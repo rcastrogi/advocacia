@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-file-contract"></i> Peticionador
+            </h1>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Sistema Peticionador</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Em desenvolvimento:</strong> Esta funcionalidade está sendo implementada e estará disponível em breve.
+                    </div>
+                    
+                    <h6>Funcionalidades planejadas:</h6>
+                    <ul>
+                        <li>Seleção de cliente para gerar petições</li>
+                        <li>Templates personalizáveis de petições</li>
+                        <li>Geração automática de documentos em PDF</li>
+                        <li>Assinatura digital</li>
+                        <li>Histórico de petições geradas</li>
+                        <li>Integração com sistemas dos tribunais</li>
+                        <li>Procurações automatizadas</li>
+                        <li>Peças processuais padronizadas</li>
+                    </ul>
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('clients.index') }}" class="btn btn-primary">
+                            <i class="fas fa-users"></i> Ver Clientes
+                        </a>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Como funciona</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>Selecione o cliente</li>
+                        <li>Escolha o tipo de petição</li>
+                        <li>Selecione o template adequado</li>
+                        <li>Preencha os dados específicos</li>
+                        <li>Gere o documento em PDF</li>
+                        <li>Imprima ou protocole digitalmente</li>
+                    </ol>
+                    
+                    <div class="alert alert-success mt-3" role="alert">
+                        <small>
+                            <i class="fas fa-check-circle"></i> 
+                            Os dados do cliente são preenchidos automaticamente nas petições!
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

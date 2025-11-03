@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+                <small class="text-muted">- Bem-vindo, {{ current_user.full_name or current_user.username }}!</small>
+            </h1>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total de Clientes</h5>
+                            <h2 class="mb-0">{{ stats.total_clients }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('clients.index') }}" class="text-white text-decoration-none">
+                        Ver todos <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Novos este Mês</h5>
+                            <h2 class="mb-0">0</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-user-plus fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('clients.new') }}" class="text-white text-decoration-none">
+                        Adicionar novo <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Petições</h5>
+                            <h2 class="mb-0">0</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-file-contract fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('main.peticionador') }}" class="text-white text-decoration-none">
+                        Gerar petição <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Documentos</h5>
+                            <h2 class="mb-0">0</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-folder fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span class="text-white">
+                        Em breve <i class="fas fa-clock"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Clients -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Clientes Recentes</h5>
+                    <a href="{{ url_for('clients.index') }}" class="btn btn-sm btn-outline-primary">
+                        Ver todos
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if stats.recent_clients %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Email</th>
+                                        <th>Telefone</th>
+                                        <th>Cadastrado</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for client in stats.recent_clients %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ client.full_name }}</strong>
+                                        </td>
+                                        <td>{{ client.email }}</td>
+                                        <td>{{ client.mobile_phone }}</td>
+                                        <td>{{ client.created_at.strftime('%d/%m/%Y') }}</td>
+                                        <td>
+                                            <a href="{{ url_for('clients.view', id=client.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="Ver detalhes">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhum cliente cadastrado</h5>
+                            <p class="text-muted">Comece adicionando seu primeiro cliente.</p>
+                            <a href="{{ url_for('clients.new') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Adicionar Cliente
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-rocket"></i> Ações Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('clients.new') }}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Novo Cliente
+                        </a>
+                        <a href="{{ url_for('main.peticionador') }}" class="btn btn-success">
+                            <i class="fas fa-file-contract"></i> Gerar Petição
+                        </a>
+                        <a href="{{ url_for('auth.profile') }}" class="btn btn-info">
+                            <i class="fas fa-user-cog"></i> Configurar Perfil
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Estatísticas</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Conta:</strong> {{ current_user.user_type.title() }}</p>
+                    <p><strong>Clientes:</strong> {{ stats.total_clients }}</p>
+                    <p><strong>Último acesso:</strong> Agora</p>
+                    
+                    {% if current_user.user_type == 'master' %}
+                    <div class="alert alert-warning mt-3" role="alert">
+                        <i class="fas fa-crown"></i> <strong>Conta Administrador</strong><br>
+                        Você tem acesso total ao sistema.
+                    </div>
+                    {% elif current_user.user_type == 'escritorio' %}
+                    <div class="alert alert-info mt-3" role="alert">
+                        <i class="fas fa-building"></i> <strong>Conta Escritório</strong><br>
+                        Acesso completo para gestão do escritório.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

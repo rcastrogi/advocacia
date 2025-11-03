@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-white mb-2">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </h1>
+                <p class="text-white opacity-75 mb-0">
+                    Bem-vindo, <strong>{{ current_user.full_name or current_user.username }}</strong>!
+                    {% if current_user.user_type %}
+                        <span class="badge {% if current_user.user_type == 'escritorio' %}badge-escritorio{% else %}badge-advogado{% endif %} ms-2">
+                            {{ current_user.user_type|title }}
+                        </span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <!-- Quick Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-3 col-md-6">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-1 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Total de Clientes</p>
+                        <h2 class="mb-0" style="font-size: 2.5rem; font-weight: 700; color: var(--dark-color);">{{ stats.total_clients }}</h2>
+                        <small class="text-success">
+                            <i class="fas fa-arrow-up me-1"></i>Ativo
+                        </small>
+                    </div>
+                    <div class="card-icon bg-primary">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-top">
+                    <a href="{{ url_for('clients.index') }}" class="text-decoration-none" style="color: var(--primary-color); font-weight: 500;">
+                        Ver todos <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-1 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Novos este Mês</p>
+                        <h2 class="mb-0" style="font-size: 2.5rem; font-weight: 700; color: var(--dark-color);">{{ stats.clients_this_month }}</h2>
+                        <small class="text-info">
+                            <i class="fas fa-calendar me-1"></i>Mês Atual
+                        </small>
+                    </div>
+                    <div class="card-icon bg-success">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-top">
+                    <a href="{{ url_for('clients.new') }}" class="text-decoration-none" style="color: var(--primary-color); font-weight: 500;">
+                        Novo cliente <i class="fas fa-plus ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-1 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Documentos</p>
+                        <h2 class="mb-0" style="font-size: 2.5rem; font-weight: 700; color: var(--dark-color);">0</h2>
+                        <small class="text-warning">
+                            <i class="fas fa-file me-1"></i>Pendentes
+                        </small>
+                    </div>
+                    <div class="card-icon bg-warning">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-top">
+                    <a href="#" class="text-decoration-none" style="color: var(--primary-color); font-weight: 500;">
+                        Gerenciar <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-1 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Petições</p>
+                        <h2 class="mb-0" style="font-size: 2.5rem; font-weight: 700; color: var(--dark-color);">0</h2>
+                        <small class="text-secondary">
+                            <i class="fas fa-gavel me-1"></i>Geradas
+                        </small>
+                    </div>
+                    <div class="card-icon bg-info">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-top">
+                    <a href="#" class="text-decoration-none" style="color: var(--primary-color); font-weight: 500;">
+                        Peticionador <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content Area -->
+    <div class="row g-4">
+        <!-- Recent Clients -->
+        <div class="col-lg-8">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0" style="font-weight: 600; color: var(--dark-color);">
+                        <i class="fas fa-users me-2"></i>Clientes Recentes
+                    </h4>
+                    <a href="{{ url_for('clients.index') }}" class="btn btn-sm btn-outline-primary">
+                        Ver Todos
+                    </a>
+                </div>
+                
+                {% if stats.recent_clients %}
+                <div class="table-responsive">
+                    <table class="table table-custom table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Email</th>
+                                <th>Telefone</th>
+                                <th>Data Cadastro</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for client in stats.recent_clients %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
+                                             style="width: 40px; height: 40px; font-weight: 600;">
+                                            {{ client.full_name[0]|upper }}
+                                        </div>
+                                        <div>
+                                            <strong>{{ client.full_name }}</strong>
+                                            <br><small class="text-muted">{{ client.cpf }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ client.email or '-' }}</td>
+                                <td>{{ client.phone or '-' }}</td>
+                                <td>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ client.created_at.strftime('%d/%m/%Y') if client.created_at else '-' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('clients.view', id=client.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" title="Visualizar">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('clients.edit', id=client.id) }}" 
+                                           class="btn btn-sm btn-outline-secondary" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-3">Nenhum cliente cadastrado ainda</p>
+                    <a href="{{ url_for('clients.new') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Cadastrar Primeiro Cliente
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions & Info -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="dashboard-card mb-4">
+                <h5 class="mb-4" style="font-weight: 600; color: var(--dark-color);">
+                    <i class="fas fa-bolt me-2"></i>Ações Rápidas
+                </h5>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('clients.new') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i>Novo Cliente
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="fas fa-file-contract me-2"></i>Nova Petição
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="fas fa-file-signature me-2"></i>Nova Procuração
+                    </a>
+                    <a href="{{ url_for('clients.index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-2"></i>Buscar Cliente
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Profile Info -->
+            <div class="dashboard-card">
+                <h5 class="mb-4" style="font-weight: 600; color: var(--dark-color);">
+                    <i class="fas fa-user-circle me-2"></i>Meu Perfil
+                </h5>
+                <div class="text-center mb-3">
+                    <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center" 
+                         style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); color: white; font-size: 2rem; font-weight: 700;">
+                        {{ current_user.full_name[0]|upper if current_user.full_name else current_user.username[0]|upper }}
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h6 class="mb-1">{{ current_user.full_name or current_user.username }}</h6>
+                    <p class="text-muted mb-0 small">{{ current_user.email }}</p>
+                    {% if current_user.user_type %}
+                    <span class="badge {% if current_user.user_type == 'escritorio' %}badge-escritorio{% else %}badge-advogado{% endif %} mt-2">
+                        {{ current_user.user_type|title }}
+                    </span>
+                    {% endif %}
+                </div>
+                <hr>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('auth.profile') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-user-edit me-2"></i>Editar Perfil
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i>Sair
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Activity Timeline (Optional) -->
+    <div class="row g-4 mt-1">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h5 class="mb-4" style="font-weight: 600; color: var(--dark-color);">
+                    <i class="fas fa-history me-2"></i>Atividade Recente
+                </h5>
+                <div class="text-center py-4">
+                    <i class="fas fa-clock fa-2x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">Nenhuma atividade recente</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

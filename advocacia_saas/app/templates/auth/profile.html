@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-user-edit"></i> Meu Perfil</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.full_name.label(class="form-label") }}
+                                    {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else "")) }}
+                                    {% if form.full_name.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.full_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.email.label(class="form-label") }}
+                                    {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                    {% if form.email.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.email.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.oab_number.label(class="form-label") }}
+                                    {{ form.oab_number(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.phone.label(class="form-label") }}
+                                    {{ form.phone(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-image"></i> Logo Personalizado</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if current_user.logo_filename %}
+                        <img src="{{ url_for('static', filename='uploads/' + current_user.logo_filename) }}" 
+                             class="img-fluid rounded mb-3" style="max-height: 200px;" alt="Logo atual">
+                        <p class="text-muted">Logo atual</p>
+                    {% else %}
+                        <div class="bg-light rounded p-4 mb-3">
+                            <i class="fas fa-image fa-3x text-muted"></i>
+                            <p class="text-muted mt-2">Nenhum logo configurado</p>
+                        </div>
+                    {% endif %}
+                    
+                    <form action="{{ url_for('auth.upload_logo') }}" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <input type="file" class="form-control" name="logo" accept=".png,.jpg,.jpeg,.gif" required>
+                            <div class="form-text">Formatos aceitos: PNG, JPG, JPEG, GIF</div>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-upload"></i> Atualizar Logo
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Informações da Conta</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Usuário:</strong> {{ current_user.username }}</p>
+                    <p><strong>Tipo:</strong> 
+                        {% if current_user.user_type == 'master' %}
+                            <span class="badge bg-warning">Administrador</span>
+                        {% elif current_user.user_type == 'escritorio' %}
+                            <span class="badge bg-info">Escritório</span>
+                        {% else %}
+                            <span class="badge bg-primary">Advogado</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Cadastrado em:</strong> {{ current_user.created_at.strftime('%d/%m/%Y') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

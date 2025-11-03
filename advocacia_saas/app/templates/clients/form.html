@@ -1,0 +1,776 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('clients.index') }}">Clientes</a></li>
+                        <li class="breadcrumb-item active">{% if client %}Editar{% else %}Novo{% endif %}</li>
+                    </ol>
+                </nav>
+                <h1 class="text-white mt-2 mb-0">
+                    <i class="fas {% if client %}fa-user-edit{% else %}fa-user-plus{% endif %} me-2"></i>
+                    {% if client %}Editar Cliente{% else %}Novo Cliente{% endif %}
+                </h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <form method="POST" id="clientForm">
+        {{ form.hidden_tag() }}
+        
+        <!-- Personal Information -->
+        <div class="form-card mb-4">
+            <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                <div class="feature-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0" style="color: var(--dark-color); font-weight: 600;">Dados Pessoais</h5>
+                    <small class="text-muted">Informações básicas do cliente</small>
+                </div>
+            </div>
+            <div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.full_name.label(class="form-label") }}
+                            {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else "")) }}
+                            {% if form.full_name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.full_name.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            {{ form.rg.label(class="form-label") }}
+                            {{ form.rg(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            {{ form.cpf_cnpj.label(class="form-label") }}
+                            {{ form.cpf_cnpj(class="form-control" + (" is-invalid" if form.cpf_cnpj.errors else "")) }}
+                            {% if form.cpf_cnpj.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.cpf_cnpj.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.civil_status.label(class="form-label") }}
+                            {{ form.civil_status(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.birth_date.label(class="form-label") }}
+                            {{ form.birth_date(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.profession.label(class="form-label") }}
+                            {{ form.profession(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.nationality.label(class="form-label") }}
+                            {{ form.nationality(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.birth_place.label(class="form-label") }}
+                            {{ form.birth_place(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.mother_name.label(class="form-label") }}
+                            {{ form.mother_name(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.father_name.label(class="form-label") }}
+                            {{ form.father_name(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Address -->
+        <div class="form-card mb-4">
+            <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                <div class="feature-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0" style="color: var(--dark-color); font-weight: 600;">Endereço</h5>
+                    <small class="text-muted">Localização e informações de contato</small>
+                </div>
+            </div>
+            <div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            {{ form.address_type.label(class="form-label") }}
+                            {{ form.address_type(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            {{ form.cep.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.cep(class="form-control", id="cep") }}
+                                <button type="button" class="btn btn-outline-secondary" id="searchCep">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-9">
+                        <div class="mb-3">
+                            {{ form.street.label(class="form-label") }}
+                            {{ form.street(class="form-control", id="street") }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            {{ form.number.label(class="form-label") }}
+                            {{ form.number(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            {{ form.complement.label(class="form-label") }}
+                            {{ form.complement(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.neighborhood.label(class="form-label") }}
+                            {{ form.neighborhood(class="form-control", id="neighborhood") }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.uf.label(class="form-label") }}
+                            {{ form.uf(class="form-select", id="uf") }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.city.label(class="form-label") }}
+                            {{ form.city(class="form-select", id="city", disabled=true) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contacts -->
+        <div class="form-card mb-4">
+            <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                <div class="feature-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                    <i class="fas fa-phone"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0" style="color: var(--dark-color); font-weight: 600;">Contatos</h5>
+                    <small class="text-muted">Telefones e email para comunicação</small>
+                </div>
+            </div>
+            <div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.landline_phone.label(class="form-label") }}
+                            {{ form.landline_phone(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.mobile_phone.label(class="form-label") }}
+                            {{ form.mobile_phone(class="form-control" + (" is-invalid" if form.mobile_phone.errors else "")) }}
+                            {% if form.mobile_phone.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.mobile_phone.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Personal Conditions -->
+        <div class="form-card mb-4">
+            <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                <div class="feature-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0" style="color: var(--dark-color); font-weight: 600;">Condições Pessoais</h5>
+                    <small class="text-muted">Informações especiais e observações</small>
+                </div>
+            </div>
+            <div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.lgbt_declared(class="form-check-input") }}
+                                {{ form.lgbt_declared.label(class="form-check-label") }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.has_disability(class="form-check-input", id="hasDisability") }}
+                                {{ form.has_disability.label(class="form-check-label") }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3" id="disabilityTypes" style="display: none;">
+                            <label class="form-label">Tipos de deficiência:</label>
+                            {% for choice in form.disability_types.choices %}
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="disability_types" 
+                                       value="{{ choice[0] }}" id="disability_{{ choice[0] }}">
+                                <label class="form-check-label" for="disability_{{ choice[0] }}">
+                                    {{ choice[1] }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_pregnant_postpartum(class="form-check-input", id="isPregnant") }}
+                                {{ form.is_pregnant_postpartum.label(class="form-check-label") }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3" id="deliveryDateField" style="display: none;">
+                            {{ form.delivery_date.label(class="form-label") }}
+                            {{ form.delivery_date(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dependents -->
+        <div class="form-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0" style="color: var(--dark-color); font-weight: 600;">Dependentes</h5>
+                        <small class="text-muted">Familiares e dependentes do cliente</small>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" id="addDependent">
+                    <i class="fas fa-plus me-1"></i> Adicionar
+                </button>
+            </div>
+            <div>
+                <div id="dependentsContainer">
+                    {% for dependent in form.dependents %}
+                    <div class="dependent-item border p-3 mb-3 rounded">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">Dependente {{ loop.index }}</h6>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-dependent">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        {{ dependent.hidden_tag() }}
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ dependent.full_name.label(class="form-label") }}
+                                    {{ dependent.full_name(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ dependent.relationship.label(class="form-label") }}
+                                    {{ dependent.relationship(class="form-select") }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ dependent.birth_date.label(class="form-label") }}
+                                    {{ dependent.birth_date(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    {{ dependent.cpf.label(class="form-label") }}
+                                    {{ dependent.cpf(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div id="noDependents" class="text-center text-muted py-3" 
+                     {% if form.dependents %}style="display: none;"{% endif %}>
+                    <i class="fas fa-users fa-2x mb-2"></i>
+                    <p>Nenhum dependente adicionado</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Submit Button -->
+        <div class="form-card">
+            <div class="d-flex gap-3 justify-content-end">
+                <a href="{{ url_for('clients.index') }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                {{ form.submit(class="btn btn-primary btn-lg") }}
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+console.log('🚀 Script de formulário carregado!');
+console.log('Elementos encontrados:', {
+    uf: document.getElementById('uf') ? 'OK' : 'ERRO',
+    city: document.getElementById('city') ? 'OK' : 'ERRO',
+    searchCep: document.getElementById('searchCep') ? 'OK' : 'ERRO',
+    cep: document.getElementById('cep') ? 'OK' : 'ERRO',
+    street: document.getElementById('street') ? 'OK' : 'ERRO',
+    neighborhood: document.getElementById('neighborhood') ? 'OK' : 'ERRO'
+});
+
+// Load cities when state changes
+document.getElementById('uf').addEventListener('change', function() {
+    const uf = this.value;
+    const citySelect = document.getElementById('city');
+    
+    if (!uf) {
+        citySelect.innerHTML = '<option value="">Selecione o estado primeiro...</option>';
+        citySelect.disabled = true;
+        return;
+    }
+    
+    citySelect.disabled = true;
+    citySelect.innerHTML = '<option value="">Carregando...</option>';
+    
+    fetch(`/api/estados/${uf}/cidades`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                citySelect.innerHTML = '<option value="">Erro ao carregar cidades</option>';
+            } else {
+                citySelect.innerHTML = '<option value="">Selecione...</option>';
+                data.forEach(cidade => {
+                    const option = document.createElement('option');
+                    option.value = cidade.nome;
+                    option.textContent = cidade.nome;
+                    citySelect.appendChild(option);
+                });
+                citySelect.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erro ao carregar cidades');
+            citySelect.innerHTML = '<option value="">Erro ao carregar cidades</option>';
+        });
+});
+
+// CEP Search
+document.getElementById('searchCep').addEventListener('click', function() {
+    const cep = document.getElementById('cep').value.replace(/\D/g, '');
+    console.log('🔍 Buscando CEP:', cep);
+    
+    if (cep.length === 8) {
+        fetch(`/api/cep/${cep}`)
+            .then(response => {
+                console.log('📡 Resposta recebida:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('📦 Dados recebidos:', data);
+                
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    console.log('✅ CEP válido! Preenchendo campos...');
+                    
+                    // Fill fields
+                    const streetField = document.getElementById('street');
+                    const neighborhoodField = document.getElementById('neighborhood');
+                    const ufField = document.getElementById('uf');
+                    const cityField = document.getElementById('city');
+                    
+                    console.log('📝 Campos encontrados:', {
+                        street: streetField ? 'OK' : 'NÃO ENCONTRADO',
+                        neighborhood: neighborhoodField ? 'OK' : 'NÃO ENCONTRADO',
+                        uf: ufField ? 'OK' : 'NÃO ENCONTRADO',
+                        city: cityField ? 'OK' : 'NÃO ENCONTRADO'
+                    });
+                    
+                    streetField.value = data.street;
+                    neighborhoodField.value = data.neighborhood;
+                    
+                    // Set UF first
+                    ufField.value = data.uf;
+                    
+                    console.log('🔄 Disparando evento change no UF...');
+                    // Trigger change event to load cities
+                    ufField.dispatchEvent(new Event('change'));
+                    
+                    console.log('⏳ Aguardando 500ms para popular cidade...');
+                    // Wait a bit then set city and lock fields
+                    setTimeout(() => {
+                        console.log('⏰ Timeout executado!');
+                        cityField.value = data.city;
+                        
+                        console.log('🔒 INICIANDO BLOQUEIO DOS CAMPOS...');
+                        
+                        // Store locked values
+                        const lockedValues = {
+                            street: data.street,
+                            neighborhood: data.neighborhood,
+                            uf: data.uf,
+                            city: data.city
+                        };
+                        
+                        // Function to prevent any changes
+                        const preventChange = function(e) {
+                            console.log('❌ TENTATIVA BLOQUEADA:', e.type);
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                            alert('⛔ Este campo foi preenchido pelo CEP e não pode ser alterado!\nAltere o CEP para desbloquear.');
+                            return false;
+                        };
+                        
+                        const restoreValue = function(field, value) {
+                            return function(e) {
+                                console.log('🔄 RESTAURANDO VALOR:', field.id);
+                                field.value = value;
+                                e.preventDefault();
+                                e.stopPropagation();
+                            };
+                        };
+                        
+                        // Lock street field
+                        console.log('🔒 Bloqueando campo LOGRADOURO');
+                        streetField.dataset.locked = 'true';
+                        streetField.dataset.lockedValue = lockedValues.street;
+                        streetField.readOnly = true;
+                        streetField.style.pointerEvents = 'none';
+                        streetField.addEventListener('keydown', preventChange, true);
+                        streetField.addEventListener('keypress', preventChange, true);
+                        streetField.addEventListener('keyup', preventChange, true);
+                        streetField.addEventListener('paste', preventChange, true);
+                        streetField.addEventListener('cut', preventChange, true);
+                        streetField.addEventListener('input', restoreValue(streetField, lockedValues.street), true);
+                        streetField.addEventListener('change', restoreValue(streetField, lockedValues.street), true);
+                        streetField.addEventListener('focus', preventChange, true);
+                        
+                        // Lock neighborhood field
+                        console.log('🔒 Bloqueando campo BAIRRO');
+                        neighborhoodField.dataset.locked = 'true';
+                        neighborhoodField.dataset.lockedValue = lockedValues.neighborhood;
+                        neighborhoodField.readOnly = true;
+                        neighborhoodField.style.pointerEvents = 'none';
+                        neighborhoodField.addEventListener('keydown', preventChange, true);
+                        neighborhoodField.addEventListener('keypress', preventChange, true);
+                        neighborhoodField.addEventListener('keyup', preventChange, true);
+                        neighborhoodField.addEventListener('paste', preventChange, true);
+                        neighborhoodField.addEventListener('cut', preventChange, true);
+                        neighborhoodField.addEventListener('input', restoreValue(neighborhoodField, lockedValues.neighborhood), true);
+                        neighborhoodField.addEventListener('change', restoreValue(neighborhoodField, lockedValues.neighborhood), true);
+                        neighborhoodField.addEventListener('focus', preventChange, true);
+                        
+                        // Lock UF field
+                        console.log('🔒 Bloqueando campo UF');
+                        ufField.dataset.locked = 'true';
+                        ufField.dataset.lockedValue = lockedValues.uf;
+                        ufField.disabled = true;
+                        ufField.style.pointerEvents = 'none';
+                        ufField.addEventListener('mousedown', preventChange, true);
+                        ufField.addEventListener('keydown', preventChange, true);
+                        ufField.addEventListener('change', restoreValue(ufField, lockedValues.uf), true);
+                        ufField.addEventListener('focus', preventChange, true);
+                        
+                        // Lock city field
+                        console.log('🔒 Bloqueando campo CIDADE');
+                        cityField.dataset.locked = 'true';
+                        cityField.dataset.lockedValue = lockedValues.city;
+                        cityField.disabled = true;
+                        cityField.style.pointerEvents = 'none';
+                        cityField.addEventListener('mousedown', preventChange, true);
+                        cityField.addEventListener('keydown', preventChange, true);
+                        cityField.addEventListener('change', restoreValue(cityField, lockedValues.city), true);
+                        cityField.addEventListener('focus', preventChange, true);
+                        
+                        // Add visual feedback with stronger styling
+                        streetField.classList.add('bg-light', 'cep-locked');
+                        neighborhoodField.classList.add('bg-light', 'cep-locked');
+                        ufField.classList.add('bg-light', 'cep-locked');
+                        cityField.classList.add('bg-light', 'cep-locked');
+                        
+                        streetField.style.cursor = 'not-allowed';
+                        neighborhoodField.style.cursor = 'not-allowed';
+                        ufField.style.cursor = 'not-allowed';
+                        cityField.style.cursor = 'not-allowed';
+                        
+                        streetField.style.backgroundColor = '#e9ecef';
+                        neighborhoodField.style.backgroundColor = '#e9ecef';
+                        ufField.style.backgroundColor = '#e9ecef';
+                        cityField.style.backgroundColor = '#e9ecef';
+                        
+                        console.log('✅ CAMPOS BLOQUEADOS COM SUCESSO!');
+                        
+                        // Show success message
+                        alert('✅ Endereço preenchido automaticamente pelo CEP!\n🔒 Campos bloqueados (altere o CEP para desbloquear)');
+                    }, 500);
+                }
+            })
+            .catch(error => {
+                alert('Erro ao buscar CEP');
+            });
+    } else {
+        alert('CEP deve conter 8 dígitos');
+    }
+});
+
+// Allow manual unlock if user wants to edit
+document.getElementById('cep').addEventListener('input', function() {
+    const streetField = document.getElementById('street');
+    const neighborhoodField = document.getElementById('neighborhood');
+    const ufField = document.getElementById('uf');
+    const cityField = document.getElementById('city');
+    
+    // Only unlock if they were locked
+    if (streetField.dataset.locked === 'true') {
+        // Remove all event listeners by cloning and replacing
+        const newStreetField = streetField.cloneNode(true);
+        streetField.parentNode.replaceChild(newStreetField, streetField);
+        
+        const newNeighborhoodField = neighborhoodField.cloneNode(true);
+        neighborhoodField.parentNode.replaceChild(newNeighborhoodField, neighborhoodField);
+        
+        const newUfField = ufField.cloneNode(true);
+        ufField.parentNode.replaceChild(newUfField, ufField);
+        
+        const newCityField = cityField.cloneNode(true);
+        cityField.parentNode.replaceChild(newCityField, cityField);
+        
+        // Get references to new elements
+        const street = document.getElementById('street');
+        const neighborhood = document.getElementById('neighborhood');
+        const uf = document.getElementById('uf');
+        const city = document.getElementById('city');
+        
+        // Remove locked state
+        delete street.dataset.locked;
+        delete neighborhood.dataset.locked;
+        delete uf.dataset.locked;
+        delete city.dataset.locked;
+        
+        // Remove visual feedback
+        street.classList.remove('bg-light', 'cep-locked');
+        neighborhood.classList.remove('bg-light', 'cep-locked');
+        uf.classList.remove('bg-light', 'cep-locked');
+        city.classList.remove('bg-light', 'cep-locked');
+        
+        street.style.cursor = '';
+        neighborhood.style.cursor = '';
+        uf.style.cursor = '';
+        city.style.cursor = '';
+        
+        // Re-attach the UF change event for city loading
+        uf.addEventListener('change', function() {
+            const ufValue = this.value;
+            const citySelect = document.getElementById('city');
+            
+            if (!ufValue) {
+                citySelect.innerHTML = '<option value="">Selecione o estado primeiro...</option>';
+                citySelect.disabled = true;
+                return;
+            }
+            
+            citySelect.disabled = true;
+            citySelect.innerHTML = '<option value="">Carregando...</option>';
+            
+            fetch(`/api/estados/${ufValue}/cidades`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        citySelect.innerHTML = '<option value="">Erro ao carregar cidades</option>';
+                    } else {
+                        citySelect.innerHTML = '<option value="">Selecione...</option>';
+                        data.forEach(cidade => {
+                            const option = document.createElement('option');
+                            option.value = cidade.nome;
+                            option.textContent = cidade.nome;
+                            citySelect.appendChild(option);
+                        });
+                        citySelect.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erro ao carregar cidades');
+                    citySelect.innerHTML = '<option value="">Erro ao carregar cidades</option>';
+                });
+        });
+    }
+});
+
+// Disability types toggle
+document.getElementById('hasDisability').addEventListener('change', function() {
+    const typesDiv = document.getElementById('disabilityTypes');
+    typesDiv.style.display = this.checked ? 'block' : 'none';
+});
+
+// Pregnancy date toggle
+document.getElementById('isPregnant').addEventListener('change', function() {
+    const dateField = document.getElementById('deliveryDateField');
+    dateField.style.display = this.checked ? 'block' : 'none';
+});
+
+// Dependents management
+let dependentIndex = {{ form.dependents|length }};
+
+document.getElementById('addDependent').addEventListener('click', function() {
+    const container = document.getElementById('dependentsContainer');
+    const noDependents = document.getElementById('noDependents');
+    
+    const dependentHtml = `
+        <div class="dependent-item border p-3 mb-3 rounded">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Dependente ${dependentIndex + 1}</h6>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-dependent">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Nome completo</label>
+                        <input type="text" class="form-control" name="dependents-${dependentIndex}-full_name">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Parentesco</label>
+                        <select class="form-select" name="dependents-${dependentIndex}-relationship">
+                            <option value="filho">Filho(a)</option>
+                            <option value="conjuge">Cônjuge</option>
+                            <option value="pai">Pai</option>
+                            <option value="mae">Mãe</option>
+                            <option value="irmao">Irmão(ã)</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Data de nascimento</label>
+                        <input type="date" class="form-control" name="dependents-${dependentIndex}-birth_date">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="mb-3">
+                        <label class="form-label">CPF</label>
+                        <input type="text" class="form-control" name="dependents-${dependentIndex}-cpf">
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', dependentHtml);
+    noDependents.style.display = 'none';
+    dependentIndex++;
+});
+
+// Remove dependent
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-dependent')) {
+        e.target.closest('.dependent-item').remove();
+        
+        const container = document.getElementById('dependentsContainer');
+        const noDependents = document.getElementById('noDependents');
+        
+        if (container.children.length === 0) {
+            noDependents.style.display = 'block';
+        }
+    }
+});
+
+// Initialize conditional fields
+document.addEventListener('DOMContentLoaded', function() {
+    const hasDisability = document.getElementById('hasDisability');
+    const isPregnant = document.getElementById('isPregnant');
+    
+    if (hasDisability.checked) {
+        document.getElementById('disabilityTypes').style.display = 'block';
+    }
+    
+    if (isPregnant.checked) {
+        document.getElementById('deliveryDateField').style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

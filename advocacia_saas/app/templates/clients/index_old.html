@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-users"></i> Clientes</h1>
+                <a href="{{ url_for('clients.new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Novo Cliente
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    {% if clients.items %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>CPF/CNPJ</th>
+                                    <th>Email</th>
+                                    <th>Telefone</th>
+                                    <th>Cidade</th>
+                                    <th>Cadastrado</th>
+                                    <th width="120">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for client in clients.items %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ client.full_name }}</strong>
+                                        {% if client.has_disability %}
+                                        <span class="badge bg-info ms-1" title="Pessoa com deficiência">PcD</span>
+                                        {% endif %}
+                                        {% if client.lgbt_declared %}
+                                        <span class="badge bg-warning ms-1" title="Autodeclarado LGBT">LGBT</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ client.cpf_cnpj }}</td>
+                                    <td>{{ client.email }}</td>
+                                    <td>{{ client.mobile_phone }}</td>
+                                    <td>{{ client.city or '-' }}</td>
+                                    <td>{{ client.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('clients.view', id=client.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="Ver">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('clients.edit', id=client.id) }}" 
+                                               class="btn btn-sm btn-outline-secondary" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    title="Excluir" onclick="confirmDelete({{ client.id }}, '{{ client.full_name }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if clients.pages > 1 %}
+                    <nav aria-label="Paginação">
+                        <ul class="pagination justify-content-center">
+                            {% if clients.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('clients.index', page=clients.prev_num) }}">Anterior</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in clients.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != clients.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('clients.index', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if clients.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('clients.index', page=clients.next_num) }}">Próximo</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-users fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted">Nenhum cliente cadastrado</h4>
+                    <p class="text-muted mb-4">Comece adicionando seu primeiro cliente ao sistema.</p>
+                    <a href="{{ url_for('clients.new') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus"></i> Adicionar Primeiro Cliente
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o cliente <strong id="clientName"></strong>?</p>
+                <p class="text-danger"><small>Esta ação não pode ser desfeita.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(clientId, clientName) {
+    document.getElementById('clientName').textContent = clientName;
+    document.getElementById('deleteForm').action = `/clients/${clientId}/delete`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-user"></i> {{ client.full_name }}</h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('clients.edit', id=client.id) }}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="{{ url_for('clients.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Personal Information -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> Dados Pessoais</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Nome completo:</strong></td>
+                            <td>{{ client.full_name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RG:</strong></td>
+                            <td>{{ client.rg or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CPF/CNPJ:</strong></td>
+                            <td>{{ client.cpf_cnpj }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Estado civil:</strong></td>
+                            <td>{{ client.civil_status or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data de nascimento:</strong></td>
+                            <td>{{ client.birth_date.strftime('%d/%m/%Y') if client.birth_date else '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Profissão:</strong></td>
+                            <td>{{ client.profession or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nacionalidade:</strong></td>
+                            <td>{{ client.nationality or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Naturalidade:</strong></td>
+                            <td>{{ client.birth_place or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nome da mãe:</strong></td>
+                            <td>{{ client.mother_name or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nome do pai:</strong></td>
+                            <td>{{ client.father_name or '-' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Address -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> Endereço</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Tipo:</strong></td>
+                            <td>{{ client.address_type.title() if client.address_type else '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CEP:</strong></td>
+                            <td>{{ client.cep or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Logradouro:</strong></td>
+                            <td>{{ client.street or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Número:</strong></td>
+                            <td>{{ client.number or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Complemento:</strong></td>
+                            <td>{{ client.complement or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bairro:</strong></td>
+                            <td>{{ client.neighborhood or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cidade:</strong></td>
+                            <td>{{ client.city or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>UF:</strong></td>
+                            <td>{{ client.uf or '-' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Contacts -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-phone"></i> Contatos</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Telefone fixo:</strong></td>
+                            <td>{{ client.landline_phone or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>
+                                {% if client.email %}
+                                <a href="mailto:{{ client.email }}">{{ client.email }}</a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Celular:</strong></td>
+                            <td>{{ client.mobile_phone or '-' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Personal Conditions -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-heart"></i> Condições Pessoais</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Autodeclarado LGBT:</strong></td>
+                            <td>
+                                {% if client.lgbt_declared %}
+                                <span class="badge bg-warning">Sim</span>
+                                {% else %}
+                                <span class="text-muted">Não</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pessoa com deficiência:</strong></td>
+                            <td>
+                                {% if client.has_disability %}
+                                <span class="badge bg-info">Sim</span>
+                                {% else %}
+                                <span class="text-muted">Não</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if client.has_disability and client.disability_types %}
+                        <tr>
+                            <td><strong>Tipos de deficiência:</strong></td>
+                            <td>
+                                {% for disability in client.disability_types.split(',') %}
+                                <span class="badge bg-secondary me-1">{{ disability.title() }}</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td><strong>Gestante/Puérpera/Lactante:</strong></td>
+                            <td>
+                                {% if client.is_pregnant_postpartum %}
+                                <span class="badge bg-success">Sim</span>
+                                {% else %}
+                                <span class="text-muted">Não</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if client.is_pregnant_postpartum and client.delivery_date %}
+                        <tr>
+                            <td><strong>Data do parto:</strong></td>
+                            <td>{{ client.delivery_date.strftime('%d/%m/%Y') }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dependents -->
+    {% if client.dependents %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Dependentes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Parentesco</th>
+                                    <th>Data de nascimento</th>
+                                    <th>CPF</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dependent in client.dependents %}
+                                <tr>
+                                    <td><strong>{{ dependent.full_name }}</strong></td>
+                                    <td>{{ dependent.relationship.title() }}</td>
+                                    <td>{{ dependent.birth_date.strftime('%d/%m/%Y') if dependent.birth_date else '-' }}</td>
+                                    <td>{{ dependent.cpf or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- System Information -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informações do Sistema</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Cadastrado em:</strong> {{ client.created_at.strftime('%d/%m/%Y às %H:%M') }}</p>
+                            <p><strong>Última atualização:</strong> {{ client.updated_at.strftime('%d/%m/%Y às %H:%M') }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Advogado responsável:</strong> {{ client.lawyer.full_name or client.lawyer.username }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
