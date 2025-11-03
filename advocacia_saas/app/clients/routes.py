@@ -25,11 +25,11 @@ def index():
 @login_required
 def new():
     form = ClientForm()
-    
+
     # Populate estado choices from database
     estados = Estado.query.order_by(Estado.nome).all()
     form.uf.choices = [("", "Selecione...")] + [(e.sigla, e.nome) for e in estados]
-    
+
     if form.validate_on_submit():
         client = Client(
             lawyer_id=current_user.id,
@@ -99,7 +99,7 @@ def view(id):
 def edit(id):
     client = Client.query.filter_by(id=id, lawyer_id=current_user.id).first_or_404()
     form = ClientForm(obj=client)
-    
+
     # Populate estado choices from database
     estados = Estado.query.order_by(Estado.nome).all()
     form.uf.choices = [("", "Selecione...")] + [(e.sigla, e.nome) for e in estados]

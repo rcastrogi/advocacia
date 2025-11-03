@@ -3,7 +3,7 @@ from config import Config
 from flask import jsonify, request
 
 from app.api import bp
-from app.models import Estado, Cidade
+from app.models import Cidade, Estado
 
 
 @bp.route("/estados")
@@ -23,8 +23,10 @@ def get_cidades_by_estado(sigla):
         estado = Estado.query.filter_by(sigla=sigla.upper()).first()
         if not estado:
             return jsonify({"error": "Estado não encontrado"}), 404
-        
-        cidades = Cidade.query.filter_by(estado_id=estado.id).order_by(Cidade.nome).all()
+
+        cidades = (
+            Cidade.query.filter_by(estado_id=estado.id).order_by(Cidade.nome).all()
+        )
         return jsonify([cidade.to_dict() for cidade in cidades])
     except Exception as e:
         return jsonify({"error": "Erro ao buscar cidades"}), 500
