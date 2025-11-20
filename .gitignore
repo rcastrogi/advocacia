@@ -1,2 +1,3 @@
-advocacia_saas/COLOR_GUIDE.md
-advocacia_saas/ACCESSIBILITY_GUIDE.md
+advocacia_saas/*.md
+advocacia_saas/**/*.md
+advocacia_saas/**/**/*.md
