@@ -94,6 +94,39 @@
                 </div>
             </div>
             
+            <!-- Segurança -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-shield-alt"></i> Segurança</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            <p class="mb-1"><strong>Senha</strong></p>
+                            <p class="text-muted small mb-0">
+                                {% if current_user.is_password_expired() %}
+                                    <span class="badge bg-danger">Expirada</span>
+                                {% elif current_user.should_show_password_warning() %}
+                                    <span class="badge bg-warning text-dark">Expira em {{ current_user.days_until_password_expires() }} dia(s)</span>
+                                {% else %}
+                                    <span class="badge bg-success">Válida</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-key me-1"></i> Alterar Senha
+                        </a>
+                    </div>
+                    
+                    {% if current_user.password_changed_at %}
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-clock me-1"></i>
+                        Última alteração: {{ current_user.password_changed_at.strftime('%d/%m/%Y às %H:%M') }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            
             <div class="card mt-3">
                 <div class="card-header">
                     <h5><i class="fas fa-info-circle"></i> Informações da Conta</h5>

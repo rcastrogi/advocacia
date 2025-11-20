@@ -28,7 +28,8 @@ def init_admin():
                 user_type="master",
                 oab_number="123456",
             )
-            admin.set_password("admin123")
+            # Usar skip_history_check=True na criação inicial
+            admin.set_password("admin123", skip_history_check=True)
             db.session.add(admin)
             db.session.commit()
 
@@ -40,6 +41,9 @@ def init_admin():
             print("🔑 Senha: admin123")
             print("=" * 60)
             print("\n⚠️  IMPORTANTE: Altere a senha após o primeiro login!")
+            print("📋 Política de senhas:")
+            print("   • Senhas expiram após 90 dias")
+            print("   • Não pode reutilizar as últimas 3 senhas")
 
 
 if __name__ == "__main__":

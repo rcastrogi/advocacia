@@ -7,8 +7,43 @@ from werkzeug.utils import secure_filename
 
 from app import db
 from app.auth import bp
-from app.auth.forms import LoginForm, ProfileForm, RegistrationForm
+from app.auth.forms import ChangePasswordForm, LoginForm, ProfileForm, RegistrationForm
 from app.models import User
+
+
+@bp.before_app_request
+def check_password_expiration():
+    """
+    Middleware que verifica se a senha do usuário expirou.
+    Redireciona para mudança de senha se necessário.
+    """
+    # Ignorar verificação para rotas públicas e de autenticação
+    exempt_endpoints = [
+        "auth.login",
+        "auth.logout",
+        "auth.register",
+        "auth.change_password",
+        "static",
+    ]
+
+    # Verificar apenas se usuário está autenticado
+    if current_user.is_authenticated:
+        # Não verificar na própria página de mudança de senha
+        if request.endpoint and request.endpoint not in exempt_endpoints:
+            # Verificar se senha expirou ou se mudança é forçada
+            if current_user.force_password_change or current_user.is_password_expired():
+                flash("Sua senha expirou. Por favor, defina uma nova senha.", "warning")
+                return redirect(url_for("auth.change_password"))
+
+            # Mostrar aviso se senha está próxima de expirar (últimos 7 dias)
+            elif current_user.should_show_password_warning():
+                days_left = current_user.days_until_password_expires()
+                flash(
+                    f"Sua senha expira em {days_left} dia(s). "
+                    f"<a href='{url_for('auth.change_password')}' class='alert-link'>Altere agora</a> "
+                    f"para manter sua conta segura.",
+                    "info",
+                )
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -21,6 +56,12 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
+
+            # Verificar se senha expirou imediatamente após login
+            if user.force_password_change or user.is_password_expired():
+                flash("Sua senha expirou. Por favor, defina uma nova senha.", "warning")
+                return redirect(url_for("auth.change_password"))
+
             next_page = request.args.get("next")
             if not next_page or urlparse(next_page).netloc != "":
                 next_page = url_for("main.dashboard")
@@ -120,3 +161,47 @@ def upload_logo():
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@bp.route("/change-password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    """Rota para mudança de senha do usuário"""
+    form = ChangePasswordForm()
+
+    # Verificar se é uma mudança forçada
+    is_forced = current_user.force_password_change or current_user.is_password_expired()
+
+    if form.validate_on_submit():
+        # Verificar senha atual
+        if not current_user.check_password(form.current_password.data):
+            flash("Senha atual incorreta.", "error")
+            return render_template(
+                "auth/change_password.html",
+                title="Alterar Senha",
+                form=form,
+                is_forced=is_forced,
+            )
+
+        # Tentar definir nova senha
+        try:
+            current_user.set_password(form.new_password.data)
+            db.session.commit()
+            flash("Senha alterada com sucesso!", "success")
+            return redirect(url_for("main.dashboard"))
+        except ValueError as e:
+            flash(str(e), "error")
+            return render_template(
+                "auth/change_password.html",
+                title="Alterar Senha",
+                form=form,
+                is_forced=is_forced,
+            )
+
+    return render_template(
+        "auth/change_password.html",
+        title="Alterar Senha",
+        form=form,
+        is_forced=is_forced,
+        days_left=current_user.days_until_password_expires(),
+    )

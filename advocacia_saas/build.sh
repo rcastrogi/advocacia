@@ -1,54 +1,125 @@
-#!/usr/bin/env bash#!/usr/bin/env bash
+#!/usr/bin/env bash#!/usr/bin/env bash#!/usr/bin/env bash
 
-# Script de build para Render.com# Script de build para o Render.com
+# Script de build para Render.com
+
+# Script de build para Render.com# Script de build para Render.com
+
+set -o errexit
 
 
-
-set -o errexit# Instalar dependências
-
-pip install -r requirements.txt
 
 echo "🔧 Instalando dependências..."
 
-pip install -r requirements.txt# Executar migrações do banco de dados
+pip install -r requirements.txtset -o errexitset -o errexit
+
+
+
+echo "🗄️  Inicializando banco de dados..."
 
 python << END
 
-echo "🗄️  Inicializando banco de dados..."from app import create_app, db
-
-python << ENDfrom app.models import User
-
-from app import create_app, dbfrom app.models.location import Estado, Cidade
+from app import create_app, dbecho "🔧 Instalando dependências..."echo "🔧 Instalando dependências..."
 
 from app.models import User
 
-app = create_app()
+pip install -r requirements.txtpip install -r requirements.txt
 
 app = create_app()
+
+
 
 with app.app_context():
 
-with app.app_context():    # Criar todas as tabelas
+    # Criar todas as tabelasecho "🗄️  Inicializando banco de dados..."echo "🗄️  Inicializando banco de dados..."
 
-    # Criar tabelas    db.create_all()
+    db.create_all()
 
-    db.create_all()    print("✅ Tabelas criadas!")
+    print("✅ Tabelas criadas!")python << ENDpython << END
 
-    print("✅ Tabelas criadas!")    
+    
 
-        # Criar usuário admin se não existir
+    # Criar usuário admin se não existirfrom app import create_app, dbfrom app import create_app, db
 
-    # Criar usuário admin se não existir    if User.query.count() == 0:
+    admin = User.query.filter_by(email="admin@advocaciasaas.com").first()
 
-    admin = User.query.filter_by(email="admin@advocaciasaas.com").first()        admin = User(
+    if not admin:from app.models import Userfrom app.models import User
 
-    if not admin:            username='admin',
+        admin = User(
 
-        admin = User(            email='admin@petitio.com',
+            username="admin",
 
-            username="admin",            is_master=True
+            email="admin@advocaciasaas.com",
+
+            full_name="Administrador do Sistema",app = create_app()app = create_app()
+
+            user_type="master",
+
+            oab_number="123456"
+
+        )
+
+        admin.set_password("admin123", skip_history_check=True)with app.app_context():with app.app_context():
+
+        db.session.add(admin)
+
+        db.session.commit()    # Criar todas as tabelas    # Criar todas as tabelas
+
+        print("✅ Usuário admin criado!")
+
+        print("📧 Email: admin@advocaciasaas.com")    db.create_all()    db.create_all()
+
+        print("🔑 Senha: admin123")
+
+    else:    print("✅ Tabelas criadas!")    print("✅ Tabelas criadas!")
+
+        print("✅ Usuário admin já existe!")
+
+END        
+
+
+
+echo "✅ Build concluído com sucesso!"    # Criar usuário admin se não existir    # Criar usuário admin se não existir
+
+
+    admin = User.query.filter_by(email="admin@advocaciasaas.com").first()    admin = User.query.filter_by(email="admin@advocaciasaas.com").first()
+
+    if not admin:    if not admin:
+
+        admin = User(        admin = User(
+
+            username="admin",            username="admin",
+
+            email="admin@advocaciasaas.com",            email="admin@advocaciasaas.com",
+
+            full_name="Administrador do Sistema",            full_name="Administrador do Sistema",
+
+            user_type="master",            user_type="master",
+
+            oab_number="123456"            oab_number="123456"
+
+        )        )
+
+        admin.set_password("admin123", skip_history_check=True)        admin.set_password("admin123", skip_history_check=True)
+
+        db.session.add(admin)        db.session.add(admin)
+
+        db.session.commit()        db.session.commit()
+
+        print("✅ Usuário admin criado!")        print("✅ Usuário admin criado!")
+
+        print("📧 Email: admin@advocaciasaas.com")        print("📧 Email: admin@advocaciasaas.com")
+
+        print("🔑 Senha: admin123")        print("🔑 Senha: admin123")
+
+    else:    else:
+
+        print("✅ Usuário admin já existe!")        print("✅ Usuário admin já existe!")
+
+END
 
             email="admin@advocaciasaas.com",        )
+
+echo "✅ Build concluído com sucesso!"
 
             full_name="Administrador do Sistema",        admin.set_password('admin123')
 

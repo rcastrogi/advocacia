@@ -1,4 +1,5 @@
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
 
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -28,14 +29,78 @@ class User(UserMixin, db.Model):
     phone = db.Column(db.String(20))
     logo_filename = db.Column(db.String(200))
 
+    # Password security fields
+    password_changed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    password_expires_at = db.Column(db.DateTime)
+    password_history = db.Column(
+        db.Text, default="[]"
+    )  # JSON array of last 3 password hashes
+    force_password_change = db.Column(db.Boolean, default=False)
+
     # Relationships
     clients = db.relationship("Client", backref="lawyer", lazy="dynamic")
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+    def set_password(self, password, skip_history_check=False):
+        """
+        Define uma nova senha para o usuário.
+
+        Args:
+            password: A nova senha em texto plano
+            skip_history_check: Se True, pula a verificação de histórico (útil para admin inicial)
+
+        Raises:
+            ValueError: Se a senha já foi usada nas últimas 3 mudanças
+        """
+        new_hash = generate_password_hash(password)
+
+        # Verificar se a senha já foi usada recentemente (exceto no setup inicial)
+        if not skip_history_check and self.password_hash:
+            history = json.loads(self.password_history) if self.password_history else []
+
+            # Verificar contra a senha atual
+            if check_password_hash(self.password_hash, password):
+                raise ValueError("Você não pode usar sua senha atual.")
+
+            # Verificar contra o histórico
+            for old_hash in history:
+                if check_password_hash(old_hash, password):
+                    raise ValueError(
+                        "Esta senha já foi utilizada recentemente. Por favor, escolha uma senha diferente."
+                    )
+
+        # Atualizar histórico antes de mudar a senha
+        if self.password_hash:
+            history = json.loads(self.password_history) if self.password_history else []
+            history.insert(0, self.password_hash)  # Adiciona a senha atual no início
+            history = history[:3]  # Mantém apenas as últimas 3
+            self.password_history = json.dumps(history)
+
+        # Definir nova senha e datas
+        self.password_hash = new_hash
+        self.password_changed_at = datetime.utcnow()
+        self.password_expires_at = datetime.utcnow() + timedelta(days=90)  # 3 meses
+        self.force_password_change = False
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def is_password_expired(self):
+        """Verifica se a senha está expirada"""
+        if not self.password_expires_at:
+            return True  # Se não tem data de expiração, força mudança
+        return datetime.utcnow() > self.password_expires_at
+
+    def days_until_password_expires(self):
+        """Retorna quantos dias faltam para a senha expirar"""
+        if not self.password_expires_at:
+            return 0
+        delta = self.password_expires_at - datetime.utcnow()
+        return max(0, delta.days)
+
+    def should_show_password_warning(self):
+        """Retorna True se deve mostrar aviso de senha próxima do vencimento (7 dias)"""
+        days = self.days_until_password_expires()
+        return 0 < days <= 7
 
     def __repr__(self):
         return f"<User {self.username}>"

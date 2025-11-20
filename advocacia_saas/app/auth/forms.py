@@ -62,3 +62,28 @@ class ProfileForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user is not None:
                 raise ValidationError("Email já cadastrado. Use outro email.")
+
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField(
+        "Senha atual",
+        validators=[DataRequired()],
+        render_kw={"placeholder": "Digite sua senha atual"},
+    )
+    new_password = PasswordField(
+        "Nova senha",
+        validators=[
+            DataRequired(),
+            Length(min=8, message="A senha deve ter no mínimo 8 caracteres"),
+        ],
+        render_kw={"placeholder": "Mínimo 8 caracteres"},
+    )
+    confirm_password = PasswordField(
+        "Confirmar nova senha",
+        validators=[
+            DataRequired(),
+            EqualTo("new_password", message="As senhas devem ser iguais"),
+        ],
+        render_kw={"placeholder": "Digite a nova senha novamente"},
+    )
+    submit = SubmitField("Alterar senha")
