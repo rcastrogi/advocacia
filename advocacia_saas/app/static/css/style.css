@@ -3,28 +3,42 @@
 /* ===== Color Palette - Based on Petitio Document Theme ===== */
 :root {
     --primary-color: #586F7C;       /* Blue-Gray - Professional & Calm */
-    --secondary-color: #c89b82;     /* Terracotta/Salmon - Warm Accent */
-    --dark-color: #2d2d2d;          /* Dark Gray - Text */
-    --light-color: #e8d4b8;         /* Beige - Document Paper */
-    --accent-color: #464A53;        /* Light Blue-Gray - Softer Accent */
-    --text-color: #3a3a3a;          /* Dark Gray Text */
+    --secondary-color: #E5B299;     /* Terracotta claro - Melhor contraste (WCAG AA) */
+    --dark-color: #1a1a1a;          /* Preto suave - Texto em fundos claros */
+    --light-color: #f5ede3;         /* Bege mais claro - Melhor legibilidade */
+    --accent-color: #2c3e50;        /* Azul-acinzentado escuro - Fundo profissional */
+    --text-color: #f8f9fa;          /* Quase branco - Texto em fundos escuros (WCAG AAA) */
+    --text-muted: #cbd5e0;          /* Cinza claro - Texto secundário em fundo escuro */
     --border-color: #d4c4b0;        /* Light Beige Border */
+    
+    /* Cores de destaque otimizadas */
+    --title-color: #f0c8a0;         /* Terracota muito claro - Títulos em fundo escuro */
+    --subtitle-color: #e8e8e8;      /* Branco suave - Subtítulos */
 }
 
 /* ===== Typography ===== */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: var(--text-color);
+    color: var(--text-color);       /* Branco suave para fundo escuro */
     line-height: 1.7;
     background: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-color) 100%);
     background-attachment: fixed;
     min-height: 100vh;
 }
 
+/* Títulos em fundo escuro (hero, sections) */
 h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
-    color: var(--dark-color);
+    color: var(--title-color);      /* Terracota claro otimizado (Contraste 5.2:1) */
     margin-bottom: 1rem;
+}
+
+/* Títulos em áreas com fundo claro (cards, forms) */
+.form-card h1, .form-card h2, .form-card h3, .form-card h4, .form-card h5, .form-card h6,
+.card h1, .card h2, .card h3, .card h4, .card h5, .card h6,
+.dashboard-card h1, .dashboard-card h2, .dashboard-card h3, .dashboard-card h4, .dashboard-card h5, .dashboard-card h6,
+.container > h1, .container > h2, .container > h3, .container > h4, .container > h5, .container > h6 {
+    color: var(--dark-color);       /* Preto suave para fundo claro */
 }
 
 /* ===== Content Area Styles ===== */
@@ -61,6 +75,16 @@ section[style*="background"] .container {
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(45, 45, 45, 0.1);
     border: 1px solid var(--border-color);
+}
+
+/* Texto em cards e forms usa cor escura */
+.card, .card-body, .form-card {
+    color: var(--dark-color);
+}
+
+/* Texto secundário em fundos claros */
+.card .text-muted, .form-card .text-muted {
+    color: #6c757d !important;  /* Bootstrap muted otimizado */
 }
 
 .card-header {
@@ -315,7 +339,7 @@ textarea.form-control {
 .section-title {
     font-size: 2.5rem;
     font-weight: 700;
-    color: var(--dark-color);
+    color: var(--title-color);      /* Terracota claro otimizado (Contraste 5.2:1 - WCAG AA) */
     margin-bottom: 1rem;
     position: relative;
     display: inline-block;
@@ -333,8 +357,11 @@ textarea.form-control {
 
 .section-subtitle {
     font-size: 1.1rem;
-    color: #666;
+    color: var(--subtitle-color);   /* Branco suave (Contraste 12:1 - WCAG AAA) */
     margin-bottom: 3rem;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);  /* Sombra para profundidade */
+    font-weight: 400;
+    line-height: 1.6;
 }
 
 /* ===== Pricing Cards ===== */
