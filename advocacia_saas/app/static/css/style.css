@@ -142,7 +142,7 @@ textarea.form-control {
 }
 
 .petitio-logo-hero {
-    filter: brightness(0) invert(1);
+    /* Removido o filtro para mostrar o logo original */
 }
 
 /* ===== Hero Section - Law Firm Style ===== */
