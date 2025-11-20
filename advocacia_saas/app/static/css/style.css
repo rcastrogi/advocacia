@@ -302,6 +302,22 @@ textarea.form-control {
     line-height: 1.8;
 }
 
+.feature-card ul li {
+    color: #2d3748; /* Cinza escuro com excelente contraste */
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.feature-card .text-success {
+    color: #0f5132 !important; /* Verde bem escuro com contraste WCAG AAA (10.1:1) */
+}
+
+.feature-card .fa-check {
+    font-weight: 900;
+    font-size: 1.1em;
+}
+
 /* ===== Stats Cards ===== */
 .stats-card {
     background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
