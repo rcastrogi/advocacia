@@ -33,5 +33,8 @@ venv/
 env/
 ENV/
 
+#documentações
+*.md
+
 # Migrations (opcional - descomente se não quiser versionar)
 # migrations/

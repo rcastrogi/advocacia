@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <img src="{{ url_for('static', filename='img/petitio.png') }}" 
+                     alt="Petitio" height="50" class="mb-3">
+                <h1 class="auth-title mb-2">Termos de Uso</h1>
+                <p class="auth-subtitle">Última atualização: Novembro de 2025</p>
+            </div>
+
+            <!-- Content Card -->
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Importante:</strong> Ao utilizar o Petitio, você concorda com estes Termos de Uso. 
+                        Leia atentamente antes de continuar.
+                    </div>
+
+                    <!-- 1. Aceitação dos Termos -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-check-circle me-2"></i>1. Aceitação dos Termos
+                        </h2>
+                        <p>
+                            Ao acessar e usar a plataforma Petitio ("Plataforma", "Serviço", "Sistema"), você 
+                            ("Usuário", "Cliente", "Advogado") concorda em cumprir e estar vinculado aos presentes 
+                            Termos de Uso ("Termos"). Se você não concorda com qualquer parte destes Termos, 
+                            não deve utilizar nossos serviços.
+                        </p>
+                        <p>
+                            Estes Termos constituem um acordo legal vinculante entre você e o Petitio. 
+                            Reservamo-nos o direito de modificar estes Termos a qualquer momento, sendo sua 
+                            responsabilidade revisar periodicamente esta página.
+                        </p>
+                    </section>
+
+                    <!-- 2. Descrição do Serviço -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-server me-2"></i>2. Descrição do Serviço
+                        </h2>
+                        <p>
+                            O Petitio é uma plataforma SaaS (Software as a Service) desenvolvida especificamente 
+                            para advogados e escritórios de advocacia, oferecendo:
+                        </p>
+                        <ul class="list-group list-group-flush mb-3">
+                            <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Sistema de gestão de clientes</li>
+                            <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Geração automatizada de documentos jurídicos</li>
+                            <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Dashboard com estatísticas e relatórios</li>
+                            <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Armazenamento seguro de informações</li>
+                            <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Peticionador eletrônico</li>
+                        </ul>
+                    </section>
+
+                    <!-- 3. Cadastro e Conta -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-user-plus me-2"></i>3. Cadastro e Responsabilidade pela Conta
+                        </h2>
+                        <p><strong>3.1 Elegibilidade:</strong> Para utilizar o Petitio, você deve:</p>
+                        <ul>
+                            <li>Ser advogado(a) regularmente inscrito(a) na OAB (Ordem dos Advogados do Brasil)</li>
+                            <li>Ter capacidade legal para celebrar contratos</li>
+                            <li>Fornecer informações verdadeiras, precisas e atualizadas</li>
+                            <li>Ser maior de 18 anos</li>
+                        </ul>
+                        
+                        <p><strong>3.2 Segurança da Conta:</strong></p>
+                        <ul>
+                            <li>Você é responsável por manter a confidencialidade de sua senha</li>
+                            <li>Não compartilhe suas credenciais de acesso com terceiros</li>
+                            <li>Notifique-nos imediatamente sobre qualquer uso não autorizado</li>
+                            <li>Você é responsável por todas as atividades realizadas em sua conta</li>
+                        </ul>
+
+                        <p><strong>3.3 Uso por Escritórios:</strong> 
+                            Contas de tipo "Escritório" podem gerenciar múltiplos advogados, sendo o titular 
+                            da conta responsável por todas as ações dos usuários vinculados.
+                        </p>
+                    </section>
+
+                    <!-- 4. Uso Aceitável -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-shield-alt me-2"></i>4. Política de Uso Aceitável
+                        </h2>
+                        <p><strong>Você concorda em NÃO:</strong></p>
+                        <ul class="text-danger">
+                            <li>Usar o serviço para atividades ilegais ou fraudulentas</li>
+                            <li>Violar leis aplicáveis, incluindo LGPD e Código de Ética da OAB</li>
+                            <li>Tentar acessar áreas restritas do sistema</li>
+                            <li>Realizar engenharia reversa, descompilar ou hackear a plataforma</li>
+                            <li>Transmitir vírus, malware ou códigos maliciosos</li>
+                            <li>Coletar informações de outros usuários sem consentimento</li>
+                            <li>Utilizar o serviço para spam ou comunicações não solicitadas</li>
+                            <li>Revender ou sublicenciar o acesso à plataforma</li>
+                            <li>Criar múltiplas contas para contornar limitações</li>
+                        </ul>
+                        
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Atenção:</strong> A violação destas políticas pode resultar em suspensão 
+                            ou encerramento imediato da conta, sem direito a reembolso.
+                        </div>
+                    </section>
+
+                    <!-- 5. Propriedade Intelectual -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-copyright me-2"></i>5. Propriedade Intelectual
+                        </h2>
+                        <p><strong>5.1 Propriedade do Petitio:</strong></p>
+                        <p>
+                            Todos os direitos, títulos e interesses relacionados à plataforma Petitio, incluindo 
+                            mas não limitado a software, código-fonte, design, logotipos, marcas, textos, gráficos 
+                            e funcionalidades, são de propriedade exclusiva do Petitio ou de seus licenciadores.
+                        </p>
+
+                        <p><strong>5.2 Licença de Uso:</strong></p>
+                        <p>
+                            Concedemos a você uma licença limitada, não exclusiva, intransferível e revogável para 
+                            acessar e usar a plataforma conforme estes Termos. Esta licença não inclui:
+                        </p>
+                        <ul>
+                            <li>Direito de revenda ou distribuição comercial</li>
+                            <li>Direito de modificação ou trabalhos derivados</li>
+                            <li>Direito de descompilação ou engenharia reversa</li>
+                            <li>Direito de uso de marcas sem permissão</li>
+                        </ul>
+
+                        <p><strong>5.3 Conteúdo do Usuário:</strong></p>
+                        <p>
+                            Você retém todos os direitos sobre os dados e documentos que inserir na plataforma 
+                            (informações de clientes, petições, etc.). Ao usar nosso serviço, você nos concede 
+                            uma licença limitada para processar, armazenar e exibir esses dados exclusivamente 
+                            para fornecer os serviços contratados.
+                        </p>
+                    </section>
+
+                    <!-- 6. Proteção de Dados e LGPD -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-lock me-2"></i>6. Proteção de Dados e LGPD
+                        </h2>
+                        <p>
+                            O Petitio está comprometido com a proteção de dados pessoais em conformidade com a 
+                            Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).
+                        </p>
+                        
+                        <p><strong>6.1 Como Controlador:</strong></p>
+                        <p>
+                            Quando você usa nossa plataforma, somos controladores dos seus dados pessoais 
+                            (email, nome, OAB, etc.). Processamos esses dados conforme nossa 
+                            <a href="{{ url_for('main.privacy_policy') }}" style="color: var(--primary-color); font-weight: 600;">
+                                Política de Privacidade
+                            </a>.
+                        </p>
+
+                        <p><strong>6.2 Como Operador:</strong></p>
+                        <p>
+                            Quando você insere dados de seus clientes na plataforma, você é o controlador e 
+                            nós somos operadores desses dados. Você é responsável por:
+                        </p>
+                        <ul>
+                            <li>Obter consentimento adequado de seus clientes</li>
+                            <li>Garantir a licitude do tratamento dos dados</li>
+                            <li>Informar seus clientes sobre como os dados serão processados</li>
+                            <li>Cumprir com todas as obrigações da LGPD</li>
+                        </ul>
+
+                        <p><strong>6.3 Segurança:</strong></p>
+                        <p>
+                            Implementamos medidas técnicas e organizacionais para proteger os dados, incluindo:
+                            criptografia, controle de acesso, backups regulares e monitoramento de segurança.
+                        </p>
+
+                        <p class="mb-0">
+                            <a href="{{ url_for('main.lgpd_info') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-info-circle me-2"></i>Saiba mais sobre nossa conformidade com LGPD
+                            </a>
+                        </p>
+                    </section>
+
+                    <!-- 7. Limitação de Responsabilidade -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-exclamation-circle me-2"></i>7. Limitação de Responsabilidade
+                        </h2>
+                        
+                        <div class="alert alert-warning">
+                            <strong>IMPORTANTE:</strong> Leia esta seção cuidadosamente, pois limita nossa responsabilidade.
+                        </div>
+
+                        <p><strong>7.1 Disponibilidade:</strong></p>
+                        <p>
+                            Embora nos esforcemos para manter a plataforma disponível 24/7, não garantimos operação 
+                            ininterrupta. Pode haver períodos de manutenção, atualizações ou indisponibilidade não planejada.
+                        </p>
+
+                        <p><strong>7.2 Conteúdo Gerado:</strong></p>
+                        <p>
+                            Os documentos e petições gerados pela plataforma são modelos automatizados. É sua 
+                            responsabilidade revisar, verificar e adequar todo conteúdo antes do uso. Não nos 
+                            responsabilizamos por erros, omissões ou inadequações nos documentos gerados.
+                        </p>
+
+                        <p><strong>7.3 Decisões Profissionais:</strong></p>
+                        <p>
+                            A plataforma é uma ferramenta de suporte. Todas as decisões jurídicas, estratégicas 
+                            e profissionais são de sua exclusiva responsabilidade como advogado(a) habilitado(a).
+                        </p>
+
+                        <p><strong>7.4 Exclusão de Garantias:</strong></p>
+                        <p>
+                            O SERVIÇO É FORNECIDO "COMO ESTÁ" E "CONFORME DISPONÍVEL", SEM GARANTIAS DE QUALQUER 
+                            TIPO, EXPRESSAS OU IMPLÍCITAS, INCLUINDO MAS NÃO LIMITADAS A GARANTIAS DE COMERCIALIZAÇÃO, 
+                            ADEQUAÇÃO A UM PROPÓSITO ESPECÍFICO OU NÃO VIOLAÇÃO.
+                        </p>
+
+                        <p><strong>7.5 Limitação de Danos:</strong></p>
+                        <p>
+                            EM NENHUMA CIRCUNSTÂNCIA SEREMOS RESPONSÁVEIS POR DANOS INDIRETOS, INCIDENTAIS, 
+                            ESPECIAIS, CONSEQUENCIAIS OU PUNITIVOS, INCLUINDO PERDA DE LUCROS, DADOS, USO OU 
+                            OUTRAS PERDAS INTANGÍVEIS.
+                        </p>
+                    </section>
+
+                    <!-- 8. Pagamento e Reembolso -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-credit-card me-2"></i>8. Pagamento e Política de Reembolso
+                        </h2>
+                        <p><strong>8.1 Planos e Cobrança:</strong></p>
+                        <ul>
+                            <li>Os planos e preços estão descritos em nossa página de assinatura</li>
+                            <li>A cobrança é realizada de forma recorrente (mensal ou anual)</li>
+                            <li>Você autoriza débitos automáticos na forma de pagamento cadastrada</li>
+                            <li>Preços podem ser alterados mediante aviso prévio de 30 dias</li>
+                        </ul>
+
+                        <p><strong>8.2 Cancelamento:</strong></p>
+                        <ul>
+                            <li>Você pode cancelar sua assinatura a qualquer momento</li>
+                            <li>O acesso permanece ativo até o final do período pago</li>
+                            <li>Não há reembolso proporcional de períodos não utilizados</li>
+                            <li>Seus dados serão mantidos por 90 dias após o cancelamento</li>
+                        </ul>
+
+                        <p><strong>8.3 Suspensão por Falta de Pagamento:</strong></p>
+                        <p>
+                            Em caso de inadimplência, sua conta será suspensa após 7 dias, com exclusão 
+                            definitiva após 30 dias de não pagamento.
+                        </p>
+                    </section>
+
+                    <!-- 9. Encerramento -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-times-circle me-2"></i>9. Encerramento da Conta
+                        </h2>
+                        <p><strong>9.1 Por Você:</strong></p>
+                        <p>
+                            Você pode encerrar sua conta a qualquer momento através das configurações ou 
+                            entrando em contato conosco.
+                        </p>
+
+                        <p><strong>9.2 Por Nós:</strong></p>
+                        <p>
+                            Reservamo-nos o direito de suspender ou encerrar sua conta se:
+                        </p>
+                        <ul>
+                            <li>Houver violação destes Termos de Uso</li>
+                            <li>Detectarmos atividades fraudulentas ou ilegais</li>
+                            <li>Houver inadimplência prolongada</li>
+                            <li>For necessário por questões legais ou regulatórias</li>
+                        </ul>
+
+                        <p><strong>9.3 Efeitos do Encerramento:</strong></p>
+                        <p>
+                            Após o encerramento, você perderá acesso à plataforma e todos os dados poderão ser 
+                            excluídos permanentemente após o período de retenção legal.
+                        </p>
+                    </section>
+
+                    <!-- 10. Modificações -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-edit me-2"></i>10. Modificações nos Termos e Serviço
+                        </h2>
+                        <p><strong>10.1 Alterações nos Termos:</strong></p>
+                        <p>
+                            Podemos modificar estes Termos a qualquer momento. Alterações significativas serão 
+                            notificadas por email ou através da plataforma com antecedência mínima de 15 dias. 
+                            O uso continuado após as alterações constitui aceitação dos novos Termos.
+                        </p>
+
+                        <p><strong>10.2 Alterações no Serviço:</strong></p>
+                        <p>
+                            Reservamo-nos o direito de modificar, adicionar ou remover funcionalidades do serviço 
+                            a qualquer momento, com ou sem aviso prévio.
+                        </p>
+                    </section>
+
+                    <!-- 11. Disposições Gerais -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-gavel me-2"></i>11. Disposições Gerais
+                        </h2>
+                        
+                        <p><strong>11.1 Lei Aplicável:</strong></p>
+                        <p>
+                            Estes Termos são regidos pelas leis da República Federativa do Brasil, 
+                            especialmente pela Lei nº 13.709/2018 (LGPD), Lei nº 12.965/2014 (Marco Civil da Internet) 
+                            e Código de Defesa do Consumidor.
+                        </p>
+
+                        <p><strong>11.2 Foro:</strong></p>
+                        <p>
+                            Fica eleito o foro da comarca de São Paulo/SP para dirimir qualquer controvérsia 
+                            decorrente destes Termos, com renúncia a qualquer outro, por mais privilegiado que seja.
+                        </p>
+
+                        <p><strong>11.3 Independência das Cláusulas:</strong></p>
+                        <p>
+                            Se qualquer disposição destes Termos for considerada inválida ou inexequível, 
+                            as demais disposições permanecerão em pleno vigor e efeito.
+                        </p>
+
+                        <p><strong>11.4 Acordo Integral:</strong></p>
+                        <p>
+                            Estes Termos, juntamente com nossa Política de Privacidade, constituem o acordo 
+                            integral entre você e o Petitio relativamente ao uso da plataforma.
+                        </p>
+
+                        <p><strong>11.5 Cessão:</strong></p>
+                        <p>
+                            Você não pode ceder ou transferir seus direitos ou obrigações sob estes Termos sem 
+                            nosso consentimento prévio por escrito. Podemos ceder nossos direitos livremente.
+                        </p>
+                    </section>
+
+                    <!-- 12. Contato -->
+                    <section class="mb-4">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-envelope me-2"></i>12. Contato
+                        </h2>
+                        <p>
+                            Para dúvidas, solicitações ou notificações relacionadas a estes Termos de Uso:
+                        </p>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <p class="mb-2"><strong><i class="fas fa-building me-2"></i>Petitio</strong></p>
+                                <p class="mb-1"><i class="fas fa-envelope me-2"></i>Email: juridico@petitio.com.br</p>
+                                <p class="mb-1"><i class="fas fa-phone me-2"></i>Telefone: (11) 9999-9999</p>
+                                <p class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Endereço: São Paulo, SP - Brasil</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Data e Versão -->
+                    <div class="border-top pt-4 mt-5 text-center text-muted">
+                        <p class="mb-2">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            <strong>Versão:</strong> 1.0 | 
+                            <strong>Última atualização:</strong> Novembro de 2025
+                        </p>
+                        <p class="mb-0 small">
+                            Documento gerado em conformidade com a legislação brasileira vigente
+                        </p>
+                    </div>
+
+                    <!-- Ações -->
+                    <div class="text-center mt-5">
+                        <a href="{{ url_for('main.privacy_policy') }}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-user-shield me-2"></i>Política de Privacidade
+                        </a>
+                        <a href="{{ url_for('main.lgpd_info') }}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-shield-alt me-2"></i>Informações sobre LGPD
+                        </a>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>Voltar para Início
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

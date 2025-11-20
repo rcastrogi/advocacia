@@ -31,3 +31,21 @@ def dashboard():
 @login_required
 def peticionador():
     return render_template("peticionador.html", title="Peticionador")
+
+
+@bp.route("/termos")
+def terms_of_service():
+    """Página de Termos de Uso"""
+    return render_template("terms_of_service.html", title="Termos de Uso")
+
+
+@bp.route("/privacidade")
+def privacy_policy():
+    """Política de Privacidade em conformidade com LGPD"""
+    return render_template("privacy_policy.html", title="Política de Privacidade")
+
+
+@bp.route("/lgpd")
+def lgpd_info():
+    """Informações sobre conformidade com LGPD"""
+    return render_template("lgpd_info.html", title="Conformidade LGPD")

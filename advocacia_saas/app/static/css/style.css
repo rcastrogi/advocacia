@@ -364,6 +364,12 @@ textarea.form-control {
     line-height: 1.6;
 }
 
+/* Títulos em seções com fundo claro */
+.bg-light .section-title,
+.bg-white .section-title {
+    color: var(--dark-color);  /* Preto suave para fundo claro */
+}
+
 /* ===== Pricing Cards ===== */
 /* ===== Pricing Cards ===== */
 .pricing-card {
@@ -914,4 +920,51 @@ textarea.form-control {
     color: #999;
     max-width: 400px;
     margin: 0 auto 2rem;
+}
+
+/* ===== Authentication Pages - Enhanced Contrast ===== */
+/* Classes especiais para páginas de login/registro com melhor legibilidade */
+
+.auth-title {
+    color: var(--title-color) !important;       /* Terracota claro - Contraste 5.2:1 AA */
+    font-weight: 700 !important;
+    font-size: 2rem !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Sombra sutil para melhorar legibilidade */
+}
+
+.auth-subtitle {
+    color: var(--subtitle-color) !important;    /* Branco suave - Contraste 12:1 AAA */
+    font-size: 1.1rem !important;
+    font-weight: 400 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.auth-text-muted {
+    color: var(--text-muted) !important;        /* Cinza claro - Contraste 8:1 AAA */
+    font-size: 0.9rem !important;
+}
+
+.auth-text-muted a {
+    color: var(--secondary-color) !important;   /* Terracotta - Bom contraste */
+    font-weight: 600 !important;
+    text-decoration: underline !important;
+    transition: all 0.3s ease;
+}
+
+.auth-text-muted a:hover {
+    color: var(--title-color) !important;
+    text-decoration: none !important;
+}
+
+/* Melhorar legibilidade de links em páginas auth */
+.auth-link {
+    color: var(--secondary-color) !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: all 0.3s ease;
+}
+
+.auth-link:hover {
+    color: var(--title-color) !important;
+    text-decoration: underline !important;
 }

@@ -1,0 +1,536 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <img src="{{ url_for('static', filename='img/petitio.png') }}" 
+                     alt="Petitio" height="50" class="mb-3">
+                <h1 class="auth-title mb-2">Política de Privacidade</h1>
+                <p class="auth-subtitle">Protegendo seus dados em conformidade com a LGPD</p>
+                <p class="auth-text-muted">Última atualização: Novembro de 2025</p>
+            </div>
+
+            <!-- Content Card -->
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    
+                    <div class="alert alert-primary mb-4">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <strong>Compromisso com sua Privacidade:</strong> Esta Política explica como coletamos, 
+                        usamos, armazenamos e protegemos seus dados pessoais em conformidade com a Lei Geral 
+                        de Proteção de Dados (LGPD - Lei nº 13.709/2018).
+                    </div>
+
+                    <!-- Introdução -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-info-circle me-2"></i>Introdução
+                        </h2>
+                        <p>
+                            O Petitio ("nós", "nosso" ou "Plataforma") respeita a privacidade de todos os usuários 
+                            ("você", "usuário", "titular dos dados") e está comprometido com a proteção de seus 
+                            dados pessoais.
+                        </p>
+                        <p>
+                            Esta Política de Privacidade descreve como tratamos informações pessoais quando você:
+                        </p>
+                        <ul>
+                            <li>Visita nosso website</li>
+                            <li>Cria uma conta na plataforma</li>
+                            <li>Utiliza nossos serviços</li>
+                            <li>Entra em contato conosco</li>
+                        </ul>
+                    </section>
+
+                    <!-- 1. Dados que Coletamos -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-database me-2"></i>1. Dados Pessoais que Coletamos
+                        </h2>
+                        
+                        <h5 class="mt-4"><i class="fas fa-user-circle me-2 text-primary"></i>1.1 Dados de Cadastro</h5>
+                        <p>Ao criar uma conta, coletamos:</p>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Dado</th>
+                                        <th>Finalidade</th>
+                                        <th>Base Legal (LGPD)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Nome completo</strong></td>
+                                        <td>Identificação e personalização</td>
+                                        <td>Execução de contrato (Art. 7º, V)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Email</strong></td>
+                                        <td>Autenticação e comunicação</td>
+                                        <td>Execução de contrato (Art. 7º, V)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Número OAB</strong></td>
+                                        <td>Verificação profissional</td>
+                                        <td>Legítimo interesse (Art. 7º, IX)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Telefone</strong></td>
+                                        <td>Contato e suporte</td>
+                                        <td>Consentimento (Art. 7º, I)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Senha (criptografada)</strong></td>
+                                        <td>Segurança da conta</td>
+                                        <td>Execução de contrato (Art. 7º, V)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h5 class="mt-4"><i class="fas fa-users me-2 text-primary"></i>1.2 Dados de Clientes do Usuário</h5>
+                        <p>
+                            <strong>Importante:</strong> Quando você cadastra informações de seus clientes na plataforma, 
+                            <strong>você é o controlador</strong> desses dados e <strong>nós somos operadores</strong>. 
+                            Dados coletados podem incluir:
+                        </p>
+                        <ul>
+                            <li>Nome, CPF/CNPJ, RG</li>
+                            <li>Endereço completo</li>
+                            <li>Telefones e email</li>
+                            <li>Estado civil, profissão</li>
+                            <li>Informações sobre dependentes</li>
+                            <li>Dados sensíveis (quando necessário para a causa)</li>
+                        </ul>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Sua Responsabilidade:</strong> Você deve obter consentimento adequado de seus 
+                            clientes e informá-los sobre o uso da plataforma Petitio para processar seus dados.
+                        </div>
+
+                        <h5 class="mt-4"><i class="fas fa-chart-line me-2 text-primary"></i>1.3 Dados de Uso e Técnicos</h5>
+                        <ul>
+                            <li><strong>Logs de acesso:</strong> IP, data/hora, páginas visitadas</li>
+                            <li><strong>Cookies:</strong> Para autenticação e preferências</li>
+                            <li><strong>Dispositivo:</strong> Navegador, sistema operacional</li>
+                            <li><strong>Estatísticas:</strong> Uso de funcionalidades (anonimizadas)</li>
+                        </ul>
+                    </section>
+
+                    <!-- 2. Como Usamos seus Dados -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-cogs me-2"></i>2. Como Usamos seus Dados Pessoais
+                        </h2>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 border-primary">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-check-circle text-success me-2"></i>Finalidades Primárias</h5>
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-angle-right text-primary me-2"></i>Criar e gerenciar sua conta</li>
+                                            <li><i class="fas fa-angle-right text-primary me-2"></i>Fornecer os serviços contratados</li>
+                                            <li><i class="fas fa-angle-right text-primary me-2"></i>Processar pagamentos</li>
+                                            <li><i class="fas fa-angle-right text-primary me-2"></i>Oferecer suporte técnico</li>
+                                            <li><i class="fas fa-angle-right text-primary me-2"></i>Gerar documentos e petições</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 border-info">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-info-circle text-info me-2"></i>Finalidades Secundárias</h5>
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-angle-right text-info me-2"></i>Melhorar nossos serviços</li>
+                                            <li><i class="fas fa-angle-right text-info me-2"></i>Enviar atualizações importantes</li>
+                                            <li><i class="fas fa-angle-right text-info me-2"></i>Prevenir fraudes e abusos</li>
+                                            <li><i class="fas fa-angle-right text-info me-2"></i>Cumprir obrigações legais</li>
+                                            <li><i class="fas fa-angle-right text-info me-2"></i>Análises estatísticas (anonimizadas)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-ban me-2"></i>
+                            <strong>O que NÃO fazemos:</strong> Não vendemos, alugamos ou compartilhamos seus dados 
+                            com terceiros para fins de marketing sem seu consentimento explícito.
+                        </div>
+                    </section>
+
+                    <!-- 3. Base Legal -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-balance-scale me-2"></i>3. Base Legal para o Tratamento (LGPD Art. 7º)
+                        </h2>
+                        <p>Processamos seus dados pessoais com base em:</p>
+                        <ul>
+                            <li><strong>Execução de contrato:</strong> Para fornecer os serviços que você contratou</li>
+                            <li><strong>Consentimento:</strong> Quando você autoriza expressamente (pode ser revogado)</li>
+                            <li><strong>Legítimo interesse:</strong> Para melhorar serviços e prevenir fraudes</li>
+                            <li><strong>Cumprimento de obrigação legal:</strong> Quando exigido por lei</li>
+                            <li><strong>Proteção ao crédito:</strong> Para gestão de pagamentos</li>
+                        </ul>
+                    </section>
+
+                    <!-- 4. Compartilhamento -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-share-alt me-2"></i>4. Compartilhamento de Dados
+                        </h2>
+                        
+                        <p>Seus dados podem ser compartilhados com:</p>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Categoria</th>
+                                        <th>Finalidade</th>
+                                        <th>Exemplos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Provedores de Serviço</strong></td>
+                                        <td>Infraestrutura e hospedagem</td>
+                                        <td>Render.com, AWS, servidores cloud</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Processadores de Pagamento</strong></td>
+                                        <td>Processar pagamentos</td>
+                                        <td>Gateways de pagamento, bancos</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Serviços de Email</strong></td>
+                                        <td>Enviar notificações</td>
+                                        <td>SendGrid, Amazon SES</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Autoridades</strong></td>
+                                        <td>Cumprimento legal</td>
+                                        <td>Quando exigido por lei ou ordem judicial</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-success">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            <strong>Proteção:</strong> Todos os terceiros são contratualmente obrigados a proteger 
+                            seus dados e usá-los apenas para as finalidades especificadas.
+                        </div>
+                    </section>
+
+                    <!-- 5. Segurança -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-lock me-2"></i>5. Segurança dos Dados
+                        </h2>
+                        <p>Implementamos medidas técnicas e organizacionais robustas:</p>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center">
+                                    <div class="mb-2" style="font-size: 2rem; color: var(--primary-color);">
+                                        <i class="fas fa-server"></i>
+                                    </div>
+                                    <h6>Infraestrutura</h6>
+                                    <p class="small">Servidores seguros com criptografia SSL/TLS</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center">
+                                    <div class="mb-2" style="font-size: 2rem; color: var(--primary-color);">
+                                        <i class="fas fa-key"></i>
+                                    </div>
+                                    <h6>Criptografia</h6>
+                                    <p class="small">Senhas hasheadas e dados sensíveis criptografados</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center">
+                                    <div class="mb-2" style="font-size: 2rem; color: var(--primary-color);">
+                                        <i class="fas fa-user-lock"></i>
+                                    </div>
+                                    <h6>Controle de Acesso</h6>
+                                    <p class="small">Autenticação e autorização rigorosas</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center">
+                                    <div class="mb-2" style="font-size: 2rem; color: var(--primary-color);">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                    <h6>Backups</h6>
+                                    <p class="small">Backups regulares e automatizados</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center">
+                                    <div class="mb-2" style="font-size: 2rem; color: var(--primary-color);">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                    <h6>Monitoramento</h6>
+                                    <p class="small">Vigilância 24/7 de atividades suspeitas</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center">
+                                    <div class="mb-2" style="font-size: 2rem; color: var(--primary-color);">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </div>
+                                    <h6>Treinamento</h6>
+                                    <p class="small">Equipe treinada em proteção de dados</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 6. Retenção -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-clock me-2"></i>6. Retenção de Dados
+                        </h2>
+                        <p>Mantemos seus dados pessoais pelo tempo necessário para:</p>
+                        <ul>
+                            <li><strong>Conta ativa:</strong> Durante todo o período de uso da plataforma</li>
+                            <li><strong>Após cancelamento:</strong> 90 dias para possível reativação</li>
+                            <li><strong>Obrigações legais:</strong> 5 anos (conforme legislação fiscal e trabalhista)</li>
+                            <li><strong>Dados de pagamento:</strong> Conforme regulamentação bancária</li>
+                            <li><strong>Logs de segurança:</strong> 6 meses (Marco Civil da Internet)</li>
+                        </ul>
+                        <p>
+                            Após os períodos acima, os dados são anonimizados ou excluídos permanentemente, 
+                            exceto quando a lei exigir retenção por prazo maior.
+                        </p>
+                    </section>
+
+                    <!-- 7. Seus Direitos -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-user-shield me-2"></i>7. Seus Direitos como Titular de Dados (LGPD Art. 18)
+                        </h2>
+                        
+                        <p>Você tem o direito de:</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-group mb-3">
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Confirmação:</strong> Saber se tratamos seus dados
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Acesso:</strong> Obter cópia de seus dados
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Correção:</strong> Atualizar dados incompletos ou incorretos
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Anonimização:</strong> Solicitar anonimização de dados
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-group mb-3">
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Exclusão:</strong> Solicitar eliminação de dados
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Portabilidade:</strong> Receber dados em formato estruturado
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Oposição:</strong> Opor-se ao tratamento de dados
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Revogação:</strong> Revogar consentimento a qualquer momento
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-primary">
+                            <h6><i class="fas fa-question-circle me-2"></i>Como exercer seus direitos?</h6>
+                            <p class="mb-0">
+                                Envie um email para <strong>privacidade@petitio.com.br</strong> ou acesse as 
+                                configurações de sua conta. Responderemos em até 15 dias.
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- 8. Cookies -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-cookie-bite me-2"></i>8. Cookies e Tecnologias Similares
+                        </h2>
+                        <p>Utilizamos cookies para:</p>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Tipo</th>
+                                        <th>Finalidade</th>
+                                        <th>Duração</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Essenciais</strong></td>
+                                        <td>Autenticação e segurança</td>
+                                        <td>Sessão / 30 dias</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Funcionais</strong></td>
+                                        <td>Lembrar preferências</td>
+                                        <td>1 ano</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Analíticos</strong></td>
+                                        <td>Estatísticas de uso (anonimizadas)</td>
+                                        <td>2 anos</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p>
+                            Você pode gerenciar cookies nas configurações do seu navegador, mas isso pode 
+                            afetar algumas funcionalidades da plataforma.
+                        </p>
+                    </section>
+
+                    <!-- 9. Transferência Internacional -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-globe-americas me-2"></i>9. Transferência Internacional de Dados
+                        </h2>
+                        <p>
+                            Seus dados são primariamente armazenados em servidores localizados no Brasil. 
+                            Caso seja necessário transferir dados para outros países (ex: provedores de 
+                            cloud internacionais), garantimos que:
+                        </p>
+                        <ul>
+                            <li>A transferência está em conformidade com a LGPD (Art. 33)</li>
+                            <li>O país de destino oferece nível adequado de proteção ou</li>
+                            <li>Utilizamos cláusulas contratuais padrão aprovadas</li>
+                            <li>Você será informado sobre a transferência quando aplicável</li>
+                        </ul>
+                    </section>
+
+                    <!-- 10. Menores de Idade -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-child me-2"></i>10. Proteção de Menores
+                        </h2>
+                        <p>
+                            Nossos serviços são destinados exclusivamente a advogados maiores de 18 anos. 
+                            Não coletamos intencionalmente dados de menores. Se tomarmos conhecimento de 
+                            coleta inadvertida, os dados serão excluídos imediatamente.
+                        </p>
+                    </section>
+
+                    <!-- 11. Alterações -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-edit me-2"></i>11. Alterações nesta Política
+                        </h2>
+                        <p>
+                            Podemos atualizar esta Política periodicamente para refletir mudanças em nossas 
+                            práticas ou na legislação. Alterações significativas serão comunicadas por email 
+                            ou notificação na plataforma com antecedência mínima de 15 dias.
+                        </p>
+                        <p>
+                            A versão atualizada sempre estará disponível nesta página com a data de última 
+                            modificação claramente indicada.
+                        </p>
+                    </section>
+
+                    <!-- 12. DPO e Contato -->
+                    <section class="mb-4">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-user-tie me-2"></i>12. Encarregado de Dados (DPO)
+                        </h2>
+                        <p>
+                            Nosso Encarregado de Proteção de Dados (Data Protection Officer) é o canal de 
+                            comunicação para questões relacionadas ao tratamento de dados pessoais:
+                        </p>
+                        <div class="card bg-light border-primary">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-id-card me-2"></i>Contato do DPO</h5>
+                                <p class="mb-2"><strong><i class="fas fa-user me-2"></i>Nome:</strong> Encarregado de Dados - Petitio</p>
+                                <p class="mb-2"><strong><i class="fas fa-envelope me-2"></i>Email:</strong> dpo@petitio.com.br</p>
+                                <p class="mb-2"><strong><i class="fas fa-envelope me-2"></i>Email alternativo:</strong> privacidade@petitio.com.br</p>
+                                <p class="mb-2"><strong><i class="fas fa-phone me-2"></i>Telefone:</strong> (11) 9999-9999</p>
+                                <p class="mb-0"><strong><i class="fas fa-map-marker-alt me-2"></i>Endereço:</strong> São Paulo, SP - Brasil</p>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-clock me-2"></i>
+                            <strong>Prazo de Resposta:</strong> Responderemos suas solicitações em até 15 dias 
+                            úteis, conforme Art. 18, §3º da LGPD.
+                        </div>
+                    </section>
+
+                    <!-- 13. Autoridade -->
+                    <section class="mb-4">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-landmark me-2"></i>13. Autoridade Nacional de Proteção de Dados (ANPD)
+                        </h2>
+                        <p>
+                            Se não ficar satisfeito com nossas respostas, você tem o direito de apresentar 
+                            reclamação à Autoridade Nacional de Proteção de Dados (ANPD):
+                        </p>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Website:</strong> <a href="https://www.gov.br/anpd" target="_blank">www.gov.br/anpd</a></p>
+                                <p class="mb-0"><strong>Email:</strong> contato@anpd.gov.br</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Versão -->
+                    <div class="border-top pt-4 mt-5 text-center text-muted">
+                        <p class="mb-2">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            <strong>Versão:</strong> 1.0 | 
+                            <strong>Última atualização:</strong> Novembro de 2025
+                        </p>
+                        <p class="mb-0 small">
+                            Política elaborada em conformidade com a LGPD (Lei nº 13.709/2018)
+                        </p>
+                    </div>
+
+                    <!-- Ações -->
+                    <div class="text-center mt-5">
+                        <a href="{{ url_for('main.terms_of_service') }}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-file-contract me-2"></i>Termos de Uso
+                        </a>
+                        <a href="{{ url_for('main.lgpd_info') }}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-shield-alt me-2"></i>Conformidade LGPD
+                        </a>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>Voltar para Início
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

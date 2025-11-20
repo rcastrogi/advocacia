@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Petitio - Sistema de Gestão para Advogados">
     <title>{% if title %}{{ title }} - {% endif %}Petitio</title>
     
     <!-- Bootstrap CSS -->
@@ -11,10 +12,89 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1, 10000) | random }}" rel="stylesheet">
+    <!-- Accessibility CSS -->
+    <link href="{{ url_for('static', filename='css/accessibility.css') }}?v={{ range(1, 10000) | random }}" rel="stylesheet">
     
     {% block styles %}{% endblock %}
 </head>
 <body>
+    <!-- Skip Link para Acessibilidade -->
+    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+    
+    <!-- Botão de Acessibilidade -->
+    <button class="accessibility-toggle" id="accessibilityToggle" aria-label="Abrir barra de acessibilidade" aria-expanded="false">
+        <i class="fas fa-universal-access" aria-hidden="true"></i>
+        ACESSIBILIDADE
+    </button>
+    
+    <!-- Barra de Acessibilidade -->
+    <aside class="accessibility-bar" id="accessibilityBar" role="complementary" aria-label="Controles de acessibilidade">
+        <h3>⚙️ Acessibilidade</h3>
+        
+        <div class="control-group">
+            <label id="font-size-label">Tamanho da Fonte:</label>
+            <div role="group" aria-labelledby="font-size-label">
+                <button data-font-size="small" aria-label="Fonte pequena">
+                    <i class="fas fa-font" style="font-size: 0.8em;" aria-hidden="true"></i> Pequena
+                </button>
+                <button data-font-size="normal" class="active" aria-label="Fonte normal">
+                    <i class="fas fa-font" aria-hidden="true"></i> Normal
+                </button>
+                <button data-font-size="large" aria-label="Fonte grande">
+                    <i class="fas fa-font" style="font-size: 1.2em;" aria-hidden="true"></i> Grande
+                </button>
+                <button data-font-size="xlarge" aria-label="Fonte extra grande">
+                    <i class="fas fa-font" style="font-size: 1.4em;" aria-hidden="true"></i> Muito Grande
+                </button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label>Contraste:</label>
+            <button id="toggleContrast" aria-pressed="false">
+                <i class="fas fa-adjust" aria-hidden="true"></i> Alto Contraste
+            </button>
+        </div>
+        
+        <div class="control-group">
+            <label>Atalhos de Teclado:</label>
+            <ul style="font-size: 0.85em; padding-left: 20px; color: #666;">
+                <li><kbd>Alt + 1</kbd> - Página inicial</li>
+                <li><kbd>Alt + 2</kbd> - Dashboard</li>
+                <li><kbd>Alt + 3</kbd> - Clientes</li>
+                <li><kbd>Alt + H</kbd> - Ajuda</li>
+                <li><kbd>Tab</kbd> - Navegar</li>
+                <li><kbd>Esc</kbd> - Fechar</li>
+            </ul>
+        </div>
+    </aside>
+    
+    <!-- Região de anúncios para Screen Readers -->
+    <div id="screen-reader-announcements" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+    
+    <!-- Script para toggle da barra de acessibilidade -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggle = document.getElementById('accessibilityToggle');
+            const bar = document.getElementById('accessibilityBar');
+            
+            if (toggle && bar) {
+                toggle.addEventListener('click', function() {
+                    const isOpen = bar.classList.toggle('open');
+                    toggle.setAttribute('aria-expanded', isOpen);
+                    toggle.setAttribute('aria-label', isOpen ? 'Fechar barra de acessibilidade' : 'Abrir barra de acessibilidade');
+                });
+                
+                // Fechar ao clicar fora
+                document.addEventListener('click', function(e) {
+                    if (!bar.contains(e.target) && !toggle.contains(e.target) && bar.classList.contains('open')) {
+                        bar.classList.remove('open');
+                        toggle.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        });
+    </script>
     {% if current_user.is_authenticated %}
     <!-- Authenticated Layout -->
     <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color));">
@@ -96,7 +176,7 @@
     {% endwith %}
 
     <!-- Main Content -->
-    <main>
+    <main id="main-content" role="main" tabindex="-1">
         {% block content %}{% endblock %}
     </main>
 
@@ -145,11 +225,12 @@
             <div class="footer-bottom">
                 <div class="row">
                     <div class="col-md-6">
-                        <p class="mb-0">&copy; 2024 Petitio. Todos os direitos reservados.</p>
+                        <p class="mb-0">&copy; 2025 Petitio. Todos os direitos reservados.</p>
                     </div>
                     <div class="col-md-6 text-md-end">
-                        <a href="#" class="text-decoration-none text-secondary me-3">Privacidade</a>
-                        <a href="#" class="text-decoration-none text-secondary">Termos de Uso</a>
+                        <a href="{{ url_for('main.privacy_policy') }}" class="text-decoration-none text-secondary me-3">Privacidade</a>
+                        <a href="{{ url_for('main.terms_of_service') }}" class="text-decoration-none text-secondary me-3">Termos de Uso</a>
+                        <a href="{{ url_for('main.lgpd_info') }}" class="text-decoration-none text-secondary">LGPD</a>
                     </div>
                 </div>
             </div>
@@ -163,6 +244,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- Accessibility JS -->
+    <script src="{{ url_for('static', filename='js/accessibility.js') }}?v={{ range(1, 10000) | random }}"></script>
     
     {% block scripts %}{% endblock %}
 </body>

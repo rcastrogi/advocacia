@@ -1,0 +1,590 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <div class="mb-4" style="font-size: 4rem; color: var(--primary-color);">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h1 class="auth-title mb-2">Conformidade com a LGPD</h1>
+                <p class="auth-subtitle">Lei Geral de Proteção de Dados - Lei nº 13.709/2018</p>
+                <p class="auth-text-muted">Nosso compromisso com a proteção de dados pessoais</p>
+            </div>
+
+            <!-- Content Card -->
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    
+                    <div class="alert alert-success mb-4">
+                        <h5 class="alert-heading"><i class="fas fa-check-circle me-2"></i>100% Conforme com a LGPD</h5>
+                        <p class="mb-0">
+                            O Petitio foi desenvolvido desde o início com foco total na conformidade com a 
+                            Lei Geral de Proteção de Dados (LGPD), garantindo segurança, transparência e 
+                            respeito aos direitos dos titulares de dados.
+                        </p>
+                    </div>
+
+                    <!-- O que é LGPD -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-book me-2"></i>O que é a LGPD?
+                        </h2>
+                        <p>
+                            A Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018) é a legislação brasileira 
+                            que regula o tratamento de dados pessoais, inspirada no GDPR europeu. Ela estabelece 
+                            regras sobre coleta, armazenamento, tratamento e compartilhamento de informações pessoais 
+                            por empresas públicas e privadas.
+                        </p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100 border-primary">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-calendar-check fa-3x text-primary mb-3"></i>
+                                        <h5>Vigência</h5>
+                                        <p class="mb-0">Em vigor desde <strong>Setembro de 2020</strong></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100 border-danger">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                                        <h5>Multas</h5>
+                                        <p class="mb-0">Até <strong>R$ 50 milhões</strong> por infração</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100 border-success">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-landmark fa-3x text-success mb-3"></i>
+                                        <h5>Fiscalização</h5>
+                                        <p class="mb-0">Pela <strong>ANPD</strong> (Autoridade Nacional)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Princípios -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-balance-scale me-2"></i>Princípios da LGPD que Seguimos
+                        </h2>
+                        <p>Nossa plataforma é construída sobre os 10 princípios fundamentais da LGPD (Art. 6º):</p>
+                        
+                        <div class="accordion" id="accordionPrincipios">
+                            <!-- Finalidade -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#finalidade">
+                                        <i class="fas fa-bullseye me-2 text-primary"></i> 1. Finalidade
+                                    </button>
+                                </h2>
+                                <div id="finalidade" class="accordion-collapse collapse show" data-bs-parent="#accordionPrincipios">
+                                    <div class="accordion-body">
+                                        Coletamos dados apenas para propósitos legítimos, específicos e explícitos, 
+                                        informados ao titular. Não usamos seus dados para fins incompatíveis com 
+                                        os informados.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Adequação -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#adequacao">
+                                        <i class="fas fa-check-double me-2 text-primary"></i> 2. Adequação
+                                    </button>
+                                </h2>
+                                <div id="adequacao" class="accordion-collapse collapse" data-bs-parent="#accordionPrincipios">
+                                    <div class="accordion-body">
+                                        O tratamento é compatível com as finalidades informadas. Por exemplo, 
+                                        seu email é usado apenas para autenticação e comunicações relacionadas 
+                                        ao serviço.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Necessidade -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#necessidade">
+                                        <i class="fas fa-compress me-2 text-primary"></i> 3. Necessidade
+                                    </button>
+                                </h2>
+                                <div id="necessidade" class="accordion-collapse collapse" data-bs-parent="#accordionPrincipios">
+                                    <div class="accordion-body">
+                                        Limitamos a coleta ao mínimo necessário. Não pedimos dados excessivos 
+                                        ou irrelevantes para a prestação do serviço.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Transparência -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#transparencia">
+                                        <i class="fas fa-eye me-2 text-primary"></i> 4. Transparência
+                                    </button>
+                                </h2>
+                                <div id="transparencia" class="accordion-collapse collapse" data-bs-parent="#accordionPrincipios">
+                                    <div class="accordion-body">
+                                        Fornecemos informações claras e acessíveis sobre o tratamento de dados 
+                                        através desta página e da Política de Privacidade.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Segurança -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#seguranca">
+                                        <i class="fas fa-lock me-2 text-primary"></i> 5. Segurança
+                                    </button>
+                                </h2>
+                                <div id="seguranca" class="accordion-collapse collapse" data-bs-parent="#accordionPrincipios">
+                                    <div class="accordion-body">
+                                        Implementamos medidas técnicas e administrativas para proteger dados 
+                                        de acessos não autorizados e situações acidentais ou ilícitas.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Demais princípios resumidos -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#outros">
+                                        <i class="fas fa-list me-2 text-primary"></i> 6-10. Outros Princípios
+                                    </button>
+                                </h2>
+                                <div id="outros" class="accordion-collapse collapse" data-bs-parent="#accordionPrincipios">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            <li><strong>Prevenção:</strong> Adotamos medidas preventivas de danos</li>
+                                            <li><strong>Não discriminação:</strong> Não tratamos dados para fins discriminatórios</li>
+                                            <li><strong>Responsabilização:</strong> Demonstramos conformidade com a LGPD</li>
+                                            <li><strong>Livre acesso:</strong> Você pode consultar seus dados facilmente</li>
+                                            <li><strong>Qualidade dos dados:</strong> Mantemos dados atualizados e precisos</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Papéis na LGPD -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-users-cog me-2"></i>Papéis na Proteção de Dados
+                        </h2>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card border-primary h-100">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0"><i class="fas fa-user-tie me-2"></i>Petitio como CONTROLADOR</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>De seus dados pessoais:</strong></p>
+                                        <ul>
+                                            <li>Nome, email, telefone, OAB</li>
+                                            <li>Dados de login e preferências</li>
+                                            <li>Informações de pagamento</li>
+                                        </ul>
+                                        <p class="mb-0">
+                                            <strong>Nossa responsabilidade:</strong> Tomar decisões sobre o 
+                                            tratamento e garantir conformidade total com a LGPD.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="card border-info h-100">
+                                    <div class="card-header bg-info text-white">
+                                        <h5 class="mb-0"><i class="fas fa-server me-2"></i>Petitio como OPERADOR</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Dos dados de seus clientes:</strong></p>
+                                        <ul>
+                                            <li>Informações cadastradas por você</li>
+                                            <li>Dados de processos e documentos</li>
+                                            <li>Qualquer informação dos seus clientes</li>
+                                        </ul>
+                                        <p class="mb-0">
+                                            <strong>Sua responsabilidade:</strong> Você é o controlador e deve 
+                                            garantir que tem base legal e consentimento adequado.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Importante para Advogados</h6>
+                            <p class="mb-0">
+                                Como advogado(a), você é responsável por garantir que tem autorização legal 
+                                para inserir dados de seus clientes na plataforma. Recomendamos incluir 
+                                cláusula específica sobre uso de ferramentas digitais em seus contratos de 
+                                prestação de serviços advocatícios.
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- Medidas de Segurança -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-shield-alt me-2"></i>Medidas de Segurança Implementadas
+                        </h2>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <table class="table table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th style="width: 30%;">Categoria</th>
+                                            <th>Medidas Implementadas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong><i class="fas fa-key me-2 text-warning"></i>Criptografia</strong></td>
+                                            <td>
+                                                • SSL/TLS em todas as comunicações (HTTPS)<br>
+                                                • Senhas hasheadas com bcrypt<br>
+                                                • Dados sensíveis criptografados em repouso
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong><i class="fas fa-user-lock me-2 text-primary"></i>Controle de Acesso</strong></td>
+                                            <td>
+                                                • Autenticação obrigatória<br>
+                                                • Segregação por conta (multi-tenant)<br>
+                                                • Permissões baseadas em função (RBAC)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong><i class="fas fa-database me-2 text-success"></i>Backup e Recuperação</strong></td>
+                                            <td>
+                                                • Backups automatizados diários<br>
+                                                • Retenção de 30 dias<br>
+                                                • Testes periódicos de restauração
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong><i class="fas fa-eye me-2 text-info"></i>Monitoramento</strong></td>
+                                            <td>
+                                                • Logs de acesso e atividades<br>
+                                                • Detecção de comportamento anômalo<br>
+                                                • Alertas automáticos de segurança
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong><i class="fas fa-graduation-cap me-2 text-danger"></i>Capacitação</strong></td>
+                                            <td>
+                                                • Treinamento em proteção de dados<br>
+                                                • Políticas internas de segurança<br>
+                                                • Acordos de confidencialidade (NDA)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong><i class="fas fa-file-contract me-2 text-secondary"></i>Documentação</strong></td>
+                                            <td>
+                                                • Registro de atividades de tratamento<br>
+                                                • Relatório de impacto (RIPD) quando aplicável<br>
+                                                • Procedimentos de resposta a incidentes
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Direitos dos Titulares -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-hands-helping me-2"></i>Como Exercer seus Direitos
+                        </h2>
+                        
+                        <p>A LGPD garante 9 direitos fundamentais aos titulares de dados (Art. 18). Veja como exercê-los no Petitio:</p>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Direito</th>
+                                        <th>Como Exercer no Petitio</th>
+                                        <th>Prazo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Confirmação e acesso</strong></td>
+                                        <td>Acesse "Meu Perfil" ou solicite via dpo@petitio.com.br</td>
+                                        <td>Imediato / 15 dias</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Correção</strong></td>
+                                        <td>Edite diretamente em "Configurações da Conta"</td>
+                                        <td>Imediato</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Anonimização/Bloqueio</strong></td>
+                                        <td>Solicite via dpo@petitio.com.br</td>
+                                        <td>15 dias</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Eliminação</strong></td>
+                                        <td>Cancele conta ou solicite via DPO</td>
+                                        <td>Imediato / 15 dias</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Portabilidade</strong></td>
+                                        <td>Exporte dados em JSON/CSV nas configurações</td>
+                                        <td>Imediato / 15 dias</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Informação sobre compartilhamento</strong></td>
+                                        <td>Consulte a Política de Privacidade ou DPO</td>
+                                        <td>15 dias</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Oposição</strong></td>
+                                        <td>Solicite via dpo@petitio.com.br</td>
+                                        <td>15 dias</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Revogação de consentimento</strong></td>
+                                        <td>Gerencie nas "Preferências de Privacidade"</td>
+                                        <td>Imediato</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Revisão de decisões automatizadas</strong></td>
+                                        <td>Solicite via dpo@petitio.com.br</td>
+                                        <td>15 dias</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- DPO -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-user-shield me-2"></i>Nosso Encarregado de Dados (DPO)
+                        </h2>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-id-badge me-2 text-primary"></i>
+                                            Função do DPO
+                                        </h5>
+                                        <p>O Data Protection Officer (DPO) ou Encarregado é o canal de comunicação entre:</p>
+                                        <ul class="mb-0">
+                                            <li>Titulares de dados (você)</li>
+                                            <li>Petitio (controlador/operador)</li>
+                                            <li>ANPD (autoridade nacional)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-success">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-envelope me-2 text-success"></i>
+                                            Contato do DPO
+                                        </h5>
+                                        <p><strong>Email principal:</strong><br>
+                                        <a href="mailto:dpo@petitio.com.br">dpo@petitio.com.br</a></p>
+                                        <p><strong>Email alternativo:</strong><br>
+                                        <a href="mailto:privacidade@petitio.com.br">privacidade@petitio.com.br</a></p>
+                                        <p class="mb-0"><strong>Telefone:</strong> (11) 9999-9999</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Incidentes -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Resposta a Incidentes de Segurança
+                        </h2>
+                        
+                        <p>Temos um protocolo rigoroso para resposta a incidentes:</p>
+                        
+                        <div class="row">
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="mb-2" style="font-size: 2rem; color: var(--danger);">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <h6>1. Detecção</h6>
+                                <p class="small">Identificação imediata através de monitoramento</p>
+                            </div>
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="mb-2" style="font-size: 2rem; color: var(--warning);">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <h6>2. Contenção</h6>
+                                <p class="small">Isolamento e mitigação em até 2 horas</p>
+                            </div>
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="mb-2" style="font-size: 2rem; color: var(--info);">
+                                    <i class="fas fa-bullhorn"></i>
+                                </div>
+                                <h6>3. Notificação</h6>
+                                <p class="small">ANPD e titulares em prazo razoável (Art. 48)</p>
+                            </div>
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="mb-2" style="font-size: 2rem; color: var(--success);">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <h6>4. Correção</h6>
+                                <p class="small">Remediação e prevenção de recorrência</p>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Compromisso de Transparência:</strong> Em caso de vazamento de dados que possa 
+                            trazer risco ou dano relevante, você será notificado imediatamente com informações 
+                            claras sobre o ocorrido e medidas tomadas.
+                        </div>
+                    </section>
+
+                    <!-- Certificações -->
+                    <section class="mb-5">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-certificate me-2"></i>Conformidade e Boas Práticas
+                        </h2>
+                        
+                        <div class="row text-center">
+                            <div class="col-md-4 mb-4">
+                                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                                <h5>LGPD</h5>
+                                <p>Lei nº 13.709/2018<br>100% Conforme</p>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <i class="fas fa-globe fa-4x text-primary mb-3"></i>
+                                <h5>Marco Civil</h5>
+                                <p>Lei nº 12.965/2014<br>Internet Regulation</p>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <i class="fas fa-gavel fa-4x text-warning mb-3"></i>
+                                <h5>Código de Ética OAB</h5>
+                                <p>Sigilo Profissional<br>Respeitado</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- FAQ -->
+                    <section class="mb-4">
+                        <h2 class="h4 mb-3" style="color: var(--primary-color);">
+                            <i class="fas fa-question-circle me-2"></i>Perguntas Frequentes sobre LGPD
+                        </h2>
+                        
+                        <div class="accordion" id="faqLGPD">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                        Preciso obter consentimento dos meus clientes para usar o Petitio?
+                                    </button>
+                                </h2>
+                                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqLGPD">
+                                    <div class="accordion-body">
+                                        Recomendamos que sim. Inclua uma cláusula em seu contrato de prestação de 
+                                        serviços informando que você utiliza ferramentas digitais para gestão de processos. 
+                                        A base legal pode ser "execução de contrato" (Art. 7º, V) ou "legítimo interesse" 
+                                        (Art. 7º, IX), mas a transparência é fundamental.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                        Meus dados de clientes são compartilhados com terceiros?
+                                    </button>
+                                </h2>
+                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqLGPD">
+                                    <div class="accordion-body">
+                                        Não vendemos ou compartilhamos seus dados ou de seus clientes com terceiros 
+                                        para fins comerciais. Compartilhamos apenas com provedores essenciais 
+                                        (hospedagem, backup) sob rigorosos acordos de confidencialidade e DPAs 
+                                        (Data Processing Agreements).
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                        O que acontece com meus dados se eu cancelar a conta?
+                                    </button>
+                                </h2>
+                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqLGPD">
+                                    <div class="accordion-body">
+                                        Mantemos seus dados por 90 dias após o cancelamento para permitir reativação. 
+                                        Após esse período, todos os dados são permanentemente excluídos, exceto 
+                                        informações que devemos manter por obrigação legal (ex: dados fiscais por 5 anos).
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                        Como o Petitio protege dados sensíveis?
+                                    </button>
+                                </h2>
+                                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqLGPD">
+                                    <div class="accordion-body">
+                                        Dados sensíveis (origem racial, saúde, orientação sexual, etc.) recebem 
+                                        camada adicional de criptografia e controles de acesso mais restritivos. 
+                                        O tratamento só ocorre quando estritamente necessário e com base legal adequada.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Versão -->
+                    <div class="border-top pt-4 mt-5 text-center text-muted">
+                        <p class="mb-2">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            <strong>Última atualização:</strong> Novembro de 2025
+                        </p>
+                        <p class="mb-0 small">
+                            Informações baseadas na LGPD (Lei nº 13.709/2018) e regulamentações da ANPD
+                        </p>
+                    </div>
+
+                    <!-- Ações -->
+                    <div class="text-center mt-5">
+                        <a href="{{ url_for('main.privacy_policy') }}" class="btn btn-primary me-2">
+                            <i class="fas fa-user-shield me-2"></i>Política de Privacidade Completa
+                        </a>
+                        <a href="{{ url_for('main.terms_of_service') }}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-file-contract me-2"></i>Termos de Uso
+                        </a>
+                        <a href="mailto:dpo@petitio.com.br" class="btn btn-outline-success">
+                            <i class="fas fa-envelope me-2"></i>Contatar DPO
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
