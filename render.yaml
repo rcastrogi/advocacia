@@ -8,8 +8,7 @@ services:
       pip install -r requirements.txt
       python << 'EOPYTHON'
       from app import create_app, db
-      from app.models import User
-      from app.models.location import Estado, Cidade
+      from app.models import User, Estado, Cidade
 
       app = create_app()
       with app.app_context():
