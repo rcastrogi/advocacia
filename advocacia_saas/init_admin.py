@@ -12,15 +12,18 @@ def init_admin():
     app = create_app()
 
     with app.app_context():
-        # Criar todas as tabelas primeiro
-        print("📦 Criando tabelas do banco de dados...")
-        db.create_all()
-        print("✅ Tabelas criadas!")
+        try:
+            # Criar todas as tabelas primeiro
+            print("📦 Criando tabelas do banco de dados...")
+            db.create_all()
+            print("✅ Tabelas criadas!")
 
-        # Verificar se já existe um usuário admin
-        admin = User.query.filter_by(email="admin@advocaciasaas.com").first()
+            # Verificar se já existe um usuário admin
+            print("🔍 Verificando se admin existe...")
+            admin = User.query.filter_by(email="admin@advocaciasaas.com").first()
+            print(f"🔍 Resultado da busca: {admin}")
 
-        if admin:
+            if admin:
             print("✅ Usuário admin já existe!")
             print(f"   Email: {admin.email}")
             print(f"   Username: {admin.username}")

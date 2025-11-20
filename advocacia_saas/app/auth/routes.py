@@ -53,6 +53,40 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
+        # DEMO: Credenciais hardcoded para testes (não usa banco de dados)
+        # Email: admin@advocaciasaas.com | Senha: admin123
+        if (
+            form.email.data == "admin@advocaciasaas.com"
+            and form.password.data == "admin123"
+        ):
+            from datetime import datetime, timedelta
+
+            # Criar usuário demo em memória (não persiste no banco)
+            demo_user = User(
+                id=999999,
+                username="admin_demo",
+                email="admin@advocaciasaas.com",
+                full_name="Administrador Demo",
+                user_type="master",
+                is_active=True,
+            )
+            # Configurar campos de segurança para evitar expiração
+            demo_user.password_changed_at = datetime.utcnow()
+            demo_user.password_expires_at = datetime.utcnow() + timedelta(days=9999)
+            demo_user.password_history = "[]"
+            demo_user.force_password_change = False
+            demo_user.set_password("admin123", skip_history_check=True)
+
+            login_user(demo_user, remember=form.remember_me.data)
+            flash(
+                "Login realizado com usuário demo (dados não salvos no banco)", "info"
+            )
+            next_page = request.args.get("next")
+            if not next_page or urlparse(next_page).netloc != "":
+                next_page = url_for("main.dashboard")
+            return redirect(next_page)
+
+        # Fluxo normal: consultar banco de dados para outros usuários
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
