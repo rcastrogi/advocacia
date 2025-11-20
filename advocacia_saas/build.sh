@@ -7,7 +7,8 @@ pip install -r requirements.txt
 # Executar migrações do banco de dados
 python << END
 from app import create_app, db
-from app.models import User, Estado, Cidade
+from app.models import User
+from app.models.location import Estado, Cidade
 
 app = create_app()
 
