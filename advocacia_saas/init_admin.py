@@ -16,7 +16,7 @@ def init_admin():
         print("📦 Criando tabelas do banco de dados...")
         db.create_all()
         print("✅ Tabelas criadas!")
-        
+
         # Verificar se já existe um usuário admin
         admin = User.query.filter_by(email="admin@advocaciasaas.com").first()
 
