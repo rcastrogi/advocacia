@@ -60,6 +60,7 @@ def login():
             and form.password.data == "admin123"
         ):
             from datetime import datetime, timedelta
+
             from app.models import _demo_user_cache
 
             # Criar usuário demo em memória (não persiste no banco)
@@ -144,13 +145,16 @@ def logout():
 def profile():
     # Verificar se é usuário demo
     is_demo = current_user.id == 999999
-    
+
     form = ProfileForm(current_user.email)
     if form.validate_on_submit():
         if is_demo:
-            flash("Não é possível editar o perfil do usuário demo. Os dados não são salvos no banco.", "warning")
+            flash(
+                "Não é possível editar o perfil do usuário demo. Os dados não são salvos no banco.",
+                "warning",
+            )
             return redirect(url_for("auth.profile"))
-        
+
         current_user.full_name = form.full_name.data
         current_user.email = form.email.data
         current_user.oab_number = form.oab_number.data
@@ -163,7 +167,9 @@ def profile():
         form.email.data = current_user.email
         form.oab_number.data = current_user.oab_number
         form.phone.data = current_user.phone
-    return render_template("auth/profile.html", title="Perfil", form=form, is_demo=is_demo)
+    return render_template(
+        "auth/profile.html", title="Perfil", form=form, is_demo=is_demo
+    )
 
 
 @bp.route("/upload_logo", methods=["POST"])
@@ -173,7 +179,7 @@ def upload_logo():
     if current_user.id == 999999:
         flash("Não é possível fazer upload de logo para o usuário demo.", "warning")
         return redirect(url_for("auth.profile"))
-    
+
     if "logo" not in request.files:
         flash("Nenhum arquivo selecionado", "error")
         return redirect(url_for("auth.profile"))
