@@ -60,6 +60,7 @@ def login():
             and form.password.data == "admin123"
         ):
             from datetime import datetime, timedelta
+            from app.models import _demo_user_cache
 
             # Criar usuário demo em memória (não persiste no banco)
             demo_user = User(
@@ -71,11 +72,15 @@ def login():
                 is_active=True,
             )
             # Configurar campos de segurança para evitar expiração
+            demo_user.created_at = datetime.utcnow()
             demo_user.password_changed_at = datetime.utcnow()
             demo_user.password_expires_at = datetime.utcnow() + timedelta(days=9999)
             demo_user.password_history = "[]"
             demo_user.force_password_change = False
             demo_user.set_password("admin123", skip_history_check=True)
+
+            # Armazenar no cache para o load_user encontrar
+            _demo_user_cache[999999] = demo_user
 
             login_user(demo_user, remember=form.remember_me.data)
             flash(
@@ -137,8 +142,15 @@ def logout():
 @bp.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
+    # Verificar se é usuário demo
+    is_demo = current_user.id == 999999
+    
     form = ProfileForm(current_user.email)
     if form.validate_on_submit():
+        if is_demo:
+            flash("Não é possível editar o perfil do usuário demo. Os dados não são salvos no banco.", "warning")
+            return redirect(url_for("auth.profile"))
+        
         current_user.full_name = form.full_name.data
         current_user.email = form.email.data
         current_user.oab_number = form.oab_number.data
@@ -151,12 +163,17 @@ def profile():
         form.email.data = current_user.email
         form.oab_number.data = current_user.oab_number
         form.phone.data = current_user.phone
-    return render_template("auth/profile.html", title="Perfil", form=form)
+    return render_template("auth/profile.html", title="Perfil", form=form, is_demo=is_demo)
 
 
 @bp.route("/upload_logo", methods=["POST"])
 @login_required
 def upload_logo():
+    # Verificar se é usuário demo
+    if current_user.id == 999999:
+        flash("Não é possível fazer upload de logo para o usuário demo.", "warning")
+        return redirect(url_for("auth.profile"))
+    
     if "logo" not in request.files:
         flash("Nenhum arquivo selecionado", "error")
         return redirect(url_for("auth.profile"))

@@ -15,6 +15,9 @@ class Config:
     UPLOAD_FOLDER = os.path.join(basedir, "app", "static", "uploads")
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
 
+    # CSRF Protection - Disabled in development for easier testing
+    WTF_CSRF_ENABLED = False
+
     # Mail settings (for future implementation)
     MAIL_SERVER = os.environ.get("MAIL_SERVER")
     MAIL_PORT = int(os.environ.get("MAIL_PORT") or 587)

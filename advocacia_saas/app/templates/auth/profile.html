@@ -6,9 +6,16 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h3><i class="fas fa-user-edit"></i> Meu Perfil</h3>
+                    <h3 style="color: white;"><i class="fas fa-user-edit"></i> Meu Perfil</h3>
                 </div>
                 <div class="card-body">
+                    {% if is_demo %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Modo Demo:</strong> Este é um usuário de demonstração. As alterações não serão salvas no banco de dados.
+                    </div>
+                    {% endif %}
+                    
                     <form method="POST">
                         {{ form.hidden_tag() }}
                         
@@ -68,7 +75,7 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fas fa-image"></i> Logo Personalizado</h5>
+                    <h5 style="color: white;"><i class="fas fa-image"></i> Logo Personalizado</h5>
                 </div>
                 <div class="card-body text-center">
                     {% if current_user.logo_filename %}
@@ -84,10 +91,10 @@
                     
                     <form action="{{ url_for('auth.upload_logo') }}" method="POST" enctype="multipart/form-data">
                         <div class="mb-3">
-                            <input type="file" class="form-control" name="logo" accept=".png,.jpg,.jpeg,.gif" required>
+                            <input type="file" class="form-control" name="logo" accept=".png,.jpg,.jpeg,.gif" {% if is_demo %}disabled{% else %}required{% endif %}>
                             <div class="form-text">Formatos aceitos: PNG, JPG, JPEG, GIF</div>
                         </div>
-                        <button type="submit" class="btn btn-outline-primary">
+                        <button type="submit" class="btn btn-outline-primary" {% if is_demo %}disabled{% endif %}>
                             <i class="fas fa-upload"></i> Atualizar Logo
                         </button>
                     </form>
@@ -97,7 +104,7 @@
             <!-- Segurança -->
             <div class="card mt-3">
                 <div class="card-header">
-                    <h5><i class="fas fa-shield-alt"></i> Segurança</h5>
+                    <h5 style="color: white;"><i class="fas fa-shield-alt"></i> Segurança</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between mb-3">
@@ -121,7 +128,7 @@
                     {% if current_user.password_changed_at %}
                     <p class="text-muted small mb-0">
                         <i class="fas fa-clock me-1"></i>
-                        Última alteração: {{ current_user.password_changed_at.strftime('%d/%m/%Y às %H:%M') }}
+                        Última alteração: {{ current_user.password_changed_at.strftime('%d/%m/%Y às %H:%M') if current_user.password_changed_at else '-' }}
                     </p>
                     {% endif %}
                 </div>
@@ -129,7 +136,7 @@
             
             <div class="card mt-3">
                 <div class="card-header">
-                    <h5><i class="fas fa-info-circle"></i> Informações da Conta</h5>
+                    <h5 style="color: white;"><i class="fas fa-info-circle"></i> Informações da Conta</h5>
                 </div>
                 <div class="card-body">
                     <p><strong>Usuário:</strong> {{ current_user.username }}</p>
@@ -142,7 +149,7 @@
                             <span class="badge bg-primary">Advogado</span>
                         {% endif %}
                     </p>
-                    <p><strong>Cadastrado em:</strong> {{ current_user.created_at.strftime('%d/%m/%Y') }}</p>
+                    <p><strong>Cadastrado em:</strong> {{ current_user.created_at.strftime('%d/%m/%Y') if current_user.created_at else '-' }}</p>
                 </div>
             </div>
         </div>

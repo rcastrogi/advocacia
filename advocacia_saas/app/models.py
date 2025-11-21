@@ -6,10 +6,18 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db, login_manager
 
+# Cache para usuário demo em memória
+_demo_user_cache = {}
+
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    user_id = int(user_id)
+    # Se for o usuário demo (ID 999999), retornar do cache
+    if user_id == 999999 and user_id in _demo_user_cache:
+        return _demo_user_cache[user_id]
+    # Caso contrário, buscar no banco de dados
+    return User.query.get(user_id)
 
 
 class User(UserMixin, db.Model):

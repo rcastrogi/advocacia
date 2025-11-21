@@ -214,37 +214,6 @@
                     </a>
                 </div>
             </div>
-            
-            <!-- Profile Info -->
-            <div class="dashboard-card">
-                <h5 class="mb-4" style="font-weight: 600; color: var(--dark-color);">
-                    <i class="fas fa-user-circle me-2"></i>Meu Perfil
-                </h5>
-                <div class="text-center mb-3">
-                    <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center" 
-                         style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); color: white; font-size: 2rem; font-weight: 700;">
-                        {{ current_user.full_name[0]|upper if current_user.full_name else current_user.username[0]|upper }}
-                    </div>
-                </div>
-                <div class="text-center">
-                    <h6 class="mb-1">{{ current_user.full_name or current_user.username }}</h6>
-                    <p class="text-muted mb-0 small">{{ current_user.email }}</p>
-                    {% if current_user.user_type %}
-                    <span class="badge {% if current_user.user_type == 'escritorio' %}badge-escritorio{% else %}badge-advogado{% endif %} mt-2">
-                        {{ current_user.user_type|title }}
-                    </span>
-                    {% endif %}
-                </div>
-                <hr>
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('auth.profile') }}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-user-edit me-2"></i>Editar Perfil
-                    </a>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">
-                        <i class="fas fa-sign-out-alt me-2"></i>Sair
-                    </a>
-                </div>
-            </div>
         </div>
     </div>
     
