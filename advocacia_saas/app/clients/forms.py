@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from flask_wtf import FlaskForm
 from wtforms import (
     BooleanField,
@@ -9,7 +7,6 @@ from wtforms import (
     SelectField,
     StringField,
     SubmitField,
-    TextAreaField,
 )
 from wtforms.validators import DataRequired, Email, Length, Optional
 from wtforms.widgets import CheckboxInput, ListWidget

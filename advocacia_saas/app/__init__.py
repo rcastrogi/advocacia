@@ -15,6 +15,10 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # Configure JSON and response encoding
+    app.config["JSON_AS_ASCII"] = False
+    app.config["JSONIFY_MIMETYPE"] = "application/json; charset=utf-8"
+
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
@@ -44,5 +48,17 @@ def create_app(config_class=Config):
     from app.api import bp as api_bp
 
     app.register_blueprint(api_bp, url_prefix="/api")
+
+    from app.petitions import bp as petitions_bp
+
+    app.register_blueprint(petitions_bp, url_prefix="/petitions")
+
+    from app.billing import bp as billing_bp
+
+    app.register_blueprint(billing_bp, url_prefix="/billing")
+
+    from app.checkout import bp as checkout_bp
+
+    app.register_blueprint(checkout_bp, url_prefix="/checkout")
 
     return app

@@ -211,54 +211,148 @@ textarea.form-control {
 
 
 /* ===== Buttons - Professional Style ===== */
+.btn {
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.65rem 1.6rem;
+    border-width: 2px;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.btn:not(.btn-link):hover,
+.btn:not(.btn-link):focus {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(41, 53, 65, 0.25);
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--secondary-color);
+    outline-offset: 3px;
+}
+
+.btn-sm {
+    padding: 0.35rem 1rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+}
+
+.btn-lg {
+    padding: 0.85rem 2.2rem;
+}
+
 .btn-primary {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
     color: white;
-    padding: 12px 30px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
+.btn-primary:hover,
+.btn-primary:focus {
     background-color: var(--accent-color);
     border-color: var(--accent-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(90, 107, 125, 0.4);
 }
 
 .btn-secondary {
     background-color: var(--secondary-color);
     border-color: var(--secondary-color);
     color: white;
-    padding: 12px 30px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: all 0.3s ease;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover,
+.btn-secondary:focus {
     background-color: #b88972;
     border-color: #b88972;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(200, 155, 130, 0.4);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    background-color: transparent;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-outline-secondary {
+    color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    background-color: transparent;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+    background-color: var(--secondary-color);
+    color: white;
 }
 
 .btn-outline-light {
-    border: 2px solid white;
     color: white;
-    padding: 12px 30px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    border-color: rgba(255, 255, 255, 0.9);
+    background-color: transparent;
 }
 
-.btn-outline-light:hover {
-    background-color: white;
+.btn-outline-light:hover,
+.btn-outline-light:focus {
+    background-color: rgba(255, 255, 255, 0.95);
     color: var(--primary-color);
+}
+
+.btn-outline-dark {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+    background-color: transparent;
+}
+
+.btn-outline-dark:hover,
+.btn-outline-dark:focus {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.btn-dark {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+.btn-dark:hover,
+.btn-dark:focus {
+    background-color: #182431;
+    border-color: #182431;
+}
+
+.btn-outline-success {
+    color: #198754;
+    border-color: #198754;
+}
+
+.btn-outline-success:hover,
+.btn-outline-success:focus {
+    background-color: #198754;
+    color: white;
+}
+
+.btn-outline-danger {
+    color: #d9534f;
+    border-color: #d9534f;
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:focus {
+    background-color: #d9534f;
+    color: white;
+}
+
+.btn-link {
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: none;
+    padding: 0;
 }
 
 /* ===== Feature Cards ===== */

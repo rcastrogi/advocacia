@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% set icon_class = page_icon or 'fas fa-pen-to-square' %}
+{% if page_subtitle %}
+    {% set subtitle_text = page_subtitle %}
+{% elif template %}
+    {% set subtitle_text = 'Atualize o conteúdo e os metadados de "' ~ template.name ~ '".' %}
+{% else %}
+    {% set subtitle_text = 'Preencha todos os campos para disponibilizar este modelo.' %}
+{% endif %}
+{% set back_href = back_url or (template and url_for('petitions.view_template', template_id=template.id)) or url_for('petitions.civil_petitions') %}
+{% set submit_text = submit_label or 'Salvar modelo' %}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="{{ icon_class }}"></i> {{ page_title or 'Editar modelo' }}</h1>
+            <p class="text-muted mb-0">{{ subtitle_text }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ back_href }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <strong>Dados do modelo</strong>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.name.label(class_='form-label') }}
+                            {{ form.name(class_='form-control') }}
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                {{ form.category.label(class_='form-label') }}
+                                {{ form.category(class_='form-select') }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.petition_type_id.label(class_='form-label') }}
+                                {{ form.petition_type_id(class_='form-select') }}
+                            </div>
+                        </div>
+                        <div class="mb-3 mt-3">
+                            {{ form.description.label(class_='form-label') }}
+                            {{ form.description(class_='form-control') }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.content.label(class_='form-label') }}
+                            {{ form.content(class_='form-control') }}
+                            <small class="text-muted">Use as mesmas variáveis disponíveis no formulário da petição. <a href="{{ url_for('petitions.template_examples') }}" class="text-decoration-underline">Ver exemplos</a>.</small>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            {{ form.is_active(class_='form-check-input') }}
+                            {{ form.is_active.label(class_='form-check-label') }}
+                        </div>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-save"></i> {{ submit_text }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

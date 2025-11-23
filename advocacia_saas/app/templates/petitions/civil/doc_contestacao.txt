@@ -1,0 +1,33 @@
+{{ forum | upper }}
+{{ vara }}
+
+Processo nº: {{ process_number or '0000000-00.0000.0.00.0000' }}
+
+{{ defendant_name | upper }}
+{{ defendant_qualification }}
+
+vem, respeitosamente, à presença de Vossa Excelência, por intermédio de seus advogados, apresentar
+
+CONTESTAÇÃO
+
+à ação proposta por {{ author_name.upper() }}, {{ author_qualification }}, expondo o que segue:
+
+I - SÍNTESE DOS FATOS
+{{ facts }}
+
+II - PRELIMINARES
+{{ fundamentos }}
+
+III - MÉRITO
+{{ pedidos }}
+
+IV - DOS PEDIDOS FINAIS
+a) rejeição total dos pedidos iniciais;
+b) condenação do autor ao pagamento das custas e honorários;
+c) produção de todos os meios de prova admitidos em direito.
+
+{{ cidade }}, {{ data_assinatura }}
+
+__________________________________
+{{ advogado_nome }}
+OAB {{ advogado_oab }}

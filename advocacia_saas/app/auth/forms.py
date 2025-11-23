@@ -1,8 +1,22 @@
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, PasswordField, SelectField, StringField, SubmitField
+from wtforms import (
+    BooleanField,
+    PasswordField,
+    SelectField,
+    SelectMultipleField,
+    StringField,
+    SubmitField,
+    widgets,
+)
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 
 from app.models import User
+from app.quick_actions import build_quick_action_choices
+
+
+class MultiCheckboxField(SelectMultipleField):
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
 
 
 class LoginForm(FlaskForm):
@@ -51,11 +65,17 @@ class ProfileForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])
     oab_number = StringField("Número da OAB")
     phone = StringField("Telefone")
+    quick_actions = MultiCheckboxField(
+        "Ações rápidas no dashboard",
+        coerce=str,
+        validators=[Length(min=1, message="Selecione pelo menos uma ação rápida.")],
+    )
     submit = SubmitField("Atualizar perfil")
 
     def __init__(self, original_email, *args, **kwargs):
         super(ProfileForm, self).__init__(*args, **kwargs)
         self.original_email = original_email
+        self.quick_actions.choices = build_quick_action_choices()
 
     def validate_email(self, email):
         if email.data != self.original_email:

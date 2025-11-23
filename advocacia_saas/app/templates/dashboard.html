@@ -194,24 +194,81 @@
         
         <!-- Quick Actions & Info -->
         <div class="col-lg-4">
+            <!-- Billing Summary -->
+            <div class="dashboard-card mb-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="mb-1" style="font-weight: 600; color: var(--dark-color);">
+                            <i class="fas fa-credit-card me-2"></i>Plano e Pagamentos
+                        </h5>
+                        <span class="badge bg-{{ plan_summary.status_badge }}">
+                            {{ plan_summary.status_label }}
+                        </span>
+                    </div>
+                    <a href="{{ plan_summary.manage_url }}" class="btn btn-sm btn-outline-primary">
+                        {{ 'Ver detalhes' if plan_summary.has_plan else 'Configurar' }}
+                    </a>
+                </div>
+
+                {% if plan_summary.has_plan %}
+                    <p class="mb-1">
+                        <strong>{{ plan_summary.plan_name }}</strong>
+                        <span class="text-muted">· {{ plan_summary.plan_type_label }}</span>
+                    </p>
+                    <small class="text-muted">
+                        Início {{ plan_summary.started_at_label or '—' }}
+                        {% if plan_summary.renewal_label %}
+                            • Renovação {{ plan_summary.renewal_label }}
+                        {% endif %}
+                    </small>
+
+                    <div class="row text-center mt-3 g-2">
+                        <div class="col-4">
+                            <small class="text-muted text-uppercase">Mensalidade</small>
+                            <div class="fw-semibold">{{ plan_summary.monthly_fee_display }}</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted text-uppercase">Valor por uso</small>
+                            <div class="fw-semibold">{{ plan_summary.usage_rate_display }}</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted text-uppercase">Uso {{ plan_summary.cycle_label }}</small>
+                            <div class="fw-semibold">{{ plan_summary.cycle_usage_total }} · {{ plan_summary.cycle_usage_amount_display }}</div>
+                        </div>
+                    </div>
+
+                    {% if plan_summary.warning %}
+                        <div class="alert alert-warning mt-3 mb-0 py-2 small">
+                            <i class="fas fa-triangle-exclamation me-2"></i>{{ plan_summary.warning }}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted mb-3">
+                        {{ plan_summary.empty_message }}
+                    </p>
+                    <a href="{{ plan_summary.manage_url }}" class="btn btn-primary w-100">
+                        <i class="fas fa-arrow-right me-2"></i>Escolher plano
+                    </a>
+                {% endif %}
+            </div>
+
             <!-- Quick Actions -->
             <div class="dashboard-card mb-4">
                 <h5 class="mb-4" style="font-weight: 600; color: var(--dark-color);">
                     <i class="fas fa-bolt me-2"></i>Ações Rápidas
                 </h5>
                 <div class="d-grid gap-2">
-                    <a href="{{ url_for('clients.new') }}" class="btn btn-primary">
-                        <i class="fas fa-user-plus me-2"></i>Novo Cliente
-                    </a>
-                    <a href="#" class="btn btn-outline-primary">
-                        <i class="fas fa-file-contract me-2"></i>Nova Petição
-                    </a>
-                    <a href="#" class="btn btn-outline-primary">
-                        <i class="fas fa-file-signature me-2"></i>Nova Procuração
-                    </a>
-                    <a href="{{ url_for('clients.index') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-search me-2"></i>Buscar Cliente
-                    </a>
+                    {% if quick_actions %}
+                        {% for action in quick_actions %}
+                            <a href="{{ action.url }}" class="{{ action.button_class }}{% if action.disabled %} disabled{% endif %}" {% if action.disabled %}aria-disabled="true"{% endif %}>
+                                <i class="{{ action.icon }} me-2"></i>{{ action.label }}
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-muted small">
+                            Configure suas ações rápidas em <a href="{{ url_for('auth.profile') }}">Meu Perfil</a> para vê-las aqui.
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

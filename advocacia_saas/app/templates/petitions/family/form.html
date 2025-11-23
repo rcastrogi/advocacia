@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="fas fa-people-roof"></i> Petições de Família</h1>
+            <p class="text-white mb-0">Preencha os dados da família e anexe documentos para gerar o PDF ou um pacote completo.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('main.peticionador') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            <a href="{{ url_for('petitions.personal_templates') }}" class="btn btn-outline-primary">
+                <i class="fas fa-user-pen"></i> Novo modelo do escritório
+            </a>
+            {% if current_user.user_type == 'master' %}
+            <a href="{{ url_for('petitions.manage_global_templates') }}" class="btn btn-primary">
+                <i class="fas fa-layer-group"></i> Modelos padrão
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <strong>Dados da Petição</strong>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.template_id.label }}</label>
+                                {{ form.template_id(class_='form-select') }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.action_type.label }}</label>
+                                {{ form.action_type(class_='form-control') }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.process_number.label }}</label>
+                                {{ form.process_number(class_='form-control') }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.forum.label }}</label>
+                                {{ form.forum(class_='form-control') }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.vara.label }}</label>
+                                {{ form.vara(class_='form-control') }}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">{{ form.marriage_date.label }}</label>
+                                {{ form.marriage_date(class_='form-control') }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ form.marriage_city.label }}</label>
+                                {{ form.marriage_city(class_='form-control') }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ form.marriage_regime.label }}</label>
+                                {{ form.marriage_regime(class_='form-control') }}
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-2 align-items-end">
+                            <div class="col-md-4">
+                                <div class="form-check form-switch">
+                                    {{ form.has_prenup(class_='form-check-input') }}
+                                    {{ form.has_prenup.label(class_='form-check-label') }}
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">{{ form.prenup_details.label }}</label>
+                                {{ form.prenup_details(class_='form-control', placeholder='Resumo do pacto, se existir') }}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.spouse_one_name.label }}</label>
+                                {{ form.spouse_one_name(class_='form-control') }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.spouse_two_name.label }}</label>
+                                {{ form.spouse_two_name(class_='form-control') }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.spouse_one_qualification.label }}</label>
+                                {{ form.spouse_one_qualification(class_='form-control') }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.spouse_two_qualification.label }}</label>
+                                {{ form.spouse_two_qualification(class_='form-control') }}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.children_info.label }}</label>
+                            {{ form.children_info(class_='form-control', placeholder='Nome, data de nascimento e necessidades especiais') }}
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.custody_plan.label }}</label>
+                                {{ form.custody_plan(class_='form-control') }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.alimony_plan.label }}</label>
+                                {{ form.alimony_plan(class_='form-control') }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3 mt-3">
+                            <label class="form-label">{{ form.property_description.label }}</label>
+                            {{ form.property_description(class_='form-control', placeholder='Imóveis, veículos, quotas, aplicações...') }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.facts.label }}</label>
+                            {{ form.facts(class_='form-control') }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.fundamentos.label }}</label>
+                            {{ form.fundamentos(class_='form-control') }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.pedidos.label }}</label>
+                            {{ form.pedidos(class_='form-control') }}
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">{{ form.cidade.label }}</label>
+                                {{ form.cidade(class_='form-control') }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ form.data_assinatura.label }}</label>
+                                {{ form.data_assinatura(class_='form-control') }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ form.advogado_oab.label }}</label>
+                                {{ form.advogado_oab(class_='form-control') }}
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-8">
+                                <label class="form-label">{{ form.advogado_nome.label }}</label>
+                                {{ form.advogado_nome(class_='form-control') }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ form.documents.label }}</label>
+                                {{ form.documents(class_='form-control') }}
+                                <small class="text-muted">Até 5 arquivos (pdf, doc, docx, png, jpg) com 5 MB cada.</small>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-end">
+                            <button type="submit" class="btn btn-lg btn-primary">
+                                <i class="fas fa-file-pdf"></i> {{ form.submit.label.text }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <strong>Modelos disponíveis</strong>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted small mb-2">Família</h6>
+                    <ul class="list-unstyled mb-0">
+                        {% for tpl in templates %}
+                            <li class="mb-2">
+                                <i class="fas fa-heart text-danger"></i>
+                                <strong>{{ tpl.name }}</strong>
+                                <span class="text-muted small">· {{ tpl.petition_type.name }}</span>
+                            </li>
+                        {% else %}
+                            <li class="text-muted small">Nenhum modelo encontrado.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <strong>Dicas Rápidas</strong>
+                </div>
+                <div class="card-body">
+                    <ul class="small text-muted mb-0">
+                        <li>Utilize marcadores para listar cláusulas e pedidos.</li>
+                        <li>Descreva a divisão de bens no mesmo formato dos anexos.</li>
+                        <li>Os documentos enviados são agrupados com o PDF em um arquivo .zip.</li>
+                        <li>Organize anexos com nomes claros (ex: comprovante-escola.pdf).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

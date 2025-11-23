@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="fas fa-layer-group"></i> Tipos de Petições</h1>
+            <p class="text-muted mb-0">Defina quais modelos contam como petições pagas e quais estão ativos.</p>
+        </div>
+        <a href="{{ url_for('billing.portal') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <strong>Novo tipo</strong>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.name.label(class_='form-label') }}
+                            {{ form.name(class_='form-control') }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.description.label(class_='form-label') }}
+                            {{ form.description(class_='form-control') }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.category.label(class_='form-label') }}
+                            {{ form.category(class_='form-select') }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.base_price.label(class_='form-label') }}
+                            {{ form.base_price(class_='form-control') }}
+                        </div>
+                        <div class="form-check form-switch">
+                            {{ form.is_billable(class_='form-check-input') }}
+                            {{ form.is_billable.label(class_='form-check-label') }}
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            {{ form.active(class_='form-check-input') }}
+                            {{ form.active.label(class_='form-check-label') }}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-save"></i> {{ form.submit.label.text }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <strong>Lista de tipos cadastrados</strong>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Categoria</th>
+                                <th>Conta como paga?</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for petition in petition_types %}
+                            <tr>
+                                <td>{{ petition.name }}</td>
+                                <td class="text-capitalize">{{ petition.category }}</td>
+                                <td>
+                                    {% if petition.is_billable %}
+                                        <span class="badge bg-success">Sim</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Não</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if petition.base_price %}
+                                        R$ {{ '%.2f'|format(petition.base_price) }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if petition.active %}
+                                        <span class="badge bg-primary">Ativo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('billing.edit_petition_type', type_id=petition.id) }}" class="btn btn-sm btn-outline-primary me-1">Editar</a>
+                                    <form method="post" action="{{ url_for('billing.toggle_petition_type', type_id=petition.id) }}" class="d-inline">
+                                        <input type="hidden" name="action" value="toggle_billable">
+                                        <button class="btn btn-sm btn-outline-success" type="submit">Alternar cobrança</button>
+                                    </form>
+                                    <form method="post" action="{{ url_for('billing.toggle_petition_type', type_id=petition.id) }}" class="d-inline ms-1">
+                                        <input type="hidden" name="action" value="toggle_active">
+                                        <button class="btn btn-sm btn-outline-secondary" type="submit">Ativar/Inativar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Nenhum tipo cadastrado.</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{{ forum | upper }}
+{{ vara }}
+
+Processo nº: {{ process_number or 'a ser definido' }}
+
+{{ author_name | upper }}
+{{ author_qualification }}
+
+vem, por seus advogados, com fundamento nos artigos 186, 187 e 927 do Código Civil e demais dispositivos aplicáveis, propor a presente
+
+AÇÃO CÍVEL
+
+em face de {{ defendant_name.upper() }}, {{ defendant_qualification }}, pelos fatos e fundamentos a seguir expostos:
+
+I - DOS FATOS
+{{ facts }}
+
+II - DO DIREITO
+{{ fundamentos }}
+
+III - DOS PEDIDOS
+{{ pedidos }}
+
+IV - DO VALOR DA CAUSA
+{% if valor_causa %}Dá-se à causa o valor de R$ {{ '%.2f' | format(valor_causa) }} ({{ valor_causa | round(2) }} reais).{% else %}Requer a atribuição do valor que Vossa Excelência entender pertinente.{% endif %}
+
+{{ cidade }}, {{ data_assinatura }}
+
+__________________________________
+{{ advogado_nome }}
+OAB {{ advogado_oab }}

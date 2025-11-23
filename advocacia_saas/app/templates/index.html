@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block content %}
 <!-- Hero Section - Law Firm Professional Style -->
@@ -7,12 +7,12 @@
         <div class="row align-items-center">
             <div class="col-lg-7">
                 <div class="d-flex align-items-center mb-4">
-                    <img src="{{ url_for('static', filename='img/petitio.png') }}" 
+                    <img src="{{ url_for('static', filename='img/petitio.png') }}"
                          alt="Petitio" height="70" class="me-3 petitio-logo petitio-logo-hero">
                 </div>
                 <h1 class="hero-title">Excelência Jurídica Digital</h1>
                 <p class="hero-subtitle">
-                    O sistema completo para modernizar a gestão do seu escritório de advocacia. 
+                    O sistema completo para modernizar a gestão do seu escritório de advocacia.
                     Gerencie clientes, processos e documentos com eficiência profissional.
                 </p>
                 <div class="d-flex gap-3 flex-wrap">
@@ -23,7 +23,7 @@
                         <i class="fas fa-sign-in-alt me-2"></i>Acessar Sistema
                     </a>
                 </div>
-                
+
                 <!-- Trust Badges -->
                 <div class="mt-5 d-flex gap-4 flex-wrap">
                     <div class="d-flex align-items-center">
@@ -57,112 +57,60 @@
                 </div>
             </div>
             <div class="col-lg-5 d-none d-lg-block text-center">
-                <img src="{{ url_for('static', filename='img/petitio.png') }}" 
-                     class="img-fluid petitio-logo" alt="Petitio" style="max-height: 450px; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));">
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Stats Section -->
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="row g-4">
-            <div class="col-md-3 col-sm-6">
-                <div class="stats-card text-center">
-                    <div class="stats-number"><i class="fas fa-users"></i></div>
-                    <div class="stats-label">Gestão de Clientes</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="stats-card text-center">
-                    <div class="stats-number"><i class="fas fa-file-contract"></i></div>
-                    <div class="stats-label">Peticionador</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="stats-card text-center">
-                    <div class="stats-number"><i class="fas fa-chart-line"></i></div>
-                    <div class="stats-label">Dashboard</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="stats-card text-center">
-                    <div class="stats-number"><i class="fas fa-shield-alt"></i></div>
-                    <div class="stats-label">100% Seguro</div>
-                </div>
+                <img src="{{ url_for('static', filename='img/petitio.png') }}"
+                     class="img-fluid petitio-logo" alt="Petitio"
+                     style="max-height: 450px; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));">
             </div>
         </div>
     </div>
 </section>
 
 <!-- Features Section -->
-<section class="section">
+<section class="section" id="recursos">
     <div class="container">
         <div class="row text-center mb-5">
             <div class="col-lg-8 mx-auto">
                 <h2 class="section-title">Recursos Essenciais</h2>
                 <p class="section-subtitle">
-                    Tudo que seu escritório precisa para operar com máxima eficiência e profissionalismo
+                    Tudo que seu escritório precisa para operar com máxima eficiência e profissionalismo.
                 </p>
             </div>
         </div>
-        
         <div class="row g-4">
-            <div class="col-lg-4 col-md-6">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-users"></i>
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-icon bg-primary">
+                        <i class="fas fa-briefcase"></i>
                     </div>
-                    <h3 class="feature-title">Gestão Completa de Clientes</h3>
-                    <p class="feature-description">
-                        Cadastro detalhado com dados pessoais, endereço automático via CEP, 
-                        documentos, dependentes e observações especiais. Tudo organizado e acessível.
-                    </p>
-                    <ul class="list-unstyled mt-3">
-                        <li><i class="fas fa-check text-success me-2"></i>Cadastro completo</li>
-                        <li><i class="fas fa-check text-success me-2"></i>Busca por CEP</li>
-                        <li><i class="fas fa-check text-success me-2"></i>Upload de documentos</li>
-                        <li><i class="fas fa-check text-success me-2"></i>Gestão de dependentes</li>
-                    </ul>
+                    <h4>Gestão de Clientes</h4>
+                    <p class="text-muted mb-0">Cadastre clientes, acompanhe históricos e organize documentos em um só lugar.</p>
                 </div>
             </div>
-            
-            <div class="col-lg-4 col-md-6">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-file-contract"></i>
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-icon bg-success">
+                        <i class="fas fa-file-signature"></i>
                     </div>
-                    <h3 class="feature-title">Sistema Peticionador</h3>
-                    <p class="feature-description">
-                        Geração automática de petições, procurações e documentos jurídicos. 
-                        Economize tempo e garanta padronização em todos os seus documentos.
-                    </p>
-                    <ul class="list-unstyled mt-3">
-                        <li><i class="fas fa-check text-success me-2"></i>Templates personalizáveis</li>
-                        <li><i class="fas fa-check text-success me-2"></i>Geração automática</li>
-                        <li><i class="fas fa-check text-success me-2"></i>Exportação PDF</li>
-                        <li><i class="fas fa-check text-success me-2"></i>Assinatura digital</li>
-                    </ul>
+                    <h4>Peticionador Inteligente</h4>
+                    <p class="text-muted mb-0">Modelos prontos e automações que aceleram a criação de petições.</p>
                 </div>
             </div>
-            
-            <div class="col-lg-4 col-md-6">
-                <div class="feature-card">
-                    <div class="feature-icon">
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-icon bg-warning">
                         <i class="fas fa-chart-line"></i>
                     </div>
-                    <h3 class="feature-title">Dashboard Inteligente</h3>
-                    <p class="feature-description">
-                        Visualize métricas importantes do seu escritório em tempo real. 
-                        Tome decisões baseadas em dados concretos e acompanhe o crescimento.
-                    </p>
-                    <ul class="list-unstyled mt-3">
-                        <li><i class="fas fa-check text-success me-2"></i>Estatísticas em tempo real</li>
-                        <li><i class="fas fa-check text-success me-2"></i>Gráficos interativos</li>
-                        <li><i class="fas fa-check text-success me-2"></i>Relatórios personalizados</li>
-                        <li><i class="fas fa-check text-success me-2"></i>Alertas e notificações</li>
-                    </ul>
+                    <h4>Dashboard em Tempo Real</h4>
+                    <p class="text-muted mb-0">Indicadores claros de produtividade, faturamento e volume de processos.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-icon bg-info">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h4>Segurança e LGPD</h4>
+                    <p class="text-muted mb-0">Criptografia, backups automáticos e conformidade com a legislação.</p>
                 </div>
             </div>
         </div>
@@ -170,7 +118,7 @@
 </section>
 
 <!-- Accessibility Section -->
-<section class="section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; overflow: hidden;">
+<section class="section" id="acessibilidade" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; overflow: hidden;">
     <div class="container position-relative" style="z-index: 2;">
         <div class="row align-items-center text-white">
             <div class="col-lg-6 mb-4 mb-lg-0">
@@ -180,7 +128,7 @@
                 </div>
                 <h2 class="display-5 fw-bold mb-4" style="color: white;">Acessibilidade e Inclusão Digital</h2>
                 <p class="lead mb-4" style="opacity: 0.95;">
-                    O Petitio foi desenvolvido seguindo os mais rigorosos padrões internacionais de acessibilidade, 
+                    O Petitio foi desenvolvido seguindo os mais rigorosos padrões internacionais de acessibilidade,
                     garantindo que <strong>todos os profissionais</strong> possam utilizar o sistema com autonomia e eficiência.
                 </p>
                 <div class="row g-3">
@@ -189,7 +137,7 @@
                             <i class="fas fa-check-circle fa-2x me-3" style="color: #4ade80;"></i>
                             <div>
                                 <h6 class="mb-1 fw-bold">Leitores de Tela</h6>
-                                <small style="opacity: 0.9;">100% compatível com NVDA, JAWS e VoiceOver</small>
+                                <small style="opacity: 0.9;">Compatível com NVDA, JAWS e VoiceOver</small>
                             </div>
                         </div>
                     </div>
@@ -207,7 +155,7 @@
                             <i class="fas fa-check-circle fa-2x me-3" style="color: #4ade80;"></i>
                             <div>
                                 <h6 class="mb-1 fw-bold">Alto Contraste</h6>
-                                <small style="opacity: 0.9;">Contraste WCAG AAA em todos os elementos</small>
+                                <small style="opacity: 0.9;">WCAG AAA em botões, textos e ícones</small>
                             </div>
                         </div>
                     </div>
@@ -216,7 +164,7 @@
                             <i class="fas fa-check-circle fa-2x me-3" style="color: #4ade80;"></i>
                             <div>
                                 <h6 class="mb-1 fw-bold">Formulários Acessíveis</h6>
-                                <small style="opacity: 0.9;">Labels descritivos e mensagens de erro claras</small>
+                                <small style="opacity: 0.9;">Labels claros e mensagens de erro descritivas</small>
                             </div>
                         </div>
                     </div>
@@ -227,9 +175,7 @@
                     <i class="fas fa-universal-access" style="font-size: 8rem; color: rgba(255,255,255,0.9); margin-bottom: 2rem;"></i>
                     <h3 class="fw-bold mb-3" style="color: white;">Compromisso com a Inclusão</h3>
                     <p style="opacity: 0.9; font-size: 1.1rem;">
-                        Acreditamos que a tecnologia deve ser acessível a todos. 
-                        Por isso, cada linha de código foi escrita pensando na experiência de 
-                        <strong>todos os usuários</strong>, independentemente de suas habilidades.
+                        Cada funcionalidade do Petitio foi projetada para entregar autonomia a todos os profissionais, independentemente de suas habilidades.
                     </p>
                     <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap">
                         <span class="badge" style="background: rgba(255,255,255,0.25); font-size: 0.9rem; padding: 0.6rem 1.2rem; font-weight: 500;">
@@ -253,6 +199,62 @@
     </div>
 </section>
 
+<!-- Pricing Section -->
+<section class="section" id="planos">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="section-title">Planos e Pagamentos</h2>
+                <p class="section-subtitle">
+                    Escolha o modelo ideal para o seu escritório e só pague pelo que usar.
+                </p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% if pricing_plans %}
+                {% for plan in pricing_plans %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="dashboard-card h-100">
+                            <div class="card-icon bg-primary mb-3">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <h4 class="mb-2">{{ plan.name }}</h4>
+                            <span class="badge bg-primary mb-3">{{ plan.plan_type_label }}</span>
+                            <p class="text-muted mb-3">{{ plan.description or 'Plano flexível para escritórios em crescimento que valorizam suporte dedicado.' }}</p>
+                            <div class="pricing-highlight mb-3">
+                                {% if plan.is_per_usage %}
+                                    <span class="display-6 fw-bold text-primary">{{ plan.usage_rate }}</span>
+                                    <small class="text-muted ms-2">por petição</small>
+                                {% else %}
+                                    <span class="display-6 fw-bold text-primary">{{ plan.monthly_fee }}</span>
+                                    <small class="text-muted ms-2">/ mês</small>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted small mb-3">Sem fidelidade. Cancele quando quiser.</p>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Gestão completa de clientes</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Peticionador com modelos prontos</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Dashboard e relatórios</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Suporte prioritário</li>
+                            </ul>
+                            <a href="{{ url_for('auth.register', plan=plan.id) }}" class="btn btn-primary w-100 mt-auto">
+                                <i class="fas fa-rocket me-2"></i>Começar Agora
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        Estamos preparando novos planos para você. Entre em contato para ser avisado assim que estiverem disponíveis.
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
 <!-- Why Choose Us Section -->
 <section class="section bg-light">
     <div class="container">
@@ -260,9 +262,9 @@
             <div class="col-lg-6 mb-4 mb-lg-0">
                 <h2 class="section-title">Por Que Escolher o Petitio?</h2>
                 <p class="lead mb-4">
-                    Desenvolvido especificamente para advogados que buscam excelência e eficiência
+                    Desenvolvido especificamente para advogados que buscam excelência e eficiência.
                 </p>
-                
+
                 <div class="mb-4">
                     <div class="d-flex align-items-start mb-3">
                         <div class="flex-shrink-0">
@@ -275,7 +277,7 @@
                             <p class="text-muted">Automatize tarefas repetitivas e concentre-se no que realmente importa: seus clientes.</p>
                         </div>
                     </div>
-                    
+
                     <div class="d-flex align-items-start mb-3">
                         <div class="flex-shrink-0">
                             <div class="feature-icon" style="width: 50px; height: 50px; font-size: 1.2rem;">
@@ -287,7 +289,7 @@
                             <p class="text-muted">Seus dados e de seus clientes protegidos com criptografia de ponta a ponta.</p>
                         </div>
                     </div>
-                    
+
                     <div class="d-flex align-items-start mb-3">
                         <div class="flex-shrink-0">
                             <div class="feature-icon" style="width: 50px; height: 50px; font-size: 1.2rem;">
@@ -299,7 +301,7 @@
                             <p class="text-muted">Trabalhe de onde estiver com total mobilidade e sincronização em tempo real.</p>
                         </div>
                     </div>
-                    
+
                     <div class="d-flex align-items-start mb-3">
                         <div class="flex-shrink-0">
                             <div class="feature-icon" style="width: 50px; height: 50px; font-size: 1.2rem;">
@@ -308,12 +310,12 @@
                         </div>
                         <div class="ms-3">
                             <h5>100% Acessível e Inclusivo</h5>
-                            <p class="text-muted">Certificado WCAG 2.1 AA/AAA. Sistema totalmente acessível para pessoas com deficiência visual, motora ou cognitiva.</p>
+                            <p class="text-muted">Certificado WCAG 2.1 AA/AAA. Sistema acessível para pessoas com deficiência visual, motora ou cognitiva.</p>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-lg-6">
                 <div class="row g-3">
                     <div class="col-6">

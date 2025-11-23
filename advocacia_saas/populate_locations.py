@@ -248,7 +248,7 @@ def populate_estados_cidades():
             print(f"Added {len(cidades)} cities for {sigla}")
 
         db.session.commit()
-        print(f"\n✅ Successfully populated:")
+        print("\n✅ Successfully populated:")
         print(f"   - {len(ESTADOS)} states")
         print(f"   - {total_cities} cities")
 

@@ -11,3 +11,5 @@ email-validator==2.0.0
 Pillow==10.0.1
 gunicorn==21.2.0
 psycopg2-binary==2.9.9
+reportlab==4.2.0
+stripe==7.8.0

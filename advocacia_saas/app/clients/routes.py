@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from flask import flash, jsonify, redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
+from app.billing.decorators import subscription_required
 from app.clients import bp
 from app.clients.forms import ClientForm
 from app.models import Client, Dependent, Estado
@@ -11,6 +12,7 @@ from app.models import Client, Dependent, Estado
 
 @bp.route("/")
 @login_required
+@subscription_required
 def index():
     page = request.args.get("page", 1, type=int)
     clients = (
@@ -23,6 +25,7 @@ def index():
 
 @bp.route("/new", methods=["GET", "POST"])
 @login_required
+@subscription_required
 def new():
     form = ClientForm()
 
@@ -87,6 +90,7 @@ def new():
 
 @bp.route("/<int:id>")
 @login_required
+@subscription_required
 def view(id):
     client = Client.query.filter_by(id=id, lawyer_id=current_user.id).first_or_404()
     return render_template(
@@ -96,6 +100,7 @@ def view(id):
 
 @bp.route("/<int:id>/edit", methods=["GET", "POST"])
 @login_required
+@subscription_required
 def edit(id):
     client = Client.query.filter_by(id=id, lawyer_id=current_user.id).first_or_404()
     form = ClientForm(obj=client)
@@ -154,6 +159,7 @@ def edit(id):
 
 @bp.route("/<int:id>/delete", methods=["POST"])
 @login_required
+@subscription_required
 def delete(id):
     client = Client.query.filter_by(id=id, lawyer_id=current_user.id).first_or_404()
     db.session.delete(client)

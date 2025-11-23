@@ -27,3 +27,14 @@ class Config:
 
     # CEP API
     CEP_API_URL = "https://viacep.com.br/ws/{}/json/"
+
+    # Stripe Payment Settings
+    STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
+    STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY")
+    STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
+    STRIPE_SUCCESS_URL = (
+        os.environ.get("STRIPE_SUCCESS_URL") or "http://localhost:5000/checkout/success"
+    )
+    STRIPE_CANCEL_URL = (
+        os.environ.get("STRIPE_CANCEL_URL") or "http://localhost:5000/checkout/cancel"
+    )

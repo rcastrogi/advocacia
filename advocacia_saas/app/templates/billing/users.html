@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="fas fa-users-cog"></i> Usuários e planos</h1>
+            <p class="text-muted mb-0">Atribua planos, altere status e visualize o uso recente.</p>
+        </div>
+        <a href="{{ url_for('billing.plans') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-tags"></i> Gerenciar planos
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <strong>Atribuir plano</strong>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {{ form.hidden_tag() }}
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        {{ form.user_id.label(class_='form-label') }}
+                        {{ form.user_id(class_='form-select') }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.plan_id.label(class_='form-label') }}
+                        {{ form.plan_id(class_='form-select') }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ form.status.label(class_='form-label') }}
+                        {{ form.status(class_='form-select') }}
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-save"></i> {{ form.submit.label.text }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <strong>Lista de usuários</strong>
+        </div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Email</th>
+                        <th>Plano atual</th>
+                        <th>Status do plano</th>
+                        <th>Situação cobrança</th>
+                        <th>Último uso</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for user in users %}
+                    {% set current_plan = user.get_active_plan() %}
+                    {% set last_usage = usage_map.get(user.id) %}
+                    <tr>
+                        <td>{{ user.full_name or user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if current_plan %}
+                                {{ current_plan.plan.name }}
+                                <span class="badge bg-light text-muted">{{ current_plan.plan.plan_type }}</span>
+                            {% else %}
+                                <span class="text-muted">Sem plano</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if current_plan %}
+                                <span class="badge bg-info text-dark">{{ current_plan.status }}</span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.billing_status == 'delinquent' %}
+                                <span class="badge bg-danger">Inadimplente</span>
+                            {% elif user.billing_status == 'trial' %}
+                                <span class="badge bg-warning text-dark">Em teste</span>
+                            {% else %}
+                                <span class="badge bg-success">Ativo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if last_usage %}
+                                {{ last_usage.generated_at.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                <form method="post" action="{{ url_for('billing.change_billing_status', user_id=user.id) }}">
+                                    <input type="hidden" name="status" value="{{ 'active' if user.billing_status == 'delinquent' else 'delinquent' }}">
+                                    <button type="submit" class="btn btn-sm {{ 'btn-outline-success' if user.billing_status == 'delinquent' else 'btn-outline-danger' }}">
+                                        {{ 'Liberar acesso' if user.billing_status == 'delinquent' else 'Marcar inadimplente' }}
+                                    </button>
+                                </form>
+                                {% if current_plan %}
+                                <form method="post" action="{{ url_for('billing.change_plan_status', user_id=user.id) }}">
+                                    <select name="status" class="form-select form-select-sm mb-1">
+                                        <option value="active" {% if current_plan.status == 'active' %}selected{% endif %}>Plano ativo</option>
+                                        <option value="trial" {% if current_plan.status == 'trial' %}selected{% endif %}>Em teste</option>
+                                        <option value="delinquent" {% if current_plan.status == 'delinquent' %}selected{% endif %}>Inadimplente</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Atualizar plano</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Nenhum usuário encontrado.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

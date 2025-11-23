@@ -53,17 +53,27 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
+        # Detecta rapidamente se já existe um admin real; evita bloquear login normal
+        real_admin_exists = False
+        try:
+            real_admin_exists = (
+                User.query.filter_by(user_type="master").first() is not None
+            )
+        except Exception:
+            pass
+
         # DEMO: Credenciais hardcoded para testes (não usa banco de dados)
         # Email: admin@advocaciasaas.com | Senha: admin123
         if (
             form.email.data == "admin@advocaciasaas.com"
             and form.password.data == "admin123"
+            and not real_admin_exists
         ):
             from datetime import datetime, timedelta
 
+            # Criar usuário demo em memória (não persiste no banco)
             from app.models import _demo_user_cache
 
-            # Criar usuário demo em memória (não persiste no banco)
             demo_user = User(
                 id=999999,
                 username="admin_demo",
@@ -78,7 +88,10 @@ def login():
             demo_user.password_expires_at = datetime.utcnow() + timedelta(days=9999)
             demo_user.password_history = "[]"
             demo_user.force_password_change = False
-            demo_user.set_password("admin123", skip_history_check=True)
+            try:
+                demo_user.set_password("admin123", skip_history_check=True)
+            except TypeError:
+                demo_user.set_password("admin123")
 
             # Armazenar no cache para o load_user encontrar
             _demo_user_cache[999999] = demo_user
@@ -115,8 +128,14 @@ def register():
     if current_user.is_authenticated:
         return redirect(url_for("main.dashboard"))
 
+    # Capture plan_id from query parameters
+    plan_id = request.args.get("plan", type=int)
+
     form = RegistrationForm()
     if form.validate_on_submit():
+        # Set billing status based on whether a plan was selected
+        billing_status = "pending_payment" if plan_id else "active"
+
         user = User(
             username=form.username.data,
             email=form.email.data,
@@ -124,13 +143,30 @@ def register():
             oab_number=form.oab_number.data,
             phone=form.phone.data,
             user_type=form.user_type.data,
+            billing_status=billing_status,
         )
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
+
+        # Auto-login the new user
+        login_user(user)
+
         flash("Cadastro realizado com sucesso!", "success")
-        return redirect(url_for("auth.login"))
-    return render_template("auth/register.html", title="Cadastro", form=form)
+
+        # If a plan was selected, redirect to checkout
+        if plan_id:
+            flash("Complete o pagamento para ativar seu plano.", "info")
+            return redirect(
+                url_for("checkout.create_checkout_session", plan_id=plan_id)
+            )
+
+        # Otherwise, go to dashboard
+        return redirect(url_for("main.dashboard"))
+
+    return render_template(
+        "auth/register.html", title="Cadastro", form=form, plan_id=plan_id
+    )
 
 
 @bp.route("/logout")
@@ -159,6 +195,7 @@ def profile():
         current_user.email = form.email.data
         current_user.oab_number = form.oab_number.data
         current_user.phone = form.phone.data
+        current_user.set_quick_actions(form.quick_actions.data)
         db.session.commit()
         flash("Perfil atualizado com sucesso!", "success")
         return redirect(url_for("auth.profile"))
@@ -167,6 +204,7 @@ def profile():
         form.email.data = current_user.email
         form.oab_number.data = current_user.oab_number
         form.phone.data = current_user.phone
+        form.quick_actions.data = current_user.get_quick_actions()
     return render_template(
         "auth/profile.html", title="Perfil", form=form, is_demo=is_demo
     )

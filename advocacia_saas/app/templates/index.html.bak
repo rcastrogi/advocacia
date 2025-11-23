@@ -1,0 +1,422 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section - Law Firm Professional Style -->
+<section class="hero-section text-white">
+    <div class="container hero-content">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div class="d-flex align-items-center mb-4">
+                    <img src="{{ url_for('static', filename='img/petitio.png') }}"
+                         alt="Petitio" height="70" class="me-3 petitio-logo petitio-logo-hero">
+                </div>
+                <h1 class="hero-title">Excelï¿½ncia Jurï¿½dica Digital</h1>
+                <p class="hero-subtitle">
+                    O sistema completo para modernizar a gestï¿½o do seu escritï¿½rio de advocacia.
+                    Gerencie clientes, processos e documentos com eficiï¿½ncia profissional.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-rocket me-2"></i>Comeï¿½ar Agora
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Acessar Sistema
+                    </a>
+                </div>
+
+                <!-- Trust Badges -->
+                <div class="mt-5 d-flex gap-4 flex-wrap">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-shield-alt fa-2x me-2"></i>
+                        <div>
+                            <small class="d-block opacity-75">Seguranï¿½a</small>
+                            <strong>100% Seguro</strong>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-lock fa-2x me-2"></i>
+                        <div>
+                            <small class="d-block opacity-75">Privacidade</small>
+                            <strong>LGPD Compliance</strong>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-cloud fa-2x me-2"></i>
+                        <div>
+                            <small class="d-block opacity-75">Tecnologia</small>
+                            <strong>Cloud Based</strong>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-universal-access fa-2x me-2"></i>
+                        <div>
+                            <small class="d-block opacity-75">Acessibilidade</small>
+                            <strong>WCAG 2.1 AA/AAA</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block text-center">
+                <img src="{{ url_for('static', filename='img/petitio.png') }}"
+                     class="img-fluid petitio-logo" alt="Petitio"
+                     style="max-height: 450px; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-3 col-sm-6">
+                <div class="stats-card text-center">
+                    <div class="stats-number"><i class="fas fa-users"></i></div>
+                    <div class="stats-label">Gestï¿½o de Clientes</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stats-card text-center">
+                    <div class="stats-number"><i class="fas fa-file-contract"></i></div>
+                    <div class="stats-label">Peticionador</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stats-card text-center">
+                    <div class="stats-number"><i class="fas fa-chart-line"></i></div>
+                    <div class="stats-label">Dashboard</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stats-card text-center">
+                    <div class="stats-number"><i class="fas fa-shield-alt"></i></div>
+                    <div class="stats-label">100% Seguro</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="section" id="recursos">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="section-title">Recursos Essenciais</h2>
+                <p class="section-subtitle">
+                    Tudo que seu escritï¿½rio precisa para operar com mï¿½xima eficiï¿½ncia e profissionalismo.
+                </p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-icon bg-primary">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h4>Gestï¿½o de Clientes</h4>
+                    <p class="text-muted mb-0">Cadastre clientes, acompanhe histï¿½ricos e organize documentos em um sï¿½ lugar.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-icon bg-success">
+                        <i class="fas fa-file-signature"></i>
+                    </div>
+                    <h4>Peticionador Inteligente</h4>
+                    <p class="text-muted mb-0">Modelos prontos e automaï¿½ï¿½es que aceleram a criaï¿½ï¿½o de petiï¿½ï¿½es.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-icon bg-warning">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Dashboard em Tempo Real</h4>
+                    <p class="text-muted mb-0">Indicadores claros de produtividade, faturamento e volume de processos.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-icon bg-info">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h4>Seguranï¿½a e LGPD</h4>
+                    <p class="text-muted mb-0">Criptografia, backups automï¿½ticos e conformidade com a legislaï¿½ï¿½o.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Accessibility Section -->
+<section class="section" id="acessibilidade" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; overflow: hidden;">
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row align-items-center text-white">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="accessibility-badge mb-4" style="display: inline-block; background: rgba(255,255,255,0.2); padding: 0.5rem 1.5rem; border-radius: 50px; backdrop-filter: blur(10px);">
+                    <i class="fas fa-universal-access me-2"></i>
+                    <span style="font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;">Certificaï¿½ï¿½o WCAG 2.1</span>
+                </div>
+                <h2 class="display-5 fw-bold mb-4" style="color: white;">Acessibilidade e Inclusï¿½o Digital</h2>
+                <p class="lead mb-4" style="opacity: 0.95;">
+                    O Petitio foi desenvolvido seguindo os mais rigorosos padrï¿½es internacionais de acessibilidade,
+                    garantindo que <strong>todos os profissionais</strong> possam utilizar o sistema com autonomia e eficiï¿½ncia.
+                </p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-check-circle fa-2x me-3" style="color: #4ade80;"></i>
+                            <div>
+                                <h6 class="mb-1 fw-bold">Leitores de Tela</h6>
+                                <small style="opacity: 0.9;">Compatï¿½vel com NVDA, JAWS e VoiceOver</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-check-circle fa-2x me-3" style="color: #4ade80;"></i>
+                            <div>
+                                <h6 class="mb-1 fw-bold">Navegaï¿½ï¿½o por Teclado</h6>
+                                <small style="opacity: 0.9;">Controle total sem uso do mouse</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-check-circle fa-2x me-3" style="color: #4ade80;"></i>
+                            <div>
+                                <h6 class="mb-1 fw-bold">Alto Contraste</h6>
+                                <small style="opacity: 0.9;">WCAG AAA em botï¿½es, textos e ï¿½cones</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-check-circle fa-2x me-3" style="color: #4ade80;"></i>
+                            <div>
+                                <h6 class="mb-1 fw-bold">Formulï¿½rios Acessï¿½veis</h6>
+                                <small style="opacity: 0.9;">Labels claros e mensagens de erro descritivas</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="p-5" style="background: rgba(255,255,255,0.1); border-radius: 20px; backdrop-filter: blur(10px);">
+                    <i class="fas fa-universal-access" style="font-size: 8rem; color: rgba(255,255,255,0.9); margin-bottom: 2rem;"></i>
+                    <h3 class="fw-bold mb-3" style="color: white;">Compromisso com a Inclusï¿½o</h3>
+                    <p style="opacity: 0.9; font-size: 1.1rem;">
+                        Cada funcionalidade do Petitio foi projetada para entregar autonomia a todos os profissionais, independentemente de suas habilidades.
+                    </p>
+                    <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap">
+                        <span class="badge" style="background: rgba(255,255,255,0.25); font-size: 0.9rem; padding: 0.6rem 1.2rem; font-weight: 500;">
+                            <i class="fas fa-eye me-2"></i>Deficiï¿½ncia Visual
+                        </span>
+                        <span class="badge" style="background: rgba(255,255,255,0.25); font-size: 0.9rem; padding: 0.6rem 1.2rem; font-weight: 500;">
+                            <i class="fas fa-hand-paper me-2"></i>Deficiï¿½ncia Motora
+                        </span>
+                        <span class="badge" style="background: rgba(255,255,255,0.25); font-size: 0.9rem; padding: 0.6rem 1.2rem; font-weight: 500;">
+                            <i class="fas fa-brain me-2"></i>Deficiï¿½ncia Cognitiva
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Background Pattern -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1; z-index: 1;">
+        <div style="position: absolute; top: -50px; right: -50px; width: 400px; height: 400px; border-radius: 50%; background: white;"></div>
+        <div style="position: absolute; bottom: -100px; left: -100px; width: 500px; height: 500px; border-radius: 50%; background: white;"></div>
+    </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="section" id="planos">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="section-title">Planos e Pagamentos</h2>
+                <p class="section-subtitle">
+                    Escolha o modelo ideal para o seu escritÃ³rio e sÃ³ pague pelo que usar.
+                </p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% if pricing_plans %}
+                {% for plan in pricing_plans %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="dashboard-card h-100">
+                            <div class="card-icon bg-primary mb-3">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <h4 class="mb-2">{{ plan.name }}</h4>
+                            <span class="badge bg-primary mb-3">{{ plan.plan_type_label }}</span>
+                            <p class="text-muted mb-3">{{ plan.description or 'Plano flexÃ­vel para escritÃ³rios em crescimento que valorizam suporte dedicado.' }}</p>
+                            <div class="pricing-highlight mb-3">
+                                {% if plan.is_per_usage %}
+                                    <span class="display-6 fw-bold text-primary">{{ plan.usage_rate }}</span>
+                                    <small class="text-muted ms-2">por petiÃ§Ã£o</small>
+                                {% else %}
+                                    <span class="display-6 fw-bold text-primary">{{ plan.monthly_fee }}</span>
+                                    <small class="text-muted ms-2">/ mÃªs</small>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted small mb-3">Sem fidelidade. Cancele quando quiser.</p>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>GestÃ£o completa de clientes</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Peticionador com modelos prontos</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Dashboard e relatÃ³rios</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Suporte prioritÃ¡rio</li>
+                            </ul>
+                            <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100 mt-auto">
+                                <i class="fas fa-rocket me-2"></i>ComeÃ§ar Agora
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        Estamos preparando novos planos para vocÃª. Entre em contato para ser avisado assim que estiverem disponÃ­veis.
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Us Section -->
+<section class="section bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h2 class="section-title">Por Que Escolher o Petitio?</h2>
+                <p class="lead mb-4">
+                    Desenvolvido especificamente para advogados que buscam excelï¿½ncia e eficiï¿½ncia.
+                </p>
+
+                <div class="mb-4">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="feature-icon" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <h5>Agilidade Operacional</h5>
+                            <p class="text-muted">Automatize tarefas repetitivas e concentre-se no que realmente importa: seus clientes.</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="feature-icon" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <h5>Seguranï¿½a Mï¿½xima</h5>
+                            <p class="text-muted">Seus dados e de seus clientes protegidos com criptografia de ponta a ponta.</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="feature-icon" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <h5>Acesso em Qualquer Lugar</h5>
+                            <p class="text-muted">Trabalhe de onde estiver com total mobilidade e sincronizaï¿½ï¿½o em tempo real.</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="feature-icon" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                <i class="fas fa-universal-access"></i>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <h5>100% Acessï¿½vel e Inclusivo</h5>
+                            <p class="text-muted">Certificado WCAG 2.1 AA/AAA. Sistema acessï¿½vel para pessoas com deficiï¿½ncia visual, motora ou cognitiva.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="dashboard-card text-center">
+                            <div class="card-icon bg-primary">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h4 class="mb-0">500+</h4>
+                            <p class="text-muted mb-0">Clientes Atendidos</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="dashboard-card text-center">
+                            <div class="card-icon bg-success">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <h4 class="mb-0">2.000+</h4>
+                            <p class="text-muted mb-0">Documentos Gerados</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="dashboard-card text-center">
+                            <div class="card-icon bg-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h4 class="mb-0">80%</h4>
+                            <p class="text-muted mb-0">Economia de Tempo</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="dashboard-card text-center">
+                            <div class="card-icon bg-info">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <h4 class="mb-0">4.9/5</h4>
+                            <p class="text-muted mb-0">Satisfaï¿½ï¿½o</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="section" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color));">
+    <div class="container">
+        <div class="row text-center text-white">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="mb-4" style="font-size: 2.5rem; font-weight: 700;">Pronto para Modernizar seu Escritï¿½rio?</h2>
+                <p class="lead mb-4 opacity-90">
+                    Junte-se a centenas de advogados que jï¿½ modernizaram seus escritï¿½rios com o Petitio.
+                    Comece hoje mesmo e veja a diferenï¿½a.
+                </p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-rocket me-2"></i>Comeï¿½ar Gratuitamente
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Jï¿½ Tenho Conta
+                    </a>
+                </div>
+                <p class="mt-4 opacity-75">
+                    <i class="fas fa-check-circle me-2"></i>Sem cartï¿½o de crï¿½dito
+                    <i class="fas fa-check-circle ms-3 me-2"></i>Cancele quando quiser
+                    <i class="fas fa-check-circle ms-3 me-2"></i>Suporte dedicado
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

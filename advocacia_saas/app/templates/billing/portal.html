@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-1"><i class="fas fa-credit-card"></i> Minha assinatura</h1>
+                <p class="text-muted mb-0">Veja o plano atual, uso de petições e situação de pagamento.</p>
+            </div>
+            {% if current_user.user_type == 'master' %}
+            <a href="{{ url_for('billing.petition_types') }}" class="btn btn-outline-primary">
+                <i class="fas fa-layer-group"></i> Gerenciar tipos
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Plano atual</p>
+                    {% if plan %}
+                        <h4 class="mb-0">{{ plan.plan.name }} <span class="badge bg-secondary text-uppercase">{{ plan.plan.plan_type }}</span></h4>
+                        <p class="small text-muted mb-2">Status: {{ plan.status }}</p>
+                    {% else %}
+                        <span class="text-danger">Nenhum plano ativo</span>
+                    {% endif %}
+                    <p class="text-muted small mb-0">Situação: {{ current_user.billing_status }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Uso no ciclo {{ cycle }}</p>
+                    <h4>{{ totals.count }} petições <small class="text-muted">({{ totals.billable }} cobradas)</small></h4>
+                    <p class="text-muted small mb-0">Estimativa de cobrança: R$ {{ '%.2f'|format(totals.billable_amount or 0) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Acesso</p>
+                    {% if current_user.billing_status == 'delinquent' %}
+                        <span class="badge bg-danger">Inadimplente</span>
+                        <p class="small text-muted mt-2">Regularize os pagamentos para retomar o acesso aos clientes e petições.</p>
+                    {% else %}
+                        <span class="badge bg-success">Ativo</span>
+                        <p class="small text-muted mt-2">Você pode gerar petições normalmente.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header">
+            <strong>Histórico do ciclo atual</strong>
+        </div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Tipo</th>
+                        <th>Cobrado?</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for usage in usages %}
+                    <tr>
+                        <td>{{ usage.generated_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ usage.petition_type.name }}</td>
+                        <td>
+                            {% if usage.billable %}
+                                <span class="badge bg-warning text-dark">Sim</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Não</span>
+                            {% endif %}
+                        </td>
+                        <td>{% if usage.billable %}R$ {{ '%.2f'|format(usage.amount or 0) }}{% else %}—{% endif %}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">Nenhuma petição registrada neste ciclo.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

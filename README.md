@@ -31,6 +31,18 @@ Acesse: http://localhost:5000
 
 O projeto está configurado para deploy no Render.com via arquivo `render.yaml` na raiz do repositório.
 
+## 🔧 Inicialização do Admin (deploy)
+
+O repositório inclui um script de inicialização do usuário administrador: `init_admin.py`.
+Durante o build (`build.sh`) o script é chamado para garantir que exista um admin inicial.
+
+- Variáveis de ambiente úteis:
+	- `ADMIN_EMAIL` — Email do administrador (padrão: `admin@advocaciasaas.com`).
+	- `ADMIN_PASSWORD` — Senha do administrador (opcional). Se omitida, uma senha forte será gerada.
+	- `ADMIN_FORCE` — Se `true`/`1`/`yes`, o build passará `--force` ao script e tentará recriar o admin.
+
+Consulte `docs/INIT_ADMIN.md` para instruções completas e recomendações de segurança.
+
 ## ✨ Features
 
 - ✅ Gestão de clientes completa

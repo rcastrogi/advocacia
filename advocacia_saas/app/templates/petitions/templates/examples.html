@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="fas fa-lightbulb"></i> Exemplos de Jinja</h1>
+            <p class="text-muted mb-0">Use estes exemplos para montar seus modelos personalizados.</p>
+        </div>
+        <a href="{{ url_for('petitions.civil_petitions') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar às petições
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <strong>Blocos rápidos</strong>
+                </div>
+                <div class="card-body">
+                    {% for example in mini_examples %}
+                        <div class="mb-4">
+                            <h6 class="mb-2 text-primary">{{ example.title }}</h6>
+                            <pre class="bg-light border rounded p-3 small mb-0"><code>{{ example.code }}</code></pre>
+                        </div>
+                    {% endfor %}
+                    <p class="small text-muted mb-0">Dica: você pode combinar blocos, aplicar filtros encadeados (<code>{{ '{{ campo|title|replace("de","d") }}' }}</code>) e usar listas geradas nos próprios formulários.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Snippet completo</strong>
+                    <span class="badge bg-info">Código</span>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-light border rounded p-3 small mb-0"><code>{{ full_snippet }}</code></pre>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Saída gerada</strong>
+                    <span class="badge bg-success">Preview</span>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-white border rounded p-3 small mb-0" style="white-space: pre-wrap;">{{ rendered_example }}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header">
+            <strong>Contexto utilizado no exemplo</strong>
+        </div>
+        <div class="card-body">
+            <pre class="bg-light border rounded p-3 small mb-0">{{ sample_context | tojson(indent=2) }}</pre>
+        </div>
+    </div>
+</div>
+{% endblock %}

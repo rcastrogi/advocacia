@@ -1,0 +1,89 @@
+"""
+Script para cadastrar planos de exemplo no banco de dados
+Execute: python seed_plans.py
+"""
+
+from decimal import Decimal
+
+from app import create_app, db
+from app.models import BillingPlan
+
+app = create_app()
+
+with app.app_context():
+    # Verifica se já existem planos
+    existing = BillingPlan.query.count()
+    if existing > 0:
+        print(f"❌ Já existem {existing} planos cadastrados.")
+        print("   Se quiser recadastrar, delete os planos existentes primeiro.")
+        exit(0)
+
+    # Plano 1: Por Uso
+    plan1 = BillingPlan(
+        name="Essencial",
+        plan_type="per_usage",
+        description="Pague apenas pelas petições que gerar. Ideal para escritórios pequenos.",
+        monthly_fee=Decimal("0.00"),
+        usage_rate=Decimal("15.00"),
+        max_users=1,
+        max_storage_gb=5,
+        has_support=False,
+        active=True,
+        features={
+            "petitions": "unlimited",
+            "clients": "unlimited",
+            "templates": "basic",
+            "support": "email",
+        },
+    )
+
+    # Plano 2: Mensal Básico
+    plan2 = BillingPlan(
+        name="Profissional",
+        plan_type="monthly",
+        description="Petições ilimitadas com suporte prioritário. Ideal para escritórios em crescimento.",
+        monthly_fee=Decimal("99.00"),
+        usage_rate=Decimal("0.00"),
+        max_users=3,
+        max_storage_gb=20,
+        has_support=True,
+        active=True,
+        features={
+            "petitions": "unlimited",
+            "clients": "unlimited",
+            "templates": "advanced",
+            "support": "priority",
+        },
+    )
+
+    # Plano 3: Mensal Premium
+    plan3 = BillingPlan(
+        name="Escritório",
+        plan_type="monthly",
+        description="Solução completa para escritórios estabelecidos com múltiplos usuários.",
+        monthly_fee=Decimal("199.00"),
+        usage_rate=Decimal("0.00"),
+        max_users=10,
+        max_storage_gb=100,
+        has_support=True,
+        active=True,
+        features={
+            "petitions": "unlimited",
+            "clients": "unlimited",
+            "templates": "premium",
+            "support": "dedicated",
+            "api_access": True,
+        },
+    )
+
+    db.session.add(plan1)
+    db.session.add(plan2)
+    db.session.add(plan3)
+    db.session.commit()
+
+    print("✅ 3 planos cadastrados com sucesso!")
+    print("\n📋 Planos criados:")
+    print(f"   1. {plan1.name} (ID: {plan1.id}) - R$ {plan1.usage_rate}/petição")
+    print(f"   2. {plan2.name} (ID: {plan2.id}) - R$ {plan2.monthly_fee}/mês")
+    print(f"   3. {plan3.name} (ID: {plan3.id}) - R$ {plan3.monthly_fee}/mês")
+    print("\n🚀 Acesse http://localhost:5000 para ver os planos na página inicial!")
