@@ -93,6 +93,15 @@ section[style*="background"] .container {
     border-radius: 12px 12px 0 0 !important;
 }
 
+.card-header h5,
+.card-header h1,
+.card-header h2,
+.card-header h3,
+.card-header h4,
+.card-header h6 {
+    color: white !important;
+}
+
 .card-body {
     background-color: rgba(248, 243, 236, 0.98);  /* Very light beige */
 }
@@ -172,7 +181,7 @@ textarea.form-control {
 /* ===== Hero Section - Law Firm Style ===== */
 .hero-section {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
-    min-height: 75vh;
+    min-height: 60vh;
     display: flex;
     align-items: center;
     position: relative;
@@ -443,7 +452,7 @@ textarea.form-control {
 
 /* ===== Section Styles ===== */
 .section {
-    padding: 5rem 0;
+    padding: 3rem 0;
 }
 
 .section-title {
@@ -478,6 +487,12 @@ textarea.form-control {
 .bg-light .section-title,
 .bg-white .section-title {
     color: var(--dark-color);  /* Preto suave para fundo claro */
+}
+
+.bg-light .section-subtitle,
+.bg-white .section-subtitle {
+    color: #6c757d;  /* Cinza escuro para fundo claro */
+    text-shadow: none;  /* Remove sombra em fundos claros */
 }
 
 /* ===== Pricing Cards ===== */
