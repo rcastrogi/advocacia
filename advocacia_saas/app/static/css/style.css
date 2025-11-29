@@ -1,45 +1,168 @@
-/* Custom styles for Petitio - Inspired by Professional Law Firm Templates */
+/* Custom styles for Petitio - Inspired by Counsel Law Professional Template */
 
-/* ===== Color Palette - Based on Petitio Document Theme ===== */
+/* ===== Color Palette - Professional Law Firm Style ===== */
 :root {
-    --primary-color: #586F7C;       /* Blue-Gray - Professional & Calm */
-    --secondary-color: #E5B299;     /* Terracotta claro - Melhor contraste (WCAG AA) */
-    --dark-color: #1a1a1a;          /* Preto suave - Texto em fundos claros */
-    --light-color: #f5ede3;         /* Bege mais claro - Melhor legibilidade */
-    --accent-color: #2c3e50;        /* Azul-acinzentado escuro - Fundo profissional */
-    --text-color: #f8f9fa;          /* Quase branco - Texto em fundos escuros (WCAG AAA) */
-    --text-muted: #cbd5e0;          /* Cinza claro - Texto secundário em fundo escuro */
-    --border-color: #d4c4b0;        /* Light Beige Border */
+    --primary-color: #0d1b2a;       /* Deep Navy Blue - Professional & Elegant */
+    --secondary-color: #c9a85c;     /* Gold/Brass - Luxury Accent */
+    --dark-color: #1a1a1a;          /* Soft Black - Text on light backgrounds */
+    --light-color: #f8f9fa;         /* Light Gray - Light sections */
+    --accent-color: #1b263b;        /* Dark Navy - Gradient accent */
+    --text-color: #ffffff;          /* White - Text on dark backgrounds */
+    --text-muted: #b0b0b0;          /* Muted Gray - Secondary text */
+    --border-color: #2d3748;        /* Dark border for dark sections */
     
-    /* Cores de destaque otimizadas */
-    --title-color: #f0c8a0;         /* Terracota muito claro - Títulos em fundo escuro */
-    --subtitle-color: #e8e8e8;      /* Branco suave - Subtítulos */
+    /* Accent colors */
+    --gold-color: #c9a85c;          /* Gold - Primary accent */
+    --gold-light: #d4b76a;          /* Light Gold - Hover states */
+    --gold-dark: #a8893d;           /* Dark Gold - Active states */
+    
+    /* Title colors */
+    --title-color: #ffffff;         /* White - Titles on dark background */
+    --subtitle-color: #c9a85c;      /* Gold - Subtitles emphasis */
 }
 
-/* ===== Typography ===== */
+/* ===== Font Rendering Optimization ===== */
+html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern" 1, "liga" 1;
+    font-kerning: normal;
+}
+
+/* ===== Typography - Cormorant Garamond + Inter ===== */
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: var(--text-color);       /* Branco suave para fundo escuro */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--dark-color);
     line-height: 1.7;
-    background: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-color) 100%);
-    background-attachment: fixed;
+    background-color: #ffffff;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
 }
 
-/* Títulos em fundo escuro (hero, sections) */
-h1, h2, h3, h4, h5, h6 {
+/* Títulos com fonte serif elegante */
+h1, h2, h3 {
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     font-weight: 600;
-    color: var(--title-color);      /* Terracota claro otimizado (Contraste 5.2:1) */
+    color: var(--dark-color);
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+}
+
+h1 {
+    font-size: 3rem;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 2.25rem;
+}
+
+h3 {
+    font-size: 1.75rem;
+}
+
+h4, h5, h6 {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 600;
+    color: var(--dark-color);
     margin-bottom: 1rem;
 }
 
-/* Títulos em áreas com fundo claro (cards, forms) */
+p {
+    font-size: 1rem;
+    line-height: 1.75;
+}
+
+/* Títulos em áreas com fundo escuro */
+.hero-section h1, .hero-section h2, .hero-section h3,
+.dark-section h1, .dark-section h2, .dark-section h3,
+.cta-section h1, .cta-section h2, .cta-section h3 {
+    color: #ffffff;
+}
+
+/* Gold accent for section titles */
+.section-title {
+    color: var(--dark-color);
+    position: relative;
+    display: inline-block;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: var(--gold-color);
+}
+
+/* Títulos em cards */
 .form-card h1, .form-card h2, .form-card h3, .form-card h4, .form-card h5, .form-card h6,
 .card h1, .card h2, .card h3, .card h4, .card h5, .card h6,
-.dashboard-card h1, .dashboard-card h2, .dashboard-card h3, .dashboard-card h4, .dashboard-card h5, .dashboard-card h6,
-.container > h1, .container > h2, .container > h3, .container > h4, .container > h5, .container > h6 {
-    color: var(--dark-color);       /* Preto suave para fundo claro */
+.dashboard-card h1, .dashboard-card h2, .dashboard-card h3, .dashboard-card h4, .dashboard-card h5, .dashboard-card h6 {
+    color: var(--dark-color);
 }
+
+/* ===== Smooth Animations - Professional Transitions ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fadeInLeft {
+    animation: fadeInLeft 0.6s ease-out forwards;
+}
+
+.animate-fadeInRight {
+    animation: fadeInRight 0.6s ease-out forwards;
+}
+
+/* Delay classes for staggered animations */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
 
 /* ===== Content Area Styles ===== */
 /* Remove default container background - let it be transparent */
@@ -178,10 +301,10 @@ textarea.form-control {
     /* Removido o filtro para mostrar o logo original */
 }
 
-/* ===== Hero Section - Law Firm Style ===== */
+/* ===== Hero Section - Counsel Law Professional Style ===== */
 .hero-section {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
-    min-height: 60vh;
+    min-height: 70vh;
     display: flex;
     align-items: center;
     position: relative;
@@ -195,8 +318,8 @@ textarea.form-control {
     left: 0;
     right: 0;
     bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.1;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a85c' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.15;
 }
 
 .hero-content {
@@ -205,39 +328,91 @@ textarea.form-control {
 }
 
 .hero-title {
+    font-family: 'Playfair Display', Georgia, serif;
     font-size: 3.5rem;
     font-weight: 700;
     line-height: 1.2;
     margin-bottom: 1.5rem;
+    color: #ffffff;
 }
 
 .hero-subtitle {
-    font-size: 1.3rem;
-    font-weight: 300;
+    font-size: 1.2rem;
+    font-weight: 400;
     margin-bottom: 2rem;
-    opacity: 0.95;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 600px;
 }
 
+/* Gold accent line under hero title */
+.hero-title::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 3px;
+    background: var(--gold-color);
+    margin-top: 1rem;
+}
 
-/* ===== Buttons - Professional Style ===== */
+/* ===== Buttons - Counsel Law Professional Style ===== */
 .btn {
-    border-radius: 999px;
+    border-radius: 0;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 0.65rem 1.6rem;
+    letter-spacing: 0.1em;
+    padding: 0.85rem 2rem;
     border-width: 2px;
-    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--gold-color);
+    border-color: var(--gold-color);
+    color: var(--primary-color);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: transparent;
+    border-color: var(--gold-color);
+    color: var(--gold-color);
+}
+
+.btn-outline-light {
+    background-color: transparent;
+    border-color: #ffffff;
+    color: #ffffff;
+}
+
+.btn-outline-light:hover,
+.btn-outline-light:focus {
+    background-color: #ffffff;
+    border-color: #ffffff;
+    color: var(--primary-color);
+}
+
+.btn-secondary {
+    background-color: var(--gold-color);
+    border-color: var(--gold-color);
+    color: var(--primary-color);
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+    background-color: var(--gold-light);
+    border-color: var(--gold-light);
+    color: var(--primary-color);
 }
 
 .btn:not(.btn-link):hover,
 .btn:not(.btn-link):focus {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 18px rgba(41, 53, 65, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .btn:focus-visible {
-    outline: 2px solid var(--secondary-color);
+    outline: 2px solid var(--gold-color);
     outline-offset: 3px;
 }
 
@@ -452,13 +627,14 @@ textarea.form-control {
 
 /* ===== Section Styles ===== */
 .section {
-    padding: 3rem 0;
+    padding: 5rem 0;
 }
 
 .section-title {
+    font-family: 'Playfair Display', Georgia, serif;
     font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--title-color);      /* Terracota claro otimizado (Contraste 5.2:1 - WCAG AA) */
+    font-weight: 600;
+    color: var(--dark-color);
     margin-bottom: 1rem;
     position: relative;
     display: inline-block;
@@ -468,49 +644,64 @@ textarea.form-control {
     content: '';
     position: absolute;
     bottom: -10px;
-    left: 0;
+    left: 50%;
+    transform: translateX(-50%);
     width: 60px;
     height: 3px;
-    background: var(--secondary-color);
+    background: var(--gold-color);
 }
 
 .section-subtitle {
     font-size: 1.1rem;
-    color: var(--subtitle-color);   /* Branco suave (Contraste 12:1 - WCAG AAA) */
+    color: #6c757d;
     margin-bottom: 3rem;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);  /* Sombra para profundidade */
     font-weight: 400;
-    line-height: 1.6;
+    line-height: 1.8;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Dark sections (like hero) */
+.dark-section {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    color: #ffffff;
+}
+
+.dark-section .section-title {
+    color: #ffffff;
+}
+
+.dark-section .section-subtitle {
+    color: rgba(255, 255, 255, 0.8);
 }
 
 /* Títulos em seções com fundo claro */
 .bg-light .section-title,
 .bg-white .section-title {
-    color: var(--dark-color);  /* Preto suave para fundo claro */
+    color: var(--dark-color);
 }
 
 .bg-light .section-subtitle,
 .bg-white .section-subtitle {
-    color: #6c757d;  /* Cinza escuro para fundo claro */
-    text-shadow: none;  /* Remove sombra em fundos claros */
+    color: #6c757d;
 }
 
-/* ===== Pricing Cards ===== */
-/* ===== Pricing Cards ===== */
+/* ===== Pricing Cards - Counsel Law Style ===== */
 .pricing-card {
     background: white;
-    border-radius: 10px;
+    border-radius: 0;
     padding: 3rem 2rem;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
-    border: 2px solid transparent;
+    border: 1px solid #e5e5e5;
     height: 100%;
 }
 
 .pricing-card:hover {
-    border-color: var(--secondary-color);
+    border-color: var(--gold-color);
     transform: translateY(-10px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
 .pricing-card.featured {
@@ -542,57 +733,65 @@ textarea.form-control {
     border-bottom: 1px solid var(--border-color);
 }
 
-/* ===== Dashboard Cards ===== */
+/* ===== Dashboard Cards - Counsel Law Style ===== */
 .dashboard-card {
-    background: rgba(248, 243, 236, 0.98);  /* Very light beige */
-    border-radius: 10px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 10px rgba(45, 45, 45, 0.1);
-    border: 1px solid var(--border-color);
+    background: #ffffff;
+    border-radius: 0;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e5e5;
     transition: all 0.3s ease;
     height: 100%;
 }
 
 .dashboard-card:hover {
-    box-shadow: 0 5px 20px rgba(45, 45, 45, 0.15);
-    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-5px);
+    border-color: var(--gold-color);
 }
 
 .card-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 8px;
+    width: 60px;
+    height: 60px;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
 }
 
 .card-icon.bg-primary {
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    color: white;
+    background: var(--primary-color);
+    color: var(--gold-color);
 }
 
 .card-icon.bg-success {
-    background: linear-gradient(135deg, var(--secondary-color), #d4a58c);
-    color: white;
+    background: var(--primary-color);
+    color: var(--gold-color);
 }
 
 .card-icon.bg-warning {
-    background: linear-gradient(135deg, #c89b82, #b88972);
-    color: white;
+    background: var(--gold-color);
+    color: var(--primary-color);
 }
 
 .card-icon.bg-info {
-    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
-    color: white;
+    background: var(--accent-color);
+    color: var(--gold-color);
 }
+
+.dashboard-card:hover .card-icon {
+    background: var(--gold-color);
+    color: var(--primary-color);
 }
 
 .card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    color: white;
+    border-bottom: none;
+    border-radius: 0 !important;
 }
 
 /* Statistics cards */
@@ -808,22 +1007,24 @@ textarea.form-control {
     border-radius: 10px;
     padding: 2.5rem;
     box-shadow: 0 5px 20px rgba(45, 45, 45, 0.1);
-    border: 1px solid var(--border-color);
+    border: 1px solid #e5e5e5;
 }
 
-/* ===== Footer - Law Firm Style ===== */
+/* ===== Footer - Counsel Law Professional Style ===== */
 .footer {
-    background-color: var(--dark-color);
-    color: #ccc;
-    padding: 4rem 0 2rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 5rem 0 2rem;
 }
 
 .footer h5 {
+    font-family: 'Playfair Display', Georgia, serif;
     color: white;
     font-weight: 600;
     margin-bottom: 1.5rem;
     position: relative;
     padding-bottom: 1rem;
+    font-size: 1.25rem;
 }
 
 .footer h5::after {
@@ -833,7 +1034,7 @@ textarea.form-control {
     left: 0;
     width: 40px;
     height: 2px;
-    background: var(--secondary-color);
+    background: var(--gold-color);
 }
 
 .footer-links {
@@ -846,28 +1047,45 @@ textarea.form-control {
 }
 
 .footer-links a {
-    color: #ccc;
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     transition: all 0.3s ease;
 }
 
 .footer-links a:hover {
-    color: var(--secondary-color);
+    color: var(--gold-color);
     padding-left: 5px;
 }
 
 .footer-bottom {
-    border-top: 1px solid #333;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     margin-top: 3rem;
     padding-top: 2rem;
     text-align: center;
-    color: #999;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.footer .social-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+.footer .social-links a:hover {
+    background: var(--gold-color);
+    color: var(--primary-color);
 }
 
 /* ===== Badges ===== */
 .badge-custom {
     padding: 0.5rem 1rem;
-    border-radius: 20px;
+    border-radius: 0;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -880,29 +1098,48 @@ textarea.form-control {
 }
 
 .badge-advogado {
-    background-color: var(--secondary-color);
-    color: white;
+    background-color: var(--gold-color);
+    color: var(--primary-color);
 }
 
-/* ===== Navigation Styles ===== */
+/* ===== Navigation Styles - Counsel Law Professional ===== */
 .navbar {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    padding: 1rem 0;
+    background: var(--primary-color) !important;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+    padding: 0.8rem 0;
 }
 
 .navbar-brand {
+    font-family: 'Playfair Display', Georgia, serif;
     font-size: 1.5rem;
     font-weight: 700;
+    color: #ffffff !important;
 }
 
 .nav-link {
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.85rem;
     transition: all 0.3s ease;
     padding: 0.5rem 1rem !important;
+    color: rgba(255, 255, 255, 0.85) !important;
 }
 
 .nav-link:hover {
-    color: var(--secondary-color) !important;
+    color: var(--gold-color) !important;
+}
+
+.nav-link.active {
+    color: var(--gold-color) !important;
+}
+
+.navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
 /* ===== Breadcrumb ===== */
@@ -922,7 +1159,7 @@ textarea.form-control {
 }
 
 .breadcrumb-custom .breadcrumb-item.active {
-    color: white;
+    color: var(--gold-color);
 }
 
 .breadcrumb-custom .breadcrumb-item a {
@@ -930,9 +1167,13 @@ textarea.form-control {
     text-decoration: none;
 }
 
+.breadcrumb-custom .breadcrumb-item a:hover {
+    color: var(--gold-color);
+}
+
 /* ===== Alert Styles ===== */
 .alert {
-    border-radius: 8px;
+    border-radius: 0;
     border: none;
     padding: 1rem 1.5rem;
 }
@@ -1047,37 +1288,432 @@ textarea.form-control {
     margin: 0 auto 2rem;
 }
 
-/* ===== Authentication Pages - Enhanced Contrast ===== */
-/* Classes especiais para páginas de login/registro com melhor legibilidade */
+/* ===== Testimonials Section - Counsel Law Style ===== */
+.testimonials-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    position: relative;
+}
+
+.testimonial-card {
+    background: #ffffff;
+    border-radius: 0;
+    padding: 2rem;
+    position: relative;
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08);
+    transition: all 0.4s ease;
+    height: 100%;
+    border-bottom: 3px solid transparent;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
+    border-bottom-color: var(--gold-color);
+}
+
+.testimonial-quote {
+    color: var(--gold-color);
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.testimonial-text {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 1.5rem;
+}
+
+.testimonial-author {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #eee;
+    padding-top: 1.5rem;
+}
+
+.testimonial-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 1rem;
+    border: 3px solid var(--gold-color);
+}
+
+.testimonial-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.testimonial-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 1rem;
+    border: 4px solid var(--gold-color);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.testimonial-avatar-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.testimonial-info h5 {
+    font-family: 'Playfair Display', Georgia, serif;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+}
+
+.testimonial-info p {
+    color: var(--gold-color);
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.testimonial-stars {
+    color: var(--gold-color);
+    font-size: 0.9rem;
+}
+
+.testimonial-stars i {
+    margin-right: 2px;
+}
+
+.testimonial-card-horizontal {
+    padding: 2.5rem;
+}
+
+.testimonial-card-horizontal .testimonial-text {
+    margin-bottom: 1rem;
+}
+
+.testimonial-card-horizontal .testimonial-info {
+    text-align: left;
+}
+
+@media (max-width: 767px) {
+    .testimonial-card-horizontal .col-md-4 {
+        margin-bottom: 1.5rem;
+    }
+    
+    .testimonial-card-horizontal .testimonial-info {
+        text-align: center;
+    }
+}
+
+/* ===== Petition Types Section ===== */
+.petition-types-section {
+    background: #ffffff;
+}
+
+.petition-type-card {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+    transition: all 0.4s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.petition-type-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+    border-color: var(--gold-color);
+}
+
+.petition-type-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--gold-color));
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.petition-type-card:hover::before {
+    transform: scaleX(1);
+}
+
+.petition-type-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: var(--gold-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.petition-type-card:hover .petition-type-icon {
+    background: var(--gold-color);
+    color: var(--primary-color);
+    transform: rotateY(180deg);
+}
+
+.petition-type-category {
+    display: inline-block;
+    background: rgba(201, 168, 92, 0.1);
+    color: var(--gold-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.4rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.petition-type-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    color: var(--primary-color);
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.petition-type-description {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    flex-grow: 1;
+    margin-bottom: 1.5rem;
+}
+
+.petition-type-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+    margin-top: auto;
+}
+
+.petition-type-price {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.petition-type-badge {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.8rem;
+}
+
+/* Coming Soon State */
+.petition-types-coming-soon {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: #ffffff;
+    text-align: center;
+    padding: 4rem 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.petition-types-coming-soon::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(201, 168, 92, 0.1) 0%, transparent 50%);
+    animation: pulse 4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 1; }
+}
+
+.coming-soon-icon {
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--gold-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    position: relative;
+    z-index: 1;
+}
+
+.petition-types-coming-soon h3 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.petition-types-coming-soon p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.petition-types-coming-soon .btn {
+    position: relative;
+    z-index: 1;
+}
+
+/* ===== Lawyer Image Container ===== */
+.lawyer-image-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0;
+}
+
+.lawyer-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.lawyer-image-container:hover .lawyer-image {
+    transform: scale(1.05);
+}
+
+.lawyer-image-badge {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: var(--gold-color);
+    color: var(--primary-color);
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+.lawyer-image-badge i {
+    color: var(--primary-color);
+}
+
+/* ===== Feature Icons - Counsel Law Style ===== */
+.feature-icon {
+    width: 70px;
+    height: 70px;
+    background: var(--primary-color);
+    color: var(--gold-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.feature-icon:hover {
+    background: var(--gold-color);
+    color: var(--primary-color);
+}
+
+/* ===== CTA Section - Counsel Law Style ===== */
+.cta-section {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    padding: 5rem 0;
+    position: relative;
+}
+
+.cta-section h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    color: #ffffff;
+    font-size: 2.5rem;
+}
+
+.cta-section p {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.cta-section .btn-primary {
+    background: var(--gold-color);
+    border-color: var(--gold-color);
+    color: var(--primary-color);
+}
+
+.cta-section .btn-primary:hover {
+    background: transparent;
+    color: var(--gold-color);
+}
+
+/* ===== Counters/Stats Section ===== */
+.counter-box {
+    text-align: center;
+    padding: 2rem;
+}
+
+.counter-box .counter-number {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--gold-color);
+    margin-bottom: 0.5rem;
+}
+
+.counter-box .counter-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* ===== Authentication Pages - Professional Style ===== */
 
 .auth-title {
-    color: var(--title-color) !important;       /* Terracota claro - Contraste 5.2:1 AA */
-    font-weight: 700 !important;
+    font-family: 'Playfair Display', Georgia, serif;
+    color: #ffffff !important;
+    font-weight: 600 !important;
     font-size: 2rem !important;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Sombra sutil para melhorar legibilidade */
 }
 
 .auth-subtitle {
-    color: var(--subtitle-color) !important;    /* Branco suave - Contraste 12:1 AAA */
+    color: rgba(255, 255, 255, 0.8) !important;
     font-size: 1.1rem !important;
     font-weight: 400 !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .auth-text-muted {
-    color: var(--text-muted) !important;        /* Cinza claro - Contraste 8:1 AAA */
+    color: rgba(255, 255, 255, 0.7) !important;
     font-size: 0.9rem !important;
 }
 
 .auth-text-muted a {
-    color: var(--secondary-color) !important;   /* Terracotta - Bom contraste */
+    color: var(--gold-color) !important;
     font-weight: 600 !important;
     text-decoration: underline !important;
     transition: all 0.3s ease;
 }
 
 .auth-text-muted a:hover {
-    color: var(--title-color) !important;
+    color: #ffffff !important;
     text-decoration: none !important;
 }
 
@@ -1092,4 +1728,215 @@ textarea.form-control {
 .auth-link:hover {
     color: var(--title-color) !important;
     text-decoration: underline !important;
+}
+
+/* ===== Scroll Reveal Animations ===== */
+
+/* Elementos começam deslocados para baixo e sobem ao aparecer */
+.scroll-animate {
+    opacity: 0;
+    transform: translateY(80px);
+    transition: opacity 0.9s ease-out, transform 0.9s ease-out;
+}
+
+.scroll-animate.animate-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Cards e items individuais com animação staggered */
+.animate-item {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.animate-item.item-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Different animation types */
+.scroll-animate[data-animation="fadeIn"] {
+    transform: none;
+}
+
+.scroll-animate[data-animation="fadeInLeft"] {
+    transform: translateX(-60px);
+}
+
+.scroll-animate[data-animation="fadeInLeft"].animate-visible {
+    transform: translateX(0);
+}
+
+.scroll-animate[data-animation="fadeInRight"] {
+    transform: translateX(60px);
+}
+
+.scroll-animate[data-animation="fadeInRight"].animate-visible {
+    transform: translateX(0);
+}
+
+.scroll-animate[data-animation="zoomIn"] {
+    transform: scale(0.8);
+}
+
+.scroll-animate[data-animation="zoomIn"].animate-visible {
+    transform: scale(1);
+}
+
+.scroll-animate[data-animation="flipIn"] {
+    transform: perspective(1000px) rotateX(-10deg);
+}
+
+.scroll-animate[data-animation="flipIn"].animate-visible {
+    transform: perspective(1000px) rotateX(0);
+}
+
+/* Floating animation for icons */
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Pulse glow animation */
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 92, 0.4); }
+    50% { box-shadow: 0 0 20px 10px rgba(201, 168, 92, 0.2); }
+}
+
+.animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Shimmer effect */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+/* Bounce animation */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-20px); }
+    60% { transform: translateY(-10px); }
+}
+
+.animate-bounce {
+    animation: bounce 2s ease infinite;
+}
+
+/* Rotate animation */
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-rotate {
+    animation: rotate 20s linear infinite;
+}
+
+/* Slide in from bottom with bounce */
+@keyframes slideInBounce {
+    0% {
+        opacity: 0;
+        transform: translateY(100px);
+    }
+    60% {
+        opacity: 1;
+        transform: translateY(-10px);
+    }
+    80% {
+        transform: translateY(5px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+.animate-slide-bounce {
+    animation: slideInBounce 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Scale up with fade */
+@keyframes scaleUpFade {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-scale-up {
+    animation: scaleUpFade 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Text reveal animation */
+@keyframes textReveal {
+    0% {
+        clip-path: inset(0 100% 0 0);
+    }
+    100% {
+        clip-path: inset(0 0 0 0);
+    }
+}
+
+.animate-text-reveal {
+    animation: textReveal 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Draw line animation */
+@keyframes drawLine {
+    0% { width: 0; }
+    100% { width: 80px; }
+}
+
+.section-title::after {
+    animation: drawLine 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.scroll-animate:not(.animate-visible) .section-title::after {
+    width: 0;
+}
+
+/* Counter animation helper */
+.counter-animate {
+    display: inline-block;
+}
+
+/* Card hover lift effect */
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Parallax-like effect */
+.parallax-bg {
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+@media (max-width: 991px) {
+    .parallax-bg {
+        background-attachment: scroll;
+    }
 }

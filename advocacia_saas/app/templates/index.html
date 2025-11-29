@@ -1,22 +1,21 @@
 ﻿{% extends "base.html" %}
 
 {% block content %}
-<!-- Hero Section - Law Firm Professional Style -->
+<!-- Hero Section - Counsel Law Professional Style -->
 <section class="hero-section text-white">
     <div class="container hero-content">
         <div class="row align-items-center">
             <div class="col-lg-7">
-                <div class="d-flex align-items-center mb-4">
-                    <img src="{{ url_for('static', filename='img/petitio.png') }}"
-                         alt="Petitio" height="70" class="me-3 petitio-logo petitio-logo-hero">
-                </div>
-                <h1 class="hero-title">Excelência Jurídica Digital</h1>
-                <p class="hero-subtitle">
+                <p class="text-uppercase mb-3" style="color: var(--gold-color); letter-spacing: 0.2em; font-size: 0.9rem;">
+                    <i class="fas fa-balance-scale me-2"></i>Software Jurídico Profissional
+                </p>
+                <h1 class="hero-title animate-fadeInUp">Excelência Jurídica Digital</h1>
+                <p class="hero-subtitle animate-fadeInUp delay-200">
                     O sistema completo para modernizar a gestão do seu escritório de advocacia.
                     Gerencie clientes, processos e documentos com eficiência profissional.
                 </p>
-                <div class="d-flex gap-3 flex-wrap">
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-secondary btn-lg">
+                <div class="d-flex gap-3 flex-wrap animate-fadeInUp delay-300">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
                         <i class="fas fa-rocket me-2"></i>Começar Agora
                     </a>
                     <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg">
@@ -25,48 +24,130 @@
                 </div>
 
                 <!-- Trust Badges -->
-                <div class="mt-5 d-flex gap-4 flex-wrap">
+                <div class="mt-5 d-flex gap-3 flex-wrap animate-fadeInUp delay-400">
                     <div class="d-flex align-items-center">
-                        <i class="fas fa-shield-alt fa-2x me-2"></i>
+                        <div class="feature-icon me-3" style="width: 45px; height: 45px; font-size: 1.1rem;">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
                         <div>
-                            <small class="d-block opacity-75">Segurança</small>
+                            <small class="d-block" style="color: var(--gold-color);">Segurança</small>
                             <strong>100% Seguro</strong>
                         </div>
                     </div>
                     <div class="d-flex align-items-center">
-                        <i class="fas fa-lock fa-2x me-2"></i>
+                        <div class="feature-icon me-3" style="width: 45px; height: 45px; font-size: 1.1rem;">
+                            <i class="fas fa-lock"></i>
+                        </div>
                         <div>
-                            <small class="d-block opacity-75">Privacidade</small>
-                            <strong>LGPD Compliance</strong>
+                            <small class="d-block" style="color: var(--gold-color);">Privacidade</small>
+                            <strong>LGPD</strong>
                         </div>
                     </div>
                     <div class="d-flex align-items-center">
-                        <i class="fas fa-cloud fa-2x me-2"></i>
+                        <div class="feature-icon me-3" style="width: 45px; height: 45px; font-size: 1.1rem;">
+                            <i class="fas fa-cloud"></i>
+                        </div>
                         <div>
-                            <small class="d-block opacity-75">Tecnologia</small>
-                            <strong>Cloud Based</strong>
+                            <small class="d-block" style="color: var(--gold-color);">Tecnologia</small>
+                            <strong>Cloud</strong>
                         </div>
                     </div>
                     <div class="d-flex align-items-center">
-                        <i class="fas fa-universal-access fa-2x me-2"></i>
+                        <div class="feature-icon me-3" style="width: 45px; height: 45px; font-size: 1.1rem;">
+                            <i class="fas fa-universal-access"></i>
+                        </div>
                         <div>
-                            <small class="d-block opacity-75">Acessibilidade</small>
-                            <strong>WCAG 2.1 AA/AAA</strong>
+                            <small class="d-block" style="color: var(--gold-color);">Acessibilidade</small>
+                            <strong>WCAG 2.1</strong>
                         </div>
                     </div>
+                    {% if petition_types %}
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon me-3" style="width: 45px; height: 45px; font-size: 1.1rem;">
+                            <i class="fas fa-file-signature"></i>
+                        </div>
+                        <div>
+                            <small class="d-block" style="color: var(--gold-color);">Petições</small>
+                            <strong>{{ petition_types|length }} Disponíveis</strong>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
-            <div class="col-lg-5 d-none d-lg-block text-center">
+            <div class="col-lg-5 d-none d-lg-block text-center animate-fadeInRight">
                 <img src="{{ url_for('static', filename='img/petitio.png') }}"
                      class="img-fluid petitio-logo" alt="Petitio"
-                     style="max-height: 450px; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));">
+                     style="max-height: 400px; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));">
             </div>
         </div>
     </div>
 </section>
 
+<!-- Petition Types Section - Tipos de Petições Disponíveis -->
+<section class="section petition-types-section scroll-animate" id="peticoes">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="section-title">Petições Disponíveis</h2>
+                <p class="section-subtitle">
+                    Confira os tipos de petições já liberados para uso no sistema. Novos modelos são adicionados constantemente.
+                </p>
+            </div>
+        </div>
+        
+        {% if petition_types %}
+        <div class="row g-4">
+            {% for petition in petition_types %}
+            <div class="col-lg-4 col-md-6 animate-item" style="--item-delay: {{ loop.index0 * 100 }}ms">
+                <div class="petition-type-card">
+                    <div class="petition-type-icon">
+                        <i class="fas {{ petition.icon }}"></i>
+                    </div>
+                    <div class="petition-type-category">
+                        {{ petition.category_label }}
+                    </div>
+                    <h4 class="petition-type-name">{{ petition.name }}</h4>
+                    <p class="petition-type-description">{{ petition.description }}</p>
+                    <div class="petition-type-footer">
+                        <span class="petition-type-badge">
+                            <i class="fas fa-check-circle me-1"></i>Disponível
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-rocket me-2"></i>Começar a Usar Agora
+            </a>
+            <p class="text-muted mt-3">
+                <i class="fas fa-info-circle me-1"></i>
+                Novos tipos de petições são adicionados regularmente
+            </p>
+        </div>
+        {% else %}
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="petition-types-coming-soon">
+                    <div class="coming-soon-icon">
+                        <i class="fas fa-file-signature"></i>
+                    </div>
+                    <h3>Em Breve!</h3>
+                    <p>Estamos preparando diversos modelos de petições para você. Cadastre-se para ser notificado quando estiverem disponíveis.</p>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+                        <i class="fas fa-bell me-2"></i>Quero Ser Notificado
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
 <!-- Features Section -->
-<section class="section bg-light" id="recursos">
+<section class="section bg-light scroll-animate" id="recursos">
     <div class="container">
         <div class="row text-center mb-5">
             <div class="col-lg-8 mx-auto">
@@ -77,7 +158,7 @@
             </div>
         </div>
         <div class="row g-4">
-            <div class="col-md-6 col-lg-3">
+            <div class="col-md-6 col-lg-3 animate-item">
                 <div class="dashboard-card h-100">
                     <div class="card-icon bg-primary">
                         <i class="fas fa-briefcase"></i>
@@ -86,7 +167,7 @@
                     <p class="text-muted mb-0">Cadastre clientes, acompanhe históricos e organize documentos em um só lugar.</p>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-3">
+            <div class="col-md-6 col-lg-3 animate-item">
                 <div class="dashboard-card h-100">
                     <div class="card-icon bg-success">
                         <i class="fas fa-file-signature"></i>
@@ -95,7 +176,7 @@
                     <p class="text-muted mb-0">Modelos prontos e automações que aceleram a criação de petições.</p>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-3">
+            <div class="col-md-6 col-lg-3 animate-item">
                 <div class="dashboard-card h-100">
                     <div class="card-icon bg-warning">
                         <i class="fas fa-chart-line"></i>
@@ -104,7 +185,7 @@
                     <p class="text-muted mb-0">Indicadores claros de produtividade, faturamento e volume de processos.</p>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-3">
+            <div class="col-md-6 col-lg-3 animate-item">
                 <div class="dashboard-card h-100">
                     <div class="card-icon bg-info">
                         <i class="fas fa-lock"></i>
@@ -118,7 +199,7 @@
 </section>
 
 <!-- Accessibility Section -->
-<section class="section" id="acessibilidade" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; overflow: hidden;">
+<section class="section scroll-animate" id="acessibilidade" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; overflow: hidden;">
     <div class="container position-relative" style="z-index: 2;">
         <div class="row align-items-center text-white">
             <div class="col-lg-6 mb-4 mb-lg-0">
@@ -200,7 +281,7 @@
 </section>
 
 <!-- Pricing Section -->
-<section class="section" id="planos">
+<section class="section scroll-animate" id="planos">
     <div class="container">
         <div class="row text-center mb-5">
             <div class="col-lg-8 mx-auto">
@@ -255,12 +336,192 @@
     </div>
 </section>
 
+<!-- Testimonials Section - Depoimentos de Clientes -->
+<section class="section testimonials-section scroll-animate" id="depoimentos">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="section-title">O Que Nossos Clientes Dizem</h2>
+                <p class="section-subtitle">
+                    Histórias reais de advogados que transformaram seus escritórios com o Petitio.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Testimonial 1 -->
+            <div class="col-lg-4 col-md-6 animate-item">
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">
+                        <i class="fas fa-quote-left"></i>
+                    </div>
+                    <p class="testimonial-text">
+                        "O Petitio revolucionou a gestão do meu escritório. Reduzi em 70% o tempo gasto com documentação e agora posso focar no que realmente importa: atender meus clientes."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">
+                            <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face" alt="Dr. Ricardo Mendes">
+                        </div>
+                        <div class="testimonial-info">
+                            <h5>Dr. Ricardo Mendes</h5>
+                            <p>Advogado Tributarista</p>
+                            <div class="testimonial-stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Testimonial 2 -->
+            <div class="col-lg-4 col-md-6 animate-item">
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">
+                        <i class="fas fa-quote-left"></i>
+                    </div>
+                    <p class="testimonial-text">
+                        "A organização que o sistema proporciona é incrível. Tenho controle total sobre prazos, processos e finanças. Recomendo para todos os colegas da área."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">
+                            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face" alt="Dra. Camila Santos">
+                        </div>
+                        <div class="testimonial-info">
+                            <h5>Dra. Camila Santos</h5>
+                            <p>Advogada Trabalhista</p>
+                            <div class="testimonial-stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Testimonial 3 -->
+            <div class="col-lg-4 col-md-6 animate-item">
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">
+                        <i class="fas fa-quote-left"></i>
+                    </div>
+                    <p class="testimonial-text">
+                        "Excelente suporte e interface intuitiva. Mesmo não sendo muito familiarizado com tecnologia, consegui me adaptar rapidamente. O sistema é perfeito!"
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">
+                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" alt="Dr. Fernando Costa">
+                        </div>
+                        <div class="testimonial-info">
+                            <h5>Dr. Fernando Costa</h5>
+                            <p>Advogado Cível</p>
+                            <div class="testimonial-stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- More Testimonials Row -->
+        <div class="row g-4 mt-2">
+            <!-- Testimonial 4 -->
+            <div class="col-lg-6 animate-item">
+                <div class="testimonial-card testimonial-card-horizontal">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center">
+                            <div class="testimonial-avatar-large">
+                                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face" alt="Dra. Juliana Oliveira">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="testimonial-quote">
+                                <i class="fas fa-quote-left"></i>
+                            </div>
+                            <p class="testimonial-text">
+                                "Minha equipe de 5 advogados usa o Petitio diariamente. A colaboração ficou muito mais fácil e a produtividade aumentou significativamente."
+                            </p>
+                            <div class="testimonial-info">
+                                <h5>Dra. Juliana Oliveira</h5>
+                                <p>Sócia - Oliveira & Associados</p>
+                                <div class="testimonial-stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Testimonial 5 -->
+            <div class="col-lg-6 animate-item">
+                <div class="testimonial-card testimonial-card-horizontal">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center">
+                            <div class="testimonial-avatar-large">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face" alt="Dr. André Machado">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="testimonial-quote">
+                                <i class="fas fa-quote-left"></i>
+                            </div>
+                            <p class="testimonial-text">
+                                "O peticionador inteligente economiza horas do meu dia. A qualidade dos modelos e a facilidade de personalização são impressionantes."
+                            </p>
+                            <div class="testimonial-info">
+                                <h5>Dr. André Machado</h5>
+                                <p>Advogado Criminalista</p>
+                                <div class="testimonial-stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Why Choose Us Section -->
 <section class="section bg-light">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6 mb-4 mb-lg-0">
-                <h2 class="section-title">Por Que Escolher o Petitio?</h2>
+                <!-- Image of happy lawyer -->
+                <div class="lawyer-image-container">
+                    <img src="https://images.unsplash.com/photo-1521791055366-0d553872125f?w=600&h=700&fit=crop" 
+                         alt="Advogado satisfeito usando o Petitio" 
+                         class="lawyer-image">
+                    <div class="lawyer-image-badge">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <span>+500 Advogados Satisfeitos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <h2 class="section-title text-start">Por Que Escolher o Petitio?</h2>
                 <p class="lead mb-4">
                     Desenvolvido especificamente para advogados que buscam excelência e eficiência.
                 </p>
@@ -315,45 +576,44 @@
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-6">
-                <div class="row g-3">
-                    <div class="col-6">
-                        <div class="dashboard-card text-center">
-                            <div class="card-icon bg-primary">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <h4 class="mb-0">500+</h4>
-                            <p class="text-muted mb-0">Clientes Atendidos</p>
-                        </div>
+        </div>
+        
+        <!-- Stats Row -->
+        <div class="row g-3 mt-5">
+            <div class="col-6 col-lg-3">
+                <div class="dashboard-card text-center">
+                    <div class="card-icon bg-primary">
+                        <i class="fas fa-users"></i>
                     </div>
-                    <div class="col-6">
-                        <div class="dashboard-card text-center">
-                            <div class="card-icon bg-success">
-                                <i class="fas fa-file-alt"></i>
-                            </div>
-                            <h4 class="mb-0">2.000+</h4>
-                            <p class="text-muted mb-0">Documentos Gerados</p>
-                        </div>
+                    <h4 class="mb-0">500+</h4>
+                    <p class="text-muted mb-0">Clientes Atendidos</p>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="dashboard-card text-center">
+                    <div class="card-icon bg-success">
+                        <i class="fas fa-file-alt"></i>
                     </div>
-                    <div class="col-6">
-                        <div class="dashboard-card text-center">
-                            <div class="card-icon bg-warning">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <h4 class="mb-0">80%</h4>
-                            <p class="text-muted mb-0">Economia de Tempo</p>
-                        </div>
+                    <h4 class="mb-0">2.000+</h4>
+                    <p class="text-muted mb-0">Documentos Gerados</p>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="dashboard-card text-center">
+                    <div class="card-icon bg-warning">
+                        <i class="fas fa-clock"></i>
                     </div>
-                    <div class="col-6">
-                        <div class="dashboard-card text-center">
-                            <div class="card-icon bg-info">
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <h4 class="mb-0">4.9/5</h4>
-                            <p class="text-muted mb-0">Satisfação</p>
-                        </div>
+                    <h4 class="mb-0">80%</h4>
+                    <p class="text-muted mb-0">Economia de Tempo</p>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="dashboard-card text-center">
+                    <div class="card-icon bg-info">
+                        <i class="fas fa-star"></i>
                     </div>
+                    <h4 class="mb-0">4.9/5</h4>
+                    <p class="text-muted mb-0">Satisfação</p>
                 </div>
             </div>
         </div>

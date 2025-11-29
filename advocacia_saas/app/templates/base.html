@@ -6,6 +6,11 @@
     <meta name="description" content="Petitio - Sistema de Gestão para Advogados">
     <title>{% if title %}{{ title }} - {% endif %}Petitio</title>
     
+    <!-- Google Fonts - Modern Professional Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -260,6 +265,85 @@
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <!-- Accessibility JS -->
     <script src="{{ url_for('static', filename='js/accessibility.js') }}?v={{ range(1, 10000) | random }}"></script>
+    
+    <!-- Scroll Reveal Animations -->
+    <script>
+        (function() {
+            // Função principal de animação
+            function initScrollAnimations() {
+                var sections = document.querySelectorAll('.scroll-animate');
+                var items = document.querySelectorAll('.animate-item');
+                
+                // Função para verificar se elemento está visível na tela
+                function isElementInViewport(el, offset) {
+                    var rect = el.getBoundingClientRect();
+                    var windowHeight = window.innerHeight || document.documentElement.clientHeight;
+                    offset = offset || 100;
+                    return (rect.top <= windowHeight - offset);
+                }
+                
+                // Função para animar seções
+                function animateSections() {
+                    sections.forEach(function(section) {
+                        if (isElementInViewport(section, 80) && !section.classList.contains('animate-visible')) {
+                            section.classList.add('animate-visible');
+                            
+                            // Anima os items filhos com delay
+                            var childItems = section.querySelectorAll('.animate-item');
+                            childItems.forEach(function(item, index) {
+                                setTimeout(function() {
+                                    item.classList.add('item-visible');
+                                }, index * 150);
+                            });
+                        }
+                    });
+                }
+                
+                // Executa na carga e no scroll
+                animateSections();
+                
+                var scrollTimer;
+                window.addEventListener('scroll', function() {
+                    if (scrollTimer) clearTimeout(scrollTimer);
+                    scrollTimer = setTimeout(animateSections, 10);
+                });
+                
+                // Parallax no Hero
+                var hero = document.querySelector('.hero-section');
+                if (hero) {
+                    window.addEventListener('scroll', function() {
+                        var scrolled = window.pageYOffset;
+                        var heroContent = hero.querySelector('.hero-content');
+                        if (heroContent && scrolled < window.innerHeight) {
+                            heroContent.style.transform = 'translateY(' + (scrolled * 0.4) + 'px)';
+                            heroContent.style.opacity = Math.max(0, 1 - (scrolled / 600));
+                        }
+                    });
+                }
+                
+                // Smooth scroll para links âncora
+                document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+                    anchor.addEventListener('click', function(e) {
+                        var href = this.getAttribute('href');
+                        if (href && href !== '#' && href.length > 1) {
+                            var target = document.querySelector(href);
+                            if (target) {
+                                e.preventDefault();
+                                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // Inicia quando DOM estiver pronto
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initScrollAnimations);
+            } else {
+                initScrollAnimations();
+            }
+        })();
+    </script>
     
     {% block scripts %}{% endblock %}
 </body>

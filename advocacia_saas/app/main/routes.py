@@ -8,14 +8,44 @@ from app import db
 from app.billing.decorators import subscription_required
 from app.billing.utils import current_billing_cycle
 from app.main import bp
-from app.models import BillingPlan, Client, PetitionUsage
+from app.models import BillingPlan, Client, PetitionType, PetitionUsage
 from app.quick_actions import build_dashboard_actions
+
+
+# Ícones para categorias de petições
+CATEGORY_ICONS = {
+    "civel": "fa-balance-scale",
+    "trabalhista": "fa-briefcase",
+    "criminal": "fa-gavel",
+    "previdenciario": "fa-user-shield",
+    "tributario": "fa-file-invoice-dollar",
+    "consumidor": "fa-shopping-cart",
+    "familia": "fa-users",
+    "administrativo": "fa-building",
+}
+
+CATEGORY_LABELS = {
+    "civel": "Cível",
+    "trabalhista": "Trabalhista",
+    "criminal": "Criminal",
+    "previdenciario": "Previdenciário",
+    "tributario": "Tributário",
+    "consumidor": "Consumidor",
+    "familia": "Família",
+    "administrativo": "Administrativo",
+}
 
 
 @bp.route("/")
 def index():
     plans = _get_public_plans()
-    return render_template("index.html", title="Petitio", pricing_plans=plans)
+    petition_types = _get_implemented_petition_types()
+    return render_template(
+        "index.html",
+        title="Petitio",
+        pricing_plans=plans,
+        petition_types=petition_types,
+    )
 
 
 @bp.route("/dashboard")
@@ -218,3 +248,26 @@ def _current_cycle_label(cycle=None):
     year, month = cycle.split("-")
     month_label = MONTH_LABELS.get(month, month)
     return f"{month_label}/{year}"
+
+
+def _get_implemented_petition_types():
+    """Retorna os tipos de petição implementados para exibição pública."""
+    types = (
+        PetitionType.query.filter_by(is_implemented=True, active=True)
+        .order_by(PetitionType.category, PetitionType.name)
+        .all()
+    )
+    result = []
+    for pt in types:
+        result.append(
+            {
+                "id": pt.id,
+                "name": pt.name,
+                "description": pt.description or "Petição disponível para uso.",
+                "category": pt.category,
+                "category_label": CATEGORY_LABELS.get(pt.category, pt.category.title()),
+                "icon": CATEGORY_ICONS.get(pt.category, "fa-file-alt"),
+                "price": _format_currency(pt.base_price) if pt.is_billable else "Gratuito",
+            }
+        )
+    return result
