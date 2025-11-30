@@ -29,8 +29,21 @@
         background: #ffc107;
         color: #000;
     }
-    .tox-tinymce {
-        border-radius: 4px !important;
+    .ql-container {
+        border-radius: 0 0 4px 4px !important;
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+    }
+    .ql-toolbar {
+        border-radius: 4px 4px 0 0 !important;
+        background: #f8f9fa;
+    }
+    .ql-editor {
+        min-height: 400px;
+        line-height: 1.5;
+    }
+    .ql-editor-small .ql-editor {
+        min-height: 150px;
     }
 </style>
 {% endblock %}
@@ -53,9 +66,9 @@
             <h1 class="h3 mb-1"><i class="{{ icon_class }}"></i> {{ page_title or 'Editar modelo' }}</h1>
             <p class="text-muted mb-0">{{ subtitle_text }}</p>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{{ back_href }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Voltar
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <a href="{{ back_href }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
             </a>
         </div>
     </div>
@@ -99,8 +112,9 @@
                         
                         <div class="mb-3">
                             {{ form.content.label(class_='form-label') }}
-                            {{ form.content(class_='form-control', id='template-content-editor') }}
-                            <small class="text-muted">Use o editor acima para formatar o texto e inserir variáveis. <a href="{{ url_for('petitions.template_examples') }}" class="text-decoration-underline">Ver exemplos</a>.</small>
+                            <div id="template-content-editor-container"></div>
+                            {{ form.content(class_='form-control d-none', id='template-content-editor') }}
+                            <small class="text-muted">Use o editor acima para formatar o texto. Clique nas variáveis acima para copiá-las e cole no editor. <a href="{{ url_for('petitions.template_examples') }}" class="text-decoration-underline">Ver exemplos</a>.</small>
                         </div>
                         
                         <hr class="my-4">
@@ -152,6 +166,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const categorySelect = document.getElementById('category');
     let currentCategory = categorySelect ? categorySelect.value : 'civel';
     
+    // Armazena referências aos editores Quill
+    let contentEditor = null;
+    let factsEditor = null;
+    let fundamentosEditor = null;
+    let pedidosEditor = null;
+    
     // Função para obter variáveis baseado na categoria
     function getVariablesForCategory(category) {
         if (category === 'familia') {
@@ -194,104 +214,112 @@ document.addEventListener('DOMContentLoaded', function() {
         categorySelect.addEventListener('change', function() {
             currentCategory = this.value;
             renderVariablesList(currentCategory);
-            
-            // Reinicializa o editor principal com as novas variáveis
-            if (tinymce.get('template-content-editor')) {
-                const content = tinymce.get('template-content-editor').getContent();
-                tinymce.get('template-content-editor').remove();
-                initMainEditor(currentCategory).then(function() {
-                    tinymce.get('template-content-editor').setContent(content);
-                });
-            }
         });
     }
+    
+    // Configuração da toolbar do Quill
+    const toolbarOptions = [
+        [{ 'header': [1, 2, 3, 4, false] }],
+        [{ 'font': [] }],
+        [{ 'size': ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'align': [] }],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],
+        ['blockquote'],
+        ['clean']
+    ];
+    
+    const simpleToolbarOptions = [
+        ['bold', 'italic', 'underline'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['clean']
+    ];
     
     // Inicializa o editor principal de conteúdo
-    function initMainEditor(category) {
-        const variables = getVariablesForCategory(category);
-        return tinymce.init({
-            selector: '#template-content-editor',
-            height: 500,
-            language: 'pt_BR',
-            plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'table', 'wordcount', 'help'
-            ],
-            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | removeformat | variableinsert | code fullscreen | help',
-            menubar: 'file edit view insert format tools table help',
-            content_style: `
-                body { 
-                    font-family: 'Times New Roman', Times, serif; 
-                    font-size: 12pt; 
-                    line-height: 1.5;
-                    margin: 1cm;
-                }
-                p { margin: 0 0 12pt 0; }
-                .jinja-variable {
-                    background-color: #fff3cd;
-                    border: 1px solid #ffc107;
-                    border-radius: 3px;
-                    padding: 2px 4px;
-                    font-family: monospace;
-                    font-size: 11pt;
-                }
-            `,
-            font_family_formats: 'Arial=arial,helvetica,sans-serif; Times New Roman=times new roman,times,serif; Courier New=courier new,courier,monospace; Georgia=georgia,palatino,serif; Verdana=verdana,geneva,sans-serif',
-            font_size_formats: '8pt 10pt 11pt 12pt 14pt 16pt 18pt 24pt 36pt',
-            block_formats: 'Parágrafo=p; Cabeçalho 1=h1; Cabeçalho 2=h2; Cabeçalho 3=h3; Cabeçalho 4=h4',
-            branding: false,
-            promotion: false,
-            setup: function(editor) {
-                editor.ui.registry.addMenuButton('variableinsert', {
-                    text: 'Inserir Campo',
-                    icon: 'template',
-                    tooltip: 'Inserir variável do formulário',
-                    fetch: function(callback) {
-                        const items = variables.map(function(variable) {
-                            return {
-                                type: 'menuitem',
-                                text: variable.text,
-                                onAction: function() {
-                                    editor.insertContent('<span class="jinja-variable">' + variable.value + '</span>&nbsp;');
-                                }
-                            };
-                        });
-                        callback(items);
-                    }
-                });
+    const contentEditorContainer = document.getElementById('template-content-editor-container');
+    const contentHidden = document.getElementById('template-content-editor');
+    
+    if (contentEditorContainer) {
+        contentEditor = new Quill(contentEditorContainer, {
+            theme: 'snow',
+            modules: {
+                toolbar: toolbarOptions
             },
-            init_instance_callback: function(editor) {
-                editor.on('GetContent', function(e) {
-                    e.content = e.content.replace(/<span class="jinja-variable">(.*?)<\/span>/g, '$1');
-                });
+            placeholder: 'Digite o conteúdo do modelo de petição...'
+        });
+        
+        // Carrega conteúdo existente
+        if (contentHidden && contentHidden.value) {
+            contentEditor.clipboard.dangerouslyPasteHTML(contentHidden.value);
+        }
+        
+        // Sincroniza com o campo hidden
+        contentEditor.on('text-change', function() {
+            if (contentHidden) {
+                contentHidden.value = contentEditor.root.innerHTML;
             }
         });
     }
     
-    // Inicializa editor principal
-    initMainEditor(currentCategory);
-    
     // Inicializa editores de textos padrão (mais simples)
-    tinymce.init({
-        selector: '#default-facts-editor, #default-fundamentos-editor, #default-pedidos-editor',
-        height: 200,
-        language: 'pt_BR',
-        plugins: ['advlist', 'autolink', 'lists', 'wordcount'],
-        toolbar: 'undo redo | bold italic underline | bullist numlist | removeformat',
-        menubar: false,
-        content_style: `
-            body { 
-                font-family: 'Times New Roman', Times, serif; 
-                font-size: 12pt; 
-                line-height: 1.5;
-                margin: 0.5cm;
+    const factsHidden = document.getElementById('default-facts-editor');
+    const fundamentosHidden = document.getElementById('default-fundamentos-editor');
+    const pedidosHidden = document.getElementById('default-pedidos-editor');
+    
+    // Cria containers para os editores
+    function createEditorContainer(hiddenField) {
+        if (!hiddenField) return null;
+        
+        const container = document.createElement('div');
+        container.className = 'ql-editor-small';
+        hiddenField.parentNode.insertBefore(container, hiddenField);
+        hiddenField.classList.add('d-none');
+        
+        const editor = new Quill(container, {
+            theme: 'snow',
+            modules: {
+                toolbar: simpleToolbarOptions
+            },
+            placeholder: 'Digite o texto padrão...'
+        });
+        
+        // Carrega conteúdo existente
+        if (hiddenField.value) {
+            editor.clipboard.dangerouslyPasteHTML(hiddenField.value);
+        }
+        
+        // Sincroniza com o campo hidden
+        editor.on('text-change', function() {
+            hiddenField.value = editor.root.innerHTML;
+        });
+        
+        return editor;
+    }
+    
+    factsEditor = createEditorContainer(factsHidden);
+    fundamentosEditor = createEditorContainer(fundamentosHidden);
+    pedidosEditor = createEditorContainer(pedidosHidden);
+    
+    // Sincroniza os editores antes do envio do formulário
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            if (contentEditor && contentHidden) {
+                contentHidden.value = contentEditor.root.innerHTML;
             }
-            p { margin: 0 0 8pt 0; }
-        `,
-        branding: false,
-        promotion: false
-    });
+            if (factsEditor && factsHidden) {
+                factsHidden.value = factsEditor.root.innerHTML;
+            }
+            if (fundamentosEditor && fundamentosHidden) {
+                fundamentosHidden.value = fundamentosEditor.root.innerHTML;
+            }
+            if (pedidosEditor && pedidosHidden) {
+                pedidosHidden.value = pedidosEditor.root.innerHTML;
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

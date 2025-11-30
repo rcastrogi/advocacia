@@ -10,7 +10,7 @@ from app.models import BillingPlan, PetitionType, PetitionUsage
 DEFAULT_PETITION_TYPES = (
     {
         "slug": "peticao-inicial-civel",
-        "name": "Petição Inicial Cível",
+        "name": "Petição Cível",
         "category": "civel",
         "description": "Modelo genérico para demandas cíveis de baixa complexidade.",
         "base_price": Decimal("20.00"),

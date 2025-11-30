@@ -514,3 +514,38 @@ class Payment(db.Model):
 
     def __repr__(self):
         return f"<Payment invoice={self.invoice_id} amount={self.amount} status={self.payment_status}>"
+
+
+class Testimonial(db.Model):
+    """Depoimentos de usuários para exibição na página inicial."""
+    __tablename__ = "testimonials"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    rating = db.Column(db.Integer, default=5)  # 1-5 stars
+    
+    # Campos para exibição (podem ser diferentes do perfil do usuário)
+    display_name = db.Column(db.String(200), nullable=False)
+    display_role = db.Column(db.String(100))  # Ex: "Advogado", "Sócio do Escritório XYZ"
+    display_location = db.Column(db.String(100))  # Ex: "São Paulo, SP"
+    
+    # Status de moderação
+    status = db.Column(db.String(20), default="pending")  # pending, approved, rejected
+    moderated_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    moderated_at = db.Column(db.DateTime, nullable=True)
+    rejection_reason = db.Column(db.Text, nullable=True)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Destaque na página inicial
+    is_featured = db.Column(db.Boolean, default=False)
+    
+    # Relationships
+    user = db.relationship("User", foreign_keys=[user_id], backref="testimonials")
+    moderator = db.relationship("User", foreign_keys=[moderated_by])
+
+    def __repr__(self):
+        return f"<Testimonial id={self.id} by={self.display_name} status={self.status}>"

@@ -203,7 +203,7 @@
                     {% if quick_actions %}
                         {% for action in quick_actions %}
                             <a href="{{ action.url }}" class="{{ action.button_class }}{% if action.disabled %} disabled{% endif %}" {% if action.disabled %}aria-disabled="true"{% endif %}>
-                                <i class="{{ action.icon }} me-2"></i>{{ action.label }}
+                                <i class="{{ action.icon }} me-1"></i>{{ action.label }}
                             </a>
                         {% endfor %}
                     {% else %}

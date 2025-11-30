@@ -20,9 +20,150 @@
     <!-- Accessibility CSS -->
     <link href="{{ url_for('static', filename='css/accessibility.css') }}?v={{ range(1, 10000) | random }}" rel="stylesheet">
     
+    <!-- HTMX + Alpine.js Styles -->
+    <style>
+        /* Loading indicator for HTMX */
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+        }
+        .htmx-request.htmx-indicator {
+            display: inline-block;
+        }
+        
+        /* Fade transitions */
+        .htmx-swapping {
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+        }
+        .htmx-settling {
+            opacity: 1;
+            transition: opacity 0.2s ease-in;
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+        .toast-notification {
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+            cursor: pointer;
+        }
+        .toast-notification.success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        .toast-notification.error {
+            background: linear-gradient(135deg, #dc3545, #e74c3c);
+            color: white;
+        }
+        .toast-notification.warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: #000;
+        }
+        .toast-notification.info {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        .toast-notification.hiding {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Auto-save indicator */
+        .autosave-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        .autosave-indicator.saving {
+            background: #ffc107;
+            color: #000;
+        }
+        .autosave-indicator.saved {
+            background: #28a745;
+            color: white;
+        }
+        .autosave-indicator.error {
+            background: #dc3545;
+            color: white;
+        }
+        
+        /* Skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 4px;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Alpine cloak - hide elements until Alpine loads */
+        [x-cloak] { display: none !important; }
+    </style>
+    
     {% block styles %}{% endblock %}
 </head>
-<body>
+<body x-data="petitioApp()" @keydown.escape="closeModals()" class="{% block body_class %}{% if current_user.is_authenticated %}page-gray-bg{% endif %}{% endblock %}">
     <!-- Skip Link para Acessibilidade -->
     <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
     
@@ -167,6 +308,9 @@
                             <li><a class="dropdown-item" href="{{ url_for('billing.users') }}">
                                 <i class="fas fa-users-cog"></i> Usuários & planos
                             </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.admin_testimonials') }}">
+                                <i class="fas fa-comments"></i> Depoimentos
+                            </a></li>
                             {% endif %}
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
@@ -198,6 +342,39 @@
     <main id="main-content" role="main" tabindex="-1">
         {% block content %}{% endblock %}
     </main>
+    
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toastContainer" x-ref="toastContainer">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div :class="'toast-notification ' + toast.type + (toast.hiding ? ' hiding' : '')"
+                 @click="removeToast(toast.id)"
+                 x-transition>
+                <i :class="toast.icon" aria-hidden="true"></i>
+                <span x-text="toast.message"></span>
+            </div>
+        </template>
+    </div>
+    
+    <!-- Auto-save Indicator -->
+    <div x-show="autosaveStatus" 
+         x-cloak
+         :class="'autosave-indicator ' + autosaveStatus"
+         x-transition>
+        <template x-if="autosaveStatus === 'saving'">
+            <span><i class="fas fa-spinner fa-spin"></i> Salvando...</span>
+        </template>
+        <template x-if="autosaveStatus === 'saved'">
+            <span><i class="fas fa-check"></i> Salvo</span>
+        </template>
+        <template x-if="autosaveStatus === 'error'">
+            <span><i class="fas fa-exclamation-triangle"></i> Erro ao salvar</span>
+        </template>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" x-show="isLoading" x-cloak x-transition.opacity>
+        <div class="loading-spinner"></div>
+    </div>
 
     <!-- Footer -->
     {% if not current_user.is_authenticated %}
@@ -259,12 +436,206 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- TinyMCE CDN (versão gratuita) -->
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
-    <!-- TinyMCE Config -->
-    <script src="{{ url_for('static', filename='js/tinymce-config.js') }}?v={{ range(1, 10000) | random }}"></script>
+    
+    <!-- HTMX - Interatividade sem JavaScript complexo -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/loading-states.js"></script>
+    
+    <!-- Alpine.js - Reatividade leve -->
+    <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    
+    <!-- Quill Editor - 100% gratuito e open-source -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    
+    <!-- Petitio App - Alpine.js Global Store -->
+    <script>
+        // Global Alpine.js App Data
+        function petitioApp() {
+            return {
+                // Toast notifications
+                toasts: [],
+                toastId: 0,
+                
+                // Loading state
+                isLoading: false,
+                
+                // Auto-save
+                autosaveStatus: null,
+                autosaveTimeout: null,
+                
+                // Modals
+                activeModal: null,
+                
+                // Initialize
+                init() {
+                    // Listen for HTMX events
+                    document.body.addEventListener('htmx:beforeRequest', () => {
+                        this.isLoading = true;
+                    });
+                    document.body.addEventListener('htmx:afterRequest', () => {
+                        this.isLoading = false;
+                    });
+                    document.body.addEventListener('htmx:responseError', (e) => {
+                        this.showToast('Erro ao processar requisição', 'error');
+                        this.isLoading = false;
+                    });
+                    
+                    // Custom event for toasts from server
+                    document.body.addEventListener('showToast', (e) => {
+                        this.showToast(e.detail.message, e.detail.type || 'info');
+                    });
+                    
+                    // Listen for HX-Trigger header with toast
+                    document.body.addEventListener('htmx:afterSwap', (e) => {
+                        const trigger = e.detail.xhr?.getResponseHeader('HX-Trigger');
+                        if (trigger) {
+                            try {
+                                const data = JSON.parse(trigger);
+                                if (data.showToast) {
+                                    this.showToast(data.showToast.message, data.showToast.type);
+                                }
+                            } catch {}
+                        }
+                        // Re-initialize Quill editors after HTMX swap
+                        if (typeof PetitioEditor !== 'undefined') {
+                            PetitioEditor.autoInitEditors();
+                        }
+                    });
+                },
+                
+                // Show toast notification
+                showToast(message, type = 'info', duration = 4000) {
+                    const icons = {
+                        success: 'fas fa-check-circle',
+                        error: 'fas fa-exclamation-circle',
+                        warning: 'fas fa-exclamation-triangle',
+                        info: 'fas fa-info-circle'
+                    };
+                    
+                    const toast = {
+                        id: ++this.toastId,
+                        message,
+                        type,
+                        icon: icons[type] || icons.info,
+                        hiding: false
+                    };
+                    
+                    this.toasts.push(toast);
+                    
+                    // Auto remove after duration
+                    setTimeout(() => this.removeToast(toast.id), duration);
+                },
+                
+                // Remove toast
+                removeToast(id) {
+                    const toast = this.toasts.find(t => t.id === id);
+                    if (toast) {
+                        toast.hiding = true;
+                        setTimeout(() => {
+                            this.toasts = this.toasts.filter(t => t.id !== id);
+                        }, 300);
+                    }
+                },
+                
+                // Auto-save functionality
+                triggerAutosave(formId, url) {
+                    if (this.autosaveTimeout) {
+                        clearTimeout(this.autosaveTimeout);
+                    }
+                    
+                    this.autosaveTimeout = setTimeout(async () => {
+                        this.autosaveStatus = 'saving';
+                        
+                        try {
+                            const form = document.getElementById(formId);
+                            const formData = new FormData(form);
+                            
+                        // Sync Quill content to textareas
+                        document.querySelectorAll('.petition-editor').forEach(ta => {
+                            if (ta._quill) {
+                                ta.value = ta._quill.root.innerHTML;
+                            }
+                        });                            const response = await fetch(url, {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'HX-Request': 'true'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                this.autosaveStatus = 'saved';
+                            } else {
+                                this.autosaveStatus = 'error';
+                            }
+                        } catch (error) {
+                            this.autosaveStatus = 'error';
+                        }
+                        
+                        // Hide indicator after 2 seconds
+                        setTimeout(() => {
+                            this.autosaveStatus = null;
+                        }, 2000);
+                    }, 2000);
+                },
+                
+                // Close all modals
+                closeModals() {
+                    this.activeModal = null;
+                    // Also close Bootstrap modals
+                    document.querySelectorAll('.modal.show').forEach(modal => {
+                        bootstrap.Modal.getInstance(modal)?.hide();
+                    });
+                },
+                
+                // Confirm dialog
+                async confirm(message, title = 'Confirmar') {
+                    return new Promise((resolve) => {
+                        if (window.confirm(message)) {
+                            resolve(true);
+                        } else {
+                            resolve(false);
+                        }
+                    });
+                }
+            };
+        }
+        
+        // HTMX Configuration
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configure HTMX
+            htmx.config.defaultSwapStyle = 'innerHTML';
+            htmx.config.defaultSettleDelay = 100;
+            htmx.config.includeIndicatorStyles = false;
+            
+            // Add CSRF token to all HTMX requests
+            document.body.addEventListener('htmx:configRequest', function(e) {
+                const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+                if (csrfToken) {
+                    e.detail.headers['X-CSRFToken'] = csrfToken;
+                }
+            });
+            
+            // Re-initialize Quill after HTMX swaps
+            document.body.addEventListener('htmx:afterSettle', function(e) {
+                if (typeof PetitioEditor !== 'undefined' && e.target.querySelector('.petition-editor')) {
+                    PetitioEditor.autoInitEditors();
+                }
+            });
+        });
+        
+        // Global showToast function for use in Alpine components
+        window.showToast = function(message, type) {
+            const event = new CustomEvent('showToast', {
+                detail: { message, type }
+            });
+            document.body.dispatchEvent(event);
+        };
+    </script>
+    
+    <!-- Quill Editor Config -->
+    <script src="{{ url_for('static', filename='js/quill-config.js') }}?v={{ range(1, 10000) | random }}"></script>
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <!-- Accessibility JS -->

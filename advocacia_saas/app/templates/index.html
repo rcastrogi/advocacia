@@ -1,8 +1,52 @@
 ﻿{% extends "base.html" %}
 
 {% block content %}
+<!-- Navigation Menu for Landing Page -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="landingNav" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); transition: all 0.3s ease;">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
+            <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}" 
+                 alt="Petitio" height="36" class="me-2">
+            <span>Petitio</span>
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#landingNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="landingNavbar">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#peticoes">Petições</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#recursos">Recursos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#acessibilidade">Acessibilidade</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#planos">Planos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#depoimentos">Depoimentos</a>
+                </li>
+            </ul>
+            
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-light d-flex align-items-center">
+                    <i class="fas fa-sign-in-alt me-1"></i> Entrar
+                </a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-warning d-flex align-items-center">
+                    <i class="fas fa-rocket me-1"></i> Começar
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
 <!-- Hero Section - Counsel Law Professional Style -->
-<section class="hero-section text-white">
+<section class="hero-section text-white" style="padding-top: 80px;">
     <div class="container hero-content">
         <div class="row align-items-center">
             <div class="col-lg-7">
@@ -76,11 +120,12 @@
             </div>
             <div class="col-lg-5 d-none d-lg-block text-center animate-fadeInRight">
                 <div class="hero-image-container" style="position: relative;">
-                    <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                         class="img-fluid hero-image" alt="Advogados utilizando o sistema Petitio"
-                         style="border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.4); border: 3px solid var(--gold-color);">
+                    <!-- Logo Petitio com T's como balança -->
+                    <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}"
+                         class="img-fluid hero-logo" alt="Petitio - Software Jurídico"
+                         style="max-width: 320px; filter: drop-shadow(0 25px 50px rgba(0,0,0,0.4));">
                     <!-- Badge flutuante -->
-                    <div style="position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); 
+                    <div style="position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); 
                                 background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); 
                                 padding: 12px 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
                                 border: 2px solid var(--gold-color);">
@@ -360,157 +405,136 @@
         </div>
         
         <div class="row g-4">
-            <!-- Testimonial 1 -->
-            <div class="col-lg-4 col-md-6 animate-item">
-                <div class="testimonial-card">
-                    <div class="testimonial-quote">
-                        <i class="fas fa-quote-left"></i>
-                    </div>
-                    <p class="testimonial-text">
-                        "O Petitio revolucionou a gestão do meu escritório. Reduzi em 70% o tempo gasto com documentação e agora posso focar no que realmente importa: atender meus clientes."
-                    </p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-avatar">
-                            <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face" alt="Dr. Ricardo Mendes">
+            {% if testimonials %}
+                {# Depoimentos reais do banco de dados #}
+                {% for t in testimonials %}
+                <div class="col-lg-4 col-md-6 animate-item">
+                    <div class="testimonial-card">
+                        <div class="testimonial-quote">
+                            <i class="fas fa-quote-left"></i>
                         </div>
-                        <div class="testimonial-info">
-                            <h5>Dr. Ricardo Mendes</h5>
-                            <p>Advogado Tributarista</p>
-                            <div class="testimonial-stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
+                        <p class="testimonial-text">
+                            "{{ t.content }}"
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar bg-primary text-white d-flex align-items-center justify-content-center" 
+                                 style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                {{ t.display_name[0]|upper }}
+                            </div>
+                            <div class="testimonial-info">
+                                <h5>{{ t.display_name }}</h5>
+                                <p>{{ t.display_role or 'Advogado(a)' }}{% if t.display_location %} · {{ t.display_location }}{% endif %}</p>
+                                <div class="testimonial-stars">
+                                    {% for i in range(t.rating) %}
+                                    <i class="fas fa-star"></i>
+                                    {% endfor %}
+                                    {% for i in range(5 - t.rating) %}
+                                    <i class="far fa-star" style="opacity: 0.3;"></i>
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Testimonial 2 -->
-            <div class="col-lg-4 col-md-6 animate-item">
-                <div class="testimonial-card">
-                    <div class="testimonial-quote">
-                        <i class="fas fa-quote-left"></i>
-                    </div>
-                    <p class="testimonial-text">
-                        "A organização que o sistema proporciona é incrível. Tenho controle total sobre prazos, processos e finanças. Recomendo para todos os colegas da área."
-                    </p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-avatar">
-                            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face" alt="Dra. Camila Santos">
+                {% endfor %}
+            {% else %}
+                {# Depoimentos estáticos de exemplo (fallback) #}
+                <!-- Testimonial 1 -->
+                <div class="col-lg-4 col-md-6 animate-item">
+                    <div class="testimonial-card">
+                        <div class="testimonial-quote">
+                            <i class="fas fa-quote-left"></i>
                         </div>
-                        <div class="testimonial-info">
-                            <h5>Dra. Camila Santos</h5>
-                            <p>Advogada Trabalhista</p>
-                            <div class="testimonial-stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
+                        <p class="testimonial-text">
+                            "O Petitio revolucionou a gestão do meu escritório. Reduzi em 70% o tempo gasto com documentação e agora posso focar no que realmente importa: atender meus clientes."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar bg-primary text-white d-flex align-items-center justify-content-center" 
+                                 style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                R
+                            </div>
+                            <div class="testimonial-info">
+                                <h5>Dr. Ricardo Mendes</h5>
+                                <p>Advogado Tributarista · São Paulo, SP</p>
+                                <div class="testimonial-stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Testimonial 3 -->
-            <div class="col-lg-4 col-md-6 animate-item">
-                <div class="testimonial-card">
-                    <div class="testimonial-quote">
-                        <i class="fas fa-quote-left"></i>
-                    </div>
-                    <p class="testimonial-text">
-                        "Excelente suporte e interface intuitiva. Mesmo não sendo muito familiarizado com tecnologia, consegui me adaptar rapidamente. O sistema é perfeito!"
-                    </p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-avatar">
-                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" alt="Dr. Fernando Costa">
+                
+                <!-- Testimonial 2 -->
+                <div class="col-lg-4 col-md-6 animate-item">
+                    <div class="testimonial-card">
+                        <div class="testimonial-quote">
+                            <i class="fas fa-quote-left"></i>
                         </div>
-                        <div class="testimonial-info">
-                            <h5>Dr. Fernando Costa</h5>
-                            <p>Advogado Cível</p>
-                            <div class="testimonial-stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
+                        <p class="testimonial-text">
+                            "A organização que o sistema proporciona é incrível. Tenho controle total sobre prazos, processos e finanças. Recomendo para todos os colegas da área."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar bg-success text-white d-flex align-items-center justify-content-center" 
+                                 style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                C
+                            </div>
+                            <div class="testimonial-info">
+                                <h5>Dra. Camila Santos</h5>
+                                <p>Advogada Trabalhista · Rio de Janeiro, RJ</p>
+                                <div class="testimonial-stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+                
+                <!-- Testimonial 3 -->
+                <div class="col-lg-4 col-md-6 animate-item">
+                    <div class="testimonial-card">
+                        <div class="testimonial-quote">
+                            <i class="fas fa-quote-left"></i>
+                        </div>
+                        <p class="testimonial-text">
+                            "Excelente suporte e interface intuitiva. Mesmo não sendo muito familiarizado com tecnologia, consegui me adaptar rapidamente. O sistema é perfeito!"
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar bg-warning text-dark d-flex align-items-center justify-content-center" 
+                                 style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                F
+                            </div>
+                            <div class="testimonial-info">
+                                <h5>Dr. Fernando Costa</h5>
+                                <p>Advogado Cível · Belo Horizonte, MG</p>
+                                <div class="testimonial-stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
         
-        <!-- More Testimonials Row -->
-        <div class="row g-4 mt-2">
-            <!-- Testimonial 4 -->
-            <div class="col-lg-6 animate-item">
-                <div class="testimonial-card testimonial-card-horizontal">
-                    <div class="row align-items-center">
-                        <div class="col-md-4 text-center">
-                            <div class="testimonial-avatar-large">
-                                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face" alt="Dra. Juliana Oliveira">
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="testimonial-quote">
-                                <i class="fas fa-quote-left"></i>
-                            </div>
-                            <p class="testimonial-text">
-                                "Minha equipe de 5 advogados usa o Petitio diariamente. A colaboração ficou muito mais fácil e a produtividade aumentou significativamente."
-                            </p>
-                            <div class="testimonial-info">
-                                <h5>Dra. Juliana Oliveira</h5>
-                                <p>Sócia - Oliveira & Associados</p>
-                                <div class="testimonial-stars">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Testimonial 5 -->
-            <div class="col-lg-6 animate-item">
-                <div class="testimonial-card testimonial-card-horizontal">
-                    <div class="row align-items-center">
-                        <div class="col-md-4 text-center">
-                            <div class="testimonial-avatar-large">
-                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face" alt="Dr. André Machado">
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="testimonial-quote">
-                                <i class="fas fa-quote-left"></i>
-                            </div>
-                            <p class="testimonial-text">
-                                "O peticionador inteligente economiza horas do meu dia. A qualidade dos modelos e a facilidade de personalização são impressionantes."
-                            </p>
-                            <div class="testimonial-info">
-                                <h5>Dr. André Machado</h5>
-                                <p>Advogado Criminalista</p>
-                                <div class="testimonial-stars">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        {% if current_user.is_authenticated %}
+        <div class="text-center mt-5">
+            <a href="{{ url_for('main.new_testimonial') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-comment-dots me-2"></i> Deixe seu depoimento
+            </a>
         </div>
+        {% endif %}
     </div>
 </section>
 
@@ -658,4 +682,78 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Landing page navbar styles */
+    #landingNav {
+        padding: 0.75rem 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    #landingNav.scrolled {
+        background: rgba(13, 27, 42, 0.98) !important;
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 0;
+    }
+    #landingNav .nav-link {
+        color: rgba(255,255,255,0.85) !important;
+        font-weight: 500;
+        padding: 0.5rem 1rem !important;
+        transition: color 0.2s;
+    }
+    #landingNav .nav-link:hover,
+    #landingNav .nav-link.active {
+        color: var(--gold-color) !important;
+    }
+    html {
+        scroll-behavior: smooth;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const nav = document.getElementById('landingNav');
+    const navLinks = nav.querySelectorAll('.nav-link');
+    
+    // Add scrolled class on scroll
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 50) {
+            nav.classList.add('scrolled');
+        } else {
+            nav.classList.remove('scrolled');
+        }
+        
+        // Update active link based on scroll position
+        const sections = document.querySelectorAll('section[id]');
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop - 100;
+            if (window.scrollY >= sectionTop) {
+                current = section.getAttribute('id');
+            }
+        });
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === '#' + current) {
+                link.classList.add('active');
+            }
+        });
+    });
+    
+    // Smooth scroll for nav links (close mobile menu after click)
+    navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            const navbarCollapse = document.getElementById('landingNavbar');
+            if (navbarCollapse.classList.contains('show')) {
+                const bsCollapse = new bootstrap.Collapse(navbarCollapse);
+                bsCollapse.hide();
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

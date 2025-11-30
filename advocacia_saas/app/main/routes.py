@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import render_template, url_for
+from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
@@ -8,7 +8,8 @@ from app import db
 from app.billing.decorators import subscription_required
 from app.billing.utils import current_billing_cycle
 from app.main import bp
-from app.models import BillingPlan, Client, PetitionType, PetitionUsage
+from app.main.forms import TestimonialForm, TestimonialModerationForm
+from app.models import BillingPlan, Client, PetitionType, PetitionUsage, Testimonial
 from app.quick_actions import build_dashboard_actions
 
 # Ícones para categorias de petições
@@ -39,11 +40,21 @@ CATEGORY_LABELS = {
 def index():
     plans = _get_public_plans()
     petition_types = _get_implemented_petition_types()
+    
+    # Busca depoimentos aprovados (prioriza destacados)
+    testimonials = (
+        Testimonial.query.filter_by(status="approved")
+        .order_by(Testimonial.is_featured.desc(), Testimonial.created_at.desc())
+        .limit(6)
+        .all()
+    )
+    
     return render_template(
         "index.html",
         title="Petitio",
         pricing_plans=plans,
         petition_types=petition_types,
+        testimonials=testimonials,
     )
 
 
@@ -272,3 +283,178 @@ def _get_implemented_petition_types():
             }
         )
     return result
+
+
+# ===== Testimonials Routes =====
+
+@bp.route("/depoimentos")
+@login_required
+def testimonials():
+    """Lista os depoimentos do usuário atual."""
+    user_testimonials = (
+        Testimonial.query.filter_by(user_id=current_user.id)
+        .order_by(Testimonial.created_at.desc())
+        .all()
+    )
+    return render_template(
+        "testimonials/index.html",
+        title="Meus Depoimentos",
+        testimonials=user_testimonials,
+    )
+
+
+@bp.route("/depoimentos/novo", methods=["GET", "POST"])
+@login_required
+def new_testimonial():
+    """Formulário para enviar um novo depoimento."""
+    form = TestimonialForm()
+    
+    # Pré-preenche o nome se disponível
+    if request.method == "GET" and current_user.full_name:
+        form.display_name.data = current_user.full_name
+    
+    if form.validate_on_submit():
+        testimonial = Testimonial(
+            user_id=current_user.id,
+            content=form.content.data.strip(),
+            rating=int(form.rating.data),
+            display_name=form.display_name.data.strip(),
+            display_role=form.display_role.data.strip() if form.display_role.data else None,
+            display_location=form.display_location.data.strip() if form.display_location.data else None,
+            status="pending",
+        )
+        db.session.add(testimonial)
+        db.session.commit()
+        flash("Seu depoimento foi enviado e está aguardando aprovação. Obrigado!", "success")
+        return redirect(url_for("main.testimonials"))
+    
+    return render_template(
+        "testimonials/form.html",
+        title="Enviar Depoimento",
+        form=form,
+    )
+
+
+@bp.route("/depoimentos/<int:testimonial_id>/editar", methods=["GET", "POST"])
+@login_required
+def edit_testimonial(testimonial_id):
+    """Edita um depoimento existente (apenas se pendente)."""
+    testimonial = Testimonial.query.get_or_404(testimonial_id)
+    
+    if testimonial.user_id != current_user.id:
+        flash("Você não tem permissão para editar este depoimento.", "danger")
+        return redirect(url_for("main.testimonials"))
+    
+    if testimonial.status != "pending":
+        flash("Apenas depoimentos pendentes podem ser editados.", "warning")
+        return redirect(url_for("main.testimonials"))
+    
+    form = TestimonialForm(obj=testimonial)
+    
+    if form.validate_on_submit():
+        testimonial.content = form.content.data.strip()
+        testimonial.rating = int(form.rating.data)
+        testimonial.display_name = form.display_name.data.strip()
+        testimonial.display_role = form.display_role.data.strip() if form.display_role.data else None
+        testimonial.display_location = form.display_location.data.strip() if form.display_location.data else None
+        testimonial.updated_at = datetime.utcnow()
+        db.session.commit()
+        flash("Depoimento atualizado com sucesso!", "success")
+        return redirect(url_for("main.testimonials"))
+    
+    return render_template(
+        "testimonials/form.html",
+        title="Editar Depoimento",
+        form=form,
+        testimonial=testimonial,
+    )
+
+
+@bp.route("/depoimentos/<int:testimonial_id>/excluir", methods=["POST"])
+@login_required
+def delete_testimonial(testimonial_id):
+    """Exclui um depoimento do usuário."""
+    testimonial = Testimonial.query.get_or_404(testimonial_id)
+    
+    if testimonial.user_id != current_user.id:
+        flash("Você não tem permissão para excluir este depoimento.", "danger")
+        return redirect(url_for("main.testimonials"))
+    
+    db.session.delete(testimonial)
+    db.session.commit()
+    flash("Depoimento excluído com sucesso.", "success")
+    return redirect(url_for("main.testimonials"))
+
+
+# ===== Admin Testimonials Routes =====
+
+@bp.route("/admin/depoimentos")
+@login_required
+def admin_testimonials():
+    """Lista todos os depoimentos para moderação (apenas admin)."""
+    if current_user.user_type != "master":
+        flash("Acesso negado.", "danger")
+        return redirect(url_for("main.dashboard"))
+    
+    status_filter = request.args.get("status", "pending")
+    query = Testimonial.query
+    
+    if status_filter and status_filter != "all":
+        query = query.filter_by(status=status_filter)
+    
+    testimonials = query.order_by(Testimonial.created_at.desc()).all()
+    
+    # Contadores
+    counts = {
+        "pending": Testimonial.query.filter_by(status="pending").count(),
+        "approved": Testimonial.query.filter_by(status="approved").count(),
+        "rejected": Testimonial.query.filter_by(status="rejected").count(),
+    }
+    
+    return render_template(
+        "testimonials/admin.html",
+        title="Moderar Depoimentos",
+        testimonials=testimonials,
+        counts=counts,
+        current_filter=status_filter,
+    )
+
+
+@bp.route("/admin/depoimentos/<int:testimonial_id>/moderar", methods=["POST"])
+@login_required
+def moderate_testimonial(testimonial_id):
+    """Aprova ou rejeita um depoimento."""
+    if current_user.user_type != "master":
+        flash("Acesso negado.", "danger")
+        return redirect(url_for("main.dashboard"))
+    
+    testimonial = Testimonial.query.get_or_404(testimonial_id)
+    action = request.form.get("action")
+    
+    if action == "approve":
+        testimonial.status = "approved"
+        testimonial.moderated_by = current_user.id
+        testimonial.moderated_at = datetime.utcnow()
+        testimonial.rejection_reason = None
+        flash(f"Depoimento de {testimonial.display_name} aprovado!", "success")
+    elif action == "reject":
+        testimonial.status = "rejected"
+        testimonial.moderated_by = current_user.id
+        testimonial.moderated_at = datetime.utcnow()
+        testimonial.rejection_reason = request.form.get("rejection_reason", "")
+        flash(f"Depoimento de {testimonial.display_name} rejeitado.", "warning")
+    elif action == "feature":
+        testimonial.is_featured = not testimonial.is_featured
+        status = "destacado" if testimonial.is_featured else "removido do destaque"
+        flash(f"Depoimento {status}.", "success")
+    
+    db.session.commit()
+    return redirect(url_for("main.admin_testimonials"))
+
+
+def get_approved_testimonials(limit=6, featured_only=False):
+    """Retorna depoimentos aprovados para exibição na página inicial."""
+    query = Testimonial.query.filter_by(status="approved")
+    if featured_only:
+        query = query.filter_by(is_featured=True)
+    return query.order_by(Testimonial.created_at.desc()).limit(limit).all()

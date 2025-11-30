@@ -2,29 +2,102 @@
 
 {% block styles %}
 <style>
-    .tox-tinymce {
-        border-radius: 4px !important;
+    .ql-container {
+        border-radius: 0 0 4px 4px !important;
+    }
+    .ql-toolbar {
+        border-radius: 4px 4px 0 0 !important;
+    }
+    
+    /* Indicadores de validação em tempo real */
+    .field-valid { border-color: #198754 !important; }
+    .field-invalid { border-color: #dc3545 !important; }
+    .field-warning { border-color: #ffc107 !important; }
+    
+    /* Status de salvamento automático */
+    .auto-save-indicator {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+    .auto-save-indicator.saving { background: #ffc107; color: #000; }
+    .auto-save-indicator.saved { background: #198754; color: #fff; }
+    .auto-save-indicator.error { background: #dc3545; color: #fff; }
+    
+    /* Loading skeleton */
+    .htmx-request .htmx-indicator { display: inline-block; }
+    .htmx-indicator { display: none; }
+    
+    /* Transições suaves */
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    /* Card com efeito de hover */
+    .template-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .template-card { transition: all 0.2s ease; cursor: pointer; }
+    
+    /* Template selecionado - fundo claro com texto legível */
+    .template-card.selected-template {
+        background-color: #e8f4fc !important;
+        border-color: var(--secondary-color, #c9a85c) !important;
+        border-width: 2px !important;
+    }
+    .template-card.selected-template strong,
+    .template-card.selected-template span {
+        color: #1a1a1a !important;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-4" 
+     x-data="petitionForm()" 
+     x-init="init()"
+     @keydown.ctrl.s.prevent="saveAsDraft()">
+    
+    <!-- Auto-save indicator -->
+    <div class="auto-save-indicator" 
+         x-show="autoSaveStatus !== 'idle'"
+         x-transition
+         :class="{
+             'saving': autoSaveStatus === 'saving',
+             'saved': autoSaveStatus === 'saved',
+             'error': autoSaveStatus === 'error'
+         }">
+        <span x-show="autoSaveStatus === 'saving'">
+            <i class="fas fa-circle-notch fa-spin me-1"></i> Salvando...
+        </span>
+        <span x-show="autoSaveStatus === 'saved'">
+            <i class="fas fa-check me-1"></i> Salvo automaticamente
+        </span>
+        <span x-show="autoSaveStatus === 'error'">
+            <i class="fas fa-exclamation-triangle me-1"></i> Erro ao salvar
+        </span>
+    </div>
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-1"><i class="fas fa-file-signature"></i> Petições Cíveis</h1>
             <p class="text-muted mb-0">Preencha os dados abaixo para gerar automaticamente a petição em PDF.</p>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{{ url_for('main.peticionador') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Voltar
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <a href="{{ url_for('main.peticionador') }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
             </a>
-            <a href="{{ url_for('petitions.personal_templates') }}" class="btn btn-outline-primary">
-                <i class="fas fa-user-pen"></i> Novo modelo do escritório
+            <a href="{{ url_for('petitions.personal_templates') }}" class="btn btn-sm btn-outline-primary d-flex align-items-center">
+                <i class="fas fa-user-pen me-1"></i> Novo modelo
             </a>
             {% if current_user.user_type == 'master' %}
-            <a href="{{ url_for('petitions.manage_global_templates') }}" class="btn btn-primary">
-                <i class="fas fa-layer-group"></i> Modelos padrão
+            <a href="{{ url_for('petitions.manage_global_templates') }}" class="btn btn-sm btn-primary d-flex align-items-center">
+                <i class="fas fa-layer-group me-1"></i> Modelos padrão
             </a>
             {% endif %}
         </div>
@@ -35,31 +108,45 @@
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <strong>Dados da Petição</strong>
-                    <button type="button" class="btn btn-sm btn-outline-light" id="btnLoadDefaults" title="Carregar textos padrão do modelo selecionado">
-                        <i class="fas fa-magic me-1"></i> Carregar Modelo
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-light" 
+                                @click="loadTemplate()"
+                                :disabled="loading || !selectedTemplate"
+                                title="Carregar textos padrão do modelo selecionado">
+                            <span x-show="!loading">
+                                <i class="fas fa-magic me-1"></i> Carregar Modelo
+                            </span>
+                            <span x-show="loading">
+                                <i class="fas fa-spinner fa-spin me-1"></i> Carregando...
+                            </span>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <form method="post">
+                    <form method="post" 
+                          id="petitionForm"
+                          @submit.prevent="submitForm($event)"
+                          hx-boost="true">
                         {{ form.hidden_tag() }}
 
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">{{ form.template_id.label }}</label>
-                                {{ form.template_id(class_='form-select', id='template_id') }}
-                                <small class="text-muted">Selecione e clique em "Carregar Modelo" para preencher os campos automaticamente.</small>
+                                {{ form.template_id(class_='form-select', id='template_id', **{'x-model': 'selectedTemplate', '@change': 'onTemplateChange()'}) }}
+                                <small class="text-muted">Selecione e clique em "Carregar Modelo" para preencher automaticamente.</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ form.process_number.label }}</label>
-                                {{ form.process_number(class_='form-control') }}
+                                {{ form.process_number(class_='form-control', **{'x-model': 'formData.process_number', '@input.debounce.500ms': 'markDirty()'}) }}
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ form.forum.label }}</label>
-                                {{ form.forum(class_='form-control') }}
+                                {{ form.forum(class_='form-control', **{'x-model': 'formData.forum', '@input.debounce.500ms': 'markDirty()'}) }}
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ form.vara.label }}</label>
-                                {{ form.vara(class_='form-control') }}
+                                {{ form.vara(class_='form-control', **{'x-model': 'formData.vara', '@input.debounce.500ms': 'markDirty()'}) }}
                             </div>
                         </div>
 
@@ -67,68 +154,91 @@
 
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">{{ form.author_name.label }}</label>
-                                {{ form.author_name(class_='form-control') }}
+                                <label class="form-label">{{ form.author_name.label }} <span class="text-danger">*</span></label>
+                                {{ form.author_name(class_='form-control', **{'x-model': 'formData.author_name', '@input.debounce.500ms': 'validateField(\"author_name\")', ':class': 'getFieldClass(\"author_name\")', 'required': 'required'}) }}
+                                <small class="text-danger" x-show="errors.author_name" x-text="errors.author_name"></small>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">{{ form.defendant_name.label }}</label>
-                                {{ form.defendant_name(class_='form-control') }}
+                                <label class="form-label">{{ form.defendant_name.label }} <span class="text-danger">*</span></label>
+                                {{ form.defendant_name(class_='form-control', **{'x-model': 'formData.defendant_name', '@input.debounce.500ms': 'validateField(\"defendant_name\")', ':class': 'getFieldClass(\"defendant_name\")', 'required': 'required'}) }}
+                                <small class="text-danger" x-show="errors.defendant_name" x-text="errors.defendant_name"></small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ form.author_qualification.label }}</label>
-                                {{ form.author_qualification(class_='form-control') }}
+                                {{ form.author_qualification(class_='form-control', **{'x-model': 'formData.author_qualification', '@input.debounce.500ms': 'markDirty()'}) }}
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ form.defendant_qualification.label }}</label>
-                                {{ form.defendant_qualification(class_='form-control') }}
+                                {{ form.defendant_qualification(class_='form-control', **{'x-model': 'formData.defendant_qualification', '@input.debounce.500ms': 'markDirty()'}) }}
                             </div>
                         </div>
 
                         <hr class="my-4">
 
                         <div class="mb-3">
-                            <label class="form-label">{{ form.facts.label }}</label>
+                            <label class="form-label">{{ form.facts.label }} <span class="text-danger">*</span></label>
                             {{ form.facts(class_='form-control petition-editor', id='facts') }}
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">{{ form.fundamentos.label }}</label>
+                            <label class="form-label">{{ form.fundamentos.label }} <span class="text-danger">*</span></label>
                             {{ form.fundamentos(class_='form-control petition-editor', id='fundamentos') }}
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">{{ form.pedidos.label }}</label>
+                            <label class="form-label">{{ form.pedidos.label }} <span class="text-danger">*</span></label>
                             {{ form.pedidos(class_='form-control petition-editor', id='pedidos') }}
                         </div>
 
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">{{ form.valor_causa.label }}</label>
-                                {{ form.valor_causa(class_='form-control', placeholder='Ex: 50000.00') }}
+                                {{ form.valor_causa(class_='form-control', placeholder='Ex: 50000.00', **{'x-model': 'formData.valor_causa', '@input.debounce.500ms': 'markDirty()'}) }}
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">{{ form.cidade.label }}</label>
-                                {{ form.cidade(class_='form-control') }}
+                                {{ form.cidade(class_='form-control', **{'x-model': 'formData.cidade', '@input.debounce.500ms': 'markDirty()'}) }}
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">{{ form.data_assinatura.label }}</label>
-                                {{ form.data_assinatura(class_='form-control') }}
+                                {{ form.data_assinatura(class_='form-control', **{'x-model': 'formData.data_assinatura', '@input.debounce.500ms': 'markDirty()'}) }}
                             </div>
                         </div>
 
                         <div class="row g-3 mt-3">
                             <div class="col-md-8">
                                 <label class="form-label">{{ form.advogado_nome.label }}</label>
-                                {{ form.advogado_nome(class_='form-control') }}
+                                {{ form.advogado_nome(class_='form-control', **{'x-model': 'formData.advogado_nome', '@input.debounce.500ms': 'markDirty()'}) }}
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">{{ form.advogado_oab.label }}</label>
-                                {{ form.advogado_oab(class_='form-control') }}
+                                {{ form.advogado_oab(class_='form-control', **{'x-model': 'formData.advogado_oab', '@input.debounce.500ms': 'markDirty()'}) }}
                             </div>
                         </div>
 
-                        <div class="mt-4 text-end">
-                            <button type="submit" class="btn btn-lg btn-primary">
-                                <i class="fas fa-file-pdf"></i> {{ form.submit.label.text }}
-                            </button>
+                        <div class="mt-4 d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small" x-show="isDirty">
+                                    <i class="fas fa-circle text-warning me-1" style="font-size: 8px;"></i>
+                                    Alterações não salvas
+                                </span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" 
+                                        class="btn btn-outline-secondary"
+                                        @click="saveAsDraft()"
+                                        :disabled="submitting">
+                                    <i class="fas fa-save me-1"></i> Salvar Rascunho
+                                </button>
+                                <button type="submit" 
+                                        class="btn btn-lg btn-primary"
+                                        :disabled="submitting || !isFormValid()">
+                                    <span x-show="!submitting">
+                                        <i class="fas fa-file-pdf me-1"></i> {{ form.submit.label.text }}
+                                    </span>
+                                    <span x-show="submitting">
+                                        <i class="fas fa-spinner fa-spin me-1"></i> Gerando PDF...
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -136,50 +246,99 @@
         </div>
 
         <div class="col-lg-4">
+            <!-- Templates disponíveis com seleção rápida -->
             <div class="card shadow-sm mb-4">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <strong>Modelos disponíveis</strong>
+                    <button class="btn btn-sm btn-link p-0" 
+                            hx-get="{{ url_for('petitions.civil_templates_partial') }}"
+                            hx-target="#templates-list"
+                            hx-swap="innerHTML"
+                            hx-indicator="#templates-loading">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
                 </div>
-                <div class="card-body">
-                    <h6 class="text-uppercase text-muted small mb-2">Padrão da plataforma</h6>
-                    <ul class="list-unstyled mb-3">
+                <div class="card-body" id="templates-list">
+                    <div id="templates-loading" class="htmx-indicator text-center py-3">
+                        <i class="fas fa-spinner fa-spin"></i> Carregando...
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-uppercase text-muted small mb-1">
+                            <i class="fas fa-building-columns me-1"></i> Padrão da plataforma
+                        </h6>
+                        <small class="text-muted d-block mb-2">Modelos prontos disponibilizados pelo sistema</small>
+                    </div>
+                    <ul class="list-unstyled mb-4">
                         {% for tpl in templates if tpl.is_global %}
-                            <li class="mb-2">
-                                <i class="fas fa-layer-group text-primary"></i>
-                                <strong>{{ tpl.name }}</strong>
-                                <span class="text-muted small">· {{ tpl.category|title }} · {{ tpl.petition_type.name }}</span>
+                            <li class="mb-2 template-card p-2 rounded border bg-light" 
+                                @click="selectTemplate('{{ tpl.id }}')"
+                                :class="selectedTemplate == '{{ tpl.id }}' ? 'border-primary selected-template' : ''">
+                                <div class="d-flex align-items-start">
+                                    <span class="badge bg-primary me-2" style="font-size: 0.65rem;">PADRÃO</span>
+                                    <div>
+                                        <strong>{{ tpl.name }}</strong>
+                                        {% if tpl.petition_type %}
+                                        <span class="text-muted small d-block">{{ tpl.petition_type.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </li>
                         {% else %}
-                            <li class="text-muted small">Nenhum modelo padrão disponível.</li>
+                            <li class="text-muted small fst-italic">Nenhum modelo padrão disponível.</li>
                         {% endfor %}
                     </ul>
 
-                    <h6 class="text-uppercase text-muted small mb-2">Modelos do meu escritório</h6>
+                    <div class="mb-3">
+                        <h6 class="text-uppercase text-muted small mb-1">
+                            <i class="fas fa-user-pen me-1"></i> Modelos do meu escritório
+                        </h6>
+                        <small class="text-muted d-block mb-2">Seus modelos personalizados</small>
+                    </div>
                     <ul class="list-unstyled mb-0">
                         {% for tpl in templates if not tpl.is_global %}
-                            <li class="mb-2">
-                                <i class="fas fa-file-pen text-success"></i>
-                                <strong>{{ tpl.name }}</strong>
-                                <span class="text-muted small">· {{ tpl.category|title }}</span>
+                            <li class="mb-2 template-card p-2 rounded border"
+                                @click="selectTemplate('{{ tpl.id }}')"
+                                :class="selectedTemplate == '{{ tpl.id }}' ? 'border-primary selected-template' : ''">
+                                <div class="d-flex align-items-start">
+                                    <span class="badge bg-success me-2" style="font-size: 0.65rem;">MEU</span>
+                                    <div>
+                                        <strong>{{ tpl.name }}</strong>
+                                        {% if tpl.petition_type %}
+                                        <span class="text-muted small d-block">{{ tpl.petition_type.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </li>
                         {% else %}
-                            <li class="text-muted small">Você ainda não criou modelos próprios.</li>
+                            <li class="text-muted small fst-italic py-2">
+                                <i class="fas fa-info-circle me-1"></i> Você ainda não criou modelos próprios.
+                                <a href="{{ url_for('petitions.create_personal_template') }}" class="d-block mt-1">
+                                    <i class="fas fa-plus me-1"></i> Criar meu primeiro modelo
+                                </a>
+                            </li>
                         {% endfor %}
                     </ul>
                 </div>
             </div>
 
+            <!-- Dicas e atalhos -->
             <div class="card shadow-sm">
                 <div class="card-header">
-                    <strong>Dicas Rápidas</strong>
+                    <strong><i class="fas fa-lightbulb text-warning me-1"></i> Dicas Rápidas</strong>
                 </div>
                 <div class="card-body">
-                    <ul class="small text-muted mb-0">
-                        <li><strong>Carregar Modelo:</strong> Selecione um modelo e clique no botão para preencher os campos automaticamente.</li>
-                        <li>Use frases curtas e objetivas nos fatos.</li>
-                        <li>Nos pedidos, inclua cada item em uma nova linha.</li>
-                        <li>Valor da causa opcional — deixe em branco para suprimir.</li>
+                    <ul class="small text-muted mb-3">
+                        <li class="mb-2"><strong>Carregar Modelo:</strong> Clique em um modelo ao lado ou selecione e clique "Carregar Modelo".</li>
+                        <li class="mb-2"><strong>Auto-save:</strong> Suas alterações são salvas automaticamente a cada 30 segundos.</li>
+                        <li class="mb-2"><strong>Atalho:</strong> <kbd>Ctrl</kbd>+<kbd>S</kbd> para salvar rascunho.</li>
+                        <li>Use o editor para formatação rica com negrito, listas e mais.</li>
                     </ul>
+                    
+                    <div class="alert alert-info small mb-0 py-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Os campos com <span class="text-danger">*</span> são obrigatórios.
+                    </div>
                 </div>
             </div>
         </div>
@@ -189,107 +348,290 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const btnLoadDefaults = document.getElementById('btnLoadDefaults');
-    const templateSelect = document.getElementById('template_id');
-    
-    // Inicializa editores TinyMCE para os campos de petição
-    tinymce.init({
-        selector: '.petition-editor',
-        height: 250,
-        language: 'pt_BR',
-        plugins: ['advlist', 'autolink', 'lists', 'wordcount'],
-        toolbar: 'undo redo | bold italic underline | bullist numlist outdent indent | removeformat',
-        menubar: false,
-        content_style: `
-            body { 
-                font-family: 'Times New Roman', Times, serif; 
-                font-size: 12pt; 
-                line-height: 1.5;
-                margin: 0.5cm;
-            }
-            p { margin: 0 0 8pt 0; }
-        `,
-        branding: false,
-        promotion: false
-    });
-    
-    btnLoadDefaults.addEventListener('click', function() {
-        const templateId = templateSelect.value;
-        if (!templateId) {
-            alert('Selecione um modelo primeiro.');
-            return;
-        }
+// Alpine.js component para o formulário de petição
+function petitionForm() {
+    return {
+        // Estado do formulário
+        selectedTemplate: '{{ form.template_id.data or "" }}',
+        loading: false,
+        submitting: false,
+        isDirty: false,
+        autoSaveStatus: 'idle', // idle, saving, saved, error
+        autoSaveTimer: null,
         
-        // Show loading state
-        btnLoadDefaults.disabled = true;
-        btnLoadDefaults.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Carregando...';
+        // Dados do formulário
+        formData: {
+            process_number: '{{ form.process_number.data or "" }}',
+            forum: '{{ form.forum.data or "" }}',
+            vara: '{{ form.vara.data or "" }}',
+            author_name: '{{ form.author_name.data or "" }}',
+            defendant_name: '{{ form.defendant_name.data or "" }}',
+            author_qualification: '{{ form.author_qualification.data or "" }}',
+            defendant_qualification: '{{ form.defendant_qualification.data or "" }}',
+            valor_causa: '{{ form.valor_causa.data or "" }}',
+            cidade: '{{ form.cidade.data or "" }}',
+            data_assinatura: '{{ form.data_assinatura.data or "" }}',
+            advogado_nome: '{{ form.advogado_nome.data or "" }}',
+            advogado_oab: '{{ form.advogado_oab.data or "" }}'
+        },
         
-        // Fetch defaults from API
-        fetch(`/petitions/api/template/${templateId}/defaults`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erro ao carregar modelo');
+        // Erros de validação
+        errors: {},
+        touched: {},
+        
+        // Inicialização
+        init() {
+            // Inicializa Quill
+            this.initEditors();
+            
+            // Configura auto-save
+            this.setupAutoSave();
+            
+            // Aviso antes de sair com alterações não salvas
+            window.addEventListener('beforeunload', (e) => {
+                if (this.isDirty) {
+                    e.preventDefault();
+                    e.returnValue = '';
                 }
-                return response.json();
-            })
-            .then(data => {
+            });
+        },
+        
+        // Inicializa editores Quill
+        initEditors() {
+            const self = this;
+            
+            // Inicializa Quill para cada textarea .petition-editor
+            document.querySelectorAll('.petition-editor').forEach(textarea => {
+                if (textarea._quillInitialized) return;
+                
+                // Cria container para o Quill
+                const container = document.createElement('div');
+                container.className = 'quill-editor-container';
+                container.style.minHeight = '250px';
+                
+                textarea.parentNode.insertBefore(container, textarea);
+                textarea.style.display = 'none';
+                textarea._quillInitialized = true;
+                
+                const quill = new Quill(container, {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'indent': '-1'}, { 'indent': '+1' }],
+                            ['clean']
+                        ]
+                    },
+                    placeholder: 'Digite aqui...'
+                });
+                
+                // Carrega conteúdo inicial
+                if (textarea.value) {
+                    quill.root.innerHTML = textarea.value;
+                }
+                
+                // Sincroniza mudanças
+                quill.on('text-change', function() {
+                    textarea.value = quill.root.innerHTML;
+                    self.markDirty();
+                });
+                
+                // Guarda referência
+                textarea._quill = quill;
+            });
+        },
+        
+        // Configura salvamento automático
+        setupAutoSave() {
+            // Salva a cada 30 segundos se houver alterações
+            setInterval(() => {
+                if (this.isDirty) {
+                    this.autoSave();
+                }
+            }, 30000);
+        },
+        
+        // Marca formulário como modificado
+        markDirty() {
+            this.isDirty = true;
+        },
+        
+        // Seleciona template e atualiza o select
+        selectTemplate(templateId) {
+            this.selectedTemplate = templateId;
+            document.getElementById('template_id').value = templateId;
+        },
+        
+        // Quando o select de template muda
+        onTemplateChange() {
+            // Template selecionado mudou
+        },
+        
+        // Carrega dados do template via HTMX/fetch
+        async loadTemplate() {
+            if (!this.selectedTemplate) {
+                window.showToast('Selecione um modelo primeiro.', 'warning');
+                return;
+            }
+            
+            this.loading = true;
+            
+            try {
+                const response = await fetch(`/petitions/api/template/${this.selectedTemplate}/defaults`);
+                if (!response.ok) throw new Error('Erro ao carregar modelo');
+                
+                const data = await response.json();
                 const defaults = data.defaults || {};
                 
-                // Check if there are any defaults to load
                 if (Object.keys(defaults).length === 0) {
-                    alert('Este modelo não possui textos padrão configurados. Você pode editá-lo para adicionar textos padrão.');
+                    window.showToast('Este modelo não possui textos padrão configurados.', 'info');
                     return;
                 }
                 
                 // Verifica se há conteúdo nos editores
-                const factsEditor = tinymce.get('facts');
-                const fundamentosEditor = tinymce.get('fundamentos');
-                const pedidosEditor = tinymce.get('pedidos');
+                const factsTextarea = document.getElementById('facts');
+                const fundamentosTextarea = document.getElementById('fundamentos');
+                const pedidosTextarea = document.getElementById('pedidos');
                 
-                let hasContent = (factsEditor && factsEditor.getContent().trim()) || 
-                                 (fundamentosEditor && fundamentosEditor.getContent().trim()) || 
-                                 (pedidosEditor && pedidosEditor.getContent().trim());
+                let hasContent = (factsTextarea._quill && factsTextarea._quill.getText().trim()) || 
+                                 (fundamentosTextarea._quill && fundamentosTextarea._quill.getText().trim()) || 
+                                 (pedidosTextarea._quill && pedidosTextarea._quill.getText().trim());
                 
                 if (hasContent) {
-                    if (!confirm('Os campos Fatos, Fundamentação e Pedidos já possuem conteúdo. Deseja substituir pelo texto padrão do modelo?')) {
+                    if (!confirm('Os campos já possuem conteúdo. Deseja substituir pelo texto do modelo?')) {
                         return;
                     }
                 }
                 
-                // Fill in the fields via TinyMCE
-                if (defaults.facts && factsEditor) {
-                    factsEditor.setContent(defaults.facts);
+                // Preenche os editores
+                if (defaults.facts && factsTextarea._quill) {
+                    factsTextarea._quill.root.innerHTML = defaults.facts;
+                    factsTextarea.value = defaults.facts;
                 }
-                if (defaults.fundamentos && fundamentosEditor) {
-                    fundamentosEditor.setContent(defaults.fundamentos);
+                if (defaults.fundamentos && fundamentosTextarea._quill) {
+                    fundamentosTextarea._quill.root.innerHTML = defaults.fundamentos;
+                    fundamentosTextarea.value = defaults.fundamentos;
                 }
-                if (defaults.pedidos && pedidosEditor) {
-                    pedidosEditor.setContent(defaults.pedidos);
+                if (defaults.pedidos && pedidosTextarea._quill) {
+                    pedidosTextarea._quill.root.innerHTML = defaults.pedidos;
+                    pedidosTextarea.value = defaults.pedidos;
                 }
                 
-                // Show success feedback
-                btnLoadDefaults.innerHTML = '<i class="fas fa-check me-1"></i> Carregado!';
-                btnLoadDefaults.classList.remove('btn-outline-light');
-                btnLoadDefaults.classList.add('btn-success');
+                this.isDirty = true;
+                window.showToast('Modelo carregado com sucesso!', 'success');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                window.showToast('Erro ao carregar o modelo.', 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        // Validação de campo individual
+        validateField(fieldName) {
+            this.touched[fieldName] = true;
+            this.markDirty();
+            
+            const value = this.formData[fieldName];
+            
+            // Validações específicas
+            switch(fieldName) {
+                case 'author_name':
+                case 'defendant_name':
+                    if (!value || value.trim().length < 3) {
+                        this.errors[fieldName] = 'Nome deve ter pelo menos 3 caracteres';
+                    } else {
+                        delete this.errors[fieldName];
+                    }
+                    break;
+            }
+        },
+        
+        // Retorna classe CSS baseado no estado do campo
+        getFieldClass(fieldName) {
+            if (!this.touched[fieldName]) return 'form-control';
+            if (this.errors[fieldName]) return 'form-control field-invalid';
+            if (this.formData[fieldName]) return 'form-control field-valid';
+            return 'form-control';
+        },
+        
+        // Verifica se formulário é válido
+        isFormValid() {
+            return this.formData.author_name && 
+                   this.formData.defendant_name && 
+                   Object.keys(this.errors).length === 0;
+        },
+        
+        // Salvamento automático (rascunho local)
+        async autoSave() {
+            this.autoSaveStatus = 'saving';
+            
+            try {
+                // Salva no localStorage como backup
+                const factsTextarea = document.getElementById('facts');
+                const fundamentosTextarea = document.getElementById('fundamentos');
+                const pedidosTextarea = document.getElementById('pedidos');
+                
+                const draftData = {
+                    ...this.formData,
+                    template_id: this.selectedTemplate,
+                    facts: factsTextarea._quill?.root.innerHTML || factsTextarea.value || '',
+                    fundamentos: fundamentosTextarea._quill?.root.innerHTML || fundamentosTextarea.value || '',
+                    pedidos: pedidosTextarea._quill?.root.innerHTML || pedidosTextarea.value || '',
+                    savedAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem('petition_draft_civil', JSON.stringify(draftData));
+                
+                this.autoSaveStatus = 'saved';
+                this.isDirty = false;
                 
                 setTimeout(() => {
-                    btnLoadDefaults.innerHTML = '<i class="fas fa-magic me-1"></i> Carregar Modelo';
-                    btnLoadDefaults.classList.remove('btn-success');
-                    btnLoadDefaults.classList.add('btn-outline-light');
+                    this.autoSaveStatus = 'idle';
                 }, 2000);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Erro ao carregar os textos padrão do modelo.');
-            })
-            .finally(() => {
-                btnLoadDefaults.disabled = false;
-                if (btnLoadDefaults.innerHTML.includes('Carregando')) {
-                    btnLoadDefaults.innerHTML = '<i class="fas fa-magic me-1"></i> Carregar Modelo';
+                
+            } catch (error) {
+                console.error('Auto-save error:', error);
+                this.autoSaveStatus = 'error';
+                
+                setTimeout(() => {
+                    this.autoSaveStatus = 'idle';
+                }, 3000);
+            }
+        },
+        
+        // Salvar como rascunho manualmente
+        async saveAsDraft() {
+            await this.autoSave();
+            window.showToast('Rascunho salvo com sucesso!', 'success');
+        },
+        
+        // Submit do formulário
+        async submitForm(event) {
+            // Sincroniza conteúdo dos editores Quill nos textareas
+            document.querySelectorAll('.petition-editor').forEach(textarea => {
+                if (textarea._quill) {
+                    textarea.value = textarea._quill.root.innerHTML;
                 }
             });
-    });
-});
+            
+            // Valida campos obrigatórios
+            this.validateField('author_name');
+            this.validateField('defendant_name');
+            
+            if (!this.isFormValid()) {
+                window.showToast('Por favor, preencha todos os campos obrigatórios.', 'error');
+                return;
+            }
+            
+            this.submitting = true;
+            
+            // Envia o formulário normalmente
+            event.target.submit();
+        }
+    }
+}
 </script>
 {% endblock %}

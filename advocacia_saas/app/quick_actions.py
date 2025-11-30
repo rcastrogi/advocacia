@@ -72,7 +72,7 @@ def _build_action_entry(key: str) -> dict | None:
             "label": data["label"],
             "icon": data["icon"],
             "url": url,
-            "button_class": f"btn btn-{data.get('variant', 'outline-primary')} w-100",
+            "button_class": f"btn btn-sm btn-{data.get('variant', 'outline-primary')} w-100 d-flex align-items-center justify-content-center",
             "disabled": False,
         }
 
@@ -93,18 +93,15 @@ def _build_action_entry(key: str) -> dict | None:
         if not implemented:
             label = f"{petition_type.name} (em breve)"
 
-        variant = "outline-primary"
-        if category == "familia":
-            variant = "outline-danger"
-        elif category == "criminal":
-            variant = "outline-dark"
+        # Usar cores padronizadas: primary para implementados, outline-secondary para não implementados
+        variant = "primary" if implemented else "outline-secondary"
 
         return {
             "key": key,
             "label": label,
             "icon": icon,
             "url": url,
-            "button_class": f"btn btn-{variant} w-100",
+            "button_class": f"btn btn-sm btn-{variant} w-100 d-flex align-items-center justify-content-center",
             "disabled": not implemented,
         }
 

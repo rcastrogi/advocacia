@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="fas fa-comment-dots"></i> Meus Depoimentos</h1>
+            <p class="text-muted mb-0">Compartilhe sua experiência com o Petitio e ajude outros advogados.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
+            </a>
+            <a href="{{ url_for('main.new_testimonial') }}" class="btn btn-sm btn-primary d-flex align-items-center">
+                <i class="fas fa-plus me-1"></i> Novo Depoimento
+            </a>
+        </div>
+    </div>
+
+    {% if testimonials %}
+    <div class="row g-4">
+        {% for t in testimonials %}
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ t.display_name }}</strong>
+                        {% if t.display_role %}
+                        <small class="text-muted d-block">{{ t.display_role }}</small>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if t.status == 'pending' %}
+                        <span class="badge bg-warning text-dark">Aguardando aprovação</span>
+                        {% elif t.status == 'approved' %}
+                        <span class="badge bg-success">Aprovado</span>
+                        {% if t.is_featured %}
+                        <span class="badge bg-primary">Destaque</span>
+                        {% endif %}
+                        {% else %}
+                        <span class="badge bg-danger">Rejeitado</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        {% for i in range(t.rating) %}
+                        <i class="fas fa-star text-warning"></i>
+                        {% endfor %}
+                        {% for i in range(5 - t.rating) %}
+                        <i class="far fa-star text-muted"></i>
+                        {% endfor %}
+                    </div>
+                    <p class="card-text">{{ t.content }}</p>
+                    {% if t.display_location %}
+                    <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>{{ t.display_location }}</small>
+                    {% endif %}
+                    
+                    {% if t.status == 'rejected' and t.rejection_reason %}
+                    <div class="alert alert-danger mt-3 mb-0 py-2">
+                        <small><strong>Motivo da rejeição:</strong> {{ t.rejection_reason }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">Enviado em {{ t.created_at.strftime('%d/%m/%Y') }}</small>
+                    {% if t.status == 'pending' %}
+                    <div class="float-end">
+                        <a href="{{ url_for('main.edit_testimonial', testimonial_id=t.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <form method="post" action="{{ url_for('main.delete_testimonial', testimonial_id=t.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja excluir este depoimento?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-comment-dots fa-3x text-muted mb-3"></i>
+            <h5>Você ainda não enviou nenhum depoimento</h5>
+            <p class="text-muted mb-4">Compartilhe sua experiência com o Petitio e ajude outros advogados a conhecer a plataforma.</p>
+            <a href="{{ url_for('main.new_testimonial') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Enviar meu primeiro depoimento
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

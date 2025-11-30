@@ -43,7 +43,7 @@ MAX_ATTACHMENT_COUNT = 5
 DEFAULT_TEMPLATE_DEFINITIONS = (
     {
         "slug": "modelo-padrao-peticao-inicial",
-        "name": "Petição Inicial Cível",
+        "name": "Petição Cível",
         "category": "civel",
         "description": "Modelo base para ações indenizatórias/obrigações.",
         "content": """
@@ -81,7 +81,7 @@ OAB {{ advogado_oab }}
 """,
         "petition_type": {
             "slug": "peticao-inicial-civel",
-            "name": "Petição Inicial Cível",
+            "name": "Petição Cível",
             "category": "civel",
             "is_billable": True,
             "base_price": Decimal("10.00"),
@@ -489,7 +489,10 @@ def _extract_attachments(files):
 
 def _build_template_label(template: PetitionTemplate) -> str:
     scope = "Padrão" if template.is_global else "Meu modelo"
-    return f"{template.name} · {template.category.title()} ({scope})"
+    ptype = template.petition_type.name if template.petition_type else ""
+    if ptype:
+        return f"{template.name} · {ptype} ({scope})"
+    return f"{template.name} ({scope})"
 
 
 def _populate_type_choices(form: PetitionTemplateForm):
@@ -542,6 +545,30 @@ def get_template_defaults(template_id):
     )
 
 
+@bp.route("/civil/templates-partial")
+@login_required
+def civil_templates_partial():
+    """HTMX partial: returns templates list for civil petitions."""
+    templates = _accessible_templates_for(current_user, category="civel")
+    return render_template(
+        "petitions/partials/templates_list.html",
+        templates=templates,
+        category="civel",
+    )
+
+
+@bp.route("/family/templates-partial")
+@login_required
+def family_templates_partial():
+    """HTMX partial: returns templates list for family petitions."""
+    templates = _accessible_templates_for(current_user, category="familia")
+    return render_template(
+        "petitions/partials/templates_list.html",
+        templates=templates,
+        category="familia",
+    )
+
+
 @bp.route("/civil", methods=["GET", "POST"])
 @login_required
 @subscription_required
@@ -549,7 +576,7 @@ def civil_petitions():
     ensure_default_templates()
     form = CivilPetitionForm()
 
-    templates = _accessible_templates_for(current_user)
+    templates = _accessible_templates_for(current_user, category="civel")
     form.template_id.choices = [
         (template.id, _build_template_label(template)) for template in templates
     ]

@@ -33,53 +33,100 @@
     <circle cx="200" cy="200" r="175" fill="none" stroke="url(#goldGradient)" stroke-width="3" />
     <circle cx="200" cy="200" r="165" fill="none" stroke="url(#goldGradient)" stroke-width="1" opacity="0.5" />
 
-    <!-- Balança da Justiça estilizada -->
-    <g transform="translate(200, 180)" filter="url(#glow)">
+    <!-- Texto PETITIO com T como balança -->
+    <g transform="translate(200, 185)" filter="url(#glow)">
+        <!-- P -->
+        <text x="-120" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58" font-weight="700" fill="url(#goldGradient)">P</text>
+        
+        <!-- E -->
+        <text x="-75" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58" font-weight="700" fill="url(#goldGradient)">E</text>
+        
+        <!-- Primeiro T como balança (mini) -->
+        <g transform="translate(-30, -20)">
+            <!-- Haste central do T/balança -->
+            <rect x="-3" y="-15" width="6" height="55" fill="url(#goldGradient)" rx="1" />
+            <!-- Barra horizontal (topo do T/barra da balança) -->
+            <rect x="-22" y="-18" width="44" height="5" fill="url(#goldGradient)" rx="2" />
+            <!-- Prato esquerdo pequeno -->
+            <g transform="translate(-18, -15)">
+                <line x1="0" y1="0" x2="0" y2="12" stroke="url(#goldGradient)" stroke-width="1.5" />
+                <ellipse cx="0" cy="14" rx="8" ry="3" fill="url(#goldGradient)" />
+            </g>
+            <!-- Prato direito pequeno -->
+            <g transform="translate(18, -15)">
+                <line x1="0" y1="0" x2="0" y2="12" stroke="url(#goldGradient)" stroke-width="1.5" />
+                <ellipse cx="0" cy="14" rx="8" ry="3" fill="url(#goldGradient)" />
+            </g>
+        </g>
+        
+        <!-- I -->
+        <text x="15" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58" font-weight="700" fill="url(#goldGradient)">I</text>
+        
+        <!-- Segundo T como balança (mini) -->
+        <g transform="translate(55, -20)">
+            <!-- Haste central do T/balança -->
+            <rect x="-3" y="-15" width="6" height="55" fill="url(#goldGradient)" rx="1" />
+            <!-- Barra horizontal (topo do T/barra da balança) -->
+            <rect x="-22" y="-18" width="44" height="5" fill="url(#goldGradient)" rx="2" />
+            <!-- Prato esquerdo pequeno -->
+            <g transform="translate(-18, -15)">
+                <line x1="0" y1="0" x2="0" y2="12" stroke="url(#goldGradient)" stroke-width="1.5" />
+                <ellipse cx="0" cy="14" rx="8" ry="3" fill="url(#goldGradient)" />
+            </g>
+            <!-- Prato direito pequeno -->
+            <g transform="translate(18, -15)">
+                <line x1="0" y1="0" x2="0" y2="12" stroke="url(#goldGradient)" stroke-width="1.5" />
+                <ellipse cx="0" cy="14" rx="8" ry="3" fill="url(#goldGradient)" />
+            </g>
+        </g>
+        
+        <!-- I -->
+        <text x="100" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58" font-weight="700" fill="url(#goldGradient)">I</text>
+        
+        <!-- O -->
+        <text x="140" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58" font-weight="700" fill="url(#goldGradient)">O</text>
+    </g>
+
+    <!-- Linha decorativa abaixo do texto -->
+    <line x1="80" y1="215" x2="320" y2="215" stroke="url(#goldGradient)" stroke-width="1.5" />
+
+    <!-- Tagline -->
+    <text x="200" y="245" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" letter-spacing="4" fill="#c9a85c" opacity="0.9">
+        ADVOCACIA DIGITAL
+    </text>
+
+    <!-- Balança da Justiça maior embaixo -->
+    <g transform="translate(200, 310)" filter="url(#glow)">
         <!-- Haste central -->
-        <rect x="-4" y="-80" width="8" height="140" fill="url(#goldGradient)" rx="2" />
+        <rect x="-3" y="-35" width="6" height="55" fill="url(#goldGradient)" rx="2" />
 
         <!-- Base triangular -->
-        <polygon points="-35,60 35,60 0,45" fill="url(#goldGradient)" />
-        <rect x="-45" y="58" width="90" height="8" fill="url(#goldGradient)" rx="2" />
+        <polygon points="-20,20 20,20 0,12" fill="url(#goldGradient)" />
+        <rect x="-25" y="18" width="50" height="5" fill="url(#goldGradient)" rx="2" />
 
         <!-- Barra horizontal da balança -->
-        <rect x="-85" y="-75" width="170" height="6" fill="url(#goldGradient)" rx="3" />
+        <rect x="-50" y="-33" width="100" height="4" fill="url(#goldGradient)" rx="2" />
 
         <!-- Prato esquerdo -->
-        <g transform="translate(-70, -75)">
-            <line x1="0" y1="0" x2="0" y2="35" stroke="url(#goldGradient)" stroke-width="2" />
-            <line x1="-15" y1="0" x2="15" y2="0" stroke="url(#goldGradient)" stroke-width="2" />
-            <line x1="-15" y1="0" x2="-20" y2="35" stroke="url(#goldGradient)" stroke-width="2" />
-            <line x1="15" y1="0" x2="20" y2="35" stroke="url(#goldGradient)" stroke-width="2" />
-            <ellipse cx="0" cy="40" rx="25" ry="8" fill="url(#goldGradient)" />
+        <g transform="translate(-42, -31)">
+            <line x1="0" y1="0" x2="0" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
+            <line x1="-8" y1="0" x2="8" y2="0" stroke="url(#goldGradient)" stroke-width="1.5" />
+            <line x1="-8" y1="0" x2="-10" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
+            <line x1="8" y1="0" x2="10" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
+            <ellipse cx="0" cy="20" rx="12" ry="4" fill="url(#goldGradient)" />
         </g>
 
         <!-- Prato direito -->
-        <g transform="translate(70, -75)">
-            <line x1="0" y1="0" x2="0" y2="35" stroke="url(#goldGradient)" stroke-width="2" />
-            <line x1="-15" y1="0" x2="15" y2="0" stroke="url(#goldGradient)" stroke-width="2" />
-            <line x1="-15" y1="0" x2="-20" y2="35" stroke="url(#goldGradient)" stroke-width="2" />
-            <line x1="15" y1="0" x2="20" y2="35" stroke="url(#goldGradient)" stroke-width="2" />
-            <ellipse cx="0" cy="40" rx="25" ry="8" fill="url(#goldGradient)" />
+        <g transform="translate(42, -31)">
+            <line x1="0" y1="0" x2="0" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
+            <line x1="-8" y1="0" x2="8" y2="0" stroke="url(#goldGradient)" stroke-width="1.5" />
+            <line x1="-8" y1="0" x2="-10" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
+            <line x1="8" y1="0" x2="10" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
+            <ellipse cx="0" cy="20" rx="12" ry="4" fill="url(#goldGradient)" />
         </g>
 
         <!-- Ornamento no topo -->
-        <circle cx="0" cy="-85" r="12" fill="url(#goldGradient)" />
-        <circle cx="0" cy="-85" r="6" fill="url(#navyGradient)" />
+        <circle cx="0" cy="-38" r="6" fill="url(#goldGradient)" />
+        <circle cx="0" cy="-38" r="3" fill="url(#navyGradient)" />
     </g>
-
-    <!-- Texto PETITIO -->
-    <text x="200" y="305" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="42"
-        font-weight="600" letter-spacing="8" fill="url(#goldGradient)">
-        PETITIO
-    </text>
-
-    <!-- Linha decorativa abaixo do texto -->
-    <line x1="110" y1="320" x2="290" y2="320" stroke="url(#goldGradient)" stroke-width="1.5" />
-
-    <!-- Tagline -->
-    <text x="200" y="345" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" letter-spacing="3"
-        fill="#c9a85c" opacity="0.9">
-        ADVOCACIA DIGITAL
-    </text>
 </svg>

@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="fas fa-comments"></i> Moderar Depoimentos</h1>
+            <p class="text-muted mb-0">Aprove ou rejeite depoimentos enviados pelos usuários.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body py-2">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="text-muted small me-2">Filtrar por:</span>
+                <a href="{{ url_for('main.admin_testimonials', status='pending') }}" 
+                   class="btn btn-sm {{ 'btn-warning' if current_filter == 'pending' else 'btn-outline-warning' }}">
+                    <i class="fas fa-clock me-1"></i> Pendentes 
+                    <span class="badge bg-dark">{{ counts.pending }}</span>
+                </a>
+                <a href="{{ url_for('main.admin_testimonials', status='approved') }}" 
+                   class="btn btn-sm {{ 'btn-success' if current_filter == 'approved' else 'btn-outline-success' }}">
+                    <i class="fas fa-check me-1"></i> Aprovados 
+                    <span class="badge bg-dark">{{ counts.approved }}</span>
+                </a>
+                <a href="{{ url_for('main.admin_testimonials', status='rejected') }}" 
+                   class="btn btn-sm {{ 'btn-danger' if current_filter == 'rejected' else 'btn-outline-danger' }}">
+                    <i class="fas fa-times me-1"></i> Rejeitados 
+                    <span class="badge bg-dark">{{ counts.rejected }}</span>
+                </a>
+                <a href="{{ url_for('main.admin_testimonials', status='all') }}" 
+                   class="btn btn-sm {{ 'btn-secondary' if current_filter == 'all' else 'btn-outline-secondary' }}">
+                    <i class="fas fa-list me-1"></i> Todos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if testimonials %}
+    <div class="row g-4">
+        {% for t in testimonials %}
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100 {{ 'border-warning' if t.status == 'pending' else ('border-success' if t.status == 'approved' else 'border-danger') }}">
+                <div class="card-header d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>{{ t.display_name }}</strong>
+                        {% if t.display_role %}
+                        <small class="text-muted d-block">{{ t.display_role }}</small>
+                        {% endif %}
+                        {% if t.display_location %}
+                        <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>{{ t.display_location }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        {% if t.status == 'pending' %}
+                        <span class="badge bg-warning text-dark">Pendente</span>
+                        {% elif t.status == 'approved' %}
+                        <span class="badge bg-success">Aprovado</span>
+                        {% else %}
+                        <span class="badge bg-danger">Rejeitado</span>
+                        {% endif %}
+                        {% if t.is_featured %}
+                        <span class="badge bg-primary">⭐ Destaque</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        {% for i in range(t.rating) %}
+                        <i class="fas fa-star text-warning"></i>
+                        {% endfor %}
+                        {% for i in range(5 - t.rating) %}
+                        <i class="far fa-star text-muted"></i>
+                        {% endfor %}
+                    </div>
+                    <p class="card-text">{{ t.content }}</p>
+                    
+                    <div class="small text-muted mb-2">
+                        <i class="fas fa-user me-1"></i> Usuário: {{ t.user.full_name or t.user.username }}
+                        ({{ t.user.email }})
+                    </div>
+                    
+                    {% if t.rejection_reason %}
+                    <div class="alert alert-danger py-2 mb-0">
+                        <small><strong>Motivo da rejeição:</strong> {{ t.rejection_reason }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <small class="text-muted">
+                            Enviado em {{ t.created_at.strftime('%d/%m/%Y %H:%M') }}
+                            {% if t.moderated_at %}
+                            <br>Moderado em {{ t.moderated_at.strftime('%d/%m/%Y %H:%M') }}
+                            {% endif %}
+                        </small>
+                        
+                        <div class="d-flex gap-1">
+                            {% if t.status == 'pending' %}
+                            <!-- Aprovar -->
+                            <form method="post" action="{{ url_for('main.moderate_testimonial', testimonial_id=t.id) }}" class="d-inline">
+                                <input type="hidden" name="action" value="approve">
+                                <button type="submit" class="btn btn-sm btn-success" title="Aprovar">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            
+                            <!-- Rejeitar com modal -->
+                            <button type="button" class="btn btn-sm btn-danger" title="Rejeitar" 
+                                    data-bs-toggle="modal" data-bs-target="#rejectModal{{ t.id }}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            {% endif %}
+                            
+                            {% if t.status == 'approved' %}
+                            <!-- Toggle destaque -->
+                            <form method="post" action="{{ url_for('main.moderate_testimonial', testimonial_id=t.id) }}" class="d-inline">
+                                <input type="hidden" name="action" value="feature">
+                                <button type="submit" class="btn btn-sm {{ 'btn-primary' if t.is_featured else 'btn-outline-primary' }}" 
+                                        title="{{ 'Remover destaque' if t.is_featured else 'Destacar' }}">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de Rejeição -->
+        {% if t.status == 'pending' %}
+        <div class="modal fade" id="rejectModal{{ t.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="post" action="{{ url_for('main.moderate_testimonial', testimonial_id=t.id) }}">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Rejeitar Depoimento</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="action" value="reject">
+                            <div class="mb-3">
+                                <label class="form-label">Motivo da rejeição (opcional)</label>
+                                <textarea name="rejection_reason" class="form-control" rows="3" 
+                                          placeholder="Explique o motivo da rejeição..."></textarea>
+                                <small class="text-muted">O usuário verá este motivo.</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times me-1"></i> Rejeitar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+            <h5>Nenhum depoimento encontrado</h5>
+            <p class="text-muted mb-0">
+                {% if current_filter == 'pending' %}
+                Não há depoimentos pendentes de aprovação.
+                {% elif current_filter == 'approved' %}
+                Nenhum depoimento foi aprovado ainda.
+                {% elif current_filter == 'rejected' %}
+                Nenhum depoimento foi rejeitado.
+                {% else %}
+                Ainda não há depoimentos enviados.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
