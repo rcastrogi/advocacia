@@ -6,6 +6,7 @@ from zipfile import ZipFile
 from flask import (
     abort,
     flash,
+    jsonify,
     redirect,
     render_template,
     render_template_string,
@@ -14,11 +15,10 @@ from flask import (
     url_for,
 )
 from flask_login import current_user, login_required
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import cm
-from reportlab.pdfgen import canvas
+from xhtml2pdf import pisa
 from sqlalchemy import or_
 from werkzeug.utils import secure_filename
+import bleach
 
 from app import db
 from app.billing.decorators import subscription_required
@@ -199,30 +199,210 @@ OAB {{ advogado_oab }}
 
 
 def _render_pdf(text: str, title: str) -> BytesIO:
+    """
+    Renderiza conteúdo HTML para PDF usando xhtml2pdf.
+    Suporta formatação rica: negrito, itálico, fontes, cabeçalhos, listas, etc.
+    """
+    # Tags HTML permitidas para sanitização
+    ALLOWED_TAGS = [
+        'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'ul', 'ol', 'li',
+        'table', 'thead', 'tbody', 'tr', 'th', 'td',
+        'span', 'div', 'blockquote',
+        'a', 'img'
+    ]
+    ALLOWED_ATTRIBUTES = {
+        '*': ['class', 'style'],
+        'a': ['href', 'title'],
+        'img': ['src', 'alt', 'width', 'height'],
+        'td': ['colspan', 'rowspan'],
+        'th': ['colspan', 'rowspan'],
+    }
+    
+    # Sanitiza o HTML
+    clean_html = bleach.clean(
+        text,
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRIBUTES,
+        strip=True
+    )
+    
+    # Template HTML completo com estilos para impressão
+    html_template = f"""
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <title>{title}</title>
+        <style>
+            @page {{
+                size: A4;
+                margin: 2.5cm 2cm 2cm 3cm;
+                @frame footer {{
+                    -pdf-frame-content: footerContent;
+                    bottom: 0.5cm;
+                    margin-left: 1cm;
+                    margin-right: 1cm;
+                    height: 1cm;
+                }}
+            }}
+            
+            body {{
+                font-family: Times, 'Times New Roman', serif;
+                font-size: 12pt;
+                line-height: 1.5;
+                text-align: justify;
+                color: #000;
+            }}
+            
+            h1 {{
+                font-size: 16pt;
+                font-weight: bold;
+                text-align: center;
+                margin: 0 0 24pt 0;
+            }}
+            
+            h2 {{
+                font-size: 14pt;
+                font-weight: bold;
+                margin: 18pt 0 12pt 0;
+            }}
+            
+            h3 {{
+                font-size: 12pt;
+                font-weight: bold;
+                margin: 12pt 0 8pt 0;
+            }}
+            
+            h4 {{
+                font-size: 12pt;
+                font-weight: bold;
+                font-style: italic;
+                margin: 10pt 0 6pt 0;
+            }}
+            
+            p {{
+                margin: 0 0 12pt 0;
+                text-indent: 2cm;
+            }}
+            
+            ul, ol {{
+                margin: 12pt 0;
+                padding-left: 1.5cm;
+            }}
+            
+            li {{
+                margin-bottom: 6pt;
+            }}
+            
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin: 12pt 0;
+            }}
+            
+            th, td {{
+                border: 1px solid #000;
+                padding: 6pt 8pt;
+                text-align: left;
+            }}
+            
+            th {{
+                background-color: #f0f0f0;
+                font-weight: bold;
+            }}
+            
+            strong, b {{
+                font-weight: bold;
+            }}
+            
+            em, i {{
+                font-style: italic;
+            }}
+            
+            u {{
+                text-decoration: underline;
+            }}
+            
+            blockquote {{
+                margin: 12pt 2cm;
+                font-style: italic;
+                border-left: 3pt solid #ccc;
+                padding-left: 12pt;
+            }}
+            
+            .signature {{
+                margin-top: 48pt;
+                text-align: center;
+            }}
+            
+            .signature-line {{
+                border-top: 1px solid #000;
+                width: 60%;
+                margin: 0 auto;
+                padding-top: 6pt;
+            }}
+            
+            #footerContent {{
+                font-size: 10pt;
+                text-align: center;
+                color: #666;
+            }}
+        </style>
+    </head>
+    <body>
+        {clean_html}
+        <div id="footerContent">
+            <pdf:pagenumber />
+        </div>
+    </body>
+    </html>
+    """
+    
+    # Gera o PDF
     buffer = BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
-    x_margin = 2 * cm
-    y = height - 2 * cm
-
-    pdf.setTitle(title)
-    pdf.setFont("Helvetica", 11)
-
-    for raw_line in text.splitlines():
-        line = raw_line.rstrip()
-        if not line:
-            y -= 12
-        else:
-            pdf.drawString(x_margin, y, line)
-            y -= 14
-
-        if y <= 2 * cm:
-            pdf.showPage()
-            pdf.setFont("Helvetica", 11)
-            y = height - 2 * cm
-
-    pdf.showPage()
-    pdf.save()
+    pisa_status = pisa.CreatePDF(
+        src=html_template,
+        dest=buffer,
+        encoding='UTF-8'
+    )
+    
+    if pisa_status.err:
+        # Fallback para texto simples se houver erro
+        buffer = BytesIO()
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.units import cm
+        from reportlab.pdfgen import canvas as reportlab_canvas
+        
+        pdf = reportlab_canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+        x_margin = 2 * cm
+        y = height - 2 * cm
+        
+        pdf.setTitle(title)
+        pdf.setFont("Helvetica", 11)
+        
+        # Remove tags HTML para texto simples
+        import re
+        plain_text = re.sub('<[^<]+?>', '', text)
+        
+        for raw_line in plain_text.splitlines():
+            line = raw_line.rstrip()
+            if not line:
+                y -= 12
+            else:
+                pdf.drawString(x_margin, y, line)
+                y -= 14
+            
+            if y <= 2 * cm:
+                pdf.showPage()
+                pdf.setFont("Helvetica", 11)
+                y = height - 2 * cm
+        
+        pdf.showPage()
+        pdf.save()
+    
     buffer.seek(0)
     return buffer
 
@@ -319,6 +499,28 @@ def _redirect_for_template(template: PetitionTemplate):
     if template.is_global:
         return url_for("petitions.manage_global_templates")
     return url_for("petitions.personal_templates")
+
+
+@bp.route("/api/template/<int:template_id>/defaults")
+@login_required
+def get_template_defaults(template_id):
+    """API endpoint to get default values for a petition template."""
+    template = PetitionTemplate.query.get_or_404(template_id)
+    
+    # Check if user has access to this template
+    if not template.is_accessible_by(current_user):
+        return jsonify({"error": "Acesso negado"}), 403
+    
+    # Get default values from the template
+    defaults = template.get_default_values()
+    
+    return jsonify({
+        "id": template.id,
+        "name": template.name,
+        "category": template.category,
+        "description": template.description,
+        "defaults": defaults
+    })
 
 
 @bp.route("/civil", methods=["GET", "POST"])
@@ -551,6 +753,16 @@ def create_global_template():
                 is_active=form.is_active.data,
                 petition_type_id=form.petition_type_id.data,
             )
+            # Save default values
+            defaults = {}
+            if form.default_facts.data:
+                defaults["facts"] = form.default_facts.data
+            if form.default_fundamentos.data:
+                defaults["fundamentos"] = form.default_fundamentos.data
+            if form.default_pedidos.data:
+                defaults["pedidos"] = form.default_pedidos.data
+            template.set_default_values(defaults)
+            
             db.session.add(template)
             db.session.commit()
             flash("Modelo padrão criado com sucesso!", "success")
@@ -603,6 +815,16 @@ def create_personal_template():
             owner_id=current_user.id,
             petition_type_id=form.petition_type_id.data,
         )
+        # Save default values
+        defaults = {}
+        if form.default_facts.data:
+            defaults["facts"] = form.default_facts.data
+        if form.default_fundamentos.data:
+            defaults["fundamentos"] = form.default_fundamentos.data
+        if form.default_pedidos.data:
+            defaults["pedidos"] = form.default_pedidos.data
+        template.set_default_values(defaults)
+        
         db.session.add(template)
         db.session.commit()
         flash("Modelo pessoal criado com sucesso!", "success")
@@ -647,6 +869,11 @@ def edit_template(template_id):
 
     if request.method == "GET":
         form.petition_type_id.data = template.petition_type_id
+        # Load default values into form
+        defaults = template.get_default_values()
+        form.default_facts.data = defaults.get("facts", "")
+        form.default_fundamentos.data = defaults.get("fundamentos", "")
+        form.default_pedidos.data = defaults.get("pedidos", "")
 
     if form.validate_on_submit():
         template.name = form.name.data
@@ -655,6 +882,17 @@ def edit_template(template_id):
         template.content = form.content.data.strip()
         template.is_active = form.is_active.data
         template.petition_type_id = form.petition_type_id.data
+        
+        # Save default values
+        defaults = {}
+        if form.default_facts.data:
+            defaults["facts"] = form.default_facts.data
+        if form.default_fundamentos.data:
+            defaults["fundamentos"] = form.default_fundamentos.data
+        if form.default_pedidos.data:
+            defaults["pedidos"] = form.default_pedidos.data
+        template.set_default_values(defaults)
+        
         db.session.commit()
         flash("Modelo atualizado com sucesso!", "success")
         return redirect(_redirect_for_template(template))

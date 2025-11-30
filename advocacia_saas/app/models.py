@@ -339,6 +339,8 @@ class PetitionTemplate(db.Model):
     description = db.Column(db.Text)
     category = db.Column(db.String(50), default="civel")
     content = db.Column(db.Text, nullable=False)
+    # JSON field to store default values for form fields (facts, fundamentos, pedidos, etc.)
+    default_values = db.Column(db.Text, default="{}")
     is_global = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
     owner_id = db.Column(db.Integer, db.ForeignKey("user.id"))
@@ -351,6 +353,19 @@ class PetitionTemplate(db.Model):
     )
 
     petition_type = db.relationship("PetitionType", backref="templates")
+
+    def get_default_values(self) -> dict:
+        """Returns the default values as a dictionary."""
+        if self.default_values:
+            try:
+                return json.loads(self.default_values)
+            except (json.JSONDecodeError, TypeError):
+                return {}
+        return {}
+
+    def set_default_values(self, values: dict):
+        """Sets the default values from a dictionary."""
+        self.default_values = json.dumps(values, ensure_ascii=False)
 
     def is_accessible_by(self, user: "User") -> bool:
         if self.is_global:

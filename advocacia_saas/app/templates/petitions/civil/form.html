@@ -1,11 +1,19 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style>
+    .tox-tinymce {
+        border-radius: 4px !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-1"><i class="fas fa-file-signature"></i> Petições Cíveis</h1>
-            <p class="text-white mb-0">Preencha os dados abaixo para gerar automaticamente a petição em PDF.</p>
+            <p class="text-muted mb-0">Preencha os dados abaixo para gerar automaticamente a petição em PDF.</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
             <a href="{{ url_for('main.peticionador') }}" class="btn btn-outline-secondary">
@@ -25,8 +33,11 @@
     <div class="row">
         <div class="col-lg-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <strong>Dados da Petição</strong>
+                    <button type="button" class="btn btn-sm btn-outline-light" id="btnLoadDefaults" title="Carregar textos padrão do modelo selecionado">
+                        <i class="fas fa-magic me-1"></i> Carregar Modelo
+                    </button>
                 </div>
                 <div class="card-body">
                     <form method="post">
@@ -35,7 +46,8 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">{{ form.template_id.label }}</label>
-                                {{ form.template_id(class_='form-select') }}
+                                {{ form.template_id(class_='form-select', id='template_id') }}
+                                <small class="text-muted">Selecione e clique em "Carregar Modelo" para preencher os campos automaticamente.</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ form.process_number.label }}</label>
@@ -76,15 +88,15 @@
 
                         <div class="mb-3">
                             <label class="form-label">{{ form.facts.label }}</label>
-                            {{ form.facts(class_='form-control') }}
+                            {{ form.facts(class_='form-control petition-editor', id='facts') }}
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{{ form.fundamentos.label }}</label>
-                            {{ form.fundamentos(class_='form-control') }}
+                            {{ form.fundamentos(class_='form-control petition-editor', id='fundamentos') }}
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{{ form.pedidos.label }}</label>
-                            {{ form.pedidos(class_='form-control') }}
+                            {{ form.pedidos(class_='form-control petition-editor', id='pedidos') }}
                         </div>
 
                         <div class="row g-3">
@@ -163,14 +175,121 @@
                 </div>
                 <div class="card-body">
                     <ul class="small text-muted mb-0">
+                        <li><strong>Carregar Modelo:</strong> Selecione um modelo e clique no botão para preencher os campos automaticamente.</li>
                         <li>Use frases curtas e objetivas nos fatos.</li>
                         <li>Nos pedidos, inclua cada item em uma nova linha.</li>
                         <li>Valor da causa opcional — deixe em branco para suprimir.</li>
-                        <li>Campos suportam Markdown simples (quebras de linha).</li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnLoadDefaults = document.getElementById('btnLoadDefaults');
+    const templateSelect = document.getElementById('template_id');
+    
+    // Inicializa editores TinyMCE para os campos de petição
+    tinymce.init({
+        selector: '.petition-editor',
+        height: 250,
+        language: 'pt_BR',
+        plugins: ['advlist', 'autolink', 'lists', 'wordcount'],
+        toolbar: 'undo redo | bold italic underline | bullist numlist outdent indent | removeformat',
+        menubar: false,
+        content_style: `
+            body { 
+                font-family: 'Times New Roman', Times, serif; 
+                font-size: 12pt; 
+                line-height: 1.5;
+                margin: 0.5cm;
+            }
+            p { margin: 0 0 8pt 0; }
+        `,
+        branding: false,
+        promotion: false
+    });
+    
+    btnLoadDefaults.addEventListener('click', function() {
+        const templateId = templateSelect.value;
+        if (!templateId) {
+            alert('Selecione um modelo primeiro.');
+            return;
+        }
+        
+        // Show loading state
+        btnLoadDefaults.disabled = true;
+        btnLoadDefaults.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Carregando...';
+        
+        // Fetch defaults from API
+        fetch(`/petitions/api/template/${templateId}/defaults`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar modelo');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const defaults = data.defaults || {};
+                
+                // Check if there are any defaults to load
+                if (Object.keys(defaults).length === 0) {
+                    alert('Este modelo não possui textos padrão configurados. Você pode editá-lo para adicionar textos padrão.');
+                    return;
+                }
+                
+                // Verifica se há conteúdo nos editores
+                const factsEditor = tinymce.get('facts');
+                const fundamentosEditor = tinymce.get('fundamentos');
+                const pedidosEditor = tinymce.get('pedidos');
+                
+                let hasContent = (factsEditor && factsEditor.getContent().trim()) || 
+                                 (fundamentosEditor && fundamentosEditor.getContent().trim()) || 
+                                 (pedidosEditor && pedidosEditor.getContent().trim());
+                
+                if (hasContent) {
+                    if (!confirm('Os campos Fatos, Fundamentação e Pedidos já possuem conteúdo. Deseja substituir pelo texto padrão do modelo?')) {
+                        return;
+                    }
+                }
+                
+                // Fill in the fields via TinyMCE
+                if (defaults.facts && factsEditor) {
+                    factsEditor.setContent(defaults.facts);
+                }
+                if (defaults.fundamentos && fundamentosEditor) {
+                    fundamentosEditor.setContent(defaults.fundamentos);
+                }
+                if (defaults.pedidos && pedidosEditor) {
+                    pedidosEditor.setContent(defaults.pedidos);
+                }
+                
+                // Show success feedback
+                btnLoadDefaults.innerHTML = '<i class="fas fa-check me-1"></i> Carregado!';
+                btnLoadDefaults.classList.remove('btn-outline-light');
+                btnLoadDefaults.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    btnLoadDefaults.innerHTML = '<i class="fas fa-magic me-1"></i> Carregar Modelo';
+                    btnLoadDefaults.classList.remove('btn-success');
+                    btnLoadDefaults.classList.add('btn-outline-light');
+                }, 2000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao carregar os textos padrão do modelo.');
+            })
+            .finally(() => {
+                btnLoadDefaults.disabled = false;
+                if (btnLoadDefaults.innerHTML.includes('Carregando')) {
+                    btnLoadDefaults.innerHTML = '<i class="fas fa-magic me-1"></i> Carregar Modelo';
+                }
+            });
+    });
+});
+</script>
 {% endblock %}

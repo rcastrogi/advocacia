@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style>
+    .tox-tinymce {
+        border-radius: 4px !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -130,15 +138,15 @@
 
                         <div class="mb-3">
                             <label class="form-label">{{ form.facts.label }}</label>
-                            {{ form.facts(class_='form-control') }}
+                            {{ form.facts(class_='form-control petition-editor', id='facts') }}
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{{ form.fundamentos.label }}</label>
-                            {{ form.fundamentos(class_='form-control') }}
+                            {{ form.fundamentos(class_='form-control petition-editor', id='fundamentos') }}
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{{ form.pedidos.label }}</label>
-                            {{ form.pedidos(class_='form-control') }}
+                            {{ form.pedidos(class_='form-control petition-editor', id='pedidos') }}
                         </div>
 
                         <div class="row g-3">
@@ -215,4 +223,31 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializa editores TinyMCE para os campos de petição
+    tinymce.init({
+        selector: '.petition-editor',
+        height: 250,
+        language: 'pt_BR',
+        plugins: ['advlist', 'autolink', 'lists', 'wordcount'],
+        toolbar: 'undo redo | bold italic underline | bullist numlist outdent indent | removeformat',
+        menubar: false,
+        content_style: `
+            body { 
+                font-family: 'Times New Roman', Times, serif; 
+                font-size: 12pt; 
+                line-height: 1.5;
+                margin: 0.5cm;
+            }
+            p { margin: 0 0 8pt 0; }
+        `,
+        branding: false,
+        promotion: false
+    });
+});
+</script>
 {% endblock %}

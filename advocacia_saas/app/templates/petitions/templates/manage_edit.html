@@ -1,5 +1,40 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style>
+    /* Estilos para o editor de variáveis */
+    .variable-legend {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .variable-legend h6 {
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    .variable-badge {
+        display: inline-block;
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 4px;
+        padding: 2px 8px;
+        margin: 2px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .variable-badge:hover {
+        background: #ffc107;
+        color: #000;
+    }
+    .tox-tinymce {
+        border-radius: 4px !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 {% set icon_class = page_icon or 'fas fa-pen-to-square' %}
 {% if page_subtitle %}
@@ -26,7 +61,7 @@
     </div>
 
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-lg-10">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <strong>Dados do modelo</strong>
@@ -52,11 +87,49 @@
                             {{ form.description.label(class_='form-label') }}
                             {{ form.description(class_='form-control') }}
                         </div>
+                        
+                        <!-- Legenda de variáveis disponíveis -->
+                        <div class="variable-legend mb-3">
+                            <h6><i class="fas fa-code text-primary me-2"></i>Variáveis Disponíveis</h6>
+                            <p class="text-muted small mb-2">Clique em uma variável para copiá-la ou use o botão "Inserir Campo" no editor.</p>
+                            <div id="variablesList">
+                                <!-- Preenchido pelo JavaScript baseado na categoria -->
+                            </div>
+                        </div>
+                        
                         <div class="mb-3">
                             {{ form.content.label(class_='form-label') }}
-                            {{ form.content(class_='form-control') }}
-                            <small class="text-muted">Use as mesmas variáveis disponíveis no formulário da petição. <a href="{{ url_for('petitions.template_examples') }}" class="text-decoration-underline">Ver exemplos</a>.</small>
+                            {{ form.content(class_='form-control', id='template-content-editor') }}
+                            <small class="text-muted">Use o editor acima para formatar o texto e inserir variáveis. <a href="{{ url_for('petitions.template_examples') }}" class="text-decoration-underline">Ver exemplos</a>.</small>
                         </div>
+                        
+                        <hr class="my-4">
+                        <h5 class="mb-3"><i class="fas fa-magic text-primary me-2"></i>Textos Padrão (Pré-preenchimento)</h5>
+                        <p class="text-muted small mb-3">
+                            Defina textos padrão que serão carregados automaticamente nos campos do formulário quando este modelo for selecionado. 
+                            Isso agiliza o preenchimento das petições.
+                        </p>
+                        
+                        <div class="mb-3">
+                            {{ form.default_facts.label(class_='form-label') }}
+                            {{ form.default_facts(class_='form-control', id='default-facts-editor') }}
+                            <small class="text-muted">Este texto será carregado no campo "Fatos" quando o usuário selecionar este modelo.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.default_fundamentos.label(class_='form-label') }}
+                            {{ form.default_fundamentos(class_='form-control', id='default-fundamentos-editor') }}
+                            <small class="text-muted">Este texto será carregado no campo "Fundamentação Jurídica" quando o usuário selecionar este modelo.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.default_pedidos.label(class_='form-label') }}
+                            {{ form.default_pedidos(class_='form-control', id='default-pedidos-editor') }}
+                            <small class="text-muted">Este texto será carregado no campo "Pedidos" quando o usuário selecionar este modelo.</small>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
                         <div class="form-check form-switch mb-3">
                             {{ form.is_active(class_='form-check-input') }}
                             {{ form.is_active.label(class_='form-check-label') }}
@@ -70,4 +143,155 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtém a categoria atual
+    const categorySelect = document.getElementById('category');
+    let currentCategory = categorySelect ? categorySelect.value : 'civel';
+    
+    // Função para obter variáveis baseado na categoria
+    function getVariablesForCategory(category) {
+        if (category === 'familia') {
+            return PetitioEditor.FAMILY_VARIABLES;
+        }
+        return PetitioEditor.CIVIL_VARIABLES;
+    }
+    
+    // Renderiza a lista de variáveis
+    function renderVariablesList(category) {
+        const container = document.getElementById('variablesList');
+        const variables = getVariablesForCategory(category);
+        
+        container.innerHTML = variables.map(function(v) {
+            return '<span class="variable-badge" data-variable="' + v.value + '" title="Clique para copiar">' + v.value + '</span>';
+        }).join(' ');
+        
+        // Adiciona evento de clique para copiar
+        container.querySelectorAll('.variable-badge').forEach(function(badge) {
+            badge.addEventListener('click', function() {
+                const variable = this.dataset.variable;
+                navigator.clipboard.writeText(variable).then(function() {
+                    // Feedback visual
+                    badge.style.background = '#28a745';
+                    badge.style.color = '#fff';
+                    setTimeout(function() {
+                        badge.style.background = '';
+                        badge.style.color = '';
+                    }, 500);
+                });
+            });
+        });
+    }
+    
+    // Renderiza inicialmente
+    renderVariablesList(currentCategory);
+    
+    // Atualiza quando categoria muda
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            currentCategory = this.value;
+            renderVariablesList(currentCategory);
+            
+            // Reinicializa o editor principal com as novas variáveis
+            if (tinymce.get('template-content-editor')) {
+                const content = tinymce.get('template-content-editor').getContent();
+                tinymce.get('template-content-editor').remove();
+                initMainEditor(currentCategory).then(function() {
+                    tinymce.get('template-content-editor').setContent(content);
+                });
+            }
+        });
+    }
+    
+    // Inicializa o editor principal de conteúdo
+    function initMainEditor(category) {
+        const variables = getVariablesForCategory(category);
+        return tinymce.init({
+            selector: '#template-content-editor',
+            height: 500,
+            language: 'pt_BR',
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'table', 'wordcount', 'help'
+            ],
+            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | removeformat | variableinsert | code fullscreen | help',
+            menubar: 'file edit view insert format tools table help',
+            content_style: `
+                body { 
+                    font-family: 'Times New Roman', Times, serif; 
+                    font-size: 12pt; 
+                    line-height: 1.5;
+                    margin: 1cm;
+                }
+                p { margin: 0 0 12pt 0; }
+                .jinja-variable {
+                    background-color: #fff3cd;
+                    border: 1px solid #ffc107;
+                    border-radius: 3px;
+                    padding: 2px 4px;
+                    font-family: monospace;
+                    font-size: 11pt;
+                }
+            `,
+            font_family_formats: 'Arial=arial,helvetica,sans-serif; Times New Roman=times new roman,times,serif; Courier New=courier new,courier,monospace; Georgia=georgia,palatino,serif; Verdana=verdana,geneva,sans-serif',
+            font_size_formats: '8pt 10pt 11pt 12pt 14pt 16pt 18pt 24pt 36pt',
+            block_formats: 'Parágrafo=p; Cabeçalho 1=h1; Cabeçalho 2=h2; Cabeçalho 3=h3; Cabeçalho 4=h4',
+            branding: false,
+            promotion: false,
+            setup: function(editor) {
+                editor.ui.registry.addMenuButton('variableinsert', {
+                    text: 'Inserir Campo',
+                    icon: 'template',
+                    tooltip: 'Inserir variável do formulário',
+                    fetch: function(callback) {
+                        const items = variables.map(function(variable) {
+                            return {
+                                type: 'menuitem',
+                                text: variable.text,
+                                onAction: function() {
+                                    editor.insertContent('<span class="jinja-variable">' + variable.value + '</span>&nbsp;');
+                                }
+                            };
+                        });
+                        callback(items);
+                    }
+                });
+            },
+            init_instance_callback: function(editor) {
+                editor.on('GetContent', function(e) {
+                    e.content = e.content.replace(/<span class="jinja-variable">(.*?)<\/span>/g, '$1');
+                });
+            }
+        });
+    }
+    
+    // Inicializa editor principal
+    initMainEditor(currentCategory);
+    
+    // Inicializa editores de textos padrão (mais simples)
+    tinymce.init({
+        selector: '#default-facts-editor, #default-fundamentos-editor, #default-pedidos-editor',
+        height: 200,
+        language: 'pt_BR',
+        plugins: ['advlist', 'autolink', 'lists', 'wordcount'],
+        toolbar: 'undo redo | bold italic underline | bullist numlist | removeformat',
+        menubar: false,
+        content_style: `
+            body { 
+                font-family: 'Times New Roman', Times, serif; 
+                font-size: 12pt; 
+                line-height: 1.5;
+                margin: 0.5cm;
+            }
+            p { margin: 0 0 8pt 0; }
+        `,
+        branding: false,
+        promotion: false
+    });
+});
+</script>
 {% endblock %}
