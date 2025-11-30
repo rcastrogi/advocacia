@@ -36,11 +36,13 @@
     <!-- Texto PETITIO com T como balança -->
     <g transform="translate(200, 185)" filter="url(#glow)">
         <!-- P -->
-        <text x="-120" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58" font-weight="700" fill="url(#goldGradient)">P</text>
-        
+        <text x="-120" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58"
+            font-weight="700" fill="url(#goldGradient)">P</text>
+
         <!-- E -->
-        <text x="-75" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58" font-weight="700" fill="url(#goldGradient)">E</text>
-        
+        <text x="-75" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58"
+            font-weight="700" fill="url(#goldGradient)">E</text>
+
         <!-- Primeiro T como balança (mini) -->
         <g transform="translate(-30, -20)">
             <!-- Haste central do T/balança -->
@@ -58,10 +60,11 @@
                 <ellipse cx="0" cy="14" rx="8" ry="3" fill="url(#goldGradient)" />
             </g>
         </g>
-        
+
         <!-- I -->
-        <text x="15" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58" font-weight="700" fill="url(#goldGradient)">I</text>
-        
+        <text x="15" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58"
+            font-weight="700" fill="url(#goldGradient)">I</text>
+
         <!-- Segundo T como balança (mini) -->
         <g transform="translate(55, -20)">
             <!-- Haste central do T/balança -->
@@ -79,19 +82,22 @@
                 <ellipse cx="0" cy="14" rx="8" ry="3" fill="url(#goldGradient)" />
             </g>
         </g>
-        
+
         <!-- I -->
-        <text x="100" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58" font-weight="700" fill="url(#goldGradient)">I</text>
-        
+        <text x="100" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58"
+            font-weight="700" fill="url(#goldGradient)">I</text>
+
         <!-- O -->
-        <text x="140" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58" font-weight="700" fill="url(#goldGradient)">O</text>
+        <text x="140" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58"
+            font-weight="700" fill="url(#goldGradient)">O</text>
     </g>
 
     <!-- Linha decorativa abaixo do texto -->
     <line x1="80" y1="215" x2="320" y2="215" stroke="url(#goldGradient)" stroke-width="1.5" />
 
     <!-- Tagline -->
-    <text x="200" y="245" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" letter-spacing="4" fill="#c9a85c" opacity="0.9">
+    <text x="200" y="245" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" letter-spacing="4"
+        fill="#c9a85c" opacity="0.9">
         ADVOCACIA DIGITAL
     </text>
 

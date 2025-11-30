@@ -40,7 +40,7 @@ CATEGORY_LABELS = {
 def index():
     plans = _get_public_plans()
     petition_types = _get_implemented_petition_types()
-    
+
     # Busca depoimentos aprovados (prioriza destacados)
     testimonials = (
         Testimonial.query.filter_by(status="approved")
@@ -48,7 +48,7 @@ def index():
         .limit(6)
         .all()
     )
-    
+
     return render_template(
         "index.html",
         title="Petitio",
@@ -287,6 +287,7 @@ def _get_implemented_petition_types():
 
 # ===== Testimonials Routes =====
 
+
 @bp.route("/depoimentos")
 @login_required
 def testimonials():
@@ -308,26 +309,33 @@ def testimonials():
 def new_testimonial():
     """Formulário para enviar um novo depoimento."""
     form = TestimonialForm()
-    
+
     # Pré-preenche o nome se disponível
     if request.method == "GET" and current_user.full_name:
         form.display_name.data = current_user.full_name
-    
+
     if form.validate_on_submit():
         testimonial = Testimonial(
             user_id=current_user.id,
             content=form.content.data.strip(),
             rating=int(form.rating.data),
             display_name=form.display_name.data.strip(),
-            display_role=form.display_role.data.strip() if form.display_role.data else None,
-            display_location=form.display_location.data.strip() if form.display_location.data else None,
+            display_role=form.display_role.data.strip()
+            if form.display_role.data
+            else None,
+            display_location=form.display_location.data.strip()
+            if form.display_location.data
+            else None,
             status="pending",
         )
         db.session.add(testimonial)
         db.session.commit()
-        flash("Seu depoimento foi enviado e está aguardando aprovação. Obrigado!", "success")
+        flash(
+            "Seu depoimento foi enviado e está aguardando aprovação. Obrigado!",
+            "success",
+        )
         return redirect(url_for("main.testimonials"))
-    
+
     return render_template(
         "testimonials/form.html",
         title="Enviar Depoimento",
@@ -340,28 +348,32 @@ def new_testimonial():
 def edit_testimonial(testimonial_id):
     """Edita um depoimento existente (apenas se pendente)."""
     testimonial = Testimonial.query.get_or_404(testimonial_id)
-    
+
     if testimonial.user_id != current_user.id:
         flash("Você não tem permissão para editar este depoimento.", "danger")
         return redirect(url_for("main.testimonials"))
-    
+
     if testimonial.status != "pending":
         flash("Apenas depoimentos pendentes podem ser editados.", "warning")
         return redirect(url_for("main.testimonials"))
-    
+
     form = TestimonialForm(obj=testimonial)
-    
+
     if form.validate_on_submit():
         testimonial.content = form.content.data.strip()
         testimonial.rating = int(form.rating.data)
         testimonial.display_name = form.display_name.data.strip()
-        testimonial.display_role = form.display_role.data.strip() if form.display_role.data else None
-        testimonial.display_location = form.display_location.data.strip() if form.display_location.data else None
+        testimonial.display_role = (
+            form.display_role.data.strip() if form.display_role.data else None
+        )
+        testimonial.display_location = (
+            form.display_location.data.strip() if form.display_location.data else None
+        )
         testimonial.updated_at = datetime.utcnow()
         db.session.commit()
         flash("Depoimento atualizado com sucesso!", "success")
         return redirect(url_for("main.testimonials"))
-    
+
     return render_template(
         "testimonials/form.html",
         title="Editar Depoimento",
@@ -375,11 +387,11 @@ def edit_testimonial(testimonial_id):
 def delete_testimonial(testimonial_id):
     """Exclui um depoimento do usuário."""
     testimonial = Testimonial.query.get_or_404(testimonial_id)
-    
+
     if testimonial.user_id != current_user.id:
         flash("Você não tem permissão para excluir este depoimento.", "danger")
         return redirect(url_for("main.testimonials"))
-    
+
     db.session.delete(testimonial)
     db.session.commit()
     flash("Depoimento excluído com sucesso.", "success")
@@ -388,6 +400,7 @@ def delete_testimonial(testimonial_id):
 
 # ===== Admin Testimonials Routes =====
 
+
 @bp.route("/admin/depoimentos")
 @login_required
 def admin_testimonials():
@@ -395,22 +408,22 @@ def admin_testimonials():
     if current_user.user_type != "master":
         flash("Acesso negado.", "danger")
         return redirect(url_for("main.dashboard"))
-    
+
     status_filter = request.args.get("status", "pending")
     query = Testimonial.query
-    
+
     if status_filter and status_filter != "all":
         query = query.filter_by(status=status_filter)
-    
+
     testimonials = query.order_by(Testimonial.created_at.desc()).all()
-    
+
     # Contadores
     counts = {
         "pending": Testimonial.query.filter_by(status="pending").count(),
         "approved": Testimonial.query.filter_by(status="approved").count(),
         "rejected": Testimonial.query.filter_by(status="rejected").count(),
     }
-    
+
     return render_template(
         "testimonials/admin.html",
         title="Moderar Depoimentos",
@@ -427,10 +440,10 @@ def moderate_testimonial(testimonial_id):
     if current_user.user_type != "master":
         flash("Acesso negado.", "danger")
         return redirect(url_for("main.dashboard"))
-    
+
     testimonial = Testimonial.query.get_or_404(testimonial_id)
     action = request.form.get("action")
-    
+
     if action == "approve":
         testimonial.status = "approved"
         testimonial.moderated_by = current_user.id
@@ -447,7 +460,7 @@ def moderate_testimonial(testimonial_id):
         testimonial.is_featured = not testimonial.is_featured
         status = "destacado" if testimonial.is_featured else "removido do destaque"
         flash(f"Depoimento {status}.", "success")
-    
+
     db.session.commit()
     return redirect(url_for("main.admin_testimonials"))
 
