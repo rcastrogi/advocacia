@@ -184,7 +184,7 @@ section[style*="background"] .container {
 /* Only dashboard and form pages should have white background container */
 .dashboard-container,
 .content-wrapper {
-    background-color: #7a98aa !important;  /* Light beige paper color */
+    background-color: #f8f9fa !important;  /* Light gray background */
     border-radius: 12px;
     padding: 30px;
     margin-top: 20px;
@@ -328,7 +328,7 @@ textarea.form-control {
 }
 
 .hero-title {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 3.5rem;
     font-weight: 700;
     line-height: 1.2;
@@ -631,7 +631,7 @@ textarea.form-control {
 }
 
 .section-title {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 2.5rem;
     font-weight: 600;
     color: var(--dark-color);
@@ -763,28 +763,38 @@ textarea.form-control {
 }
 
 .card-icon.bg-primary {
-    background: var(--primary-color);
-    color: var(--gold-color);
+    background: var(--primary-color) !important;
+    color: var(--gold-color) !important;
 }
 
 .card-icon.bg-success {
-    background: var(--primary-color);
-    color: var(--gold-color);
+    background: var(--accent-color) !important;
+    color: var(--gold-color) !important;
 }
 
 .card-icon.bg-warning {
-    background: var(--gold-color);
-    color: var(--primary-color);
+    background: var(--gold-color) !important;
+    color: var(--primary-color) !important;
 }
 
 .card-icon.bg-info {
-    background: var(--accent-color);
-    color: var(--gold-color);
+    background: var(--primary-color) !important;
+    color: var(--gold-color) !important;
+}
+
+.card-icon.bg-secondary {
+    background: var(--accent-color) !important;
+    color: var(--gold-color) !important;
+}
+
+.card-icon.bg-danger {
+    background: var(--primary-color) !important;
+    color: var(--gold-color) !important;
 }
 
 .dashboard-card:hover .card-icon {
-    background: var(--gold-color);
-    color: var(--primary-color);
+    background: var(--gold-color) !important;
+    color: var(--primary-color) !important;
 }
 
 .card-header {
@@ -792,6 +802,48 @@ textarea.form-control {
     color: white;
     border-bottom: none;
     border-radius: 0 !important;
+}
+
+/* Override Bootstrap bg-* classes for consistency */
+.bg-primary {
+    background: var(--primary-color) !important;
+}
+
+.bg-success {
+    background: var(--accent-color) !important;
+}
+
+.bg-info {
+    background: var(--primary-color) !important;
+}
+
+.bg-warning {
+    background: var(--gold-color) !important;
+}
+
+.bg-secondary {
+    background: var(--accent-color) !important;
+}
+
+/* Override Bootstrap text-* color classes */
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.text-success {
+    color: var(--gold-color) !important;
+}
+
+.text-info {
+    color: var(--gold-color) !important;
+}
+
+.text-warning {
+    color: var(--gold-dark) !important;
+}
+
+.text-secondary {
+    color: var(--accent-color) !important;
 }
 
 /* Statistics cards */
@@ -1018,7 +1070,7 @@ textarea.form-control {
 }
 
 .footer h5 {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     color: white;
     font-weight: 600;
     margin-bottom: 1.5rem;
@@ -1110,7 +1162,7 @@ textarea.form-control {
 }
 
 .navbar-brand {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 1.5rem;
     font-weight: 700;
     color: #ffffff !important;
@@ -1365,7 +1417,7 @@ textarea.form-control {
 }
 
 .testimonial-info h5 {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     color: var(--primary-color);
     margin-bottom: 0.25rem;
     font-size: 1.1rem;
@@ -1481,7 +1533,7 @@ textarea.form-control {
 }
 
 .petition-type-name {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     color: var(--primary-color);
     font-size: 1.25rem;
     margin-bottom: 0.75rem;
@@ -1505,7 +1557,7 @@ textarea.form-control {
 }
 
 .petition-type-price {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--primary-color);
@@ -1561,7 +1613,7 @@ textarea.form-control {
 }
 
 .petition-types-coming-soon h3 {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 2rem;
     margin-bottom: 1rem;
     position: relative;
@@ -1644,7 +1696,7 @@ textarea.form-control {
 }
 
 .cta-section h2 {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     color: #ffffff;
     font-size: 2.5rem;
 }
@@ -1671,7 +1723,7 @@ textarea.form-control {
 }
 
 .counter-box .counter-number {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 3rem;
     font-weight: 700;
     color: var(--gold-color);
@@ -1688,45 +1740,45 @@ textarea.form-control {
 /* ===== Authentication Pages - Professional Style ===== */
 
 .auth-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    color: #ffffff !important;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    color: var(--primary-color) !important;
     font-weight: 600 !important;
     font-size: 2rem !important;
 }
 
 .auth-subtitle {
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: #666 !important;
     font-size: 1.1rem !important;
     font-weight: 400 !important;
 }
 
 .auth-text-muted {
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: #666 !important;
     font-size: 0.9rem !important;
 }
 
 .auth-text-muted a {
     color: var(--gold-color) !important;
     font-weight: 600 !important;
-    text-decoration: underline !important;
+    text-decoration: none !important;
     transition: all 0.3s ease;
 }
 
 .auth-text-muted a:hover {
-    color: #ffffff !important;
-    text-decoration: none !important;
+    color: var(--primary-color) !important;
+    text-decoration: underline !important;
 }
 
 /* Melhorar legibilidade de links em páginas auth */
 .auth-link {
-    color: var(--secondary-color) !important;
+    color: var(--gold-color) !important;
     font-weight: 600 !important;
     text-decoration: none !important;
     transition: all 0.3s ease;
 }
 
 .auth-link:hover {
-    color: var(--title-color) !important;
+    color: var(--primary-color) !important;
     text-decoration: underline !important;
 }
 

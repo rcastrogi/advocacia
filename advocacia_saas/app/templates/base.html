@@ -105,8 +105,8 @@
     <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color));">
         <div class="container-fluid">
             <div class="d-flex align-items-center">
-                <img src="{{ url_for('static', filename='img/petitio.png') }}" 
-                     alt="Petitio" class="navbar-brand-logo petitio-logo me-2" height="30">
+                <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}" 
+                     alt="Petitio" class="navbar-brand-logo me-2" height="40">
                 {% if current_user.logo_filename %}
                 <img src="{{ url_for('static', filename='uploads/' + current_user.logo_filename) }}" 
                      alt="Logo" class="navbar-brand-logo me-2">

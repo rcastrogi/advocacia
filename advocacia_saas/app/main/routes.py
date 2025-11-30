@@ -11,7 +11,6 @@ from app.main import bp
 from app.models import BillingPlan, Client, PetitionType, PetitionUsage
 from app.quick_actions import build_dashboard_actions
 
-
 # Ícones para categorias de petições
 CATEGORY_ICONS = {
     "civel": "fa-balance-scale",
@@ -267,7 +266,9 @@ def _get_implemented_petition_types():
                 "category": pt.category,
                 "category_label": CATEGORY_LABELS.get(pt.category, pt.category.title()),
                 "icon": CATEGORY_ICONS.get(pt.category, "fa-file-alt"),
-                "price": _format_currency(pt.base_price) if pt.is_billable else "Gratuito",
+                "price": _format_currency(pt.base_price)
+                if pt.is_billable
+                else "Gratuito",
             }
         )
     return result

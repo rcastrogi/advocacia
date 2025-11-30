@@ -75,9 +75,20 @@
                 </div>
             </div>
             <div class="col-lg-5 d-none d-lg-block text-center animate-fadeInRight">
-                <img src="{{ url_for('static', filename='img/petitio.png') }}"
-                     class="img-fluid petitio-logo" alt="Petitio"
-                     style="max-height: 400px; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));">
+                <div class="hero-image-container" style="position: relative;">
+                    <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                         class="img-fluid hero-image" alt="Advogados utilizando o sistema Petitio"
+                         style="border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.4); border: 3px solid var(--gold-color);">
+                    <!-- Badge flutuante -->
+                    <div style="position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); 
+                                background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); 
+                                padding: 12px 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                                border: 2px solid var(--gold-color);">
+                        <span style="color: var(--gold-color); font-weight: 600; font-size: 0.9rem;">
+                            <i class="fas fa-star me-2"></i>+500 Advogados Satisfeitos
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
