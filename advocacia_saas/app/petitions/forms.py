@@ -92,17 +92,26 @@ class PetitionTemplateForm(FlaskForm):
     default_facts = TextAreaField(
         "Texto padrão - Fatos",
         validators=[Optional()],
-        render_kw={"rows": 5, "placeholder": "Texto padrão para o campo 'Fatos' que será carregado automaticamente"},
+        render_kw={
+            "rows": 5,
+            "placeholder": "Texto padrão para o campo 'Fatos' que será carregado automaticamente",
+        },
     )
     default_fundamentos = TextAreaField(
         "Texto padrão - Fundamentação",
         validators=[Optional()],
-        render_kw={"rows": 5, "placeholder": "Texto padrão para o campo 'Fundamentação' que será carregado automaticamente"},
+        render_kw={
+            "rows": 5,
+            "placeholder": "Texto padrão para o campo 'Fundamentação' que será carregado automaticamente",
+        },
     )
     default_pedidos = TextAreaField(
         "Texto padrão - Pedidos",
         validators=[Optional()],
-        render_kw={"rows": 5, "placeholder": "Texto padrão para o campo 'Pedidos' que será carregado automaticamente"},
+        render_kw={
+            "rows": 5,
+            "placeholder": "Texto padrão para o campo 'Pedidos' que será carregado automaticamente",
+        },
     )
     is_active = BooleanField("Ativo", default=True)
     submit = SubmitField("Salvar modelo")

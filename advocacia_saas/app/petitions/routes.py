@@ -3,6 +3,7 @@ from decimal import Decimal
 from io import BytesIO
 from zipfile import ZipFile
 
+import bleach
 from flask import (
     abort,
     flash,
@@ -15,10 +16,9 @@ from flask import (
     url_for,
 )
 from flask_login import current_user, login_required
-from xhtml2pdf import pisa
 from sqlalchemy import or_
 from werkzeug.utils import secure_filename
-import bleach
+from xhtml2pdf import pisa
 
 from app import db
 from app.billing.decorators import subscription_required
@@ -205,29 +205,49 @@ def _render_pdf(text: str, title: str) -> BytesIO:
     """
     # Tags HTML permitidas para sanitização
     ALLOWED_TAGS = [
-        'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
-        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'ul', 'ol', 'li',
-        'table', 'thead', 'tbody', 'tr', 'th', 'td',
-        'span', 'div', 'blockquote',
-        'a', 'img'
+        "p",
+        "br",
+        "strong",
+        "b",
+        "em",
+        "i",
+        "u",
+        "s",
+        "strike",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "ul",
+        "ol",
+        "li",
+        "table",
+        "thead",
+        "tbody",
+        "tr",
+        "th",
+        "td",
+        "span",
+        "div",
+        "blockquote",
+        "a",
+        "img",
     ]
     ALLOWED_ATTRIBUTES = {
-        '*': ['class', 'style'],
-        'a': ['href', 'title'],
-        'img': ['src', 'alt', 'width', 'height'],
-        'td': ['colspan', 'rowspan'],
-        'th': ['colspan', 'rowspan'],
+        "*": ["class", "style"],
+        "a": ["href", "title"],
+        "img": ["src", "alt", "width", "height"],
+        "td": ["colspan", "rowspan"],
+        "th": ["colspan", "rowspan"],
     }
-    
+
     # Sanitiza o HTML
     clean_html = bleach.clean(
-        text,
-        tags=ALLOWED_TAGS,
-        attributes=ALLOWED_ATTRIBUTES,
-        strip=True
+        text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, strip=True
     )
-    
+
     # Template HTML completo com estilos para impressão
     html_template = f"""
     <!DOCTYPE html>
@@ -359,34 +379,31 @@ def _render_pdf(text: str, title: str) -> BytesIO:
     </body>
     </html>
     """
-    
+
     # Gera o PDF
     buffer = BytesIO()
-    pisa_status = pisa.CreatePDF(
-        src=html_template,
-        dest=buffer,
-        encoding='UTF-8'
-    )
-    
+    pisa_status = pisa.CreatePDF(src=html_template, dest=buffer, encoding="UTF-8")
+
     if pisa_status.err:
         # Fallback para texto simples se houver erro
         buffer = BytesIO()
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.units import cm
         from reportlab.pdfgen import canvas as reportlab_canvas
-        
+
         pdf = reportlab_canvas.Canvas(buffer, pagesize=A4)
         width, height = A4
         x_margin = 2 * cm
         y = height - 2 * cm
-        
+
         pdf.setTitle(title)
         pdf.setFont("Helvetica", 11)
-        
+
         # Remove tags HTML para texto simples
         import re
-        plain_text = re.sub('<[^<]+?>', '', text)
-        
+
+        plain_text = re.sub("<[^<]+?>", "", text)
+
         for raw_line in plain_text.splitlines():
             line = raw_line.rstrip()
             if not line:
@@ -394,15 +411,15 @@ def _render_pdf(text: str, title: str) -> BytesIO:
             else:
                 pdf.drawString(x_margin, y, line)
                 y -= 14
-            
+
             if y <= 2 * cm:
                 pdf.showPage()
                 pdf.setFont("Helvetica", 11)
                 y = height - 2 * cm
-        
+
         pdf.showPage()
         pdf.save()
-    
+
     buffer.seek(0)
     return buffer
 
@@ -506,21 +523,23 @@ def _redirect_for_template(template: PetitionTemplate):
 def get_template_defaults(template_id):
     """API endpoint to get default values for a petition template."""
     template = PetitionTemplate.query.get_or_404(template_id)
-    
+
     # Check if user has access to this template
     if not template.is_accessible_by(current_user):
         return jsonify({"error": "Acesso negado"}), 403
-    
+
     # Get default values from the template
     defaults = template.get_default_values()
-    
-    return jsonify({
-        "id": template.id,
-        "name": template.name,
-        "category": template.category,
-        "description": template.description,
-        "defaults": defaults
-    })
+
+    return jsonify(
+        {
+            "id": template.id,
+            "name": template.name,
+            "category": template.category,
+            "description": template.description,
+            "defaults": defaults,
+        }
+    )
 
 
 @bp.route("/civil", methods=["GET", "POST"])
@@ -762,7 +781,7 @@ def create_global_template():
             if form.default_pedidos.data:
                 defaults["pedidos"] = form.default_pedidos.data
             template.set_default_values(defaults)
-            
+
             db.session.add(template)
             db.session.commit()
             flash("Modelo padrão criado com sucesso!", "success")
@@ -824,7 +843,7 @@ def create_personal_template():
         if form.default_pedidos.data:
             defaults["pedidos"] = form.default_pedidos.data
         template.set_default_values(defaults)
-        
+
         db.session.add(template)
         db.session.commit()
         flash("Modelo pessoal criado com sucesso!", "success")
@@ -882,7 +901,7 @@ def edit_template(template_id):
         template.content = form.content.data.strip()
         template.is_active = form.is_active.data
         template.petition_type_id = form.petition_type_id.data
-        
+
         # Save default values
         defaults = {}
         if form.default_facts.data:
@@ -892,7 +911,7 @@ def edit_template(template_id):
         if form.default_pedidos.data:
             defaults["pedidos"] = form.default_pedidos.data
         template.set_default_values(defaults)
-        
+
         db.session.commit()
         flash("Modelo atualizado com sucesso!", "success")
         return redirect(_redirect_for_template(template))
