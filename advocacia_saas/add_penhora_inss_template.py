@@ -2,12 +2,14 @@
 """
 Script para adicionar o template de Petição de Penhora de Benefício INSS.
 """
+
 import json
 import sys
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
 
 from app import create_app, db
-from app.models import PetitionType, PetitionTemplate
+from app.models import PetitionTemplate, PetitionType
 
 app = create_app()
 
@@ -75,34 +77,40 @@ TEMPLATE_CONTENT = """
 DEFAULT_VALUES = {
     "facts": """<p>Assim, por possuir empresa em seu nome, trabalhar com outras atividades, embora igualmente ocultadas ou registradas em nome de terceiros, e possuir uma condição satisfatória de subsistência, a medida requerida se apresenta como a única maneira de reparar prejuízo causado unicamente pelo EXECUTADO.</p>""",
     "pedidos": """<p>Termos em que,</p>
-<p>Pede deferimento.</p>"""
+<p>Pede deferimento.</p>""",
 }
 
 
 def add_penhora_inss_template():
     with app.app_context():
         # Verificar/criar o tipo de petição
-        petition_type = PetitionType.query.filter_by(slug="peticao-simples-penhora-inss").first()
-        
+        petition_type = PetitionType.query.filter_by(
+            slug="peticao-simples-penhora-inss"
+        ).first()
+
         if not petition_type:
             petition_type = PetitionType(
                 slug="peticao-simples-penhora-inss",
                 name="Petição Simples - Penhora INSS",
                 description="Petições de penhora de benefício previdenciário (INSS)",
                 category="execucao",
-                is_implemented=True
+                is_implemented=True,
             )
             db.session.add(petition_type)
             db.session.commit()
-            print(f"✓ Criado PetitionType: {petition_type.name} (ID: {petition_type.id})")
+            print(
+                f"✓ Criado PetitionType: {petition_type.name} (ID: {petition_type.id})"
+            )
         else:
-            print(f"• PetitionType já existe: {petition_type.name} (ID: {petition_type.id})")
-        
+            print(
+                f"• PetitionType já existe: {petition_type.name} (ID: {petition_type.id})"
+            )
+
         # Verificar se o template já existe
         existing = PetitionTemplate.query.filter_by(
             slug="penhora-beneficio-inss"
         ).first()
-        
+
         if existing:
             print(f"• Template já existe: {existing.name} (ID: {existing.id})")
             # Atualizar conteúdo
@@ -111,7 +119,7 @@ def add_penhora_inss_template():
             db.session.commit()
             print(f"✓ Template atualizado!")
             return
-        
+
         # Criar o template
         template = PetitionTemplate(
             slug="penhora-beneficio-inss",
@@ -121,12 +129,12 @@ def add_penhora_inss_template():
             content=TEMPLATE_CONTENT.strip(),
             category="execucao",
             default_values=json.dumps(DEFAULT_VALUES),
-            is_active=True
+            is_active=True,
         )
-        
+
         db.session.add(template)
         db.session.commit()
-        
+
         print(f"✓ Criado PetitionTemplate: {template.name} (ID: {template.id})")
         print(f"✓ Modelo de Penhora de Benefício INSS adicionado com sucesso!")
 

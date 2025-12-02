@@ -371,13 +371,13 @@ class FamilyPetitionForm(FlaskForm):
 
 class SimplePetitionForm(FlaskForm):
     """Formulário para petições simples (juntada de documentos, MLE, etc.)"""
-    
+
     template_id = SelectField(
         "Modelo",
         coerce=int,
         validators=[DataRequired()],
     )
-    
+
     # Dados do processo
     forum = StringField(
         "Fórum/Tribunal",
@@ -387,7 +387,9 @@ class SimplePetitionForm(FlaskForm):
     vara = StringField(
         "Vara",
         validators=[Optional(), Length(max=255)],
-        render_kw={"placeholder": "Ex: 1ª Vara do Juizado Especial Cível de Santo Amaro"},
+        render_kw={
+            "placeholder": "Ex: 1ª Vara do Juizado Especial Cível de Santo Amaro"
+        },
     )
     process_number = StringField(
         "Número do Processo",
@@ -399,7 +401,7 @@ class SimplePetitionForm(FlaskForm):
         validators=[Optional(), Length(max=180)],
         render_kw={"placeholder": "Ex: AÇÃO DE REPARAÇÃO DE DANOS"},
     )
-    
+
     # Partes
     author_name = StringField(
         "Nome do Autor/Requerente",
@@ -409,7 +411,7 @@ class SimplePetitionForm(FlaskForm):
         "Nome do Réu/Requerido",
         validators=[Optional(), Length(max=255)],
     )
-    
+
     # Dados do levantamento (MLE)
     valor_levantamento = StringField(
         "Valor a levantar",
@@ -419,14 +421,16 @@ class SimplePetitionForm(FlaskForm):
     valor_extenso = StringField(
         "Valor por extenso",
         validators=[Optional(), Length(max=255)],
-        render_kw={"placeholder": "Ex: oitocentos e cinquenta e quatro reais e sessenta centavos"},
+        render_kw={
+            "placeholder": "Ex: oitocentos e cinquenta e quatro reais e sessenta centavos"
+        },
     )
     folhas_referencia = StringField(
         "Folhas de referência",
         validators=[Optional(), Length(max=100)],
         render_kw={"placeholder": "Ex: 222 e 223"},
     )
-    
+
     # Dados bancários
     pix_chave = StringField(
         "Chave PIX",
@@ -448,7 +452,7 @@ class SimplePetitionForm(FlaskForm):
         validators=[Optional(), Length(max=50)],
         render_kw={"placeholder": "Ex: 50"},
     )
-    
+
     # Dados da Penhora INSS
     valor_beneficio_inss = StringField(
         "Valor do benefício INSS",
@@ -473,7 +477,9 @@ class SimplePetitionForm(FlaskForm):
     valor_penhora_extenso = StringField(
         "Valor da penhora por extenso",
         validators=[Optional(), Length(max=255)],
-        render_kw={"placeholder": "Ex: trezentos e sessenta e três reais e sessenta centavos"},
+        render_kw={
+            "placeholder": "Ex: trezentos e sessenta e três reais e sessenta centavos"
+        },
     )
     debito_atualizado = StringField(
         "Débito atualizado total",
@@ -483,7 +489,9 @@ class SimplePetitionForm(FlaskForm):
     debito_extenso = StringField(
         "Débito por extenso",
         validators=[Optional(), Length(max=255)],
-        render_kw={"placeholder": "Ex: dez mil, trezentos e sessenta e nove reais e quarenta e um centavos"},
+        render_kw={
+            "placeholder": "Ex: dez mil, trezentos e sessenta e nove reais e quarenta e um centavos"
+        },
     )
     qtd_parcelas = StringField(
         "Quantidade de parcelas estimadas",
@@ -495,7 +503,7 @@ class SimplePetitionForm(FlaskForm):
         validators=[Optional(), Length(max=100)],
         render_kw={"placeholder": "Ex: 9 (nove) anos"},
     )
-    
+
     # Conteúdo
     facts = TextAreaField(
         "Justificativa/Fatos",
@@ -507,7 +515,7 @@ class SimplePetitionForm(FlaskForm):
         validators=[Optional()],
         render_kw={"rows": 4},
     )
-    
+
     # Assinatura
     cidade = StringField(
         "Cidade",
@@ -525,7 +533,7 @@ class SimplePetitionForm(FlaskForm):
         validators=[Optional(), Length(max=50)],
         render_kw={"readonly": True},
     )
-    
+
     # Anexos
     documents = MultipleFileField(
         "Documentos anexos (MLE, comprovantes, etc.)",

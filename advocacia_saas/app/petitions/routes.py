@@ -856,28 +856,37 @@ def family_petitions():
         # Usar dados do advogado logado (ignorar valores do form para segurança)
         advogado_nome = current_user.full_name or current_user.username
         advogado_oab = current_user.oab_number or "OAB não cadastrada"
-        
+
         # Formatar data de assinatura
         data_assinatura = form.data_assinatura.data
         if data_assinatura:
-            data_assinatura_str = data_assinatura.strftime("%d de %B de %Y").replace(
-                "January", "janeiro"
-            ).replace("February", "fevereiro").replace("March", "março").replace(
-                "April", "abril"
-            ).replace("May", "maio").replace("June", "junho").replace(
-                "July", "julho"
-            ).replace("August", "agosto").replace("September", "setembro").replace(
-                "October", "outubro"
-            ).replace("November", "novembro").replace("December", "dezembro")
+            data_assinatura_str = (
+                data_assinatura.strftime("%d de %B de %Y")
+                .replace("January", "janeiro")
+                .replace("February", "fevereiro")
+                .replace("March", "março")
+                .replace("April", "abril")
+                .replace("May", "maio")
+                .replace("June", "junho")
+                .replace("July", "julho")
+                .replace("August", "agosto")
+                .replace("September", "setembro")
+                .replace("October", "outubro")
+                .replace("November", "novembro")
+                .replace("December", "dezembro")
+            )
         else:
             from datetime import date
+
             data_assinatura_str = date.today().strftime("%d de %B de %Y")
 
         context = {
-            "forum": form.forum.data or "EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO",
+            "forum": form.forum.data
+            or "EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO",
             "vara": form.vara.data or "Vara de Família e Sucessões",
             "process_number": form.process_number.data,
-            "action_type": form.action_type.data or "AÇÃO DE DIVÓRCIO C/C GUARDA E ALIMENTOS",
+            "action_type": form.action_type.data
+            or "AÇÃO DE DIVÓRCIO C/C GUARDA E ALIMENTOS",
             # Dados do casamento
             "marriage_date": form.marriage_date.data
             if form.marriage_date.data
@@ -990,13 +999,24 @@ def simple_petitions():
     # Buscar templates de petições simples (categoria civel, mas tipos específicos)
     templates = _accessible_templates_for(current_user, category="civel")
     # Filtrar para mostrar apenas modelos de petições simples
-    simple_slugs = ['modelo-juntada-mle', 'modelo-juntada-documento', 'penhora-beneficio-inss']
-    simple_templates = [t for t in templates if t.slug in simple_slugs or 'juntada' in t.slug.lower() or 'mle' in t.slug.lower() or 'penhora' in t.slug.lower()]
-    
+    simple_slugs = [
+        "modelo-juntada-mle",
+        "modelo-juntada-documento",
+        "penhora-beneficio-inss",
+    ]
+    simple_templates = [
+        t
+        for t in templates
+        if t.slug in simple_slugs
+        or "juntada" in t.slug.lower()
+        or "mle" in t.slug.lower()
+        or "penhora" in t.slug.lower()
+    ]
+
     # Se não houver templates específicos, usar todos os cíveis
     if not simple_templates:
         simple_templates = templates
-    
+
     form.template_id.choices = [
         (template.id, _build_template_label(template)) for template in simple_templates
     ]
@@ -1035,23 +1055,42 @@ def simple_petitions():
         # Usar dados do advogado logado
         advogado_nome = current_user.full_name or current_user.username
         advogado_oab = current_user.oab_number or "OAB não cadastrada"
-        
+
         # Formatar data de assinatura
         data_assinatura = form.data_assinatura.data
         if data_assinatura:
             meses = {
-                1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
-                5: "maio", 6: "junho", 7: "julho", 8: "agosto",
-                9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+                1: "janeiro",
+                2: "fevereiro",
+                3: "março",
+                4: "abril",
+                5: "maio",
+                6: "junho",
+                7: "julho",
+                8: "agosto",
+                9: "setembro",
+                10: "outubro",
+                11: "novembro",
+                12: "dezembro",
             }
             data_assinatura_str = f"{data_assinatura.day} de {meses[data_assinatura.month]} de {data_assinatura.year}"
         else:
             from datetime import date
+
             hoje = date.today()
             meses = {
-                1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
-                5: "maio", 6: "junho", 7: "julho", 8: "agosto",
-                9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+                1: "janeiro",
+                2: "fevereiro",
+                3: "março",
+                4: "abril",
+                5: "maio",
+                6: "junho",
+                7: "julho",
+                8: "agosto",
+                9: "setembro",
+                10: "outubro",
+                11: "novembro",
+                12: "dezembro",
             }
             data_assinatura_str = f"{hoje.day} de {meses[hoje.month]} de {hoje.year}"
 

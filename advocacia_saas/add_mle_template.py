@@ -4,6 +4,7 @@ Script para adicionar o modelo de Petição de Juntada de MLE (Mandado de Levant
 
 import json
 from decimal import Decimal
+
 from app import create_app, db
 from app.models import PetitionTemplate, PetitionType
 
@@ -65,33 +66,37 @@ MLE_DEFAULT_VALUES = {
 def add_mle_template():
     with app.app_context():
         # Verificar se o tipo de petição já existe
-        petition_type = PetitionType.query.filter_by(slug='peticao-juntada-mle').first()
+        petition_type = PetitionType.query.filter_by(slug="peticao-juntada-mle").first()
         if not petition_type:
             petition_type = PetitionType(
-                slug='peticao-juntada-mle',
-                name='Petição Simples - Juntada de MLE',
-                category='civel',
+                slug="peticao-juntada-mle",
+                name="Petição Simples - Juntada de MLE",
+                category="civel",
                 is_billable=True,
-                base_price=Decimal('5.00')  # Preço menor por ser petição simples
+                base_price=Decimal("5.00"),  # Preço menor por ser petição simples
             )
             db.session.add(petition_type)
             db.session.commit()
-            print(f"✓ Criado PetitionType: {petition_type.name} (ID: {petition_type.id})")
+            print(
+                f"✓ Criado PetitionType: {petition_type.name} (ID: {petition_type.id})"
+            )
         else:
-            print(f"• PetitionType já existe: {petition_type.name} (ID: {petition_type.id})")
+            print(
+                f"• PetitionType já existe: {petition_type.name} (ID: {petition_type.id})"
+            )
 
         # Verificar se o template já existe
-        template = PetitionTemplate.query.filter_by(slug='modelo-juntada-mle').first()
+        template = PetitionTemplate.query.filter_by(slug="modelo-juntada-mle").first()
         if not template:
             template = PetitionTemplate(
-                slug='modelo-juntada-mle',
-                name='Juntada de MLE (Levantamento de Valores)',
-                description='Petição simples para requerer juntada de Mandado de Levantamento Eletrônico e indicar dados bancários para crédito de valores.',
-                category='civel',
+                slug="modelo-juntada-mle",
+                name="Juntada de MLE (Levantamento de Valores)",
+                description="Petição simples para requerer juntada de Mandado de Levantamento Eletrônico e indicar dados bancários para crédito de valores.",
+                category="civel",
                 content=MLE_TEMPLATE_CONTENT.strip(),
                 default_values=json.dumps(MLE_DEFAULT_VALUES, ensure_ascii=False),
                 is_global=True,
-                petition_type_id=petition_type.id
+                petition_type_id=petition_type.id,
             )
             db.session.add(template)
             db.session.commit()
@@ -120,5 +125,5 @@ def add_mle_template():
         print("  - procuracao_folha: Folha da procuração (opcional)")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     add_mle_template()
