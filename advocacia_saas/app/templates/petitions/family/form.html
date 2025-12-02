@@ -193,18 +193,23 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">{{ form.marriage_regime.label }}</label>
-                                        {{ form.marriage_regime(class_='form-control', **{'x-model': 'formData.marriage_regime', '@input.debounce.500ms': 'markDirty()'}) }}
+                                        {{ form.marriage_regime(class_='form-select', **{'x-model': 'formData.marriage_regime', '@input.debounce.500ms': 'markDirty()'}) }}
                                     </div>
                                 </div>
 
-                                <div class="row g-3 mt-2 align-items-end">
+                                <div class="row g-3 mt-2">
                                     <div class="col-md-4">
-                                        <div class="form-check form-switch">
+                                        <label class="form-label">{{ form.separation_date.label }}</label>
+                                        {{ form.separation_date(class_='form-control', **{'x-model': 'formData.separation_date', '@input.debounce.500ms': 'markDirty()'}) }}
+                                        <small class="text-muted">Para divórcio litigioso</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch mt-4">
                                             {{ form.has_prenup(class_='form-check-input', **{'x-model': 'formData.has_prenup'}) }}
                                             {{ form.has_prenup.label(class_='form-check-label') }}
                                         </div>
                                     </div>
-                                    <div class="col-md-8">
+                                    <div class="col-md-4">
                                         <label class="form-label">{{ form.prenup_details.label }}</label>
                                         {{ form.prenup_details(class_='form-control', placeholder='Resumo do pacto, se existir', **{'x-model': 'formData.prenup_details', '@input.debounce.500ms': 'markDirty()', ':disabled': '!formData.has_prenup'}) }}
                                     </div>
@@ -222,24 +227,47 @@
                                 <span class="badge bg-secondary" x-text="sections.spouses ? 'Expandido' : 'Recolhido'"></span>
                             </div>
                             <div x-show="sections.spouses" x-transition class="pt-3">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">{{ form.spouse_one_name.label }} <span class="text-danger">*</span></label>
-                                        {{ form.spouse_one_name(class_='form-control', **{'x-model': 'formData.spouse_one_name', '@input.debounce.500ms': 'validateField(\"spouse_one_name\")', ':class': 'getFieldClass(\"spouse_one_name\")', 'required': 'required'}) }}
-                                        <small class="text-danger" x-show="errors.spouse_one_name" x-text="errors.spouse_one_name"></small>
+                                <!-- Autora/Autor -->
+                                <div class="border rounded p-3 mb-3 bg-light">
+                                    <h6 class="text-muted mb-3"><i class="fas fa-user me-2"></i>Autora/Autor</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">{{ form.spouse_one_name.label }} <span class="text-danger">*</span></label>
+                                            {{ form.spouse_one_name(class_='form-control', **{'x-model': 'formData.spouse_one_name', '@input.debounce.500ms': 'validateField(\"spouse_one_name\")', ':class': 'getFieldClass(\"spouse_one_name\")', 'required': 'required'}) }}
+                                            <small class="text-danger" x-show="errors.spouse_one_name" x-text="errors.spouse_one_name"></small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">{{ form.author_cpf.label }}</label>
+                                            {{ form.author_cpf(class_='form-control', **{'x-model': 'formData.author_cpf', '@input.debounce.500ms': 'markDirty()'}) }}
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">{{ form.spouse_one_qualification.label }}</label>
+                                            {{ form.spouse_one_qualification(class_='form-control', placeholder='Nacionalidade, profissão, estado civil, RG, CPF, etc.', **{'x-model': 'formData.spouse_one_qualification', '@input.debounce.500ms': 'markDirty()'}) }}
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">{{ form.author_address.label }}</label>
+                                            {{ form.author_address(class_='form-control', **{'x-model': 'formData.author_address', '@input.debounce.500ms': 'markDirty()'}) }}
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">{{ form.spouse_two_name.label }} <span class="text-danger">*</span></label>
-                                        {{ form.spouse_two_name(class_='form-control', **{'x-model': 'formData.spouse_two_name', '@input.debounce.500ms': 'validateField(\"spouse_two_name\")', ':class': 'getFieldClass(\"spouse_two_name\")', 'required': 'required'}) }}
-                                        <small class="text-danger" x-show="errors.spouse_two_name" x-text="errors.spouse_two_name"></small>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">{{ form.spouse_one_qualification.label }}</label>
-                                        {{ form.spouse_one_qualification(class_='form-control', **{'x-model': 'formData.spouse_one_qualification', '@input.debounce.500ms': 'markDirty()'}) }}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">{{ form.spouse_two_qualification.label }}</label>
-                                        {{ form.spouse_two_qualification(class_='form-control', **{'x-model': 'formData.spouse_two_qualification', '@input.debounce.500ms': 'markDirty()'}) }}
+                                </div>
+                                
+                                <!-- Réu/Ré -->
+                                <div class="border rounded p-3 bg-light">
+                                    <h6 class="text-muted mb-3"><i class="fas fa-user-slash me-2"></i>Réu/Ré</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-12">
+                                            <label class="form-label">{{ form.spouse_two_name.label }} <span class="text-danger">*</span></label>
+                                            {{ form.spouse_two_name(class_='form-control', **{'x-model': 'formData.spouse_two_name', '@input.debounce.500ms': 'validateField(\"spouse_two_name\")', ':class': 'getFieldClass(\"spouse_two_name\")', 'required': 'required'}) }}
+                                            <small class="text-danger" x-show="errors.spouse_two_name" x-text="errors.spouse_two_name"></small>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">{{ form.spouse_two_qualification.label }}</label>
+                                            {{ form.spouse_two_qualification(class_='form-control', placeholder='Nacionalidade, profissão, estado civil, RG, CPF, etc.', **{'x-model': 'formData.spouse_two_qualification', '@input.debounce.500ms': 'markDirty()'}) }}
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">{{ form.defendant_address.label }}</label>
+                                            {{ form.defendant_address(class_='form-control', **{'x-model': 'formData.defendant_address', '@input.debounce.500ms': 'markDirty()'}) }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -250,46 +278,121 @@
                             <div class="section-header d-flex justify-content-between align-items-center pb-2 border-bottom" @click="sections.children = !sections.children">
                                 <h6 class="mb-0 text-primary">
                                     <i class="fas fa-caret-down me-2" :class="{ 'fa-rotate-270': !sections.children }"></i>
-                                    Filhos e Guarda
+                                    Filhos, Guarda e Pensão
                                 </h6>
                                 <span class="badge bg-secondary" x-text="sections.children ? 'Expandido' : 'Recolhido'"></span>
                             </div>
                             <div x-show="sections.children" x-transition class="pt-3">
-                                <div class="mb-3">
-                                    <label class="form-label">{{ form.children_info.label }}</label>
-                                    {{ form.children_info(class_='form-control', placeholder='Nome, data de nascimento e necessidades especiais', **{'x-model': 'formData.children_info', '@input.debounce.500ms': 'markDirty()'}) }}
-                                </div>
                                 <div class="row g-3">
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
+                                        <label class="form-label">{{ form.children_info.label }}</label>
+                                        {{ form.children_info(class_='form-control', **{'x-model': 'formData.children_info', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label">{{ form.children_names.label }}</label>
+                                        {{ form.children_names(class_='form-control', **{'x-model': 'formData.children_names', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    </div>
+                                    <div class="col-md-12">
                                         <label class="form-label">{{ form.custody_plan.label }}</label>
                                         {{ form.custody_plan(class_='form-control', **{'x-model': 'formData.custody_plan', '@input.debounce.500ms': 'markDirty()'}) }}
                                     </div>
-                                    <div class="col-md-6">
+                                </div>
+                                
+                                <hr class="my-3">
+                                <h6 class="text-muted mb-3"><i class="fas fa-money-bill-wave me-2"></i>Pensão Alimentícia</h6>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-12">
                                         <label class="form-label">{{ form.alimony_plan.label }}</label>
                                         {{ form.alimony_plan(class_='form-control', **{'x-model': 'formData.alimony_plan', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">{{ form.defendant_income.label }}</label>
+                                        {{ form.defendant_income(class_='form-control', **{'x-model': 'formData.defendant_income', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">{{ form.alimony_amount.label }}</label>
+                                        {{ form.alimony_amount(class_='form-control', **{'x-model': 'formData.alimony_amount', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label">{{ form.health_plan_details.label }}</label>
+                                        {{ form.health_plan_details(class_='form-control', **{'x-model': 'formData.health_plan_details', '@input.debounce.500ms': 'markDirty()'}) }}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Seção 5: Patrimônio -->
+                        <!-- Seção 5: Patrimônio e Dívidas -->
                         <div class="collapsible-section mb-4">
                             <div class="section-header d-flex justify-content-between align-items-center pb-2 border-bottom" @click="sections.property = !sections.property">
                                 <h6 class="mb-0 text-primary">
                                     <i class="fas fa-caret-down me-2" :class="{ 'fa-rotate-270': !sections.property }"></i>
-                                    Patrimônio
+                                    Patrimônio e Dívidas
                                 </h6>
                                 <span class="badge bg-secondary" x-text="sections.property ? 'Expandido' : 'Recolhido'"></span>
                             </div>
                             <div x-show="sections.property" x-transition class="pt-3">
-                                <div class="mb-3">
-                                    <label class="form-label">{{ form.property_description.label }}</label>
-                                    {{ form.property_description(class_='form-control', placeholder='Imóveis, veículos, quotas, aplicações...', **{'x-model': 'formData.property_description', '@input.debounce.500ms': 'markDirty()'}) }}
+                                <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <label class="form-label">{{ form.property_description.label }}</label>
+                                        {{ form.property_description(class_='form-control', placeholder='Imóveis, veículos, quotas, aplicações...', **{'x-model': 'formData.property_description', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label">{{ form.debts_description.label }}</label>
+                                        {{ form.debts_description(class_='form-control', **{'x-model': 'formData.debts_description', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Seção 6: Conteúdo da Petição -->
+                        <!-- Seção 6: Violência Doméstica / Medida Protetiva -->
+                        <div class="collapsible-section mb-4">
+                            <div class="section-header d-flex justify-content-between align-items-center pb-2 border-bottom" @click="sections.violence = !sections.violence">
+                                <h6 class="mb-0 text-danger">
+                                    <i class="fas fa-caret-down me-2" :class="{ 'fa-rotate-270': !sections.violence }"></i>
+                                    Violência Doméstica / Medida Protetiva
+                                </h6>
+                                <span class="badge bg-secondary" x-text="sections.violence ? 'Expandido' : 'Recolhido'"></span>
+                            </div>
+                            <div x-show="sections.violence" x-transition class="pt-3">
+                                <div class="alert alert-warning small mb-3">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Preencha esta seção apenas se houver situação de violência doméstica. Estas informações serão incluídas na petição com base na Lei Maria da Penha (Lei 11.340/06).
+                                </div>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch">
+                                            {{ form.has_domestic_violence(class_='form-check-input', **{'x-model': 'formData.has_domestic_violence'}) }}
+                                            {{ form.has_domestic_violence.label(class_='form-check-label') }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch">
+                                            {{ form.has_protective_order(class_='form-check-input', **{'x-model': 'formData.has_protective_order', ':disabled': '!formData.has_domestic_violence'}) }}
+                                            {{ form.has_protective_order.label(class_='form-check-label') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-3 mt-2" x-show="formData.has_domestic_violence" x-transition>
+                                    <div class="col-md-12">
+                                        <label class="form-label">{{ form.domestic_violence_facts.label }}</label>
+                                        {{ form.domestic_violence_facts(class_='form-control', **{'x-model': 'formData.domestic_violence_facts', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    </div>
+                                    <div class="col-md-12" x-show="formData.has_protective_order">
+                                        <label class="form-label">{{ form.protective_order_details.label }}</label>
+                                        {{ form.protective_order_details(class_='form-control', **{'x-model': 'formData.protective_order_details', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">{{ form.moral_damages_amount.label }}</label>
+                                        {{ form.moral_damages_amount(class_='form-control', **{'x-model': 'formData.moral_damages_amount', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seção 7: Conteúdo da Petição -->
                         <div class="collapsible-section mb-4">
                             <div class="section-header d-flex justify-content-between align-items-center pb-2 border-bottom" @click="sections.content = !sections.content">
                                 <h6 class="mb-0 text-primary">
@@ -299,6 +402,11 @@
                                 <span class="badge bg-secondary" x-text="sections.content ? 'Expandido' : 'Recolhido'"></span>
                             </div>
                             <div x-show="sections.content" x-transition class="pt-3">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.divorce_facts.label }}</label>
+                                    {{ form.divorce_facts(class_='form-control petition-editor', id='divorce_facts') }}
+                                    <small class="text-muted">Fatos específicos do divórcio (será usado na seção 1.1 do documento)</small>
+                                </div>
                                 <div class="mb-3">
                                     <label class="form-label">{{ form.facts.label }} <span class="text-danger">*</span></label>
                                     {{ form.facts(class_='form-control petition-editor', id='facts') }}
@@ -311,10 +419,16 @@
                                     <label class="form-label">{{ form.pedidos.label }} <span class="text-danger">*</span></label>
                                     {{ form.pedidos(class_='form-control petition-editor', id='pedidos') }}
                                 </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">{{ form.valor_causa.label }}</label>
+                                        {{ form.valor_causa(class_='form-control', **{'x-model': 'formData.valor_causa', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Seção 7: Assinatura e Anexos -->
+                        <!-- Seção 8: Assinatura e Anexos -->
                         <div class="collapsible-section mb-4">
                             <div class="section-header d-flex justify-content-between align-items-center pb-2 border-bottom" @click="sections.signature = !sections.signature">
                                 <h6 class="mb-0 text-primary">
@@ -333,18 +447,55 @@
                                         <label class="form-label">{{ form.data_assinatura.label }}</label>
                                         {{ form.data_assinatura(class_='form-control', **{'x-model': 'formData.data_assinatura', '@input.debounce.500ms': 'markDirty()'}) }}
                                     </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">{{ form.advogado_oab.label }}</label>
-                                        {{ form.advogado_oab(class_='form-control', **{'x-model': 'formData.advogado_oab', '@input.debounce.500ms': 'markDirty()'}) }}
+                                </div>
+                                
+                                <div class="row g-3 mt-3">
+                                    <div class="col-12">
+                                        <div class="alert alert-info mb-0 py-2">
+                                            <i class="fas fa-user-tie me-2"></i>
+                                            <strong>Advogado:</strong> {{ form.advogado_nome.data }} - <strong>OAB:</strong> {{ form.advogado_oab.data }}
+                                            <small class="text-muted ms-2">(dados do perfil)</small>
+                                        </div>
+                                        {{ form.advogado_nome(type='hidden') }}
+                                        {{ form.advogado_oab(type='hidden') }}
                                     </div>
                                 </div>
 
                                 <div class="row g-3 mt-3">
-                                    <div class="col-md-8">
-                                        <label class="form-label">{{ form.advogado_nome.label }}</label>
-                                        {{ form.advogado_nome(class_='form-control', **{'x-model': 'formData.advogado_nome', '@input.debounce.500ms': 'markDirty()'}) }}
+                                    <div class="col-md-12">
+                                        <label class="form-label">{{ form.lawyer_address.label }}</label>
+                                        {{ form.lawyer_address(class_='form-control', **{'x-model': 'formData.lawyer_address', '@input.debounce.500ms': 'markDirty()'}) }}
                                     </div>
-                                    <div class="col-md-4">
+                                </div>
+                                
+                                <hr class="my-3">
+                                <h6 class="text-muted mb-3"><i class="fas fa-file-signature me-2"></i>Opções Adicionais</h6>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">{{ form.name_change.label }}</label>
+                                        {{ form.name_change(class_='form-control', **{'x-model': 'formData.name_change', '@input.debounce.500ms': 'markDirty()'}) }}
+                                        <small class="text-muted">Preencha se desejar retornar ao nome de solteira</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check form-switch mt-4">
+                                            {{ form.request_free_justice(class_='form-check-input', **{'x-model': 'formData.request_free_justice'}) }}
+                                            {{ form.request_free_justice.label(class_='form-check-label') }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check form-switch mt-4">
+                                            {{ form.signature_author(class_='form-check-input', **{'x-model': 'formData.signature_author'}) }}
+                                            {{ form.signature_author.label(class_='form-check-label') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <hr class="my-3">
+                                <h6 class="text-muted mb-3"><i class="fas fa-paperclip me-2"></i>Documentos Anexos</h6>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-12">
                                         <label class="form-label">{{ form.documents.label }}</label>
                                         {{ form.documents(class_='form-control', **{'@change': 'handleFiles($event)'}) }}
                                         <small class="text-muted">Até 5 arquivos (pdf, doc, docx, png, jpg) com 5 MB cada.</small>
@@ -366,30 +517,76 @@
                             </div>
                         </div>
 
-                        <div class="mt-4 d-flex justify-content-between align-items-center">
-                            <div>
-                                <span class="text-muted small" x-show="isDirty">
-                                    <i class="fas fa-circle text-warning me-1" style="font-size: 8px;"></i>
-                                    Alterações não salvas
-                                </span>
+                        <div class="mt-4">
+                            <!-- Validação visual dos campos obrigatórios -->
+                            <div class="alert alert-light border mb-3" x-show="!isFormValid()" x-transition>
+                                <h6 class="alert-heading mb-2">
+                                    <i class="fas fa-exclamation-circle text-warning me-1"></i>
+                                    Preencha os campos obrigatórios para gerar o PDF:
+                                </h6>
+                                <ul class="mb-0 small">
+                                    <li :class="formData.spouse_one_name ? 'text-success' : 'text-danger'">
+                                        <i :class="formData.spouse_one_name ? 'fas fa-check' : 'fas fa-times'"></i>
+                                        Nome da Autora/Autor
+                                    </li>
+                                    <li :class="formData.spouse_two_name ? 'text-success' : 'text-danger'">
+                                        <i :class="formData.spouse_two_name ? 'fas fa-check' : 'fas fa-times'"></i>
+                                        Nome do Réu/Ré
+                                    </li>
+                                    <li :class="hasEditorContent('facts') ? 'text-success' : 'text-danger'">
+                                        <i :class="hasEditorContent('facts') ? 'fas fa-check' : 'fas fa-times'"></i>
+                                        Fatos
+                                    </li>
+                                    <li :class="hasEditorContent('fundamentos') ? 'text-success' : 'text-danger'">
+                                        <i :class="hasEditorContent('fundamentos') ? 'fas fa-check' : 'fas fa-times'"></i>
+                                        Fundamentação Jurídica
+                                    </li>
+                                    <li :class="hasEditorContent('pedidos') ? 'text-success' : 'text-danger'">
+                                        <i :class="hasEditorContent('pedidos') ? 'fas fa-check' : 'fas fa-times'"></i>
+                                        Pedidos
+                                    </li>
+                                </ul>
                             </div>
-                            <div class="d-flex gap-2">
-                                <button type="button" 
-                                        class="btn btn-outline-secondary"
-                                        @click="saveAsDraft()"
-                                        :disabled="submitting">
-                                    <i class="fas fa-save me-1"></i> Salvar Rascunho
-                                </button>
-                                <button type="submit" 
-                                        class="btn btn-lg btn-primary"
-                                        :disabled="submitting || !isFormValid()">
-                                    <span x-show="!submitting">
-                                        <i class="fas fa-file-pdf me-1"></i> {{ form.submit.label.text }}
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted small" x-show="isDirty">
+                                        <i class="fas fa-circle text-warning me-1" style="font-size: 8px;"></i>
+                                        Alterações não salvas
                                     </span>
-                                    <span x-show="submitting">
-                                        <i class="fas fa-spinner fa-spin me-1"></i> Gerando...
-                                    </span>
-                                </button>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" 
+                                            class="btn btn-outline-secondary"
+                                            @click="saveAsDraft()"
+                                            :disabled="submitting">
+                                        <i class="fas fa-save me-1"></i> Salvar Rascunho
+                                    </button>
+                                    <div class="position-relative" 
+                                         x-data="{ showTooltip: false }"
+                                         @mouseenter="showTooltip = !isFormValid()"
+                                         @mouseleave="showTooltip = false">
+                                        <button type="submit" 
+                                                class="btn btn-lg btn-primary"
+                                                :disabled="submitting || !isFormValid()"
+                                                :class="{ 'opacity-50': !isFormValid() }">
+                                            <span x-show="!submitting">
+                                                <i class="fas fa-file-pdf me-1"></i> {{ form.submit.label.text }}
+                                            </span>
+                                            <span x-show="submitting">
+                                                <i class="fas fa-spinner fa-spin me-1"></i> Gerando...
+                                            </span>
+                                        </button>
+                                        <!-- Tooltip explicativo -->
+                                        <div x-show="showTooltip" 
+                                             x-transition
+                                             class="position-absolute bottom-100 end-0 mb-2 p-2 bg-dark text-white rounded shadow-sm small"
+                                             style="min-width: 250px; z-index: 1000;">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Preencha todos os campos obrigatórios acima para habilitar este botão.
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -554,6 +751,7 @@ function familyPetitionForm() {
             spouses: true,
             children: true,
             property: true,
+            violence: false,
             content: true,
             signature: true
         },
@@ -564,23 +762,53 @@ function familyPetitionForm() {
             process_number: '{{ form.process_number.data or "" }}',
             forum: '{{ form.forum.data or "" }}',
             vara: '{{ form.vara.data or "" }}',
+            // Casamento
             marriage_date: '{{ form.marriage_date.data or "" }}',
             marriage_city: '{{ form.marriage_city.data or "" }}',
             marriage_regime: '{{ form.marriage_regime.data or "" }}',
+            separation_date: '{{ form.separation_date.data or "" }}',
             has_prenup: {{ 'true' if form.has_prenup.data else 'false' }},
             prenup_details: '{{ form.prenup_details.data or "" }}',
+            // Partes
             spouse_one_name: '{{ form.spouse_one_name.data or "" }}',
             spouse_one_qualification: '{{ form.spouse_one_qualification.data or "" }}',
+            author_address: '{{ form.author_address.data or "" }}',
+            author_cpf: '{{ form.author_cpf.data or "" }}',
             spouse_two_name: '{{ form.spouse_two_name.data or "" }}',
             spouse_two_qualification: '{{ form.spouse_two_qualification.data or "" }}',
+            defendant_address: '{{ form.defendant_address.data or "" }}',
+            // Filhos e pensão
             children_info: '{{ form.children_info.data or "" }}',
+            children_names: '{{ form.children_names.data or "" }}',
             custody_plan: '{{ form.custody_plan.data or "" }}',
             alimony_plan: '{{ form.alimony_plan.data or "" }}',
+            defendant_income: '{{ form.defendant_income.data or "" }}',
+            alimony_amount: '{{ form.alimony_amount.data or "" }}',
+            health_plan_details: '{{ form.health_plan_details.data or "" }}',
+            // Patrimônio e dívidas
             property_description: '{{ form.property_description.data or "" }}',
+            debts_description: '{{ form.debts_description.data or "" }}',
+            // Violência doméstica
+            has_domestic_violence: {{ 'true' if form.has_domestic_violence.data else 'false' }},
+            domestic_violence_facts: '{{ form.domestic_violence_facts.data or "" }}',
+            has_protective_order: {{ 'true' if form.has_protective_order.data else 'false' }},
+            protective_order_details: '{{ form.protective_order_details.data or "" }}',
+            moral_damages_amount: '{{ form.moral_damages_amount.data or "" }}',
+            // Conteúdo dos editores (para validação reativa)
+            facts_content: '',
+            fundamentos_content: '',
+            pedidos_content: '',
+            // Valor
+            valor_causa: '{{ form.valor_causa.data or "" }}',
+            // Assinatura
             cidade: '{{ form.cidade.data or "" }}',
             data_assinatura: '{{ form.data_assinatura.data or "" }}',
             advogado_nome: '{{ form.advogado_nome.data or "" }}',
-            advogado_oab: '{{ form.advogado_oab.data or "" }}'
+            advogado_oab: '{{ form.advogado_oab.data or "" }}',
+            lawyer_address: '{{ form.lawyer_address.data or "" }}',
+            name_change: '{{ form.name_change.data or "" }}',
+            request_free_justice: {{ 'true' if form.request_free_justice.data else 'true' }},
+            signature_author: {{ 'true' if form.signature_author.data else 'false' }}
         },
         
         // Erros de validação
@@ -647,23 +875,35 @@ function familyPetitionForm() {
                 // Carrega conteúdo inicial
                 if (textarea.value) {
                     quill.root.innerHTML = textarea.value;
+                    // Sincroniza com formData
+                    const text = quill.getText().trim();
+                    if (textarea.id === 'facts') {
+                        self.formData.facts_content = text;
+                    } else if (textarea.id === 'fundamentos') {
+                        self.formData.fundamentos_content = text;
+                    } else if (textarea.id === 'pedidos') {
+                        self.formData.pedidos_content = text;
+                    }
                 }
                 
                 // Sincroniza mudanças
                 quill.on('text-change', function() {
                     textarea.value = quill.root.innerHTML;
                     self.markDirty();
+                    // Atualiza o formData para validação reativa
+                    const text = quill.getText().trim();
+                    if (textarea.id === 'facts') {
+                        self.formData.facts_content = text;
+                    } else if (textarea.id === 'fundamentos') {
+                        self.formData.fundamentos_content = text;
+                    } else if (textarea.id === 'pedidos') {
+                        self.formData.pedidos_content = text;
+                    }
                 });
                 
                 // Guarda referência
                 textarea._quill = quill;
             });
-        },
-        
-        // Verifica se editor tem conteúdo
-        hasEditorContent(editorId) {
-            const textarea = document.getElementById(editorId);
-            return textarea && textarea._quill && textarea._quill.getText().trim().length > 0;
         },
         
         // Auto-save
@@ -723,14 +963,17 @@ function familyPetitionForm() {
                 if (defaults.facts && factsTextarea._quill) {
                     factsTextarea._quill.root.innerHTML = defaults.facts;
                     factsTextarea.value = defaults.facts;
+                    this.formData.facts_content = factsTextarea._quill.getText().trim();
                 }
                 if (defaults.fundamentos && fundamentosTextarea._quill) {
                     fundamentosTextarea._quill.root.innerHTML = defaults.fundamentos;
                     fundamentosTextarea.value = defaults.fundamentos;
+                    this.formData.fundamentos_content = fundamentosTextarea._quill.getText().trim();
                 }
                 if (defaults.pedidos && pedidosTextarea._quill) {
                     pedidosTextarea._quill.root.innerHTML = defaults.pedidos;
                     pedidosTextarea.value = defaults.pedidos;
+                    this.formData.pedidos_content = pedidosTextarea._quill.getText().trim();
                 }
                 
                 this.isDirty = true;
@@ -769,10 +1012,31 @@ function familyPetitionForm() {
             return 'form-control';
         },
         
+        hasEditorContent(editorId) {
+            // Usa os campos reativos do formData
+            if (editorId === 'facts') {
+                return this.formData.facts_content && this.formData.facts_content.length > 10;
+            } else if (editorId === 'fundamentos') {
+                return this.formData.fundamentos_content && this.formData.fundamentos_content.length > 10;
+            } else if (editorId === 'pedidos') {
+                return this.formData.pedidos_content && this.formData.pedidos_content.length > 10;
+            }
+            return false;
+        },
+        
         isFormValid() {
-            return this.formData.spouse_one_name && 
-                   this.formData.spouse_two_name && 
-                   Object.keys(this.errors).length === 0;
+            const hasSpouseNames = this.formData.spouse_one_name && 
+                                   this.formData.spouse_one_name.trim().length >= 3 &&
+                                   this.formData.spouse_two_name && 
+                                   this.formData.spouse_two_name.trim().length >= 3;
+            
+            const hasFacts = this.formData.facts_content && this.formData.facts_content.length > 10;
+            const hasFundamentos = this.formData.fundamentos_content && this.formData.fundamentos_content.length > 10;
+            const hasPedidos = this.formData.pedidos_content && this.formData.pedidos_content.length > 10;
+            
+            const noErrors = Object.keys(this.errors).length === 0;
+            
+            return hasSpouseNames && hasFacts && hasFundamentos && hasPedidos && noErrors;
         },
         
         handleFiles(event) {

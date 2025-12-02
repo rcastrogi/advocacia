@@ -34,6 +34,7 @@ from app.petitions.forms import (
     CivilPetitionForm,
     FamilyPetitionForm,
     PetitionTemplateForm,
+    SimplePetitionForm,
 )
 
 ATTACHMENT_EXTENSIONS = {"pdf", "doc", "docx", "png", "jpg", "jpeg"}
@@ -47,37 +48,44 @@ DEFAULT_TEMPLATE_DEFINITIONS = (
         "category": "civel",
         "description": "Modelo base para ações indenizatórias/obrigações.",
         "content": """
-{{ forum | upper }}
-{{ vara }}
+<div class="header">
+<p class="header-forum">{{ forum | upper }}</p>
+<p class="header-vara">{{ vara }}</p>
+</div>
 
-Processo nº: {{ process_number or 'a ser definido' }}
+<p style="text-indent: 0;">Processo nº: {{ process_number or 'a ser definido' }}</p>
 
-{{ author_name | upper }}
-{{ author_qualification }}
+<p class="party-name" style="text-indent: 0; margin-top: 24pt;">{{ author_name | upper }}</p>
+<p class="party-qualification" style="text-indent: 0;">{{ author_qualification }}</p>
 
-vem, por seus advogados, com fundamento nos artigos 186, 187 e 927 do Código Civil e demais dispositivos aplicáveis, propor a presente
+<p style="text-indent: 0;">vem, por seus advogados, com fundamento nos artigos 186, 187 e 927 do Código Civil e demais dispositivos aplicáveis, propor a presente</p>
 
-AÇÃO CÍVEL
+<h1>AÇÃO CÍVEL</h1>
 
-em face de {{ defendant_name.upper() }}, {{ defendant_qualification }}, pelos fatos e fundamentos a seguir expostos:
+<p style="text-indent: 0;">em face de <strong>{{ defendant_name | upper }}</strong>, {{ defendant_qualification }}, pelos fatos e fundamentos a seguir expostos:</p>
 
-I - DOS FATOS
+<h2>I - DOS FATOS</h2>
 {{ facts }}
 
-II - DO DIREITO
+<h2>II - DO DIREITO</h2>
 {{ fundamentos }}
 
-III - DOS PEDIDOS
+<h2>III - DOS PEDIDOS</h2>
+<p style="text-indent: 0;">Ante o exposto, requer:</p>
 {{ pedidos }}
 
-IV - DO VALOR DA CAUSA
-{% if valor_causa %}Dá-se à causa o valor de R$ {{ '%.2f' | format(valor_causa) }}.{% else %}Requer a atribuição do valor que Vossa Excelência entender pertinente.{% endif %}
+<h2>IV - DO VALOR DA CAUSA</h2>
+<p class="valor-causa">{% if valor_causa %}Dá-se à causa o valor de <strong>R$ {{ '%.2f' | format(valor_causa) }}</strong> ({{ valor_causa | int }} reais).{% else %}Requer a atribuição do valor que Vossa Excelência entender pertinente.{% endif %}</p>
 
-{{ cidade }}, {{ data_assinatura }}
+<p style="text-indent: 0; margin-top: 18pt;">Nestes termos,<br>Pede deferimento.</p>
 
-__________________________________
-{{ advogado_nome }}
-OAB {{ advogado_oab }}
+<div class="signature-block">
+<p class="signature-city-date">{{ cidade }}, {{ data_assinatura }}</p>
+<div class="signature-line">
+<p class="signature-name">{{ advogado_nome }}</p>
+<p class="signature-oab">OAB {{ advogado_oab }}</p>
+</div>
+</div>
 """,
         "petition_type": {
             "slug": "peticao-inicial-civel",
@@ -93,39 +101,48 @@ OAB {{ advogado_oab }}
         "category": "civel",
         "description": "Contestação geral para ações cíveis.",
         "content": """
-{{ forum | upper }}
-{{ vara }}
+<div class="header">
+<p class="header-forum">{{ forum | upper }}</p>
+<p class="header-vara">{{ vara }}</p>
+</div>
 
-Processo nº: {{ process_number or '0000000-00.0000.0.00.0000' }}
+<p style="text-indent: 0;">Processo nº: {{ process_number or '0000000-00.0000.0.00.0000' }}</p>
 
-{{ defendant_name | upper }}
-{{ defendant_qualification }}
+<p class="party-name" style="text-indent: 0; margin-top: 24pt;">{{ defendant_name | upper }}</p>
+<p class="party-qualification" style="text-indent: 0;">{{ defendant_qualification }}</p>
 
-vem, respeitosamente, à presença de Vossa Excelência, por intermédio de seus advogados, apresentar
+<p style="text-indent: 0;">vem, respeitosamente, à presença de Vossa Excelência, por intermédio de seus advogados, apresentar</p>
 
-CONTESTAÇÃO
+<h1>CONTESTAÇÃO</h1>
 
-à ação proposta por {{ author_name.upper() }}, {{ author_qualification }}, expondo o que segue:
+<p style="text-indent: 0;">à ação proposta por <strong>{{ author_name | upper }}</strong>, {{ author_qualification }}, expondo o que segue:</p>
 
-I - SÍNTESE DOS FATOS
+<h2>I - SÍNTESE DOS FATOS</h2>
 {{ facts }}
 
-II - PRELIMINARES
+<h2>II - PRELIMINARES</h2>
 {{ fundamentos }}
 
-III - MÉRITO
+<h2>III - DO MÉRITO</h2>
 {{ pedidos }}
 
-IV - DOS PEDIDOS FINAIS
-a) rejeição total dos pedidos iniciais;
-b) condenação do autor ao pagamento das custas e honorários;
-c) produção de todos os meios de prova admitidos em direito.
+<h2>IV - DOS PEDIDOS FINAIS</h2>
+<p style="text-indent: 0;">Ante o exposto, requer:</p>
+<ol type="a">
+<li>A rejeição total dos pedidos iniciais;</li>
+<li>A condenação do autor ao pagamento das custas processuais e honorários advocatícios;</li>
+<li>A produção de todos os meios de prova admitidos em direito, especialmente o depoimento pessoal do autor, oitiva de testemunhas e prova pericial.</li>
+</ol>
 
-{{ cidade }}, {{ data_assinatura }}
+<p style="text-indent: 0; margin-top: 18pt;">Nestes termos,<br>Pede deferimento.</p>
 
-__________________________________
-{{ advogado_nome }}
-OAB {{ advogado_oab }}
+<div class="signature-block">
+<p class="signature-city-date">{{ cidade }}, {{ data_assinatura }}</p>
+<div class="signature-line">
+<p class="signature-name">{{ advogado_nome }}</p>
+<p class="signature-oab">OAB {{ advogado_oab }}</p>
+</div>
+</div>
 """,
         "petition_type": {
             "slug": "contestacao-civel",
@@ -141,51 +158,56 @@ OAB {{ advogado_oab }}
         "category": "familia",
         "description": "Petição base para divórcio com acordo de guarda e alimentos.",
         "content": """
-{{ forum | upper }} - {{ vara }}
+<div class="header">
+<p class="header-forum">{{ forum | upper }}</p>
+<p class="header-vara">{{ vara }}</p>
+</div>
 
-Processo nº: {{ process_number or 'a atribuir' }}
+<p style="text-indent: 0;">Processo nº: {{ process_number or 'a atribuir' }}</p>
 
-{{ spouse_one_name | upper }}
-{{ spouse_one_qualification }}
+<p class="party-name" style="text-indent: 0; margin-top: 24pt;">{{ spouse_one_name | upper }}</p>
+<p class="party-qualification" style="text-indent: 0;">{{ spouse_one_qualification }}</p>
 
-e
+<p style="text-indent: 0; margin: 12pt 0;"><strong>e</strong></p>
 
-{{ spouse_two_name | upper }}
-{{ spouse_two_qualification }}
+<p class="party-name" style="text-indent: 0;">{{ spouse_two_name | upper }}</p>
+<p class="party-qualification" style="text-indent: 0;">{{ spouse_two_qualification }}</p>
 
-vêm, por seus advogados, propor a presente
+<p style="text-indent: 0; margin-top: 18pt;">vêm, por seus advogados, propor a presente</p>
 
-{{ action_type | upper }}
+<h1>{{ action_type | upper }}</h1>
 
-em razão do término da união celebrada em {{ marriage_city or '...' }}{% if marriage_date %} em {{ marriage_date }}{% endif %}, sob o regime de {{ marriage_regime or 'comunhão parcial' }}.{% if prenup_summary %}
+<p>em razão do término da união celebrada em {{ marriage_city or '...' }}{% if marriage_date %} em {{ marriage_date }}{% endif %}, sob o regime de <strong>{{ marriage_regime or 'comunhão parcial de bens' }}</strong>.{% if prenup_summary %} Pacto antenupcial: {{ prenup_summary }}.{% endif %}</p>
 
-Pacto antenupcial: {{ prenup_summary }}.{% endif %}
-
-I - DOS FATOS
+<h2>I - DOS FATOS</h2>
 {{ facts }}
 
-II - DOS FILHOS E GUARDA
-{{ children_info or 'Não há filhos menores.' }}
+<h2>II - DOS FILHOS E DA GUARDA</h2>
+<p>{{ children_info or 'Não há filhos menores ou incapazes.' }}</p>
+<p><strong>Proposta de guarda e convivência:</strong> {{ custody_plan or 'Guarda compartilhada conforme acordo anexo.' }}</p>
 
-Proposta de guarda/convivência: {{ custody_plan or 'Guarda compartilhada conforme acordo anexo.' }}
+<h2>III - DOS ALIMENTOS</h2>
+<p>{{ alimony_plan or 'As partes renunciam aos alimentos recíprocos.' }}</p>
 
-III - DOS ALIMENTOS
-{{ alimony_plan or 'As partes renunciam aos alimentos.' }}
+<h2>IV - DO PATRIMÔNIO</h2>
+<p>{{ property_description or 'Não há bens a partilhar ou os bens serão objeto de ação própria.' }}</p>
 
-IV - DO PATRIMÔNIO
-{{ property_description or 'Não há bens a partilhar.' }}
-
-V - DO DIREITO
+<h2>V - DO DIREITO</h2>
 {{ fundamentos }}
 
-VI - DOS PEDIDOS
+<h2>VI - DOS PEDIDOS</h2>
+<p style="text-indent: 0;">Ante o exposto, requerem:</p>
 {{ pedidos }}
 
-{{ cidade }}, {{ data_assinatura }}
+<p style="text-indent: 0; margin-top: 18pt;">Nestes termos,<br>Pedem deferimento.</p>
 
-__________________________________
-{{ advogado_nome }}
-OAB {{ advogado_oab }}
+<div class="signature-block">
+<p class="signature-city-date">{{ cidade }}, {{ data_assinatura }}</p>
+<div class="signature-line">
+<p class="signature-name">{{ advogado_nome }}</p>
+<p class="signature-oab">OAB {{ advogado_oab }}</p>
+</div>
+</div>
 """,
         "petition_type": {
             "slug": "peticao-familia-divorcio",
@@ -202,7 +224,10 @@ def _render_pdf(text: str, title: str) -> BytesIO:
     """
     Renderiza conteúdo HTML para PDF usando xhtml2pdf.
     Suporta formatação rica: negrito, itálico, fontes, cabeçalhos, listas, etc.
+    Otimizado para documentos jurídicos profissionais.
     """
+    import re
+
     # Tags HTML permitidas para sanitização
     ALLOWED_TAGS = [
         "p",
@@ -234,6 +259,9 @@ def _render_pdf(text: str, title: str) -> BytesIO:
         "blockquote",
         "a",
         "img",
+        "hr",
+        "sub",
+        "sup",
     ]
     ALLOWED_ATTRIBUTES = {
         "*": ["class", "style"],
@@ -248,7 +276,35 @@ def _render_pdf(text: str, title: str) -> BytesIO:
         text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, strip=True
     )
 
-    # Template HTML completo com estilos para impressão
+    # Pré-processamento do HTML para melhor formatação
+    # 1. Converte quebras de linha simples em parágrafos
+    lines = clean_html.split("\n")
+    processed_lines = []
+    for line in lines:
+        line = line.strip()
+        if line:
+            # Se não está dentro de uma tag de bloco, envolve em <p>
+            if not re.match(
+                r"^<(p|h[1-6]|ul|ol|li|table|tr|th|td|div|blockquote)", line, re.I
+            ):
+                if not line.startswith("<"):
+                    line = f"<p>{line}</p>"
+            processed_lines.append(line)
+
+    clean_html = "\n".join(processed_lines)
+
+    # 2. Corrige parágrafos vazios e <br> excessivos
+    clean_html = re.sub(r"<p>\s*</p>", "", clean_html)
+    clean_html = re.sub(r"(<br\s*/?>){3,}", "<br><br>", clean_html)
+
+    # 3. Adiciona classe para seções (I -, II -, DOS, DA, DO)
+    clean_html = re.sub(
+        r"<p>(\s*)(I+\s*[-–—]|[IVXLC]+\s*[-–—]|D[OAE]\s+|D[OA]S?\s+)",
+        r'<p class="section-title">\1\2',
+        clean_html,
+    )
+
+    # Template HTML completo com estilos profissionais para documentos jurídicos
     html_template = f"""
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -258,81 +314,142 @@ def _render_pdf(text: str, title: str) -> BytesIO:
         <style>
             @page {{
                 size: A4;
-                margin: 2.5cm 2cm 2cm 3cm;
+                margin: 3cm 2.5cm 2.5cm 3cm;
                 @frame footer {{
                     -pdf-frame-content: footerContent;
-                    bottom: 0.5cm;
-                    margin-left: 1cm;
-                    margin-right: 1cm;
+                    bottom: 1cm;
+                    margin-left: 2cm;
+                    margin-right: 2cm;
                     height: 1cm;
                 }}
             }}
             
             body {{
-                font-family: Times, 'Times New Roman', serif;
+                font-family: 'Times New Roman', Times, serif;
                 font-size: 12pt;
-                line-height: 1.5;
+                line-height: 1.8;
                 text-align: justify;
                 color: #000;
             }}
             
+            /* Cabeçalho do documento */
+            .header {{
+                text-align: center;
+                margin-bottom: 24pt;
+                font-weight: bold;
+            }}
+            
+            .header-forum {{
+                font-size: 13pt;
+                font-weight: bold;
+                text-transform: uppercase;
+                margin-bottom: 6pt;
+            }}
+            
+            .header-vara {{
+                font-size: 12pt;
+                margin-bottom: 12pt;
+            }}
+            
+            /* Títulos principais */
             h1 {{
-                font-size: 16pt;
+                font-size: 14pt;
                 font-weight: bold;
                 text-align: center;
-                margin: 0 0 24pt 0;
+                text-transform: uppercase;
+                letter-spacing: 1pt;
+                margin: 24pt 0;
+                padding: 12pt 0;
             }}
             
             h2 {{
-                font-size: 14pt;
+                font-size: 13pt;
                 font-weight: bold;
-                margin: 18pt 0 12pt 0;
+                text-transform: uppercase;
+                margin: 24pt 0 12pt 0;
             }}
             
             h3 {{
                 font-size: 12pt;
                 font-weight: bold;
-                margin: 12pt 0 8pt 0;
+                margin: 18pt 0 10pt 0;
             }}
             
             h4 {{
                 font-size: 12pt;
                 font-weight: bold;
                 font-style: italic;
-                margin: 10pt 0 6pt 0;
+                margin: 12pt 0 8pt 0;
             }}
             
+            /* Parágrafos */
             p {{
                 margin: 0 0 12pt 0;
-                text-indent: 2cm;
+                text-indent: 2.5cm;
+                text-align: justify;
             }}
             
-            ul, ol {{
-                margin: 12pt 0;
-                padding-left: 1.5cm;
+            /* Primeiro parágrafo após título sem recuo */
+            h1 + p, h2 + p, h3 + p, h4 + p {{
+                text-indent: 0;
             }}
             
-            li {{
+            /* Seções numeradas (I -, II -, etc.) */
+            .section-title {{
+                font-weight: bold;
+                text-indent: 0 !important;
+                margin-top: 24pt;
+                margin-bottom: 12pt;
+            }}
+            
+            /* Qualificação das partes */
+            .party-name {{
+                font-weight: bold;
+                text-transform: uppercase;
+            }}
+            
+            .party-qualification {{
+                text-indent: 0;
                 margin-bottom: 6pt;
             }}
             
+            /* Listas */
+            ul, ol {{
+                margin: 12pt 0 12pt 1cm;
+                padding-left: 1cm;
+            }}
+            
+            li {{
+                margin-bottom: 8pt;
+                text-align: justify;
+            }}
+            
+            /* Lista com letras */
+            ol.letters {{
+                list-style-type: lower-alpha;
+            }}
+            
+            /* Tabelas */
             table {{
                 width: 100%;
                 border-collapse: collapse;
-                margin: 12pt 0;
+                margin: 18pt 0;
+                font-size: 11pt;
             }}
             
             th, td {{
-                border: 1px solid #000;
-                padding: 6pt 8pt;
+                border: 1px solid #333;
+                padding: 8pt 10pt;
                 text-align: left;
+                vertical-align: top;
             }}
             
             th {{
-                background-color: #f0f0f0;
+                background-color: #f5f5f5;
                 font-weight: bold;
             }}
             
+            /* Formatação de texto */
             strong, b {{
                 font-weight: bold;
             }}
@@ -345,36 +462,87 @@ def _render_pdf(text: str, title: str) -> BytesIO:
                 text-decoration: underline;
             }}
             
+            /* Citações */
             blockquote {{
-                margin: 12pt 2cm;
+                margin: 18pt 2cm 18pt 4cm;
+                font-size: 11pt;
                 font-style: italic;
-                border-left: 3pt solid #ccc;
-                padding-left: 12pt;
+                text-indent: 0;
+                line-height: 1.5;
             }}
             
-            .signature {{
+            /* Valor da causa */
+            .valor-causa {{
+                text-indent: 0;
+                margin: 24pt 0;
+            }}
+            
+            /* Bloco de assinatura */
+            .signature-block {{
                 margin-top: 48pt;
                 text-align: center;
+                page-break-inside: avoid;
+            }}
+            
+            .signature-city-date {{
+                text-align: right;
+                margin-bottom: 48pt;
             }}
             
             .signature-line {{
                 border-top: 1px solid #000;
-                width: 60%;
+                width: 250pt;
                 margin: 0 auto;
-                padding-top: 6pt;
+                padding-top: 8pt;
             }}
             
+            .signature-name {{
+                font-weight: bold;
+            }}
+            
+            .signature-oab {{
+                font-size: 11pt;
+            }}
+            
+            /* Termos em destaque */
+            .termo-juridico {{
+                font-style: italic;
+            }}
+            
+            /* Separador horizontal */
+            hr {{
+                border: none;
+                border-top: 1px solid #ccc;
+                margin: 24pt 0;
+            }}
+            
+            /* Rodapé */
             #footerContent {{
                 font-size: 10pt;
                 text-align: center;
                 color: #666;
+                font-family: Arial, sans-serif;
+            }}
+            
+            /* Evitar quebras indesejadas */
+            .no-break {{
+                page-break-inside: avoid;
+            }}
+            
+            /* Pedidos */
+            .pedidos {{
+                text-indent: 0;
+            }}
+            
+            .pedidos li {{
+                margin-bottom: 12pt;
             }}
         </style>
     </head>
     <body>
         {clean_html}
         <div id="footerContent">
-            <pdf:pagenumber />
+            Página <pdf:pagenumber /> de <pdf:pagecount />
         </div>
     </body>
     </html>
@@ -400,8 +568,6 @@ def _render_pdf(text: str, title: str) -> BytesIO:
         pdf.setFont("Helvetica", 11)
 
         # Remove tags HTML para texto simples
-        import re
-
         plain_text = re.sub("<[^<]+?>", "", text)
 
         for raw_line in plain_text.splitlines():
@@ -667,6 +833,11 @@ def family_petitions():
     if not form.template_id.data and not form.is_submitted():
         form.template_id.data = form.template_id.choices[0][0]
 
+    # Preencher dados do advogado automaticamente
+    if not form.is_submitted():
+        form.advogado_nome.data = current_user.full_name or current_user.username
+        form.advogado_oab.data = current_user.oab_number or ""
+
     if form.validate_on_submit():
         template = next(
             (tpl for tpl in templates if tpl.id == form.template_id.data), None
@@ -682,34 +853,83 @@ def family_petitions():
             flash(str(exc), "warning")
             return redirect(request.url)
 
+        # Usar dados do advogado logado (ignorar valores do form para segurança)
+        advogado_nome = current_user.full_name or current_user.username
+        advogado_oab = current_user.oab_number or "OAB não cadastrada"
+        
+        # Formatar data de assinatura
+        data_assinatura = form.data_assinatura.data
+        if data_assinatura:
+            data_assinatura_str = data_assinatura.strftime("%d de %B de %Y").replace(
+                "January", "janeiro"
+            ).replace("February", "fevereiro").replace("March", "março").replace(
+                "April", "abril"
+            ).replace("May", "maio").replace("June", "junho").replace(
+                "July", "julho"
+            ).replace("August", "agosto").replace("September", "setembro").replace(
+                "October", "outubro"
+            ).replace("November", "novembro").replace("December", "dezembro")
+        else:
+            from datetime import date
+            data_assinatura_str = date.today().strftime("%d de %B de %Y")
+
         context = {
-            "forum": form.forum.data,
-            "vara": form.vara.data,
+            "forum": form.forum.data or "EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO",
+            "vara": form.vara.data or "Vara de Família e Sucessões",
             "process_number": form.process_number.data,
-            "action_type": form.action_type.data,
-            "marriage_date": form.marriage_date.data.strftime("%d/%m/%Y")
+            "action_type": form.action_type.data or "AÇÃO DE DIVÓRCIO C/C GUARDA E ALIMENTOS",
+            # Dados do casamento
+            "marriage_date": form.marriage_date.data
             if form.marriage_date.data
             else None,
             "marriage_city": form.marriage_city.data,
             "marriage_regime": form.marriage_regime.data,
+            "separation_date": form.separation_date.data
+            if form.separation_date.data
+            else None,
             "prenup_summary": form.prenup_details.data
             if form.has_prenup.data
             else None,
+            # Partes
             "spouse_one_name": form.spouse_one_name.data,
             "spouse_one_qualification": form.spouse_one_qualification.data,
+            "author_address": form.author_address.data,
+            "author_cpf": form.author_cpf.data,
             "spouse_two_name": form.spouse_two_name.data,
             "spouse_two_qualification": form.spouse_two_qualification.data,
+            "defendant_address": form.defendant_address.data,
+            # Filhos e pensão
             "children_info": form.children_info.data,
+            "children_names": form.children_names.data,
             "custody_plan": form.custody_plan.data,
             "alimony_plan": form.alimony_plan.data,
+            "defendant_income": form.defendant_income.data,
+            "alimony_amount": form.alimony_amount.data,
+            "health_plan_details": form.health_plan_details.data,
+            # Patrimônio e dívidas
             "property_description": form.property_description.data,
+            "debts_description": form.debts_description.data,
+            # Violência doméstica
+            "has_domestic_violence": form.has_domestic_violence.data,
+            "domestic_violence_facts": form.domestic_violence_facts.data,
+            "has_protective_order": form.has_protective_order.data,
+            "protective_order_details": form.protective_order_details.data,
+            "moral_damages_amount": form.moral_damages_amount.data,
+            # Conteúdo
+            "divorce_facts": form.divorce_facts.data,
             "facts": form.facts.data,
             "fundamentos": form.fundamentos.data,
             "pedidos": form.pedidos.data,
-            "cidade": form.cidade.data,
-            "data_assinatura": form.data_assinatura.data.strftime("%d/%m/%Y"),
-            "advogado_nome": form.advogado_nome.data,
-            "advogado_oab": form.advogado_oab.data,
+            "valor_causa": form.valor_causa.data,
+            # Assinatura
+            "cidade": form.cidade.data or "Local",
+            "data_assinatura": data_assinatura_str,
+            "advogado_nome": advogado_nome,
+            "advogado_oab": advogado_oab,
+            "lawyer_address": form.lawyer_address.data,
+            "name_change": form.name_change.data,
+            "request_free_justice": form.request_free_justice.data,
+            "signature_author": form.signature_author.data,
         }
 
         rendered_text = render_template_string(template.content, **context)
@@ -756,6 +976,163 @@ def family_petitions():
         title="Petições de Família",
         form=form,
         templates=templates,
+    )
+
+
+@bp.route("/simple", methods=["GET", "POST"])
+@login_required
+@subscription_required
+def simple_petitions():
+    """Rota para petições simples (juntada de documentos, MLE, etc.)"""
+    ensure_default_templates()
+    form = SimplePetitionForm()
+
+    # Buscar templates de petições simples (categoria civel, mas tipos específicos)
+    templates = _accessible_templates_for(current_user, category="civel")
+    # Filtrar para mostrar apenas modelos de petições simples
+    simple_slugs = ['modelo-juntada-mle', 'modelo-juntada-documento', 'penhora-beneficio-inss']
+    simple_templates = [t for t in templates if t.slug in simple_slugs or 'juntada' in t.slug.lower() or 'mle' in t.slug.lower() or 'penhora' in t.slug.lower()]
+    
+    # Se não houver templates específicos, usar todos os cíveis
+    if not simple_templates:
+        simple_templates = templates
+    
+    form.template_id.choices = [
+        (template.id, _build_template_label(template)) for template in simple_templates
+    ]
+
+    if not form.template_id.choices:
+        flash(
+            "Nenhum modelo disponível. Entre em contato com o suporte.",
+            "warning",
+        )
+        return redirect(url_for("petitions.personal_templates"))
+
+    if not form.template_id.data and not form.is_submitted():
+        form.template_id.data = form.template_id.choices[0][0]
+
+    # Preencher dados do advogado automaticamente
+    if not form.is_submitted():
+        form.advogado_nome.data = current_user.full_name or current_user.username
+        form.advogado_oab.data = current_user.oab_number or ""
+        form.titular_conta.data = current_user.full_name or current_user.username
+
+    if form.validate_on_submit():
+        template = next(
+            (tpl for tpl in simple_templates if tpl.id == form.template_id.data), None
+        )
+
+        if not template:
+            flash("Modelo selecionado não foi encontrado.", "error")
+            return redirect(request.url)
+
+        try:
+            attachments = _extract_attachments(form.documents.data)
+        except ValueError as exc:
+            flash(str(exc), "warning")
+            return redirect(request.url)
+
+        # Usar dados do advogado logado
+        advogado_nome = current_user.full_name or current_user.username
+        advogado_oab = current_user.oab_number or "OAB não cadastrada"
+        
+        # Formatar data de assinatura
+        data_assinatura = form.data_assinatura.data
+        if data_assinatura:
+            meses = {
+                1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
+                5: "maio", 6: "junho", 7: "julho", 8: "agosto",
+                9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+            }
+            data_assinatura_str = f"{data_assinatura.day} de {meses[data_assinatura.month]} de {data_assinatura.year}"
+        else:
+            from datetime import date
+            hoje = date.today()
+            meses = {
+                1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
+                5: "maio", 6: "junho", 7: "julho", 8: "agosto",
+                9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+            }
+            data_assinatura_str = f"{hoje.day} de {meses[hoje.month]} de {hoje.year}"
+
+        context = {
+            "forum": form.forum.data or "EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO",
+            "vara": form.vara.data or "Vara do Juizado Especial Cível",
+            "process_number": form.process_number.data,
+            "action_type": form.action_type.data or "AÇÃO",
+            "author_name": form.author_name.data,
+            "defendant_name": form.defendant_name.data or "",
+            # Dados do MLE
+            "valor_levantamento": form.valor_levantamento.data or "",
+            "valor_extenso": form.valor_extenso.data or "",
+            "folhas_referencia": form.folhas_referencia.data or "",
+            "pix_chave": form.pix_chave.data or "",
+            "banco_dados": form.banco_dados.data or "",
+            "titular_conta": form.titular_conta.data or advogado_nome,
+            "procuracao_folha": form.procuracao_folha.data or "",
+            # Dados da Penhora INSS
+            "valor_beneficio_inss": form.valor_beneficio_inss.data or "",
+            "valor_beneficio_extenso": form.valor_beneficio_extenso.data or "",
+            "percentual_penhora": form.percentual_penhora.data or "30%",
+            "valor_penhora": form.valor_penhora.data or "",
+            "valor_penhora_extenso": form.valor_penhora_extenso.data or "",
+            "debito_atualizado": form.debito_atualizado.data or "",
+            "debito_extenso": form.debito_extenso.data or "",
+            "qtd_parcelas": form.qtd_parcelas.data or "",
+            "tempo_inadimplencia": form.tempo_inadimplencia.data or "",
+            # Conteúdo
+            "facts": form.facts.data or "",
+            "pedidos": form.pedidos.data or "",
+            # Assinatura
+            "cidade": form.cidade.data or "São Paulo",
+            "data_assinatura_formatada": data_assinatura_str,
+            "data_assinatura": data_assinatura_str,
+            "advogado_nome": advogado_nome,
+            "advogado_oab": advogado_oab,
+        }
+
+        rendered_text = render_template_string(template.content, **context)
+        document_title = f"Peticao-Simples-{template.slug}"
+        pdf_buffer = _render_pdf(rendered_text, document_title)
+        base_filename = f"{template.slug}-{datetime.now().strftime('%Y%m%d-%H%M')}"
+        pdf_filename = f"{base_filename}.pdf"
+
+        try:
+            record_petition_usage(current_user, template.petition_type)
+        except BillingAccessError as exc:
+            flash(str(exc), "warning")
+            return redirect(url_for("billing.portal"))
+
+        if attachments:
+            pdf_bytes = pdf_buffer.getvalue()
+            zip_buffer = BytesIO()
+            with ZipFile(zip_buffer, "w") as zipf:
+                zipf.writestr(pdf_filename, pdf_bytes)
+                for attachment in attachments:
+                    zipf.writestr(
+                        f"anexos/{attachment['filename']}", attachment["data"]
+                    )
+            zip_buffer.seek(0)
+            return send_file(
+                zip_buffer,
+                mimetype="application/zip",
+                as_attachment=True,
+                download_name=f"{base_filename}-com-anexos.zip",
+            )
+
+        pdf_buffer.seek(0)
+        return send_file(
+            pdf_buffer,
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=pdf_filename,
+        )
+
+    return render_template(
+        "petitions/simple/form.html",
+        title="Petições Simples",
+        form=form,
+        templates=simple_templates,
     )
 
 
