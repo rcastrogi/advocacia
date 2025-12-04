@@ -87,7 +87,19 @@ def dashboard():
 @login_required
 @subscription_required
 def peticionador():
-    return render_template("peticionador.html", title="Peticionador")
+    # Buscar tipos de petição com formulário dinâmico ativo
+    dynamic_petition_types = (
+        PetitionType.query
+        .filter_by(use_dynamic_form=True, is_active=True)
+        .order_by(PetitionType.name)
+        .all()
+    )
+    
+    return render_template(
+        "peticionador.html", 
+        title="Peticionador",
+        dynamic_petition_types=dynamic_petition_types
+    )
 
 
 @bp.route("/termos")

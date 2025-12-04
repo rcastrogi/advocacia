@@ -1,0 +1,1286 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    /* Quill Editor Styles */
+    .quill-wrapper {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .quill-wrapper .ql-toolbar {
+        border: none !important;
+        border-bottom: 1px solid #ced4da !important;
+        background: #f8f9fa;
+    }
+    .quill-wrapper .ql-container {
+        border: none !important;
+        min-height: 250px;
+        font-size: 1rem;
+    }
+    .quill-wrapper .ql-editor {
+        min-height: 250px;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .quill-wrapper .ql-editor.ql-blank::before {
+        font-style: italic;
+        color: #6c757d;
+    }
+    .ql-container { border-radius: 0 0 4px 4px !important; }
+    .ql-toolbar { border-radius: 4px 4px 0 0 !important; }
+    
+    /* Indicadores de validação */
+    .field-valid { border-color: #198754 !important; }
+    .field-invalid { border-color: #dc3545 !important; }
+    .field-warning { border-color: #ffc107 !important; }
+    
+    /* Auto-save indicator */
+    .auto-save-indicator {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+    .auto-save-indicator.saving { background: #ffc107; color: #000; }
+    .auto-save-indicator.saved { background: #198754; color: #fff; }
+    .auto-save-indicator.error { background: #dc3545; color: #fff; }
+    
+    /* Seções colapsáveis */
+    .section-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .section-header {
+        cursor: pointer;
+        padding: 1rem 1.25rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+        border-bottom: 1px solid #e0e0e0;
+        user-select: none;
+        transition: background 0.2s;
+    }
+    .section-header:hover {
+        background: linear-gradient(135deg, #f0f0f0 0%, #fff 100%);
+    }
+    .section-header .section-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+    .section-body {
+        padding: 1.25rem;
+        background: #fff;
+    }
+    .section-required::after {
+        content: ' *';
+        color: #dc3545;
+    }
+    
+    /* Indicador de campo obrigatório no label */
+    label.required::after,
+    .form-label.required::after {
+        content: ' *';
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    /* Chevron animado */
+    .chevron-icon {
+        transition: transform 0.3s ease;
+    }
+    .section-collapsed .chevron-icon {
+        transform: rotate(-90deg);
+    }
+    
+    /* Campos condicionais */
+    .conditional-field {
+        animation: fadeSlideIn 0.3s ease;
+    }
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Badge de seção */
+    .section-badge {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dados das seções em variável global para Alpine -->
+<script>
+    window.PETITION_SECTIONS = {{ sections_json | safe }};
+    window.PETITION_TYPE = {
+        id: {{ petition_type.id }},
+        slug: {{ petition_type.slug | tojson }},
+        name: {{ petition_type.name | tojson }}
+    };
+    // Dados de edição (se houver)
+    window.EDIT_PETITION = {{ edit_petition_json | safe if edit_petition_json else 'null' }};
+</script>
+
+<div class="container py-4" 
+     x-data="dynamicPetitionForm()" 
+     x-init="init()"
+     x-cloak>
+    
+    <!-- Auto-save indicator -->
+    <div class="auto-save-indicator" 
+         x-show="autoSaveStatus !== 'idle'"
+         x-transition
+         :class="{
+             'saving': autoSaveStatus === 'saving',
+             'saved': autoSaveStatus === 'saved',
+             'error': autoSaveStatus === 'error'
+         }">
+        <span x-show="autoSaveStatus === 'saving'">
+            <i class="fas fa-circle-notch fa-spin me-1"></i> Salvando...
+        </span>
+        <span x-show="autoSaveStatus === 'saved'">
+            <i class="fas fa-check me-1"></i> Salvo automaticamente
+        </span>
+        <span x-show="autoSaveStatus === 'error'">
+            <i class="fas fa-exclamation-triangle me-1"></i> Erro ao salvar
+        </span>
+    </div>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas {{ petition_type.icon or 'fa-file-alt' }}"></i> 
+                {{ petition_type.name }}
+                {% if edit_petition %}
+                <span class="badge bg-warning ms-2">Editando</span>
+                {% endif %}
+            </h1>
+            <p class="text-muted mb-0">{{ petition_type.description or 'Preencha os dados para gerar a petição.' }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('petitions.saved_list') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-folder-open me-1"></i> Minhas Petições
+            </a>
+            <a href="{{ url_for('main.peticionador') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
+            </a>
+            <button type="button" class="btn btn-sm btn-primary" @click="savePetition()" :disabled="isSaving">
+                <i class="fas fa-save me-1"></i> 
+                <span x-text="isSaving ? 'Salvando...' : 'Salvar'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Barra de controle das seções -->
+    <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">
+                <i class="fas fa-layer-group me-1"></i>
+                <span x-text="sections.length"></span> seções
+            </span>
+            <span class="text-muted small" x-show="getTotalMissingRequired() > 0">
+                | <i class="fas fa-exclamation-circle text-danger me-1"></i>
+                <span x-text="getTotalMissingRequired()" class="text-danger"></span> campo(s) obrigatório(s) pendente(s)
+            </span>
+        </div>
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-secondary" @click="expandAllSections()" title="Expandir todas">
+                <i class="fas fa-expand-alt me-1"></i> Expandir
+            </button>
+            <button type="button" class="btn btn-outline-secondary" @click="collapseAllSections()" title="Recolher todas">
+                <i class="fas fa-compress-alt me-1"></i> Recolher
+            </button>
+        </div>
+    </div>
+
+    <!-- Formulário Principal -->
+    <form @submit.prevent="generatePetition()" id="petition-form">
+        
+        <!-- Loop pelas seções configuradas -->
+        {% for section_config in sections %}
+        <div class="section-card" 
+             :class="{ 'section-collapsed': !sectionExpanded['{{ section_config.section.slug }}'] }"
+             x-show="shouldShowSection('{{ section_config.section.slug }}')"
+             x-transition>
+            
+            <!-- Cabeçalho da Seção -->
+            <div class="section-header d-flex align-items-center justify-content-between"
+                 @click="toggleSection('{{ section_config.section.slug }}')">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="section-icon bg-{{ section_config.section.color or 'primary' }} bg-opacity-10 text-{{ section_config.section.color or 'primary' }}">
+                        <i class="fas {{ section_config.section.icon or 'fa-file-alt' }}"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 {% if section_config.is_required %}section-required{% endif %}">
+                            {{ section_config.section.name }}
+                        </h5>
+                        {% if section_config.section.description %}
+                        <small class="text-muted">{{ section_config.section.description }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Indicador de campos obrigatórios pendentes -->
+                    <span class="badge bg-danger rounded-pill" 
+                          x-show="getMissingRequiredCount('{{ section_config.section.slug }}') > 0"
+                          x-text="getMissingRequiredCount('{{ section_config.section.slug }}')" 
+                          title="Campos obrigatórios não preenchidos">
+                    </span>
+                    {% if section_config.is_required %}
+                    <span class="section-badge bg-danger text-white">Obrigatório</span>
+                    {% endif %}
+                    <i class="fas fa-chevron-down chevron-icon text-muted"></i>
+                </div>
+            </div>
+            
+            <!-- Corpo da Seção -->
+            <div class="section-body" x-show="sectionExpanded['{{ section_config.section.slug }}']" x-transition>
+                <div class="row g-3">
+                    {% for field in section_config.section.fields_schema %}
+                    <!-- Campo: {{ field.name }} -->
+                    <div class="{{ field.size or 'col-12' }} conditional-field"
+                         x-show="shouldShowField('{{ field.name }}', '{{ field.show_if or '' }}')"
+                         x-transition>
+                        
+                        {% if field.type == 'text' %}
+                        <!-- Campo de Texto -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <input type="text" 
+                               class="form-control {% if field.mask %}{{ field.mask }}-mask{% endif %}" 
+                               name="{{ field.name }}"
+                               x-model="formData['{{ field.name }}']"
+                               placeholder="{{ field.placeholder or '' }}"
+                               {% if field.required %}required aria-required="true"{% endif %}>
+                        
+                        {% elif field.type == 'email' %}
+                        <!-- Campo de Email -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <input type="email" 
+                               class="form-control" 
+                               name="{{ field.name }}"
+                               x-model="formData['{{ field.name }}']"
+                               placeholder="{{ field.placeholder or '' }}"
+                               {% if field.required %}required{% endif %}>
+                        
+                        {% elif field.type == 'cpf' %}
+                        <!-- Campo de CPF -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <input type="text" 
+                               class="form-control cpf-mask" 
+                               name="{{ field.name }}"
+                               x-model="formData['{{ field.name }}']"
+                               placeholder="000.000.000-00"
+                               {% if field.required %}required{% endif %}>
+                        
+                        {% elif field.type == 'cnpj' %}
+                        <!-- Campo de CNPJ -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <input type="text" 
+                               class="form-control cnpj-mask" 
+                               name="{{ field.name }}"
+                               x-model="formData['{{ field.name }}']"
+                               placeholder="00.000.000/0000-00"
+                               {% if field.required %}required{% endif %}>
+                        
+                        {% elif field.type == 'phone' %}
+                        <!-- Campo de Telefone -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <input type="text" 
+                               class="form-control phone-mask" 
+                               name="{{ field.name }}"
+                               x-model="formData['{{ field.name }}']"
+                               placeholder="(00) 00000-0000"
+                               {% if field.required %}required{% endif %}>
+                        
+                        {% elif field.type == 'cep' %}
+                        <!-- Campo de CEP com busca automática -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control cep-mask" 
+                                   name="{{ field.name }}"
+                                   x-model="formData['{{ field.name }}']"
+                                   @blur="buscarCEP('{{ field.name }}')"
+                                   @keyup.enter="buscarCEP('{{ field.name }}')"
+                                   placeholder="00000-000"
+                                   {% if field.required %}required{% endif %}>
+                            <button type="button" 
+                                    class="btn btn-outline-secondary" 
+                                    @click="buscarCEP('{{ field.name }}')"
+                                    :disabled="cepLoading === '{{ field.name }}'">
+                                <span x-show="cepLoading !== '{{ field.name }}'">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <span x-show="cepLoading === '{{ field.name }}'">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </span>
+                            </button>
+                        </div>
+                        <small class="text-muted">Digite o CEP e clique em buscar para preencher o endereço automaticamente</small>
+                        
+                        {% elif field.type == 'date' %}
+                        <!-- Campo de Data -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <input type="date" 
+                               class="form-control" 
+                               name="{{ field.name }}"
+                               x-model="formData['{{ field.name }}']"
+                               {% if field.required %}required{% endif %}>
+                        
+                        {% elif field.type == 'number' %}
+                        <!-- Campo Numérico -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <input type="number" 
+                               class="form-control" 
+                               name="{{ field.name }}"
+                               x-model="formData['{{ field.name }}']"
+                               placeholder="{{ field.placeholder or '' }}"
+                               {% if field.min is defined %}min="{{ field.min }}"{% endif %}
+                               {% if field.max is defined %}max="{{ field.max }}"{% endif %}
+                               {% if field.step %}step="{{ field.step }}"{% endif %}
+                               {% if field.required %}required{% endif %}>
+                        
+                        {% elif field.type == 'currency' %}
+                        <!-- Campo de Moeda -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input type="text" 
+                                   class="form-control money-mask" 
+                                   name="{{ field.name }}"
+                                   x-model="formData['{{ field.name }}']"
+                                   placeholder="{{ field.placeholder or '0,00' }}"
+                                   {% if field.required %}required{% endif %}>
+                        </div>
+                        
+                        {% elif field.type == 'select' %}
+                        <!-- Campo de Seleção -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <select class="form-select" 
+                                name="{{ field.name }}"
+                                x-model="formData['{{ field.name }}']"
+                                {% if field.required %}required{% endif %}>
+                            <option value="">Selecione...</option>
+                            {% for option in field.options %}
+                            <option value="{{ option }}">{{ option }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        {% elif field.type == 'radio' %}
+                        <!-- Botões de Rádio -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            {% for option in field.options %}
+                            <div class="form-check">
+                                <input type="radio" 
+                                       class="form-check-input" 
+                                       name="{{ field.name }}"
+                                       id="{{ field.name }}_{{ loop.index }}"
+                                       value="{{ option }}"
+                                       x-model="formData['{{ field.name }}']"
+                                       {% if field.required %}required{% endif %}>
+                                <label class="form-check-label" for="{{ field.name }}_{{ loop.index }}">{{ option }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% elif field.type == 'checkbox' %}
+                        <!-- Checkbox -->
+                        <div class="form-check">
+                            <input type="checkbox" 
+                                   class="form-check-input" 
+                                   name="{{ field.name }}"
+                                   id="{{ field.name }}"
+                                   x-model="formData['{{ field.name }}']">
+                            <label class="form-check-label" for="{{ field.name }}">{{ field.label }}</label>
+                        </div>
+                        
+                        {% elif field.type == 'textarea' %}
+                        <!-- Área de Texto -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <textarea class="form-control" 
+                                  name="{{ field.name }}"
+                                  x-model="formData['{{ field.name }}']"
+                                  rows="{{ field.rows or 3 }}"
+                                  placeholder="{{ field.placeholder or '' }}"
+                                  {% if field.required %}required{% endif %}></textarea>
+                        
+                        {% elif field.type == 'editor' %}
+                        <!-- Editor Rich Text (Quill) -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <div class="quill-wrapper mb-3">
+                            <div class="quill-editor" 
+                                 id="quill_{{ field.name }}"
+                                 x-ref="editor_{{ field.name }}"
+                                 x-init="$nextTick(() => initQuillEditor('{{ field.name }}'))">
+                            </div>
+                        </div>
+                        <input type="hidden" name="{{ field.name }}" x-model="formData['{{ field.name }}']">
+                        
+                        {% elif field.type == 'processo' %}
+                        <!-- Campo de Número de Processo (formato CNJ) -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <input type="text" 
+                               class="form-control processo-mask" 
+                               name="{{ field.name }}"
+                               x-model="formData['{{ field.name }}']"
+                               placeholder="0000000-00.0000.0.00.0000"
+                               {% if field.required %}required{% endif %}>
+                        
+                        {% elif field.type == 'estado' %}
+                        <!-- Campo de Estado (UF) -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <select class="form-select" 
+                                name="{{ field.name }}"
+                                x-model="formData['{{ field.name }}']"
+                                {% if field.required %}required{% endif %}>
+                            <option value="">Selecione...</option>
+                            <option value="AC">Acre</option>
+                            <option value="AL">Alagoas</option>
+                            <option value="AP">Amapá</option>
+                            <option value="AM">Amazonas</option>
+                            <option value="BA">Bahia</option>
+                            <option value="CE">Ceará</option>
+                            <option value="DF">Distrito Federal</option>
+                            <option value="ES">Espírito Santo</option>
+                            <option value="GO">Goiás</option>
+                            <option value="MA">Maranhão</option>
+                            <option value="MT">Mato Grosso</option>
+                            <option value="MS">Mato Grosso do Sul</option>
+                            <option value="MG">Minas Gerais</option>
+                            <option value="PA">Pará</option>
+                            <option value="PB">Paraíba</option>
+                            <option value="PR">Paraná</option>
+                            <option value="PE">Pernambuco</option>
+                            <option value="PI">Piauí</option>
+                            <option value="RJ">Rio de Janeiro</option>
+                            <option value="RN">Rio Grande do Norte</option>
+                            <option value="RS">Rio Grande do Sul</option>
+                            <option value="RO">Rondônia</option>
+                            <option value="RR">Roraima</option>
+                            <option value="SC">Santa Catarina</option>
+                            <option value="SP">São Paulo</option>
+                            <option value="SE">Sergipe</option>
+                            <option value="TO">Tocantins</option>
+                        </select>
+                        
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Seção de Anexos (visível após salvar a petição) -->
+        <div class="section-card" 
+             x-show="petitionId"
+             x-transition>
+            
+            <div class="section-header d-flex align-items-center justify-content-between"
+                 @click="sectionExpanded.attachments = !sectionExpanded.attachments">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="section-icon bg-info bg-opacity-10 text-info">
+                        <i class="fas fa-paperclip"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">Documentos e Provas</h5>
+                        <small class="text-muted">Anexe documentos relacionados ao caso</small>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-down section-toggle-icon" 
+                   :class="{ 'rotated': sectionExpanded.attachments }"></i>
+            </div>
+            
+            <div class="section-content p-4" x-show="sectionExpanded.attachments !== false">
+                <!-- Upload de arquivos -->
+                <div class="mb-4">
+                    <label class="form-label">Adicionar arquivos</label>
+                    <div class="border border-2 border-dashed rounded p-4 text-center" 
+                         id="dropzone"
+                         @dragover.prevent="isDragging = true"
+                         @dragleave.prevent="isDragging = false"
+                         @drop.prevent="handleDrop($event)"
+                         :class="{'bg-light': isDragging}">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
+                        <p class="mb-2">Arraste arquivos aqui ou</p>
+                        <label class="btn btn-outline-primary">
+                            <i class="fas fa-folder-open me-1"></i> Selecione arquivos
+                            <input type="file" 
+                                   multiple 
+                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                                   @change="uploadFiles($event.target.files)"
+                                   class="d-none">
+                        </label>
+                        <p class="small text-muted mt-2 mb-0">
+                            PDF, DOC, DOCX, JPG, PNG (máx. 10MB por arquivo)
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Lista de anexos -->
+                <div x-show="attachments.length > 0">
+                    <h6 class="mb-3">Arquivos anexados (<span x-text="attachments.length"></span>)</h6>
+                    <div class="list-group">
+                        <template x-for="attachment in attachments" :key="attachment.id">
+                            <div class="list-group-item d-flex align-items-center gap-3">
+                                <i class="fas fa-file text-muted fa-lg"></i>
+                                <div class="flex-grow-1">
+                                    <span x-text="attachment.filename" class="fw-medium"></span>
+                                    <br>
+                                    <small class="text-muted">
+                                        <span x-text="attachment.file_size_display"></span>
+                                        <span class="mx-1">•</span>
+                                        <span x-text="attachment.uploaded_at"></span>
+                                    </small>
+                                </div>
+                                <div class="btn-group">
+                                    <a :href="'/petitions/attachments/' + attachment.id + '/download'" 
+                                       class="btn btn-sm btn-outline-primary" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger"
+                                            @click="deleteAttachment(attachment.id)"
+                                            title="Remover">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                
+                <!-- Mensagem quando não há anexos -->
+                <div x-show="attachments.length === 0" class="text-center text-muted py-4">
+                    <i class="fas fa-file-upload fa-2x mb-2"></i>
+                    <p class="mb-0">Nenhum arquivo anexado ainda.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-5">
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" @click="clearForm()">
+                    <i class="fas fa-eraser me-1"></i> Limpar
+                </button>
+                <a href="{{ url_for('petitions.saved_list') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-folder-open me-1"></i> Minhas Petições
+                </a>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <!-- Botão Salvar -->
+                <button type="button" class="btn btn-outline-success" @click="savePetition()" :disabled="isSaving">
+                    <span x-show="!isSaving">
+                        <i class="fas fa-save me-1"></i> Salvar
+                    </span>
+                    <span x-show="isSaving">
+                        <i class="fas fa-spinner fa-spin me-1"></i> Salvando...
+                    </span>
+                </button>
+                
+                <!-- Botão Preview -->
+                <button type="button" class="btn btn-outline-primary" @click="previewPetition()">
+                    <i class="fas fa-eye me-1"></i> Pré-visualizar
+                </button>
+                
+                <!-- Botão Gerar PDF -->
+                <button type="submit" class="btn btn-primary" :disabled="isGenerating">
+                    <span x-show="!isGenerating">
+                        <i class="fas fa-file-pdf me-1"></i> Gerar PDF
+                    </span>
+                    <span x-show="isGenerating">
+                        <i class="fas fa-spinner fa-spin me-1"></i> Gerando...
+                    </span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Indicador de edição -->
+        <template x-if="petitionId">
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-edit me-2"></i>
+                Editando petição salva #<span x-text="petitionId"></span>
+                <a :href="'/petitions/saved/' + petitionId" class="ms-2">Ver detalhes</a>
+            </div>
+        </template>
+    </form>
+</div>
+
+<!-- Modal de Preview -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pré-visualização da Petição</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="preview-content" class="p-4 bg-white" style="font-family: 'Times New Roman', serif;">
+                    <!-- Conteúdo será inserido via JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" @click="bootstrap.Modal.getInstance(document.getElementById('previewModal')).hide(); $nextTick(() => document.getElementById('petition-form').requestSubmit())">
+                    <i class="fas fa-file-pdf me-1"></i> Gerar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Quill Editor (já no base, mas garantir CSS) -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+<script>
+// Registrar componente Alpine ANTES da inicialização
+document.addEventListener('alpine:init', () => {
+    Alpine.data('dynamicPetitionForm', () => ({
+        sections: window.PETITION_SECTIONS || [],
+        formData: {},
+        sectionExpanded: {},
+        autoSaveStatus: 'idle',
+        isGenerating: false,
+        isSaving: false,
+        isUploading: false,
+        isDragging: false,
+        cepLoading: null,  // Campo CEP que está carregando
+        petitionId: null,  // ID da petição se estiver editando
+        attachments: [],  // Lista de anexos da petição
+        quillEditors: {},
+        autoSaveTimeout: null,
+        
+        init() {
+            // Inicializar estado de expansão das seções
+            if (this.sections && this.sections.length > 0) {
+                this.sections.forEach(s => {
+                    this.sectionExpanded[s.section.slug] = s.is_expanded !== false;
+                });
+            }
+            
+            // Inicializar seção de anexos
+            this.sectionExpanded.attachments = true;
+            
+            // Verificar se está editando uma petição existente
+            if (window.EDIT_PETITION) {
+                this.petitionId = window.EDIT_PETITION.id;
+                this.formData = window.EDIT_PETITION.form_data || {};
+                
+                // Carregar anexos existentes
+                this.loadAttachments();
+                
+                // Restaurar conteúdo dos editores após inicialização
+                this.$nextTick(() => {
+                    Object.keys(this.quillEditors).forEach(fieldName => {
+                        if (this.formData[fieldName]) {
+                            this.quillEditors[fieldName].root.innerHTML = this.formData[fieldName];
+                        }
+                    });
+                });
+            } else {
+                // Carregar rascunho local se existir
+                this.loadDraft();
+            }
+            
+            // Inicializar editores Quill após DOM estar pronto
+            this.$nextTick(() => {
+                this.applyMasks();
+            });
+            
+            // Auto-save a cada 30 segundos quando há mudanças
+            this.$watch('formData', () => {
+                this.scheduleAutoSave();
+            }, { deep: true });
+        },
+        
+        initAllQuillEditors() {
+            // Encontrar todos os campos do tipo editor e inicializá-los
+            this.sections.forEach(s => {
+                if (s.section.fields_schema) {
+                    s.section.fields_schema.forEach(field => {
+                        if (field.type === 'editor') {
+                            this.$nextTick(() => {
+                                this.initQuillEditor(field.name);
+                            });
+                        }
+                    });
+                }
+            });
+        },
+        
+        applyMasks() {
+            $('.cpf-mask').mask('000.000.000-00');
+            $('.cnpj-mask').mask('00.000.000/0000-00');
+            $('.phone-mask').mask('(00) 00000-0000');
+            $('.cep-mask').mask('00000-000');
+            $('.money-mask').mask('#.##0,00', {reverse: true});
+            $('.processo-mask').mask('0000000-00.0000.0.00.0000');
+        },
+        
+        toggleSection(slug) {
+            this.sectionExpanded[slug] = !this.sectionExpanded[slug];
+        },
+        
+        expandAllSections() {
+            this.sections.forEach(s => {
+                this.sectionExpanded[s.section.slug] = true;
+            });
+            this.sectionExpanded.attachments = true;
+        },
+        
+        collapseAllSections() {
+            this.sections.forEach(s => {
+                this.sectionExpanded[s.section.slug] = false;
+            });
+            this.sectionExpanded.attachments = false;
+        },
+        
+        getMissingRequiredCount(sectionSlug) {
+            // Encontrar a seção
+            const sectionConfig = this.sections.find(s => s.section.slug === sectionSlug);
+            if (!sectionConfig || !sectionConfig.section.fields_schema) return 0;
+            
+            // Contar campos obrigatórios não preenchidos
+            let count = 0;
+            sectionConfig.section.fields_schema.forEach(field => {
+                if (field.required) {
+                    const value = this.formData[field.name];
+                    if (!value || (typeof value === 'string' && value.trim() === '')) {
+                        count++;
+                    }
+                }
+            });
+            return count;
+        },
+        
+        getTotalMissingRequired() {
+            let total = 0;
+            this.sections.forEach(s => {
+                total += this.getMissingRequiredCount(s.section.slug);
+            });
+            return total;
+        },
+        
+        shouldShowSection(slug) {
+            // Por padrão, mostrar todas as seções
+            // Pode ser customizado para esconder seções baseado em condições
+            return true;
+        },
+        
+        shouldShowField(fieldName, showIf) {
+            if (!showIf) return true;
+            
+            // Parse da condição: "campo=valor" ou "campo!=valor"
+            const match = showIf.match(/^(\w+)(=|!=)(.+)$/);
+            if (!match) return true;
+            
+            const [, field, operator, value] = match;
+            const currentValue = this.formData[field] || '';
+            
+            if (operator === '=') {
+                return currentValue === value;
+            } else if (operator === '!=') {
+                return currentValue !== value;
+            }
+            return true;
+        },
+        
+        initQuillEditor(fieldName) {
+            // Tentar encontrar o container por ID ou por ref
+            let container = document.getElementById('quill_' + fieldName);
+            if (!container) {
+                container = this.$refs['editor_' + fieldName];
+            }
+            
+            if (!container) {
+                return;
+            }
+            
+            // Verificar se já foi inicializado
+            if (this.quillEditors[fieldName]) {
+                return;
+            }
+            
+            const quill = new Quill(container, {
+                theme: 'snow',
+                placeholder: 'Digite o conteúdo aqui...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'indent': '-1'}, { 'indent': '+1' }],
+                        [{ 'align': [] }],
+                        ['clean']
+                    ]
+                }
+            });
+            
+            quill.on('text-change', () => {
+                this.formData[fieldName] = quill.root.innerHTML;
+            });
+            
+            this.quillEditors[fieldName] = quill;
+            
+            // Restaurar conteúdo se existir
+            if (this.formData[fieldName]) {
+                quill.root.innerHTML = this.formData[fieldName];
+            }
+        },
+        
+        async buscarCEP(fieldName) {
+            const cep = (this.formData[fieldName] || '').replace(/\D/g, '');
+            if (cep.length !== 8) return;
+            
+            // Mostrar indicador de carregamento
+            this.cepLoading = fieldName;
+            
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await response.json();
+                
+                if (!data.erro) {
+                    // Extrair prefixo do campo CEP (ex: autor_cep -> autor_, reu_cep -> reu_)
+                    const prefix = fieldName.replace(/_?cep$/i, '');
+                    const prefixWithUnderscore = prefix ? prefix + '_' : '';
+                    
+                    // Mapeamento de campos do ViaCEP para possíveis nomes de campos
+                    const fieldMappings = {
+                        logradouro: ['endereco', 'rua', 'logradouro', 'address', 'street'],
+                        bairro: ['bairro', 'neighborhood', 'district'],
+                        localidade: ['cidade', 'city', 'municipio', 'localidade'],
+                        uf: ['estado', 'uf', 'state'],
+                        complemento: ['complemento', 'complement']
+                    };
+                    
+                    // Tentar preencher cada campo
+                    for (const [viaCepField, possibleNames] of Object.entries(fieldMappings)) {
+                        if (!data[viaCepField]) continue;
+                        
+                        // Tentar encontrar o campo com o prefixo
+                        for (const name of possibleNames) {
+                            const fieldNameWithPrefix = prefixWithUnderscore + name;
+                            const fieldNameWithoutPrefix = name;
+                            
+                            // Verificar se o campo existe no formData ou nas seções
+                            if (this.fieldExists(fieldNameWithPrefix)) {
+                                this.formData[fieldNameWithPrefix] = data[viaCepField];
+                                break;
+                            } else if (prefix && this.fieldExists(fieldNameWithoutPrefix)) {
+                                // Só usar sem prefixo se não houver prefixo específico
+                                this.formData[fieldNameWithoutPrefix] = data[viaCepField];
+                                break;
+                            }
+                        }
+                    }
+                    
+                    this.showToast('Endereço preenchido automaticamente!', 'success');
+                } else {
+                    this.showToast('CEP não encontrado.', 'warning');
+                }
+            } catch (error) {
+                console.error('Erro ao buscar CEP:', error);
+                this.showToast('Erro ao buscar CEP. Verifique sua conexão.', 'error');
+            } finally {
+                this.cepLoading = null;
+            }
+        },
+        
+        fieldExists(fieldName) {
+            // Verificar se o campo existe nas seções configuradas
+            for (const section of this.sections) {
+                if (section.section.fields_schema) {
+                    for (const field of section.section.fields_schema) {
+                        if (field.name === fieldName) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        },
+        
+        scheduleAutoSave() {
+            if (this.autoSaveTimeout) {
+                clearTimeout(this.autoSaveTimeout);
+            }
+            this.autoSaveTimeout = setTimeout(() => {
+                this.saveAsDraft();
+            }, 30000); // 30 segundos
+        },
+        
+        async saveAsDraft() {
+            this.autoSaveStatus = 'saving';
+            
+            try {
+                const key = 'petition_draft_' + window.PETITION_TYPE.slug;
+                localStorage.setItem(key, JSON.stringify({
+                    formData: this.formData,
+                    timestamp: new Date().toISOString()
+                }));
+                
+                this.autoSaveStatus = 'saved';
+                setTimeout(() => {
+                    this.autoSaveStatus = 'idle';
+                }, 2000);
+            } catch (error) {
+                this.autoSaveStatus = 'error';
+                console.error('Erro ao salvar rascunho:', error);
+            }
+        },
+        
+        loadDraft() {
+            try {
+                const key = 'petition_draft_' + window.PETITION_TYPE.slug;
+                const saved = localStorage.getItem(key);
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    this.formData = data.formData || {};
+                    
+                    // Restaurar conteúdo dos editores Quill
+                    this.$nextTick(() => {
+                        Object.keys(this.quillEditors).forEach(fieldName => {
+                            if (this.formData[fieldName]) {
+                                this.quillEditors[fieldName].root.innerHTML = this.formData[fieldName];
+                            }
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar rascunho:', error);
+            }
+        },
+        
+        clearForm() {
+            if (!confirm('Tem certeza que deseja limpar todo o formulário?')) return;
+            
+            this.formData = {};
+            this.petitionId = null;
+            Object.keys(this.quillEditors).forEach(fieldName => {
+                this.quillEditors[fieldName].root.innerHTML = '';
+            });
+            
+            const key = 'petition_draft_' + window.PETITION_TYPE.slug;
+            localStorage.removeItem(key);
+        },
+        
+        async savePetition() {
+            this.isSaving = true;
+            
+            try {
+                const response = await fetch('/petitions/api/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        petition_id: this.petitionId,
+                        petition_type_id: window.PETITION_TYPE.id,
+                        form_data: this.formData,
+                        action: 'save'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.petitionId = data.petition_id;
+                    
+                    // Limpar rascunho local após salvar no servidor
+                    const key = 'petition_draft_' + window.PETITION_TYPE.slug;
+                    localStorage.removeItem(key);
+                    
+                    // Mostrar toast de sucesso
+                    this.showToast('Petição salva com sucesso!', 'success');
+                    
+                    // Atualizar URL para modo edição
+                    const newUrl = `/petitions/dynamic/${window.PETITION_TYPE.slug}?edit_id=${data.petition_id}`;
+                    window.history.replaceState({}, '', newUrl);
+                } else {
+                    this.showToast(data.error || 'Erro ao salvar petição', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                this.showToast('Erro ao salvar petição. Tente novamente.', 'error');
+            } finally {
+                this.isSaving = false;
+            }
+        },
+        
+        showToast(message, type = 'info') {
+            // Criar toast simples
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type === 'error' ? 'danger' : type} position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                ${message}
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        },
+        
+        // ============ MÉTODOS DE ANEXOS ============
+        
+        async loadAttachments() {
+            if (!this.petitionId) return;
+            
+            try {
+                const response = await fetch(`/petitions/api/saved/${this.petitionId}/attachments`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.attachments = data.attachments;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar anexos:', error);
+            }
+        },
+        
+        handleDrop(event) {
+            this.isDragging = false;
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                this.uploadFiles(files);
+            }
+        },
+        
+        async uploadFiles(files) {
+            if (!this.petitionId) {
+                this.showToast('Salve a petição antes de anexar arquivos.', 'warning');
+                return;
+            }
+            
+            this.isUploading = true;
+            
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            const allowedTypes = ['application/pdf', 'application/msword', 
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'image/jpeg', 'image/png', 'image/gif'];
+            
+            for (const file of files) {
+                // Validar tamanho
+                if (file.size > maxSize) {
+                    this.showToast(`Arquivo ${file.name} excede o tamanho máximo de 10MB.`, 'error');
+                    continue;
+                }
+                
+                // Validar tipo
+                if (!allowedTypes.includes(file.type)) {
+                    this.showToast(`Tipo de arquivo não permitido: ${file.name}`, 'error');
+                    continue;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch(`/petitions/api/saved/${this.petitionId}/attachments`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showToast(`Arquivo ${file.name} enviado com sucesso!`, 'success');
+                        this.loadAttachments();
+                    } else {
+                        this.showToast(data.error || 'Erro ao enviar arquivo', 'error');
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    this.showToast(`Erro ao enviar ${file.name}`, 'error');
+                }
+            }
+            
+            this.isUploading = false;
+        },
+        
+        async deleteAttachment(attachmentId) {
+            if (!confirm('Tem certeza que deseja remover este arquivo?')) return;
+            
+            try {
+                const response = await fetch(`/petitions/api/attachments/${attachmentId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.showToast('Arquivo removido com sucesso!', 'success');
+                    this.loadAttachments();
+                } else {
+                    this.showToast(data.error || 'Erro ao remover arquivo', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                this.showToast('Erro ao remover arquivo', 'error');
+            }
+        },
+        
+        // ============ FIM DOS MÉTODOS DE ANEXOS ============
+        
+        formatFieldLabel(fieldName) {
+            // Buscar o label do campo nas seções
+            for (const section of this.sections) {
+                if (section.section.fields_schema) {
+                    for (const field of section.section.fields_schema) {
+                        if (field.name === fieldName) {
+                            return field.label;
+                        }
+                    }
+                }
+            }
+            // Se não encontrar, formatar o nome do campo
+            return fieldName
+                .replace(/_/g, ' ')
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase())
+                .trim();
+        },
+        
+        previewPetition() {
+            // Gerar preview da petição
+            const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+            const content = document.getElementById('preview-content');
+            
+            // Montar HTML de preview baseado nos dados organizados por seção
+            let html = '<div class="text-center mb-4">';
+            html += '<h4>EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO</h4>';
+            html += '</div>';
+            
+            // Organizar por seções
+            this.sections.forEach(sectionConfig => {
+                const section = sectionConfig.section;
+                const fields = section.fields_schema || [];
+                
+                // Verificar se há dados preenchidos nesta seção
+                const sectionHasData = fields.some(field => {
+                    const value = this.formData[field.name];
+                    return value && value.toString().trim() !== '';
+                });
+                
+                if (sectionHasData) {
+                    html += `<div class="preview-section mb-4">`;
+                    html += `<h5 class="border-bottom pb-2 mb-3"><i class="fas ${section.icon || 'fa-file-alt'} me-2 text-${section.color || 'primary'}"></i>${section.name}</h5>`;
+                    html += `<div class="row">`;
+                    
+                    fields.forEach(field => {
+                        const value = this.formData[field.name];
+                        if (value && value.toString().trim() !== '') {
+                            // Definir largura baseado no tipo
+                            const colSize = ['editor', 'textarea'].includes(field.type) ? '12' : '6';
+                            
+                            html += `<div class="col-md-${colSize} mb-2">`;
+                            html += `<strong class="text-muted small">${field.label}:</strong><br>`;
+                            
+                            // Formatar valor baseado no tipo
+                            if (field.type === 'editor') {
+                                html += `<div class="border rounded p-2 bg-light">${value}</div>`;
+                            } else if (field.type === 'checkbox') {
+                                html += value ? 'Sim' : 'Não';
+                            } else {
+                                html += `<span>${value}</span>`;
+                            }
+                            
+                            html += `</div>`;
+                        }
+                    });
+                    
+                    html += `</div></div>`;
+                }
+            });
+            
+            // Campos não mapeados (se houver)
+            const mappedFields = new Set();
+            this.sections.forEach(s => {
+                (s.section.fields_schema || []).forEach(f => mappedFields.add(f.name));
+            });
+            
+            const unmappedData = Object.entries(this.formData).filter(([key, value]) => 
+                !mappedFields.has(key) && value && value.toString().trim() !== ''
+            );
+            
+            if (unmappedData.length > 0) {
+                html += `<div class="preview-section mb-4">`;
+                html += `<h5 class="border-bottom pb-2 mb-3"><i class="fas fa-info-circle me-2 text-secondary"></i>Outros Dados</h5>`;
+                html += `<div class="row">`;
+                unmappedData.forEach(([key, value]) => {
+                    html += `<div class="col-md-6 mb-2">`;
+                    html += `<strong class="text-muted small">${this.formatFieldLabel(key)}:</strong><br>`;
+                    html += `<span>${value}</span>`;
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            content.innerHTML = html;
+            modal.show();
+        },
+        
+        async generatePetition() {
+            this.isGenerating = true;
+            
+            try {
+                const response = await fetch('{{ url_for("petitions.generate_dynamic") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        petition_type_id: window.PETITION_TYPE.id,
+                        form_data: this.formData
+                    })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = window.PETITION_TYPE.name.replace(/ /g, '_') + '.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                    
+                    // Limpar rascunho após gerar com sucesso
+                    const key = 'petition_draft_' + window.PETITION_TYPE.slug;
+                    localStorage.removeItem(key);
+                } else {
+                    const error = await response.json();
+                    this.showToast('Erro ao gerar petição: ' + (error.error || error.message || 'Erro desconhecido'), 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                this.showToast('Erro ao gerar petição. Tente novamente.', 'error');
+            } finally {
+                this.isGenerating = false;
+            }
+        }
+    }));
+});
+</script>
+{% endblock %}

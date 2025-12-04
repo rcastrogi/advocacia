@@ -336,9 +336,10 @@ textarea.form-control {
 /* ===== Hero Section - Counsel Law Professional Style ===== */
 .hero-section {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
-    min-height: 70vh;
+    min-height: auto;
+    padding: 100px 0 60px 0;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     position: relative;
     overflow: hidden;
 }

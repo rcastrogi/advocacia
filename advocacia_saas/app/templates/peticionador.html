@@ -12,16 +12,51 @@
     
     <div class="row">
         <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Sistema Peticionador</h5>
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-bolt text-warning me-2"></i>Petições Rápidas</h5>
+                    <span class="badge bg-success">Novo!</span>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-success" role="alert">
-                        <i class="fas fa-check-circle"></i> 
-                        <strong>Novo:</strong> Petições cíveis já podem ser geradas automaticamente em PDF.
-                    </div>
+                    <p class="text-muted mb-3">Formulários dinâmicos com seções expansíveis e preenchimento inteligente.</p>
                     
+                    <div class="row g-3">
+                        {% for petition_type in dynamic_petition_types %}
+                        <div class="col-md-4">
+                            <a href="{{ url_for('petitions.dynamic_form', slug=petition_type.slug) }}" 
+                               class="text-decoration-none">
+                                <div class="border rounded p-3 h-100 d-flex flex-column hover-shadow" 
+                                     style="transition: all 0.2s; cursor: pointer;">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="rounded-circle bg-{{ petition_type.color or 'primary' }} bg-opacity-10 p-2 me-2">
+                                            <i class="fas {{ petition_type.icon or 'fa-file-alt' }} text-{{ petition_type.color or 'primary' }}"></i>
+                                        </div>
+                                        <h6 class="fw-bold mb-0 text-dark">{{ petition_type.name }}</h6>
+                                    </div>
+                                    <p class="text-muted small flex-grow-1 mb-2">{{ petition_type.description or 'Gerar petição automaticamente.' }}</p>
+                                    <span class="btn btn-sm btn-outline-{{ petition_type.color or 'primary' }} w-100">
+                                        <i class="fas fa-arrow-right me-1"></i> Abrir
+                                    </span>
+                                </div>
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Nenhum tipo de petição dinâmico configurado ainda.
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Formulários Clássicos</h5>
+                </div>
+                <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-4">
                             <div class="border rounded p-3 h-100 d-flex flex-column">

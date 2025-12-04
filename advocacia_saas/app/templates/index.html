@@ -46,7 +46,7 @@
 </nav>
 
 <!-- Hero Section - Counsel Law Professional Style -->
-<section class="hero-section text-white" style="padding-top: 80px;">
+<section class="hero-section text-white" style="padding-top: 0;">
     <div class="container hero-content">
         <div class="row align-items-center">
             <div class="col-lg-7">
@@ -152,36 +152,369 @@
         </div>
         
         {% if petition_types %}
-        <div class="row g-4">
-            {% for petition in petition_types %}
-            <div class="col-lg-4 col-md-6 animate-item" style="--item-delay: {{ loop.index0 * 100 }}ms">
-                <div class="petition-type-card">
-                    <div class="petition-type-icon">
-                        <i class="fas {{ petition.icon }}"></i>
+        <!-- Carrossel com Navegação -->
+        <div class="petition-carousel-wrapper">
+            <!-- Botão Anterior -->
+            <button class="carousel-nav-btn carousel-nav-prev" onclick="scrollCarouselLeft()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <div class="infinite-carousel-container">
+                <!-- Gradiente esquerdo para fade -->
+                <div class="carousel-fade-left"></div>
+                
+                <!-- Track do carrossel -->
+                <div class="infinite-carousel-track" id="petitionTrack">
+                    {% for petition in petition_types %}
+                    <div class="carousel-petition-card">
+                        <div class="petition-type-card h-100">
+                            <div class="petition-type-icon">
+                                <i class="fas {{ petition.icon }}"></i>
+                            </div>
+                            <div class="petition-type-category">
+                                {{ petition.category_label }}
+                            </div>
+                            <h4 class="petition-type-name">{{ petition.name }}</h4>
+                            <p class="petition-type-description">{{ petition.description }}</p>
+                            <div class="petition-type-footer">
+                                <span class="petition-type-badge">
+                                    <i class="fas fa-check-circle me-1"></i>Disponível
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="petition-type-category">
-                        {{ petition.category_label }}
+                    {% endfor %}
+                    <!-- Repetição para loop infinito -->
+                    {% for petition in petition_types %}
+                    <div class="carousel-petition-card">
+                        <div class="petition-type-card h-100">
+                            <div class="petition-type-icon">
+                                <i class="fas {{ petition.icon }}"></i>
+                            </div>
+                            <div class="petition-type-category">
+                                {{ petition.category_label }}
+                            </div>
+                            <h4 class="petition-type-name">{{ petition.name }}</h4>
+                            <p class="petition-type-description">{{ petition.description }}</p>
+                            <div class="petition-type-footer">
+                                <span class="petition-type-badge">
+                                    <i class="fas fa-check-circle me-1"></i>Disponível
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <h4 class="petition-type-name">{{ petition.name }}</h4>
-                    <p class="petition-type-description">{{ petition.description }}</p>
-                    <div class="petition-type-footer">
-                        <span class="petition-type-badge">
-                            <i class="fas fa-check-circle me-1"></i>Disponível
-                        </span>
-                    </div>
+                    {% endfor %}
                 </div>
+                
+                <!-- Gradiente direito para fade -->
+                <div class="carousel-fade-right"></div>
             </div>
-            {% endfor %}
+            
+            <!-- Botão Próximo -->
+            <button class="carousel-nav-btn carousel-nav-next" onclick="scrollCarouselRight()">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
+        
+        <!-- CSS do Carrossel -->
+        <style>
+            .petition-carousel-wrapper {
+                position: relative;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .carousel-nav-btn {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                border: none;
+                background: var(--primary-color, #0d6efd);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                flex-shrink: 0;
+                box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+                z-index: 20;
+            }
+            
+            .carousel-nav-btn:hover {
+                background: var(--primary-dark, #0b5ed7);
+                transform: scale(1.1);
+                box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+            }
+            
+            .carousel-nav-btn:active {
+                transform: scale(0.95);
+            }
+            
+            .infinite-carousel-container {
+                position: relative;
+                flex: 1;
+                overflow: hidden;
+                padding: 20px 0;
+                cursor: grab;
+            }
+            
+            .infinite-carousel-container:active {
+                cursor: grabbing;
+            }
+            
+            .carousel-fade-left,
+            .carousel-fade-right {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 80px;
+                z-index: 10;
+                pointer-events: none;
+            }
+            
+            .carousel-fade-left {
+                left: 0;
+                background: linear-gradient(to right, var(--bs-body-bg, #f8f9fa) 0%, transparent 100%);
+            }
+            
+            .carousel-fade-right {
+                right: 0;
+                background: linear-gradient(to left, var(--bs-body-bg, #f8f9fa) 0%, transparent 100%);
+            }
+            
+            .infinite-carousel-track {
+                display: flex;
+                gap: 24px;
+                width: max-content;
+                will-change: transform;
+            }
+            
+            .infinite-carousel-track.smooth {
+                transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            }
+            
+            .infinite-carousel-track.dragging {
+                transition: none;
+            }
+            
+            .carousel-petition-card {
+                flex: 0 0 350px;
+                max-width: 350px;
+                user-select: none;
+            }
+            
+            @keyframes scrollCarousel {
+                0% {
+                    transform: translateX(0);
+                }
+                100% {
+                    transform: translateX(-50%);
+                }
+            }
+            
+            /* Efeito de hover nos cards */
+            .carousel-petition-card .petition-type-card {
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            
+            .carousel-petition-card .petition-type-card:hover {
+                transform: translateY(-10px) scale(1.02);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            }
+            
+            /* Responsividade */
+            @media (max-width: 768px) {
+                .carousel-petition-card {
+                    flex: 0 0 280px;
+                    max-width: 280px;
+                }
+                
+                .carousel-fade-left,
+                .carousel-fade-right {
+                    width: 40px;
+                }
+                
+                .carousel-nav-btn {
+                    width: 38px;
+                    height: 38px;
+                }
+            }
+            
+            @media (max-width: 576px) {
+                .carousel-petition-card {
+                    flex: 0 0 250px;
+                    max-width: 250px;
+                }
+                
+                .carousel-nav-btn {
+                    width: 34px;
+                    height: 34px;
+                    font-size: 12px;
+                }
+            }
+        </style>
+        
+        <!-- JavaScript do Carrossel -->
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const track = document.getElementById('petitionTrack');
+            const container = track.parentElement;
+            let currentPosition = 0;
+            let isDragging = false;
+            let startX = 0;
+            let scrollLeft = 0;
+            let autoScrollInterval = null;
+            const cardWidth = 374; // 350px + 24px gap
+            const scrollSpeed = 1; // pixels por frame
+            
+            // Calcula metade da largura do track (para loop infinito)
+            function getHalfWidth() {
+                return track.scrollWidth / 2;
+            }
+            
+            // Aplica a posição
+            function applyPosition() {
+                track.style.transform = `translateX(${currentPosition}px)`;
+            }
+            
+            // Loop infinito - reseta quando chega na metade
+            function checkLoop() {
+                const halfWidth = getHalfWidth();
+                if (currentPosition <= -halfWidth) {
+                    currentPosition += halfWidth;
+                    track.classList.remove('smooth');
+                    applyPosition();
+                    // Força reflow
+                    track.offsetHeight;
+                    track.classList.add('smooth');
+                } else if (currentPosition > 0) {
+                    currentPosition -= halfWidth;
+                    track.classList.remove('smooth');
+                    applyPosition();
+                    track.offsetHeight;
+                    track.classList.add('smooth');
+                }
+            }
+            
+            // Auto scroll contínuo
+            function startAutoScroll() {
+                if (autoScrollInterval) return;
+                autoScrollInterval = setInterval(() => {
+                    currentPosition -= scrollSpeed;
+                    checkLoop();
+                    applyPosition();
+                }, 20); // ~50fps
+            }
+            
+            function stopAutoScroll() {
+                if (autoScrollInterval) {
+                    clearInterval(autoScrollInterval);
+                    autoScrollInterval = null;
+                }
+            }
+            
+            // Inicia auto scroll após 2 segundos
+            setTimeout(startAutoScroll, 2000);
+            
+            // Pausa ao passar mouse por cima
+            container.addEventListener('mouseenter', () => {
+                if (!isDragging) {
+                    stopAutoScroll();
+                }
+            });
+            
+            container.addEventListener('mouseleave', () => {
+                if (!isDragging) {
+                    startAutoScroll();
+                }
+            });
+            
+            // Mouse events para arrastar
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                stopAutoScroll();
+                track.classList.remove('smooth');
+                track.classList.add('dragging');
+                startX = e.pageX;
+                scrollLeft = currentPosition;
+                container.style.cursor = 'grabbing';
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const x = e.pageX;
+                const walk = (x - startX);
+                currentPosition = scrollLeft + walk;
+                checkLoop();
+                applyPosition();
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                track.classList.remove('dragging');
+                track.classList.add('smooth');
+                container.style.cursor = 'grab';
+            });
+            
+            // Touch events para mobile
+            container.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                stopAutoScroll();
+                track.classList.remove('smooth');
+                track.classList.add('dragging');
+                startX = e.touches[0].pageX;
+                scrollLeft = currentPosition;
+            }, { passive: true });
+            
+            container.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                const x = e.touches[0].pageX;
+                const walk = (x - startX);
+                currentPosition = scrollLeft + walk;
+                checkLoop();
+                applyPosition();
+            }, { passive: true });
+            
+            container.addEventListener('touchend', () => {
+                isDragging = false;
+                track.classList.remove('dragging');
+                track.classList.add('smooth');
+                startAutoScroll();
+            });
+            
+            // Funções de navegação por botões
+            window.scrollCarouselLeft = function() {
+                stopAutoScroll();
+                track.classList.add('smooth');
+                currentPosition += cardWidth;
+                checkLoop();
+                applyPosition();
+                
+                // Reinicia auto scroll após 3 segundos
+                setTimeout(startAutoScroll, 3000);
+            };
+            
+            window.scrollCarouselRight = function() {
+                stopAutoScroll();
+                track.classList.add('smooth');
+                currentPosition -= cardWidth;
+                checkLoop();
+                applyPosition();
+                
+                // Reinicia auto scroll após 3 segundos
+                setTimeout(startAutoScroll, 3000);
+            };
+        });
+        </script>
         
         <div class="text-center mt-5">
             <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
                 <i class="fas fa-rocket me-2"></i>Começar a Usar Agora
             </a>
-            <p class="text-muted mt-3">
-                <i class="fas fa-info-circle me-1"></i>
-                Novos tipos de petições são adicionados regularmente
-            </p>
         </div>
         {% else %}
         <div class="row">
@@ -404,129 +737,498 @@
             </div>
         </div>
         
-        <div class="row g-4">
-            {% if testimonials %}
-                {# Depoimentos reais do banco de dados #}
-                {% for t in testimonials %}
-                <div class="col-lg-4 col-md-6 animate-item">
-                    <div class="testimonial-card">
-                        <div class="testimonial-quote">
-                            <i class="fas fa-quote-left"></i>
-                        </div>
-                        <p class="testimonial-text">
-                            "{{ t.content }}"
-                        </p>
-                        <div class="testimonial-author">
-                            <div class="testimonial-avatar bg-primary text-white d-flex align-items-center justify-content-center" 
-                                 style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
-                                {{ t.display_name[0]|upper }}
-                            </div>
-                            <div class="testimonial-info">
-                                <h5>{{ t.display_name }}</h5>
-                                <p>{{ t.display_role or 'Advogado(a)' }}{% if t.display_location %} · {{ t.display_location }}{% endif %}</p>
-                                <div class="testimonial-stars">
-                                    {% for i in range(t.rating) %}
-                                    <i class="fas fa-star"></i>
-                                    {% endfor %}
-                                    {% for i in range(5 - t.rating) %}
-                                    <i class="far fa-star" style="opacity: 0.3;"></i>
-                                    {% endfor %}
+        <!-- Carrossel de Depoimentos -->
+        <div class="testimonial-carousel-wrapper">
+            <!-- Botão Anterior -->
+            <button class="carousel-nav-btn carousel-nav-prev" onclick="scrollTestimonialLeft()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <div class="testimonial-carousel-container">
+                <!-- Gradiente esquerdo -->
+                <div class="testimonial-fade-left"></div>
+                
+                <!-- Track do carrossel -->
+                <div class="testimonial-carousel-track" id="testimonialTrack">
+                    {% if testimonials %}
+                        {# Depoimentos reais do banco de dados #}
+                        {% for t in testimonials %}
+                        <div class="carousel-testimonial-card">
+                            <div class="testimonial-card">
+                                <div class="testimonial-quote">
+                                    <i class="fas fa-quote-left"></i>
+                                </div>
+                                <p class="testimonial-text">
+                                    "{{ t.content }}"
+                                </p>
+                                <div class="testimonial-author">
+                                    <div class="testimonial-avatar bg-primary text-white d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                        {{ t.display_name[0]|upper }}
+                                    </div>
+                                    <div class="testimonial-info">
+                                        <h5>{{ t.display_name }}</h5>
+                                        <p>{{ t.display_role or 'Advogado(a)' }}{% if t.display_location %} · {{ t.display_location }}{% endif %}</p>
+                                        <div class="testimonial-stars">
+                                            {% for i in range(t.rating) %}
+                                            <i class="fas fa-star"></i>
+                                            {% endfor %}
+                                            {% for i in range(5 - t.rating) %}
+                                            <i class="far fa-star" style="opacity: 0.3;"></i>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                {# Depoimentos estáticos de exemplo (fallback) #}
-                <!-- Testimonial 1 -->
-                <div class="col-lg-4 col-md-6 animate-item">
-                    <div class="testimonial-card">
-                        <div class="testimonial-quote">
-                            <i class="fas fa-quote-left"></i>
-                        </div>
-                        <p class="testimonial-text">
-                            "O Petitio revolucionou a gestão do meu escritório. Reduzi em 70% o tempo gasto com documentação e agora posso focar no que realmente importa: atender meus clientes."
-                        </p>
-                        <div class="testimonial-author">
-                            <div class="testimonial-avatar bg-primary text-white d-flex align-items-center justify-content-center" 
-                                 style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
-                                R
-                            </div>
-                            <div class="testimonial-info">
-                                <h5>Dr. Ricardo Mendes</h5>
-                                <p>Advogado Tributarista · São Paulo, SP</p>
-                                <div class="testimonial-stars">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
+                        {% endfor %}
+                        <!-- Repetição para loop infinito -->
+                        {% for t in testimonials %}
+                        <div class="carousel-testimonial-card">
+                            <div class="testimonial-card">
+                                <div class="testimonial-quote">
+                                    <i class="fas fa-quote-left"></i>
+                                </div>
+                                <p class="testimonial-text">
+                                    "{{ t.content }}"
+                                </p>
+                                <div class="testimonial-author">
+                                    <div class="testimonial-avatar bg-primary text-white d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                        {{ t.display_name[0]|upper }}
+                                    </div>
+                                    <div class="testimonial-info">
+                                        <h5>{{ t.display_name }}</h5>
+                                        <p>{{ t.display_role or 'Advogado(a)' }}{% if t.display_location %} · {{ t.display_location }}{% endif %}</p>
+                                        <div class="testimonial-stars">
+                                            {% for i in range(t.rating) %}
+                                            <i class="fas fa-star"></i>
+                                            {% endfor %}
+                                            {% for i in range(5 - t.rating) %}
+                                            <i class="far fa-star" style="opacity: 0.3;"></i>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        {% endfor %}
+                    {% else %}
+                        {# Depoimentos estáticos de exemplo (fallback) #}
+                        <!-- Testimonial 1 -->
+                        <div class="carousel-testimonial-card">
+                            <div class="testimonial-card">
+                                <div class="testimonial-quote">
+                                    <i class="fas fa-quote-left"></i>
+                                </div>
+                                <p class="testimonial-text">
+                                    "O Petitio revolucionou a gestão do meu escritório. Reduzi em 70% o tempo gasto com documentação e agora posso focar no que realmente importa: atender meus clientes."
+                                </p>
+                                <div class="testimonial-author">
+                                    <div class="testimonial-avatar bg-primary text-white d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                        R
+                                    </div>
+                                    <div class="testimonial-info">
+                                        <h5>Dr. Ricardo Mendes</h5>
+                                        <p>Advogado Tributarista · São Paulo, SP</p>
+                                        <div class="testimonial-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Testimonial 2 -->
+                        <div class="carousel-testimonial-card">
+                            <div class="testimonial-card">
+                                <div class="testimonial-quote">
+                                    <i class="fas fa-quote-left"></i>
+                                </div>
+                                <p class="testimonial-text">
+                                    "A organização que o sistema proporciona é incrível. Tenho controle total sobre prazos, processos e finanças. Recomendo para todos os colegas da área."
+                                </p>
+                                <div class="testimonial-author">
+                                    <div class="testimonial-avatar bg-success text-white d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                        C
+                                    </div>
+                                    <div class="testimonial-info">
+                                        <h5>Dra. Camila Santos</h5>
+                                        <p>Advogada Trabalhista · Rio de Janeiro, RJ</p>
+                                        <div class="testimonial-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Testimonial 3 -->
+                        <div class="carousel-testimonial-card">
+                            <div class="testimonial-card">
+                                <div class="testimonial-quote">
+                                    <i class="fas fa-quote-left"></i>
+                                </div>
+                                <p class="testimonial-text">
+                                    "Excelente suporte e interface intuitiva. Mesmo não sendo muito familiarizado com tecnologia, consegui me adaptar rapidamente. O sistema é perfeito!"
+                                </p>
+                                <div class="testimonial-author">
+                                    <div class="testimonial-avatar bg-warning text-dark d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                        F
+                                    </div>
+                                    <div class="testimonial-info">
+                                        <h5>Dr. Fernando Costa</h5>
+                                        <p>Advogado Cível · Belo Horizonte, MG</p>
+                                        <div class="testimonial-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star-half-alt"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Repetição dos fallbacks para loop infinito -->
+                        <div class="carousel-testimonial-card">
+                            <div class="testimonial-card">
+                                <div class="testimonial-quote">
+                                    <i class="fas fa-quote-left"></i>
+                                </div>
+                                <p class="testimonial-text">
+                                    "O Petitio revolucionou a gestão do meu escritório. Reduzi em 70% o tempo gasto com documentação e agora posso focar no que realmente importa: atender meus clientes."
+                                </p>
+                                <div class="testimonial-author">
+                                    <div class="testimonial-avatar bg-primary text-white d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                        R
+                                    </div>
+                                    <div class="testimonial-info">
+                                        <h5>Dr. Ricardo Mendes</h5>
+                                        <p>Advogado Tributarista · São Paulo, SP</p>
+                                        <div class="testimonial-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="carousel-testimonial-card">
+                            <div class="testimonial-card">
+                                <div class="testimonial-quote">
+                                    <i class="fas fa-quote-left"></i>
+                                </div>
+                                <p class="testimonial-text">
+                                    "A organização que o sistema proporciona é incrível. Tenho controle total sobre prazos, processos e finanças. Recomendo para todos os colegas da área."
+                                </p>
+                                <div class="testimonial-author">
+                                    <div class="testimonial-avatar bg-success text-white d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                        C
+                                    </div>
+                                    <div class="testimonial-info">
+                                        <h5>Dra. Camila Santos</h5>
+                                        <p>Advogada Trabalhista · Rio de Janeiro, RJ</p>
+                                        <div class="testimonial-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="carousel-testimonial-card">
+                            <div class="testimonial-card">
+                                <div class="testimonial-quote">
+                                    <i class="fas fa-quote-left"></i>
+                                </div>
+                                <p class="testimonial-text">
+                                    "Excelente suporte e interface intuitiva. Mesmo não sendo muito familiarizado com tecnologia, consegui me adaptar rapidamente. O sistema é perfeito!"
+                                </p>
+                                <div class="testimonial-author">
+                                    <div class="testimonial-avatar bg-warning text-dark d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
+                                        F
+                                    </div>
+                                    <div class="testimonial-info">
+                                        <h5>Dr. Fernando Costa</h5>
+                                        <p>Advogado Cível · Belo Horizonte, MG</p>
+                                        <div class="testimonial-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star-half-alt"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
                 
-                <!-- Testimonial 2 -->
-                <div class="col-lg-4 col-md-6 animate-item">
-                    <div class="testimonial-card">
-                        <div class="testimonial-quote">
-                            <i class="fas fa-quote-left"></i>
-                        </div>
-                        <p class="testimonial-text">
-                            "A organização que o sistema proporciona é incrível. Tenho controle total sobre prazos, processos e finanças. Recomendo para todos os colegas da área."
-                        </p>
-                        <div class="testimonial-author">
-                            <div class="testimonial-avatar bg-success text-white d-flex align-items-center justify-content-center" 
-                                 style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
-                                C
-                            </div>
-                            <div class="testimonial-info">
-                                <h5>Dra. Camila Santos</h5>
-                                <p>Advogada Trabalhista · Rio de Janeiro, RJ</p>
-                                <div class="testimonial-stars">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Testimonial 3 -->
-                <div class="col-lg-4 col-md-6 animate-item">
-                    <div class="testimonial-card">
-                        <div class="testimonial-quote">
-                            <i class="fas fa-quote-left"></i>
-                        </div>
-                        <p class="testimonial-text">
-                            "Excelente suporte e interface intuitiva. Mesmo não sendo muito familiarizado com tecnologia, consegui me adaptar rapidamente. O sistema é perfeito!"
-                        </p>
-                        <div class="testimonial-author">
-                            <div class="testimonial-avatar bg-warning text-dark d-flex align-items-center justify-content-center" 
-                                 style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; font-weight: 600;">
-                                F
-                            </div>
-                            <div class="testimonial-info">
-                                <h5>Dr. Fernando Costa</h5>
-                                <p>Advogado Cível · Belo Horizonte, MG</p>
-                                <div class="testimonial-stars">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star-half-alt"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
+                <!-- Gradiente direito -->
+                <div class="testimonial-fade-right"></div>
+            </div>
+            
+            <!-- Botão Próximo -->
+            <button class="carousel-nav-btn carousel-nav-next" onclick="scrollTestimonialRight()">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
+        
+        <!-- CSS do Carrossel de Depoimentos -->
+        <style>
+            .testimonial-carousel-wrapper {
+                position: relative;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .testimonial-carousel-container {
+                position: relative;
+                flex: 1;
+                overflow: hidden;
+                padding: 20px 0;
+                cursor: grab;
+            }
+            
+            .testimonial-carousel-container:active {
+                cursor: grabbing;
+            }
+            
+            .testimonial-fade-left,
+            .testimonial-fade-right {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 80px;
+                z-index: 10;
+                pointer-events: none;
+            }
+            
+            .testimonial-fade-left {
+                left: 0;
+                background: linear-gradient(to right, #f8f9fa 0%, transparent 100%);
+            }
+            
+            .testimonial-fade-right {
+                right: 0;
+                background: linear-gradient(to left, #f8f9fa 0%, transparent 100%);
+            }
+            
+            .testimonial-carousel-track {
+                display: flex;
+                gap: 24px;
+                width: max-content;
+                will-change: transform;
+            }
+            
+            .testimonial-carousel-track.smooth {
+                transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            }
+            
+            .testimonial-carousel-track.dragging {
+                transition: none;
+            }
+            
+            .carousel-testimonial-card {
+                flex: 0 0 380px;
+                max-width: 380px;
+                user-select: none;
+            }
+            
+            .carousel-testimonial-card .testimonial-card {
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                height: 100%;
+            }
+            
+            .carousel-testimonial-card .testimonial-card:hover {
+                transform: translateY(-10px) scale(1.02);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            }
+            
+            @media (max-width: 768px) {
+                .carousel-testimonial-card {
+                    flex: 0 0 300px;
+                    max-width: 300px;
+                }
+                
+                .testimonial-fade-left,
+                .testimonial-fade-right {
+                    width: 40px;
+                }
+            }
+            
+            @media (max-width: 576px) {
+                .carousel-testimonial-card {
+                    flex: 0 0 280px;
+                    max-width: 280px;
+                }
+            }
+        </style>
+        
+        <!-- JavaScript do Carrossel de Depoimentos -->
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tTrack = document.getElementById('testimonialTrack');
+            if (!tTrack) return;
+            
+            const tContainer = tTrack.parentElement;
+            let tCurrentPosition = 0;
+            let tIsDragging = false;
+            let tStartX = 0;
+            let tScrollLeft = 0;
+            let tAutoScrollInterval = null;
+            const tCardWidth = 404; // 380px + 24px gap
+            const tScrollSpeed = 0.8;
+            
+            function tGetHalfWidth() {
+                return tTrack.scrollWidth / 2;
+            }
+            
+            function tApplyPosition() {
+                tTrack.style.transform = `translateX(${tCurrentPosition}px)`;
+            }
+            
+            function tCheckLoop() {
+                const halfWidth = tGetHalfWidth();
+                if (tCurrentPosition <= -halfWidth) {
+                    tCurrentPosition += halfWidth;
+                    tTrack.classList.remove('smooth');
+                    tApplyPosition();
+                    tTrack.offsetHeight;
+                    tTrack.classList.add('smooth');
+                } else if (tCurrentPosition > 0) {
+                    tCurrentPosition -= halfWidth;
+                    tTrack.classList.remove('smooth');
+                    tApplyPosition();
+                    tTrack.offsetHeight;
+                    tTrack.classList.add('smooth');
+                }
+            }
+            
+            function tStartAutoScroll() {
+                if (tAutoScrollInterval) return;
+                tAutoScrollInterval = setInterval(() => {
+                    tCurrentPosition -= tScrollSpeed;
+                    tCheckLoop();
+                    tApplyPosition();
+                }, 20);
+            }
+            
+            function tStopAutoScroll() {
+                if (tAutoScrollInterval) {
+                    clearInterval(tAutoScrollInterval);
+                    tAutoScrollInterval = null;
+                }
+            }
+            
+            setTimeout(tStartAutoScroll, 2500);
+            
+            tContainer.addEventListener('mouseenter', () => {
+                if (!tIsDragging) tStopAutoScroll();
+            });
+            
+            tContainer.addEventListener('mouseleave', () => {
+                if (!tIsDragging) tStartAutoScroll();
+            });
+            
+            tContainer.addEventListener('mousedown', (e) => {
+                tIsDragging = true;
+                tStopAutoScroll();
+                tTrack.classList.remove('smooth');
+                tTrack.classList.add('dragging');
+                tStartX = e.pageX;
+                tScrollLeft = tCurrentPosition;
+                tContainer.style.cursor = 'grabbing';
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!tIsDragging) return;
+                e.preventDefault();
+                const x = e.pageX;
+                const walk = (x - tStartX);
+                tCurrentPosition = tScrollLeft + walk;
+                tCheckLoop();
+                tApplyPosition();
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (!tIsDragging) return;
+                tIsDragging = false;
+                tTrack.classList.remove('dragging');
+                tTrack.classList.add('smooth');
+                tContainer.style.cursor = 'grab';
+            });
+            
+            tContainer.addEventListener('touchstart', (e) => {
+                tIsDragging = true;
+                tStopAutoScroll();
+                tTrack.classList.remove('smooth');
+                tTrack.classList.add('dragging');
+                tStartX = e.touches[0].pageX;
+                tScrollLeft = tCurrentPosition;
+            }, { passive: true });
+            
+            tContainer.addEventListener('touchmove', (e) => {
+                if (!tIsDragging) return;
+                const x = e.touches[0].pageX;
+                const walk = (x - tStartX);
+                tCurrentPosition = tScrollLeft + walk;
+                tCheckLoop();
+                tApplyPosition();
+            }, { passive: true });
+            
+            tContainer.addEventListener('touchend', () => {
+                tIsDragging = false;
+                tTrack.classList.remove('dragging');
+                tTrack.classList.add('smooth');
+                tStartAutoScroll();
+            });
+            
+            window.scrollTestimonialLeft = function() {
+                tStopAutoScroll();
+                tTrack.classList.add('smooth');
+                tCurrentPosition += tCardWidth;
+                tCheckLoop();
+                tApplyPosition();
+                setTimeout(tStartAutoScroll, 3000);
+            };
+            
+            window.scrollTestimonialRight = function() {
+                tStopAutoScroll();
+                tTrack.classList.add('smooth');
+                tCurrentPosition -= tCardWidth;
+                tCheckLoop();
+                tApplyPosition();
+                setTimeout(tStartAutoScroll, 3000);
+            };
+        });
+        </script>
         
         {% if current_user.is_authenticated %}
         <div class="text-center mt-5">
@@ -708,6 +1410,44 @@
     }
     html {
         scroll-behavior: smooth;
+    }
+    
+    /* Carrossel de Petições */
+    #petitionCarousel .carousel-item {
+        transition: transform 0.6s ease-in-out;
+    }
+    
+    #petitionCarousel .petition-type-card {
+        transform: scale(0.98);
+        transition: all 0.3s ease;
+    }
+    
+    #petitionCarousel .carousel-item.active .petition-type-card {
+        transform: scale(1);
+    }
+    
+    #petitionCarousel .petition-type-card:hover {
+        transform: scale(1.02) translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+    
+    .carousel-indicators button {
+        transition: all 0.3s ease;
+    }
+    
+    .carousel-indicators button.active {
+        opacity: 1 !important;
+        transform: scale(1.3);
+    }
+    
+    /* Responsivo - no mobile mostra 1 por vez */
+    @media (max-width: 767.98px) {
+        #petitionCarousel .col-lg-4 {
+            display: none;
+        }
+        #petitionCarousel .col-lg-4:first-child {
+            display: block;
+        }
     }
 </style>
 {% endblock %}

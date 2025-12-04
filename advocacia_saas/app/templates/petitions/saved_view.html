@@ -1,0 +1,497 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .petition-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .data-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .data-section h5 {
+        color: #495057;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .data-item {
+        margin-bottom: 0.75rem;
+    }
+    .data-item label {
+        font-weight: 600;
+        color: #6c757d;
+        font-size: 0.85rem;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    .data-item .value {
+        color: #212529;
+    }
+    .data-item .value.empty {
+        color: #adb5bd;
+        font-style: italic;
+    }
+    
+    .attachment-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.2s ease;
+    }
+    .attachment-card:hover {
+        background: #f8f9fa;
+    }
+    .attachment-icon {
+        font-size: 2rem;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -24px;
+        top: 4px;
+        width: 10px;
+        height: 10px;
+        background: #667eea;
+        border-radius: 50%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Navegação -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('petitions.saved_list') }}">Minhas Petições</a></li>
+            <li class="breadcrumb-item active">{{ petition.title or 'Petição' }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Cabeçalho -->
+    <div class="petition-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                {% set status_display = petition.get_status_display() %}
+                <span class="badge bg-{{ status_display[1] }} mb-2">{{ status_display[0] }}</span>
+                <h2 class="mb-2">{{ petition.title or 'Sem título' }}</h2>
+                <p class="mb-0 opacity-75">
+                    <i class="fas fa-gavel me-1"></i> {{ petition.petition_type.name }}
+                    {% if petition.process_number %}
+                    <span class="ms-3">
+                        <i class="fas fa-hashtag me-1"></i> {{ petition.process_number }}
+                    </span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                {% if petition.status != 'cancelled' %}
+                <a href="{{ url_for('petitions.saved_edit', petition_id=petition.id) }}" class="btn btn-light me-2">
+                    <i class="fas fa-edit me-1"></i> Editar
+                </a>
+                {% endif %}
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-outline-light dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% if petition.status == 'draft' %}
+                        <li><a class="dropdown-item" href="#" onclick="completePetition()">
+                            <i class="fas fa-check text-success me-2"></i> Marcar como Finalizada
+                        </a></li>
+                        {% endif %}
+                        {% if petition.status == 'cancelled' %}
+                        <li><a class="dropdown-item" href="#" onclick="restorePetition()">
+                            <i class="fas fa-undo text-primary me-2"></i> Restaurar
+                        </a></li>
+                        {% else %}
+                        <li><a class="dropdown-item" href="#" onclick="cancelPetition()">
+                            <i class="fas fa-ban text-warning me-2"></i> Cancelar
+                        </a></li>
+                        {% endif %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="deletePetition()">
+                            <i class="fas fa-trash me-2"></i> Excluir Permanentemente
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Dados do Formulário -->
+            {% if petition.form_data %}
+            
+            <!-- Autor -->
+            {% if petition.form_data.get('autor_nome') %}
+            <div class="data-section">
+                <h5><i class="fas fa-user text-success me-2"></i>Autor / Requerente</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="data-item">
+                            <label>Nome</label>
+                            <div class="value">{{ petition.form_data.get('autor_nome', '-') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="data-item">
+                            <label>CPF</label>
+                            <div class="value">{{ petition.form_data.get('autor_cpf', '-') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="data-item">
+                            <label>RG</label>
+                            <div class="value">{{ petition.form_data.get('autor_rg', '-') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="data-item">
+                            <label>Nacionalidade</label>
+                            <div class="value">{{ petition.form_data.get('autor_nacionalidade', '-') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="data-item">
+                            <label>Estado Civil</label>
+                            <div class="value">{{ petition.form_data.get('autor_estado_civil', '-') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="data-item">
+                            <label>Profissão</label>
+                            <div class="value">{{ petition.form_data.get('autor_profissao', '-') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="data-item">
+                            <label>Endereço</label>
+                            <div class="value">{{ petition.form_data.get('autor_endereco', '-') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Réu -->
+            {% if petition.form_data.get('reu_nome') %}
+            <div class="data-section">
+                <h5><i class="fas fa-user-tie text-danger me-2"></i>Réu / Requerido</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="data-item">
+                            <label>Nome</label>
+                            <div class="value">{{ petition.form_data.get('reu_nome', '-') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="data-item">
+                            <label>CPF</label>
+                            <div class="value">{{ petition.form_data.get('reu_cpf', '-') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="data-item">
+                            <label>RG</label>
+                            <div class="value">{{ petition.form_data.get('reu_rg', '-') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="data-item">
+                            <label>Endereço</label>
+                            <div class="value">{{ petition.form_data.get('reu_endereco', '-') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Fatos -->
+            {% if petition.form_data.get('fatos') %}
+            <div class="data-section">
+                <h5><i class="fas fa-book-open text-info me-2"></i>Dos Fatos</h5>
+                <div class="value">{{ petition.form_data.get('fatos') | safe }}</div>
+            </div>
+            {% endif %}
+            
+            <!-- Direito -->
+            {% if petition.form_data.get('fundamentos') or petition.form_data.get('direito') %}
+            <div class="data-section">
+                <h5><i class="fas fa-scale-balanced text-primary me-2"></i>Do Direito</h5>
+                <div class="value">{{ (petition.form_data.get('fundamentos') or petition.form_data.get('direito')) | safe }}</div>
+            </div>
+            {% endif %}
+            
+            <!-- Pedidos -->
+            {% if petition.form_data.get('pedidos') %}
+            <div class="data-section">
+                <h5><i class="fas fa-list-check text-warning me-2"></i>Dos Pedidos</h5>
+                <div class="value">{{ petition.form_data.get('pedidos') | safe }}</div>
+            </div>
+            {% endif %}
+            
+            <!-- Valor da Causa -->
+            {% if petition.form_data.get('valor_causa') %}
+            <div class="data-section">
+                <h5><i class="fas fa-dollar-sign text-success me-2"></i>Valor da Causa</h5>
+                <div class="value h4">R$ {{ petition.form_data.get('valor_causa') }}</div>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Nenhum dado preenchido nesta petição.
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Informações -->
+            <div class="data-section">
+                <h5><i class="fas fa-info-circle text-muted me-2"></i>Informações</h5>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <small class="text-muted">Criada em</small>
+                        <div>{{ petition.created_at.strftime('%d/%m/%Y às %H:%M') }}</div>
+                    </div>
+                    <div class="timeline-item">
+                        <small class="text-muted">Última atualização</small>
+                        <div>{{ petition.updated_at.strftime('%d/%m/%Y às %H:%M') }}</div>
+                    </div>
+                    {% if petition.completed_at %}
+                    <div class="timeline-item">
+                        <small class="text-muted">Finalizada em</small>
+                        <div>{{ petition.completed_at.strftime('%d/%m/%Y às %H:%M') }}</div>
+                    </div>
+                    {% endif %}
+                    {% if petition.cancelled_at %}
+                    <div class="timeline-item">
+                        <small class="text-muted">Cancelada em</small>
+                        <div>{{ petition.cancelled_at.strftime('%d/%m/%Y às %H:%M') }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Anexos -->
+            <div class="data-section">
+                <h5>
+                    <i class="fas fa-paperclip text-secondary me-2"></i>
+                    Anexos ({{ petition.attachments.count() }})
+                </h5>
+                
+                {% if petition.attachments.count() > 0 %}
+                <div class="d-flex flex-column gap-2">
+                    {% for attachment in petition.attachments %}
+                    <div class="attachment-card">
+                        <div class="attachment-icon">
+                            <i class="fas {{ attachment.get_icon() }}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-medium">{{ attachment.filename }}</div>
+                            <small class="text-muted">{{ attachment.get_file_size_display() }}</small>
+                        </div>
+                        <a href="{{ url_for('petitions.download_attachment', attachment_id=attachment.id) }}" 
+                           class="btn btn-sm btn-outline-primary" title="Download">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Nenhum anexo.</p>
+                {% endif %}
+                
+                {% if petition.status != 'cancelled' %}
+                <button class="btn btn-outline-secondary btn-sm mt-3 w-100" onclick="showUploadModal()">
+                    <i class="fas fa-plus me-1"></i> Adicionar Anexo
+                </button>
+                {% endif %}
+            </div>
+            
+            <!-- Notas -->
+            {% if petition.notes %}
+            <div class="data-section">
+                <h5><i class="fas fa-sticky-note text-warning me-2"></i>Notas</h5>
+                <p class="mb-0">{{ petition.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Upload -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adicionar Anexo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Arquivo</label>
+                        <input type="file" class="form-control" name="file" required>
+                        <small class="text-muted">Máximo 10MB. Tipos: PDF, DOC, DOCX, imagens</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoria</label>
+                        <select class="form-select" name="category">
+                            <option value="prova">Prova</option>
+                            <option value="documento">Documento</option>
+                            <option value="procuracao">Procuração</option>
+                            <option value="certidao">Certidão</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descrição (opcional)</label>
+                        <input type="text" class="form-control" name="description" placeholder="Descreva o arquivo...">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="uploadFile()">
+                    <i class="fas fa-upload me-1"></i> Enviar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const petitionId = {{ petition.id }};
+
+async function cancelPetition() {
+    if (!confirm('Tem certeza que deseja cancelar esta petição?')) return;
+    
+    try {
+        const response = await fetch(`/petitions/api/saved/${petitionId}/cancel`, { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Erro ao cancelar');
+        }
+    } catch (e) {
+        alert('Erro ao cancelar petição');
+    }
+}
+
+async function restorePetition() {
+    try {
+        const response = await fetch(`/petitions/api/saved/${petitionId}/restore`, { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Erro ao restaurar');
+        }
+    } catch (e) {
+        alert('Erro ao restaurar petição');
+    }
+}
+
+async function deletePetition() {
+    if (!confirm('ATENÇÃO: Esta ação é irreversível!\n\nExcluir permanentemente?')) return;
+    
+    try {
+        const response = await fetch(`/petitions/api/saved/${petitionId}/delete`, { method: 'DELETE' });
+        const data = await response.json();
+        if (data.success) {
+            window.location.href = '{{ url_for("petitions.saved_list") }}';
+        } else {
+            alert(data.error || 'Erro ao excluir');
+        }
+    } catch (e) {
+        alert('Erro ao excluir petição');
+    }
+}
+
+async function completePetition() {
+    try {
+        const response = await fetch('/petitions/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                petition_id: petitionId,
+                petition_type_id: {{ petition.petition_type_id }},
+                form_data: {{ petition.form_data | tojson }},
+                action: 'complete'
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Erro ao finalizar');
+        }
+    } catch (e) {
+        alert('Erro ao finalizar petição');
+    }
+}
+
+function showUploadModal() {
+    new bootstrap.Modal(document.getElementById('uploadModal')).show();
+}
+
+async function uploadFile() {
+    const form = document.getElementById('uploadForm');
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch(`/petitions/api/saved/${petitionId}/attachments`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Erro ao enviar arquivo');
+        }
+    } catch (e) {
+        alert('Erro ao enviar arquivo');
+    }
+}
+</script>
+{% endblock %}

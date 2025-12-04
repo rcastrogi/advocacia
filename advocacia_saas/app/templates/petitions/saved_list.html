@@ -1,0 +1,465 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .petition-card {
+        transition: all 0.2s ease;
+        border-left: 4px solid transparent;
+    }
+    .petition-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .petition-card.status-draft {
+        border-left-color: #ffc107;
+    }
+    .petition-card.status-completed {
+        border-left-color: #198754;
+    }
+    .petition-card.status-cancelled {
+        border-left-color: #dc3545;
+    }
+    
+    .stats-card {
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-2px);
+    }
+    .stats-card .stats-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+    
+    .filter-btn {
+        border-radius: 20px;
+        padding: 6px 16px;
+        font-size: 0.875rem;
+    }
+    .filter-btn.active {
+        font-weight: 600;
+    }
+    
+    .process-number {
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .party-info {
+        font-size: 0.9rem;
+    }
+    .party-info .vs {
+        color: #dc3545;
+        font-weight: bold;
+        margin: 0 4px;
+    }
+    
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Cabeçalho -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-folder-open text-primary me-2"></i>
+                Minhas Petições
+            </h1>
+            <p class="text-muted mb-0">Gerencie todas as suas petições salvas</p>
+        </div>
+        <a href="{{ url_for('main.peticionador') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Nova Petição
+        </a>
+    </div>
+    
+    <!-- Cards de Estatísticas -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stats-card bg-white p-3 shadow-sm h-100">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-primary bg-opacity-10 text-primary me-3">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div>
+                        <div class="h4 mb-0">{{ stats.total }}</div>
+                        <div class="text-muted small">Total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stats-card bg-white p-3 shadow-sm h-100">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-warning bg-opacity-10 text-warning me-3">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div>
+                        <div class="h4 mb-0">{{ stats.draft }}</div>
+                        <div class="text-muted small">Rascunhos</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stats-card bg-white p-3 shadow-sm h-100">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-success bg-opacity-10 text-success me-3">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="h4 mb-0">{{ stats.completed }}</div>
+                        <div class="text-muted small">Finalizadas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stats-card bg-white p-3 shadow-sm h-100">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-danger bg-opacity-10 text-danger me-3">
+                        <i class="fas fa-ban"></i>
+                    </div>
+                    <div>
+                        <div class="h4 mb-0">{{ stats.cancelled }}</div>
+                        <div class="text-muted small">Canceladas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filtros e Busca -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" 
+                               class="form-control" 
+                               name="search" 
+                               value="{{ search }}"
+                               placeholder="Buscar por nº processo, partes ou título...">
+                        {% if search %}
+                        <a href="{{ url_for('petitions.saved_list', status=status_filter) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{{ url_for('petitions.saved_list', search=search) }}" 
+                           class="btn filter-btn {% if status_filter == 'all' %}btn-primary active{% else %}btn-outline-secondary{% endif %}">
+                            Todas
+                        </a>
+                        <a href="{{ url_for('petitions.saved_list', status='draft', search=search) }}" 
+                           class="btn filter-btn {% if status_filter == 'draft' %}btn-warning active{% else %}btn-outline-secondary{% endif %}">
+                            <i class="fas fa-edit me-1"></i> Rascunhos
+                        </a>
+                        <a href="{{ url_for('petitions.saved_list', status='completed', search=search) }}" 
+                           class="btn filter-btn {% if status_filter == 'completed' %}btn-success active{% else %}btn-outline-secondary{% endif %}">
+                            <i class="fas fa-check me-1"></i> Finalizadas
+                        </a>
+                        <a href="{{ url_for('petitions.saved_list', status='cancelled', search=search) }}" 
+                           class="btn filter-btn {% if status_filter == 'cancelled' %}btn-danger active{% else %}btn-outline-secondary{% endif %}">
+                            <i class="fas fa-ban me-1"></i> Canceladas
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Lista de Petições -->
+    {% if petitions %}
+    <div class="row g-3">
+        {% for petition in petitions %}
+        <div class="col-12">
+            <div class="card petition-card shadow-sm status-{{ petition.status }}">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3">
+                                    {% set status_display = petition.get_status_display() %}
+                                    <span class="badge bg-{{ status_display[1] }}">
+                                        {{ status_display[0] }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">
+                                        <a href="{{ url_for('petitions.saved_view', petition_id=petition.id) }}" class="text-decoration-none">
+                                            {{ petition.title or 'Sem título' }}
+                                        </a>
+                                    </h5>
+                                    
+                                    {% if petition.process_number %}
+                                    <div class="process-number mb-1">
+                                        <i class="fas fa-hashtag me-1"></i>{{ petition.process_number }}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="party-info text-muted">
+                                        {% if petition.get_author_name() %}
+                                        <span>{{ petition.get_author_name() }}</span>
+                                        {% if petition.get_defendant_name() %}
+                                        <span class="vs">x</span>
+                                        <span>{{ petition.get_defendant_name() }}</span>
+                                        {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-gavel me-1"></i>{{ petition.petition_type.name }}
+                                        </small>
+                                        {% if petition.attachments.count() > 0 %}
+                                        <small class="text-muted ms-3">
+                                            <i class="fas fa-paperclip me-1"></i>{{ petition.attachments.count() }} anexo(s)
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-md-center mt-3 mt-md-0">
+                            <small class="text-muted d-block">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ petition.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                            </small>
+                            <small class="text-muted">
+                                Criada em {{ petition.created_at.strftime('%d/%m/%Y') }}
+                            </small>
+                        </div>
+                        <div class="col-md-2 text-md-end mt-3 mt-md-0">
+                            <div class="btn-group">
+                                {% if petition.status != 'cancelled' %}
+                                <a href="{{ url_for('petitions.saved_edit', petition_id=petition.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('petitions.saved_view', petition_id=petition.id) }}" 
+                                   class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-danger"
+                                        onclick="showPetitionActions({{ petition.id }}, '{{ petition.status }}')"
+                                        title="Mais ações">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Paginação -->
+    {% if pagination.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('petitions.saved_list', page=pagination.prev_num, status=status_filter, search=search) }}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('petitions.saved_list', page=page_num, status=status_filter, search=search) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('petitions.saved_list', page=pagination.next_num, status=status_filter, search=search) }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <!-- Estado vazio -->
+    <div class="card shadow-sm">
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <h4 class="text-muted">Nenhuma petição encontrada</h4>
+            {% if search %}
+            <p class="text-muted">Não encontramos petições com o termo "{{ search }}"</p>
+            <a href="{{ url_for('petitions.saved_list') }}" class="btn btn-outline-primary">
+                Limpar busca
+            </a>
+            {% else %}
+            <p class="text-muted">Comece criando sua primeira petição</p>
+            <a href="{{ url_for('main.peticionador') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Nova Petição
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Ações -->
+<div class="modal fade" id="actionsModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ações</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="list-group list-group-flush" id="actionsList">
+                    <!-- Ações serão inseridas via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentPetitionId = null;
+const actionsModal = new bootstrap.Modal(document.getElementById('actionsModal'));
+
+function showPetitionActions(petitionId, status) {
+    currentPetitionId = petitionId;
+    const actionsList = document.getElementById('actionsList');
+    
+    let html = '';
+    
+    if (status === 'cancelled') {
+        html += `
+            <button class="list-group-item list-group-item-action" onclick="restorePetition()">
+                <i class="fas fa-undo text-success me-2"></i> Restaurar
+            </button>
+        `;
+    } else {
+        html += `
+            <button class="list-group-item list-group-item-action" onclick="cancelPetition()">
+                <i class="fas fa-ban text-warning me-2"></i> Cancelar
+            </button>
+        `;
+    }
+    
+    html += `
+        <button class="list-group-item list-group-item-action text-danger" onclick="deletePetition()">
+            <i class="fas fa-trash me-2"></i> Excluir Permanentemente
+        </button>
+    `;
+    
+    actionsList.innerHTML = html;
+    actionsModal.show();
+}
+
+async function cancelPetition() {
+    if (!confirm('Tem certeza que deseja cancelar esta petição?')) return;
+    
+    try {
+        const response = await fetch(`/petitions/api/saved/${currentPetitionId}/cancel`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Erro ao cancelar petição');
+        }
+    } catch (error) {
+        alert('Erro ao cancelar petição');
+    }
+    
+    actionsModal.hide();
+}
+
+async function restorePetition() {
+    try {
+        const response = await fetch(`/petitions/api/saved/${currentPetitionId}/restore`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Erro ao restaurar petição');
+        }
+    } catch (error) {
+        alert('Erro ao restaurar petição');
+    }
+    
+    actionsModal.hide();
+}
+
+async function deletePetition() {
+    if (!confirm('ATENÇÃO: Esta ação é irreversível!\n\nTem certeza que deseja excluir permanentemente esta petição e todos os seus anexos?')) return;
+    
+    try {
+        const response = await fetch(`/petitions/api/saved/${currentPetitionId}/delete`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Erro ao excluir petição');
+        }
+    } catch (error) {
+        alert('Erro ao excluir petição');
+    }
+    
+    actionsModal.hide();
+}
+
+// Busca ao pressionar Enter
+document.querySelector('input[name="search"]').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        this.form.submit();
+    }
+});
+</script>
+{% endblock %}
