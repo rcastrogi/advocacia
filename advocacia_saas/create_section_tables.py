@@ -1,6 +1,7 @@
 """
 Script para criar as tabelas de seções dinâmicas usando SQLAlchemy do Flask.
 """
+
 from app import create_app, db
 
 app = create_app()
@@ -12,15 +13,15 @@ print("=" * 70)
 with app.app_context():
     conn = db.engine.raw_connection()
     cur = conn.cursor()
-    
+
     # Verificar se as tabelas já existem
     cur.execute("""
         SELECT table_name FROM information_schema.tables 
         WHERE table_schema = 'public' AND table_name IN ('petition_sections', 'petition_type_sections')
     """)
     existing = [row[0] for row in cur.fetchall()]
-    
-    if 'petition_sections' in existing:
+
+    if "petition_sections" in existing:
         print("⚠️ Tabela petition_sections já existe")
     else:
         print("📦 Criando tabela petition_sections...")
@@ -41,8 +42,8 @@ with app.app_context():
         """)
         conn.commit()
         print("✅ Tabela petition_sections criada!")
-    
-    if 'petition_type_sections' in existing:
+
+    if "petition_type_sections" in existing:
         print("⚠️ Tabela petition_type_sections já existe")
     else:
         print("📦 Criando tabela petition_type_sections...")
@@ -59,36 +60,42 @@ with app.app_context():
         """)
         conn.commit()
         print("✅ Tabela petition_type_sections criada!")
-    
+
     # Adicionar colunas novas ao petition_types se não existirem
     print("\n📦 Verificando colunas adicionais em petition_types...")
-    
+
     cur.execute("""
         SELECT column_name FROM information_schema.columns 
         WHERE table_name = 'petition_types' AND column_name = 'icon'
     """)
     if not cur.fetchone():
-        cur.execute("ALTER TABLE petition_types ADD COLUMN icon VARCHAR(50) DEFAULT 'fa-file-alt'")
+        cur.execute(
+            "ALTER TABLE petition_types ADD COLUMN icon VARCHAR(50) DEFAULT 'fa-file-alt'"
+        )
         conn.commit()
         print("  ✅ Coluna 'icon' adicionada")
     else:
         print("  ⚠️ Coluna 'icon' já existe")
-    
+
     cur.execute("""
         SELECT column_name FROM information_schema.columns 
         WHERE table_name = 'petition_types' AND column_name = 'use_dynamic_form'
     """)
     if not cur.fetchone():
-        cur.execute("ALTER TABLE petition_types ADD COLUMN use_dynamic_form BOOLEAN DEFAULT FALSE")
+        cur.execute(
+            "ALTER TABLE petition_types ADD COLUMN use_dynamic_form BOOLEAN DEFAULT FALSE"
+        )
         conn.commit()
         print("  ✅ Coluna 'use_dynamic_form' adicionada")
     else:
         print("  ⚠️ Coluna 'use_dynamic_form' já existe")
-    
+
     cur.close()
     conn.close()
-    
+
     print("\n" + "=" * 70)
     print("✅ TABELAS CRIADAS COM SUCESSO!")
     print("=" * 70)
-    print("\n💡 Próximo passo: Execute setup_petition_sections.py para popular as seções")
+    print(
+        "\n💡 Próximo passo: Execute setup_petition_sections.py para popular as seções"
+    )

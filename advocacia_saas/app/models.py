@@ -309,7 +309,9 @@ class PetitionType(db.Model):
     description = db.Column(db.Text)
     category = db.Column(db.String(50), default="civel")
     icon = db.Column(db.String(50), default="fa-file-alt")  # Ícone FontAwesome
-    color = db.Column(db.String(20), default="primary")  # Cor Bootstrap (primary, success, danger, etc.)
+    color = db.Column(
+        db.String(20), default="primary"
+    )  # Cor Bootstrap (primary, success, danger, etc.)
     is_implemented = db.Column(db.Boolean, default=False)
     is_billable = db.Column(db.Boolean, default=True)
     is_active = db.Column(db.Boolean, default=True)
@@ -570,11 +572,14 @@ class PetitionSection(db.Model):
     Define uma seção reutilizável para petições.
     Cada seção contém campos que podem ser usados em diferentes tipos de petição.
     """
+
     __tablename__ = "petition_sections"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)  # Ex: "Qualificação das Partes"
-    slug = db.Column(db.String(100), unique=True, nullable=False)  # Ex: "qualificacao-partes"
+    slug = db.Column(
+        db.String(100), unique=True, nullable=False
+    )  # Ex: "qualificacao-partes"
     description = db.Column(db.String(255))
     icon = db.Column(db.String(50), default="fa-file-alt")  # Ícone FontAwesome
     color = db.Column(db.String(20), default="primary")  # Cor do Bootstrap
@@ -582,12 +587,14 @@ class PetitionSection(db.Model):
     is_active = db.Column(db.Boolean, default=True)
 
     # Campos da seção em formato JSON
-    # Estrutura: [{"name": "author_name", "label": "Nome do Autor", "type": "text", 
+    # Estrutura: [{"name": "author_name", "label": "Nome do Autor", "type": "text",
     #              "required": true, "size": "col-md-6", "placeholder": "...", "options": [...]}]
     fields_schema = db.Column(db.JSON, default=list)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     def get_fields(self):
         """Retorna os campos da seção."""
@@ -606,11 +613,16 @@ class PetitionTypeSection(db.Model):
     Relaciona tipos de petição com suas seções (muitos para muitos com metadados).
     Permite definir quais seções aparecem em cada tipo de petição e em qual ordem.
     """
+
     __tablename__ = "petition_type_sections"
 
     id = db.Column(db.Integer, primary_key=True)
-    petition_type_id = db.Column(db.Integer, db.ForeignKey("petition_types.id"), nullable=False)
-    section_id = db.Column(db.Integer, db.ForeignKey("petition_sections.id"), nullable=False)
+    petition_type_id = db.Column(
+        db.Integer, db.ForeignKey("petition_types.id"), nullable=False
+    )
+    section_id = db.Column(
+        db.Integer, db.ForeignKey("petition_sections.id"), nullable=False
+    )
     order = db.Column(db.Integer, default=0)  # Ordem desta seção neste tipo de petição
     is_required = db.Column(db.Boolean, default=False)  # Seção obrigatória?
     is_expanded = db.Column(db.Boolean, default=True)  # Começa expandida?
@@ -622,16 +634,18 @@ class PetitionTypeSection(db.Model):
     # Relacionamentos
     petition_type = db.relationship(
         "PetitionType",
-        backref=db.backref("type_sections", lazy="dynamic", order_by="PetitionTypeSection.order")
+        backref=db.backref(
+            "type_sections", lazy="dynamic", order_by="PetitionTypeSection.order"
+        ),
     )
     section = db.relationship(
-        "PetitionSection",
-        backref=db.backref("type_sections", lazy="dynamic")
+        "PetitionSection", backref=db.backref("type_sections", lazy="dynamic")
     )
 
     def get_fields(self):
         """Retorna os campos da seção com overrides aplicados para este tipo de petição."""
         import copy
+
         fields = copy.deepcopy(self.section.get_fields()) if self.section else []
         overrides = self.field_overrides or {}
 
@@ -651,54 +665,71 @@ class SavedPetition(db.Model):
     Petições salvas pelo usuário (rascunhos e finalizadas).
     Permite consulta, edição e acompanhamento das petições criadas.
     """
+
     __tablename__ = "saved_petitions"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    petition_type_id = db.Column(db.Integer, db.ForeignKey("petition_types.id"), nullable=False)
-    
+    petition_type_id = db.Column(
+        db.Integer, db.ForeignKey("petition_types.id"), nullable=False
+    )
+
     # Identificação
-    title = db.Column(db.String(300))  # Título da petição (ex: "Ação de Alimentos - João x Maria")
-    process_number = db.Column(db.String(30), index=True)  # Número do processo (se houver)
-    
+    title = db.Column(
+        db.String(300)
+    )  # Título da petição (ex: "Ação de Alimentos - João x Maria")
+    process_number = db.Column(
+        db.String(30), index=True
+    )  # Número do processo (se houver)
+
     # Status: draft (rascunho), completed (finalizada), cancelled (cancelada)
     status = db.Column(db.String(20), default="draft", index=True)
-    
+
     # Dados do formulário em JSON
     form_data = db.Column(db.JSON, default=dict)
-    
+
     # Metadados
     notes = db.Column(db.Text)  # Anotações internas
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
     completed_at = db.Column(db.DateTime)  # Quando foi finalizada
     cancelled_at = db.Column(db.DateTime)  # Quando foi cancelada
-    
+
     # Relacionamentos
-    user = db.relationship("User", backref=db.backref("saved_petitions", lazy="dynamic"))
-    petition_type = db.relationship("PetitionType", backref=db.backref("saved_petitions", lazy="dynamic"))
-    
+    user = db.relationship(
+        "User", backref=db.backref("saved_petitions", lazy="dynamic")
+    )
+    petition_type = db.relationship(
+        "PetitionType", backref=db.backref("saved_petitions", lazy="dynamic")
+    )
+
     def get_status_display(self):
         """Retorna o status formatado para exibição."""
         status_map = {
             "draft": ("Rascunho", "warning"),
             "completed": ("Finalizada", "success"),
-            "cancelled": ("Cancelada", "danger")
+            "cancelled": ("Cancelada", "danger"),
         }
         return status_map.get(self.status, ("Desconhecido", "secondary"))
-    
+
     def get_author_name(self):
         """Extrai o nome do autor dos dados do formulário."""
         if self.form_data:
-            return self.form_data.get("autor_nome") or self.form_data.get("requerente_nome", "")
+            return self.form_data.get("autor_nome") or self.form_data.get(
+                "requerente_nome", ""
+            )
         return ""
-    
+
     def get_defendant_name(self):
         """Extrai o nome do réu dos dados do formulário."""
         if self.form_data:
-            return self.form_data.get("reu_nome") or self.form_data.get("requerido_nome", "")
+            return self.form_data.get("reu_nome") or self.form_data.get(
+                "requerido_nome", ""
+            )
         return ""
-    
+
     def __repr__(self):
         return f"<SavedPetition {self.id} - {self.status}>"
 
@@ -708,32 +739,37 @@ class PetitionAttachment(db.Model):
     Anexos/Provas das petições salvas.
     Permite upload de documentos relacionados ao caso.
     """
+
     __tablename__ = "petition_attachments"
 
     id = db.Column(db.Integer, primary_key=True)
-    saved_petition_id = db.Column(db.Integer, db.ForeignKey("saved_petitions.id"), nullable=False)
-    
+    saved_petition_id = db.Column(
+        db.Integer, db.ForeignKey("saved_petitions.id"), nullable=False
+    )
+
     # Informações do arquivo
     filename = db.Column(db.String(255), nullable=False)  # Nome original do arquivo
     stored_filename = db.Column(db.String(255), nullable=False)  # Nome no storage
     file_type = db.Column(db.String(100))  # MIME type
     file_size = db.Column(db.Integer)  # Tamanho em bytes
-    
+
     # Categorização
-    category = db.Column(db.String(50), default="prova")  # prova, documento, procuracao, etc.
+    category = db.Column(
+        db.String(50), default="prova"
+    )  # prova, documento, procuracao, etc.
     description = db.Column(db.String(500))  # Descrição do anexo
-    
+
     # Metadados
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
     uploaded_by_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    
+
     # Relacionamentos
     saved_petition = db.relationship(
-        "SavedPetition", 
-        backref=db.backref("attachments", lazy="dynamic", cascade="all, delete-orphan")
+        "SavedPetition",
+        backref=db.backref("attachments", lazy="dynamic", cascade="all, delete-orphan"),
     )
     uploaded_by = db.relationship("User")
-    
+
     def get_file_size_display(self):
         """Retorna o tamanho formatado (KB, MB)."""
         if not self.file_size:
@@ -744,7 +780,7 @@ class PetitionAttachment(db.Model):
             return f"{self.file_size / 1024:.1f} KB"
         else:
             return f"{self.file_size / (1024 * 1024):.1f} MB"
-    
+
     def get_icon(self):
         """Retorna o ícone baseado no tipo de arquivo."""
         icons = {
@@ -759,6 +795,6 @@ class PetitionAttachment(db.Model):
             "text/plain": "fa-file-alt text-secondary",
         }
         return icons.get(self.file_type, "fa-file text-secondary")
-    
+
     def __repr__(self):
         return f"<PetitionAttachment {self.filename}>"

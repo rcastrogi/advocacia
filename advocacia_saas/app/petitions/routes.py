@@ -1,9 +1,10 @@
+import json
+import os
+import uuid
 from datetime import datetime
 from decimal import Decimal
 from io import BytesIO
 from zipfile import ZipFile
-import os
-import uuid
 
 import bleach
 from flask import (
@@ -31,7 +32,14 @@ from app.billing.utils import (
     record_petition_usage,
     slugify,
 )
-from app.models import PetitionTemplate, PetitionType, PetitionSection, PetitionTypeSection, SavedPetition, PetitionAttachment
+from app.models import (
+    PetitionAttachment,
+    PetitionSection,
+    PetitionTemplate,
+    PetitionType,
+    PetitionTypeSection,
+    SavedPetition,
+)
 from app.petitions import bp
 from app.petitions.forms import (
     CivilPetitionForm,
@@ -39,7 +47,6 @@ from app.petitions.forms import (
     PetitionTemplateForm,
     SimplePetitionForm,
 )
-import json
 
 ATTACHMENT_EXTENSIONS = {"pdf", "doc", "docx", "png", "jpg", "jpeg"}
 MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024  # 5 MB
@@ -1454,36 +1461,38 @@ Pedidos:
 # ROTAS PARA FORMULÁRIO DINÂMICO
 # =============================================================================
 
+
 @bp.route("/dynamic/<slug>")
 @login_required
 @subscription_required
 def dynamic_form(slug):
     """Renderiza o formulário dinâmico baseado nas seções configuradas para o tipo de petição."""
-    
+
     # Buscar tipo de petição
     petition_type = PetitionType.query.filter_by(slug=slug).first_or_404()
-    
+
     # Verificar se usa formulário dinâmico
     if not petition_type.use_dynamic_form:
         # Redirecionar para formulário tradicional se não for dinâmico
-        flash("Este tipo de petição não está configurado para formulário dinâmico.", "warning")
+        flash(
+            "Este tipo de petição não está configurado para formulário dinâmico.",
+            "warning",
+        )
         return redirect(url_for("main.peticionador"))
-    
+
     # Verificar se está editando uma petição existente
     edit_id = request.args.get("edit_id", type=int)
     edit_petition = None
-    
+
     if edit_id:
         edit_petition = SavedPetition.query.filter_by(
-            id=edit_id,
-            user_id=current_user.id,
-            petition_type_id=petition_type.id
+            id=edit_id, user_id=current_user.id, petition_type_id=petition_type.id
         ).first()
-        
+
         if edit_petition and edit_petition.status == "cancelled":
             flash("Petições canceladas não podem ser editadas.", "warning")
             edit_petition = None
-    
+
     # Buscar seções configuradas para este tipo
     sections_config = (
         db.session.query(PetitionTypeSection)
@@ -1491,48 +1500,53 @@ def dynamic_form(slug):
         .order_by(PetitionTypeSection.order)
         .all()
     )
-    
+
     # Montar estrutura para o template
     sections = []
     for config in sections_config:
         section = PetitionSection.query.get(config.section_id)
         if section and section.is_active:
-            sections.append({
-                "section": {
-                    "id": section.id,
-                    "name": section.name,
-                    "slug": section.slug,
-                    "description": section.description,
-                    "icon": section.icon,
-                    "color": section.color,
-                    "fields_schema": section.fields_schema or []
-                },
-                "is_required": config.is_required,
-                "is_expanded": config.is_expanded,
-                "field_overrides": config.field_overrides or {}
-            })
-    
+            sections.append(
+                {
+                    "section": {
+                        "id": section.id,
+                        "name": section.name,
+                        "slug": section.slug,
+                        "description": section.description,
+                        "icon": section.icon,
+                        "color": section.color,
+                        "fields_schema": section.fields_schema or [],
+                    },
+                    "is_required": config.is_required,
+                    "is_expanded": config.is_expanded,
+                    "field_overrides": config.field_overrides or {},
+                }
+            )
+
     # Serializar seções para JSON (para Alpine.js)
     sections_json = json.dumps(sections, ensure_ascii=False)
-    
+
     # Serializar petição para edição (se existir)
     edit_petition_json = None
     if edit_petition:
-        edit_petition_json = json.dumps({
-            "id": edit_petition.id,
-            "form_data": edit_petition.form_data or {},
-            "status": edit_petition.status,
-            "title": edit_petition.title,
-            "process_number": edit_petition.process_number
-        }, ensure_ascii=False)
-    
+        edit_petition_json = json.dumps(
+            {
+                "id": edit_petition.id,
+                "form_data": edit_petition.form_data or {},
+                "status": edit_petition.status,
+                "title": edit_petition.title,
+                "process_number": edit_petition.process_number,
+            },
+            ensure_ascii=False,
+        )
+
     return render_template(
         "petitions/dynamic_form.html",
         petition_type=petition_type,
         sections=sections,
         sections_json=sections_json,
         edit_petition=edit_petition,
-        edit_petition_json=edit_petition_json
+        edit_petition_json=edit_petition_json,
     )
 
 
@@ -1541,24 +1555,22 @@ def dynamic_form(slug):
 @subscription_required
 def generate_dynamic():
     """Gera a petição a partir dos dados do formulário dinâmico."""
-    
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "Dados não fornecidos"}), 400
-    
+
     petition_type_id = data.get("petition_type_id")
     form_data = data.get("form_data", {})
-    
+
     # Buscar tipo de petição
     petition_type = PetitionType.query.get_or_404(petition_type_id)
-    
+
     # Buscar template associado
-    template = (
-        PetitionTemplate.query
-        .filter_by(petition_type_id=petition_type_id, is_active=True)
-        .first()
-    )
-    
+    template = PetitionTemplate.query.filter_by(
+        petition_type_id=petition_type_id, is_active=True
+    ).first()
+
     if not template:
         # Usar template padrão genérico
         template_content = generate_default_template(petition_type, form_data)
@@ -1568,7 +1580,7 @@ def generate_dynamic():
             template_content = render_template_string(template.content, **form_data)
         except Exception as e:
             return jsonify({"error": f"Erro ao renderizar template: {str(e)}"}), 500
-    
+
     # Gerar PDF
     try:
         pdf_buffer = BytesIO()
@@ -1593,49 +1605,55 @@ def generate_dynamic():
         </body>
         </html>
         """
-        
+
         pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
-        
+
         if pisa_status.err:
             return jsonify({"error": "Erro ao gerar PDF"}), 500
-        
+
         pdf_buffer.seek(0)
-        
+
         # Registrar uso
         try:
             record_petition_usage(current_user, petition_type)
         except BillingAccessError as e:
             return jsonify({"error": str(e)}), 403
-        
-        filename = f"{petition_type.slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        
+
+        filename = (
+            f"{petition_type.slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        )
+
         return send_file(
             pdf_buffer,
             mimetype="application/pdf",
             as_attachment=True,
-            download_name=filename
+            download_name=filename,
         )
-        
+
     except Exception as e:
         return jsonify({"error": f"Erro ao gerar PDF: {str(e)}"}), 500
 
 
 def generate_default_template(petition_type, form_data):
     """Gera um template padrão baseado nos dados do formulário."""
-    
+
     html = []
-    
+
     # Cabeçalho
     if form_data.get("cabecalho_forum"):
         html.append(f'<div class="header">')
-        html.append(f'<p><strong>{form_data.get("cabecalho_forum", "").upper()}</strong></p>')
+        html.append(
+            f"<p><strong>{form_data.get('cabecalho_forum', '').upper()}</strong></p>"
+        )
         if form_data.get("cabecalho_vara"):
-            html.append(f'<p>{form_data.get("cabecalho_vara")}</p>')
-        html.append('</div>')
-    
+            html.append(f"<p>{form_data.get('cabecalho_vara')}</p>")
+        html.append("</div>")
+
     # Autor
     if form_data.get("autor_nome"):
-        html.append(f'<p style="text-indent: 0;"><strong>{form_data.get("autor_nome", "").upper()}</strong>, ')
+        html.append(
+            f'<p style="text-indent: 0;"><strong>{form_data.get("autor_nome", "").upper()}</strong>, '
+        )
         qualificacao = []
         if form_data.get("autor_nacionalidade"):
             qualificacao.append(form_data.get("autor_nacionalidade"))
@@ -1644,114 +1662,139 @@ def generate_default_template(petition_type, form_data):
         if form_data.get("autor_profissao"):
             qualificacao.append(form_data.get("autor_profissao"))
         if form_data.get("autor_cpf"):
-            qualificacao.append(f'CPF nº {form_data.get("autor_cpf")}')
+            qualificacao.append(f"CPF nº {form_data.get('autor_cpf')}")
         if form_data.get("autor_rg"):
-            qualificacao.append(f'RG nº {form_data.get("autor_rg")}')
+            qualificacao.append(f"RG nº {form_data.get('autor_rg')}")
         if qualificacao:
-            html.append(', '.join(qualificacao) + ', ')
-        
+            html.append(", ".join(qualificacao) + ", ")
+
         if form_data.get("autor_endereco"):
             endereco = [form_data.get("autor_endereco")]
             if form_data.get("autor_numero"):
-                endereco.append(f'nº {form_data.get("autor_numero")}')
+                endereco.append(f"nº {form_data.get('autor_numero')}")
             if form_data.get("autor_bairro"):
                 endereco.append(form_data.get("autor_bairro"))
             if form_data.get("autor_cidade"):
-                endereco.append(f'{form_data.get("autor_cidade")}/{form_data.get("autor_estado", "")}')
+                endereco.append(
+                    f"{form_data.get('autor_cidade')}/{form_data.get('autor_estado', '')}"
+                )
             if form_data.get("autor_cep"):
-                endereco.append(f'CEP {form_data.get("autor_cep")}')
-            html.append(f'residente e domiciliado(a) em {", ".join(endereco)}, ')
-        html.append('</p>')
-    
+                endereco.append(f"CEP {form_data.get('autor_cep')}")
+            html.append(f"residente e domiciliado(a) em {', '.join(endereco)}, ")
+        html.append("</p>")
+
     # Título da ação
-    html.append(f'<p style="text-indent: 0;">vem, respeitosamente, perante Vossa Excelência, propor a presente</p>')
-    html.append(f'<h1>{petition_type.name.upper()}</h1>')
-    
+    html.append(
+        f'<p style="text-indent: 0;">vem, respeitosamente, perante Vossa Excelência, propor a presente</p>'
+    )
+    html.append(f"<h1>{petition_type.name.upper()}</h1>")
+
     # Réu
     if form_data.get("reu_nome"):
-        html.append(f'<p style="text-indent: 0;">em face de <strong>{form_data.get("reu_nome", "").upper()}</strong>, ')
+        html.append(
+            f'<p style="text-indent: 0;">em face de <strong>{form_data.get("reu_nome", "").upper()}</strong>, '
+        )
         qualificacao_reu = []
         if form_data.get("reu_cpf"):
-            qualificacao_reu.append(f'CPF nº {form_data.get("reu_cpf")}')
+            qualificacao_reu.append(f"CPF nº {form_data.get('reu_cpf')}")
         if form_data.get("reu_endereco"):
             endereco_reu = [form_data.get("reu_endereco")]
             if form_data.get("reu_cidade"):
-                endereco_reu.append(f'{form_data.get("reu_cidade")}/{form_data.get("reu_estado", "")}')
-            qualificacao_reu.append(f'residente em {", ".join(endereco_reu)}')
-        html.append(', '.join(qualificacao_reu) + ', pelos fatos e fundamentos a seguir expostos:</p>')
-    
+                endereco_reu.append(
+                    f"{form_data.get('reu_cidade')}/{form_data.get('reu_estado', '')}"
+                )
+            qualificacao_reu.append(f"residente em {', '.join(endereco_reu)}")
+        html.append(
+            ", ".join(qualificacao_reu)
+            + ", pelos fatos e fundamentos a seguir expostos:</p>"
+        )
+
     # Fatos
     if form_data.get("fatos"):
-        html.append('<h2>I - DOS FATOS</h2>')
+        html.append("<h2>I - DOS FATOS</h2>")
         html.append(form_data.get("fatos"))
-    
+
     # Direito
     if form_data.get("direito") or form_data.get("fundamentacao"):
-        html.append('<h2>II - DO DIREITO</h2>')
+        html.append("<h2>II - DO DIREITO</h2>")
         html.append(form_data.get("direito") or form_data.get("fundamentacao", ""))
-    
+
     # Pedidos
     if form_data.get("pedidos"):
-        html.append('<h2>III - DOS PEDIDOS</h2>')
+        html.append("<h2>III - DOS PEDIDOS</h2>")
         html.append('<p style="text-indent: 0;">Ante o exposto, requer:</p>')
         html.append(form_data.get("pedidos"))
-    
+
     # Valor da causa
     if form_data.get("valor_causa"):
-        html.append('<h2>IV - DO VALOR DA CAUSA</h2>')
-        html.append(f'<p style="text-indent: 0;">Dá-se à causa o valor de <strong>R$ {form_data.get("valor_causa")}</strong>.</p>')
-    
+        html.append("<h2>IV - DO VALOR DA CAUSA</h2>")
+        html.append(
+            f'<p style="text-indent: 0;">Dá-se à causa o valor de <strong>R$ {form_data.get("valor_causa")}</strong>.</p>'
+        )
+
     # Provas
     if form_data.get("provas"):
-        html.append('<h2>V - DAS PROVAS</h2>')
+        html.append("<h2>V - DAS PROVAS</h2>")
         html.append(form_data.get("provas"))
-    
+
     # Justiça Gratuita
     if form_data.get("justica_gratuita_requer"):
-        html.append('<h2>DA JUSTIÇA GRATUITA</h2>')
-        html.append('<p>Requer a concessão dos benefícios da justiça gratuita, nos termos do art. 98 e seguintes do Código de Processo Civil, por não possuir condições de arcar com as custas processuais e honorários advocatícios sem prejuízo do próprio sustento.</p>')
-    
+        html.append("<h2>DA JUSTIÇA GRATUITA</h2>")
+        html.append(
+            "<p>Requer a concessão dos benefícios da justiça gratuita, nos termos do art. 98 e seguintes do Código de Processo Civil, por não possuir condições de arcar com as custas processuais e honorários advocatícios sem prejuízo do próprio sustento.</p>"
+        )
+
     # Fechamento
-    html.append('<p style="text-indent: 0; margin-top: 24pt;">Nestes termos,<br>Pede deferimento.</p>')
-    
+    html.append(
+        '<p style="text-indent: 0; margin-top: 24pt;">Nestes termos,<br>Pede deferimento.</p>'
+    )
+
     # Assinatura
     cidade = form_data.get("assinatura_cidade", form_data.get("autor_cidade", ""))
-    data_assinatura = form_data.get("assinatura_data", datetime.now().strftime("%d/%m/%Y"))
-    html.append(f'<p style="text-indent: 0;" class="signature">{cidade}, {data_assinatura}</p>')
-    html.append('<p style="text-indent: 0; margin-top: 48pt;" class="signature">_________________________________<br>Advogado(a) - OAB/XX nº 00000</p>')
-    
-    return '\n'.join(html)
+    data_assinatura = form_data.get(
+        "assinatura_data", datetime.now().strftime("%d/%m/%Y")
+    )
+    html.append(
+        f'<p style="text-indent: 0;" class="signature">{cidade}, {data_assinatura}</p>'
+    )
+    html.append(
+        '<p style="text-indent: 0; margin-top: 48pt;" class="signature">_________________________________<br>Advogado(a) - OAB/XX nº 00000</p>'
+    )
+
+    return "\n".join(html)
 
 
 @bp.route("/api/sections/<int:petition_type_id>")
 @login_required
 def get_sections(petition_type_id):
     """API para obter seções de um tipo de petição."""
-    
+
     sections_config = (
         db.session.query(PetitionTypeSection)
         .filter_by(petition_type_id=petition_type_id)
         .order_by(PetitionTypeSection.order)
         .all()
     )
-    
+
     sections = []
     for config in sections_config:
         section = PetitionSection.query.get(config.section_id)
         if section and section.is_active:
-            sections.append({
-                "id": section.id,
-                "name": section.name,
-                "slug": section.slug,
-                "description": section.description,
-                "icon": section.icon,
-                "color": section.color,
-                "fields_schema": section.fields_schema or [],
-                "is_required": config.is_required,
-                "is_expanded": config.is_expanded,
-                "field_overrides": config.field_overrides or {}
-            })
-    
+            sections.append(
+                {
+                    "id": section.id,
+                    "name": section.name,
+                    "slug": section.slug,
+                    "description": section.description,
+                    "icon": section.icon,
+                    "color": section.color,
+                    "fields_schema": section.fields_schema or [],
+                    "is_required": config.is_required,
+                    "is_expanded": config.is_expanded,
+                    "field_overrides": config.field_overrides or {},
+                }
+            )
+
     return jsonify(sections)
 
 
@@ -1759,24 +1802,25 @@ def get_sections(petition_type_id):
 # ROTAS PARA PETIÇÕES SALVAS (CRUD)
 # ============================================================================
 
+
 @bp.route("/saved")
 @login_required
 def saved_list():
     """Lista todas as petições salvas do usuário."""
-    
+
     # Filtros
     status_filter = request.args.get("status", "all")
     search = request.args.get("search", "").strip()
     page = request.args.get("page", 1, type=int)
     per_page = 20
-    
+
     # Query base
     query = SavedPetition.query.filter_by(user_id=current_user.id)
-    
+
     # Filtro de status
     if status_filter != "all":
         query = query.filter_by(status=status_filter)
-    
+
     # Busca por número de processo, título ou partes
     if search:
         search_term = f"%{search}%"
@@ -1785,25 +1829,31 @@ def saved_list():
                 SavedPetition.process_number.ilike(search_term),
                 SavedPetition.title.ilike(search_term),
                 SavedPetition.form_data["autor_nome"].astext.ilike(search_term),
-                SavedPetition.form_data["reu_nome"].astext.ilike(search_term)
+                SavedPetition.form_data["reu_nome"].astext.ilike(search_term),
             )
         )
-    
+
     # Ordenar por mais recentes
     query = query.order_by(SavedPetition.updated_at.desc())
-    
+
     # Paginação
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     petitions = pagination.items
-    
+
     # Estatísticas
     stats = {
         "total": SavedPetition.query.filter_by(user_id=current_user.id).count(),
-        "draft": SavedPetition.query.filter_by(user_id=current_user.id, status="draft").count(),
-        "completed": SavedPetition.query.filter_by(user_id=current_user.id, status="completed").count(),
-        "cancelled": SavedPetition.query.filter_by(user_id=current_user.id, status="cancelled").count()
+        "draft": SavedPetition.query.filter_by(
+            user_id=current_user.id, status="draft"
+        ).count(),
+        "completed": SavedPetition.query.filter_by(
+            user_id=current_user.id, status="completed"
+        ).count(),
+        "cancelled": SavedPetition.query.filter_by(
+            user_id=current_user.id, status="cancelled"
+        ).count(),
     }
-    
+
     return render_template(
         "petitions/saved_list.html",
         title="Minhas Petições",
@@ -1811,7 +1861,7 @@ def saved_list():
         pagination=pagination,
         stats=stats,
         status_filter=status_filter,
-        search=search
+        search=search,
     )
 
 
@@ -1819,16 +1869,15 @@ def saved_list():
 @login_required
 def saved_view(petition_id):
     """Visualiza detalhes de uma petição salva."""
-    
+
     petition = SavedPetition.query.filter_by(
-        id=petition_id,
-        user_id=current_user.id
+        id=petition_id, user_id=current_user.id
     ).first_or_404()
-    
+
     return render_template(
         "petitions/saved_view.html",
         title=petition.title or f"Petição #{petition.id}",
-        petition=petition
+        petition=petition,
     )
 
 
@@ -1836,78 +1885,85 @@ def saved_view(petition_id):
 @login_required
 def saved_edit(petition_id):
     """Redireciona para edição da petição."""
-    
+
     petition = SavedPetition.query.filter_by(
-        id=petition_id,
-        user_id=current_user.id
+        id=petition_id, user_id=current_user.id
     ).first_or_404()
-    
+
     if petition.status == "cancelled":
         flash("Petições canceladas não podem ser editadas.", "warning")
         return redirect(url_for("petitions.saved_list"))
-    
+
     # Redirecionar para o formulário dinâmico com os dados carregados
-    return redirect(url_for(
-        "petitions.dynamic_form",
-        slug=petition.petition_type.slug,
-        edit_id=petition.id
-    ))
+    return redirect(
+        url_for(
+            "petitions.dynamic_form",
+            slug=petition.petition_type.slug,
+            edit_id=petition.id,
+        )
+    )
 
 
 @bp.route("/api/save", methods=["POST"])
 @login_required
 def api_save_petition():
     """API para salvar uma petição (novo ou atualização)."""
-    
+
     data = request.get_json()
-    
+
     if not data:
         return jsonify({"success": False, "error": "Dados inválidos"}), 400
-    
+
     petition_type_id = data.get("petition_type_id")
     form_data = data.get("form_data", {})
     petition_id = data.get("petition_id")  # Se for edição
     action = data.get("action", "save")  # save, complete, cancel
-    
+
     if not petition_type_id:
-        return jsonify({"success": False, "error": "Tipo de petição não informado"}), 400
-    
+        return jsonify(
+            {"success": False, "error": "Tipo de petição não informado"}
+        ), 400
+
     # Verificar se é edição ou novo
     if petition_id:
         petition = SavedPetition.query.filter_by(
-            id=petition_id,
-            user_id=current_user.id
+            id=petition_id, user_id=current_user.id
         ).first()
-        
+
         if not petition:
             return jsonify({"success": False, "error": "Petição não encontrada"}), 404
-        
+
         if petition.status == "cancelled":
-            return jsonify({"success": False, "error": "Petição cancelada não pode ser editada"}), 400
+            return jsonify(
+                {"success": False, "error": "Petição cancelada não pode ser editada"}
+            ), 400
     else:
         # Criar nova petição
         petition = SavedPetition(
-            user_id=current_user.id,
-            petition_type_id=petition_type_id
+            user_id=current_user.id, petition_type_id=petition_type_id
         )
         db.session.add(petition)
-    
+
     # Atualizar dados
     petition.form_data = form_data
-    petition.process_number = form_data.get("processo_numero") or form_data.get("processo_number")
-    
+    petition.process_number = form_data.get("processo_numero") or form_data.get(
+        "processo_number"
+    )
+
     # Gerar título automático
     autor = form_data.get("autor_nome", "").strip()
     reu = form_data.get("reu_nome", "").strip()
     petition_type = PetitionType.query.get(petition_type_id)
-    
+
     if autor and reu:
         petition.title = f"{petition_type.name} - {autor} x {reu}"
     elif autor:
         petition.title = f"{petition_type.name} - {autor}"
     else:
-        petition.title = f"{petition_type.name} - #{petition.id if petition.id else 'Novo'}"
-    
+        petition.title = (
+            f"{petition_type.name} - #{petition.id if petition.id else 'Novo'}"
+        )
+
     # Ações
     if action == "complete":
         petition.status = "completed"
@@ -1918,16 +1974,18 @@ def api_save_petition():
     else:
         if petition.status != "completed":
             petition.status = "draft"
-    
+
     try:
         db.session.commit()
-        
-        return jsonify({
-            "success": True,
-            "petition_id": petition.id,
-            "message": "Petição salva com sucesso!",
-            "status": petition.status
-        })
+
+        return jsonify(
+            {
+                "success": True,
+                "petition_id": petition.id,
+                "message": "Petição salva com sucesso!",
+                "status": petition.status,
+            }
+        )
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
@@ -1937,18 +1995,17 @@ def api_save_petition():
 @login_required
 def api_cancel_petition(petition_id):
     """API para cancelar uma petição."""
-    
+
     petition = SavedPetition.query.filter_by(
-        id=petition_id,
-        user_id=current_user.id
+        id=petition_id, user_id=current_user.id
     ).first_or_404()
-    
+
     if petition.status == "cancelled":
         return jsonify({"success": False, "error": "Petição já está cancelada"}), 400
-    
+
     petition.status = "cancelled"
     petition.cancelled_at = datetime.utcnow()
-    
+
     try:
         db.session.commit()
         return jsonify({"success": True, "message": "Petição cancelada com sucesso!"})
@@ -1961,18 +2018,22 @@ def api_cancel_petition(petition_id):
 @login_required
 def api_restore_petition(petition_id):
     """API para restaurar uma petição cancelada."""
-    
+
     petition = SavedPetition.query.filter_by(
-        id=petition_id,
-        user_id=current_user.id
+        id=petition_id, user_id=current_user.id
     ).first_or_404()
-    
+
     if petition.status != "cancelled":
-        return jsonify({"success": False, "error": "Apenas petições canceladas podem ser restauradas"}), 400
-    
+        return jsonify(
+            {
+                "success": False,
+                "error": "Apenas petições canceladas podem ser restauradas",
+            }
+        ), 400
+
     petition.status = "draft"
     petition.cancelled_at = None
-    
+
     try:
         db.session.commit()
         return jsonify({"success": True, "message": "Petição restaurada com sucesso!"})
@@ -1985,30 +2046,32 @@ def api_restore_petition(petition_id):
 @login_required
 def api_delete_petition(petition_id):
     """API para excluir permanentemente uma petição."""
-    
+
     petition = SavedPetition.query.filter_by(
-        id=petition_id,
-        user_id=current_user.id
+        id=petition_id, user_id=current_user.id
     ).first_or_404()
-    
+
     try:
         # Primeiro remove os anexos físicos
         for attachment in petition.attachments:
             try:
                 import os
+
                 file_path = os.path.join(
                     current_app.config.get("UPLOAD_FOLDER", "uploads"),
                     "attachments",
-                    attachment.stored_filename
+                    attachment.stored_filename,
                 )
                 if os.path.exists(file_path):
                     os.remove(file_path)
             except:
                 pass
-        
+
         db.session.delete(petition)
         db.session.commit()
-        return jsonify({"success": True, "message": "Petição excluída permanentemente!"})
+        return jsonify(
+            {"success": True, "message": "Petição excluída permanentemente!"}
+        )
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
@@ -2018,36 +2081,49 @@ def api_delete_petition(petition_id):
 # ROTAS PARA ANEXOS/PROVAS
 # ============================================================================
 
-ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg', 'gif', 'txt', 'xls', 'xlsx'}
+ALLOWED_EXTENSIONS = {
+    "pdf",
+    "doc",
+    "docx",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "txt",
+    "xls",
+    "xlsx",
+}
+
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @bp.route("/api/saved/<int:petition_id>/attachments", methods=["GET"])
 @login_required
 def api_list_attachments(petition_id):
     """Lista anexos de uma petição."""
-    
+
     petition = SavedPetition.query.filter_by(
-        id=petition_id,
-        user_id=current_user.id
+        id=petition_id, user_id=current_user.id
     ).first_or_404()
-    
+
     attachments = []
     for att in petition.attachments:
-        attachments.append({
-            "id": att.id,
-            "filename": att.filename,
-            "file_type": att.file_type,
-            "file_size": att.file_size,
-            "file_size_display": att.get_file_size_display(),
-            "category": att.category,
-            "description": att.description,
-            "icon": att.get_icon(),
-            "uploaded_at": att.uploaded_at.isoformat() if att.uploaded_at else None
-        })
-    
+        attachments.append(
+            {
+                "id": att.id,
+                "filename": att.filename,
+                "file_type": att.file_type,
+                "file_size": att.file_size,
+                "file_size_display": att.get_file_size_display(),
+                "category": att.category,
+                "description": att.description,
+                "icon": att.get_icon(),
+                "uploaded_at": att.uploaded_at.isoformat() if att.uploaded_at else None,
+            }
+        )
+
     return jsonify(attachments)
 
 
@@ -2055,50 +2131,62 @@ def api_list_attachments(petition_id):
 @login_required
 def api_upload_attachment(petition_id):
     """Upload de anexo para uma petição."""
-    
+
     petition = SavedPetition.query.filter_by(
-        id=petition_id,
-        user_id=current_user.id
+        id=petition_id, user_id=current_user.id
     ).first_or_404()
-    
+
     if petition.status == "cancelled":
-        return jsonify({"success": False, "error": "Não é possível anexar arquivos a petições canceladas"}), 400
-    
-    if 'file' not in request.files:
+        return jsonify(
+            {
+                "success": False,
+                "error": "Não é possível anexar arquivos a petições canceladas",
+            }
+        ), 400
+
+    if "file" not in request.files:
         return jsonify({"success": False, "error": "Nenhum arquivo enviado"}), 400
-    
-    file = request.files['file']
-    
-    if file.filename == '':
+
+    file = request.files["file"]
+
+    if file.filename == "":
         return jsonify({"success": False, "error": "Arquivo sem nome"}), 400
-    
+
     if not allowed_file(file.filename):
-        return jsonify({"success": False, "error": f"Tipo de arquivo não permitido. Permitidos: {', '.join(ALLOWED_EXTENSIONS)}"}), 400
-    
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Tipo de arquivo não permitido. Permitidos: {', '.join(ALLOWED_EXTENSIONS)}",
+            }
+        ), 400
+
     # Verificar tamanho
     file.seek(0, 2)
     file_size = file.tell()
     file.seek(0)
-    
+
     if file_size > 10 * 1024 * 1024:  # 10MB
-        return jsonify({"success": False, "error": "Arquivo muito grande. Máximo: 10MB"}), 400
-    
+        return jsonify(
+            {"success": False, "error": "Arquivo muito grande. Máximo: 10MB"}
+        ), 400
+
     # Gerar nome único
     original_filename = secure_filename(file.filename)
-    ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
+    ext = (
+        original_filename.rsplit(".", 1)[1].lower() if "." in original_filename else ""
+    )
     stored_filename = f"{uuid.uuid4().hex}.{ext}"
-    
+
     # Criar diretório se não existir
     upload_dir = os.path.join(
-        current_app.config.get("UPLOAD_FOLDER", "uploads"),
-        "attachments"
+        current_app.config.get("UPLOAD_FOLDER", "uploads"), "attachments"
     )
     os.makedirs(upload_dir, exist_ok=True)
-    
+
     # Salvar arquivo
     file_path = os.path.join(upload_dir, stored_filename)
     file.save(file_path)
-    
+
     # Criar registro no banco
     attachment = PetitionAttachment(
         saved_petition_id=petition.id,
@@ -2108,49 +2196,51 @@ def api_upload_attachment(petition_id):
         file_size=file_size,
         category=request.form.get("category", "prova"),
         description=request.form.get("description", ""),
-        uploaded_by_id=current_user.id
+        uploaded_by_id=current_user.id,
     )
-    
+
     db.session.add(attachment)
     db.session.commit()
-    
-    return jsonify({
-        "success": True,
-        "attachment": {
-            "id": attachment.id,
-            "filename": attachment.filename,
-            "file_size_display": attachment.get_file_size_display(),
-            "icon": attachment.get_icon()
+
+    return jsonify(
+        {
+            "success": True,
+            "attachment": {
+                "id": attachment.id,
+                "filename": attachment.filename,
+                "file_size_display": attachment.get_file_size_display(),
+                "icon": attachment.get_icon(),
+            },
         }
-    })
+    )
 
 
 @bp.route("/api/attachments/<int:attachment_id>", methods=["DELETE"])
 @login_required
 def api_delete_attachment(attachment_id):
     """Exclui um anexo."""
-    
+
     attachment = PetitionAttachment.query.get_or_404(attachment_id)
-    
+
     # Verificar permissão
     if attachment.saved_petition.user_id != current_user.id:
         return jsonify({"success": False, "error": "Sem permissão"}), 403
-    
+
     # Remover arquivo físico
     try:
         file_path = os.path.join(
             current_app.config.get("UPLOAD_FOLDER", "uploads"),
             "attachments",
-            attachment.stored_filename
+            attachment.stored_filename,
         )
         if os.path.exists(file_path):
             os.remove(file_path)
     except:
         pass
-    
+
     db.session.delete(attachment)
     db.session.commit()
-    
+
     return jsonify({"success": True, "message": "Anexo removido!"})
 
 
@@ -2158,25 +2248,20 @@ def api_delete_attachment(attachment_id):
 @login_required
 def download_attachment(attachment_id):
     """Download de um anexo."""
-    
+
     attachment = PetitionAttachment.query.get_or_404(attachment_id)
-    
+
     # Verificar permissão
     if attachment.saved_petition.user_id != current_user.id:
         abort(403)
-    
+
     file_path = os.path.join(
         current_app.config.get("UPLOAD_FOLDER", "uploads"),
         "attachments",
-        attachment.stored_filename
-    )
-    
-    if not os.path.exists(file_path):
-        abort(404)
-    
-    return send_file(
-        file_path,
-        download_name=attachment.filename,
-        as_attachment=True
+        attachment.stored_filename,
     )
 
+    if not os.path.exists(file_path):
+        abort(404)
+
+    return send_file(file_path, download_name=attachment.filename, as_attachment=True)
