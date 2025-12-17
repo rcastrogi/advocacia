@@ -1,0 +1,39 @@
+# flyctl launch added from .gitignore
+# Byte-compiled / optimized / DLL files
+**\__pycache__
+**\*.py[cod]
+**\*$py.class
+
+# Flask stuff:
+**\instance
+**\.webassets-cache
+
+# Database
+**\*.db
+**\*.sqlite
+**\*.sqlite3
+
+# Environment variables
+**\.env
+
+# IDE
+**\.vscode
+**\.idea
+**\*.swp
+**\*.swo
+
+# OS
+**\.DS_Store
+**\Thumbs.db
+
+# Logs
+**\*.log
+
+# Virtual Environment
+**\venv
+**\env
+**\ENV
+
+# Migrations (opcional - descomente se não quiser versionar)
+# migrations/
+fly.toml

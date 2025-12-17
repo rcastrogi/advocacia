@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% block title %}Meus Créditos - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold text-dark mb-1">
+                <i class="bi bi-stars text-warning me-2"></i>Meus Créditos
+            </h1>
+            <p class="text-muted mb-0">Gerencie seus créditos para usar a IA</p>
+        </div>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Voltar
+        </a>
+    </div>
+
+    <!-- Cards de Resumo -->
+    <div class="row g-4 mb-5">
+        <!-- Saldo Atual -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, var(--primary-green), var(--dark-green));">
+                <div class="card-body text-white p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Saldo Atual</h6>
+                            <h2 class="display-4 fw-bold mb-0">{{ credits.balance }}</h2>
+                            <small class="text-white-50">créditos disponíveis</small>
+                        </div>
+                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
+                            <i class="bi bi-coin display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Usado -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-1">Total Usado</h6>
+                            <h2 class="display-4 fw-bold text-dark mb-0">{{ credits.total_used }}</h2>
+                            <small class="text-muted">créditos consumidos</small>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-lightning-charge text-primary display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gerações -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-1">Gerações IA</h6>
+                            <h2 class="display-4 fw-bold text-dark mb-0">{{ total_generations }}</h2>
+                            <small class="text-muted">textos gerados</small>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-robot text-success display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Custos -->
+    <div class="card border-0 shadow-sm mb-5">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">
+                <i class="bi bi-calculator me-2 text-muted"></i>Tabela de Custos
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0 py-3 px-4">Funcionalidade</th>
+                            <th class="border-0 py-3 px-4 text-center">Créditos</th>
+                            <th class="border-0 py-3 px-4">Descrição</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="py-3 px-4">
+                                <i class="bi bi-paragraph text-primary me-2"></i>
+                                <strong>Gerar Seção</strong>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="badge bg-primary">{{ credit_costs.section }} crédito</span>
+                            </td>
+                            <td class="py-3 px-4 text-muted">Gera fatos, fundamentos ou pedidos</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4">
+                                <i class="bi bi-magic text-info me-2"></i>
+                                <strong>Melhorar Texto</strong>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="badge bg-info">{{ credit_costs.improve }} crédito</span>
+                            </td>
+                            <td class="py-3 px-4 text-muted">Melhora linguagem e argumentação</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4">
+                                <i class="bi bi-book text-warning me-2"></i>
+                                <strong>Gerar Fundamentos</strong>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="badge bg-warning text-dark">{{ credit_costs.fundamentos }} créditos</span>
+                            </td>
+                            <td class="py-3 px-4 text-muted">Fundamentação jurídica completa</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4">
+                                <i class="bi bi-search text-secondary me-2"></i>
+                                <strong>Analisar Caso</strong>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="badge bg-secondary">{{ credit_costs.analyze }} créditos</span>
+                            </td>
+                            <td class="py-3 px-4 text-muted">Análise completa do caso</td>
+                        </tr>
+                        <tr class="table-success">
+                            <td class="py-3 px-4">
+                                <i class="bi bi-file-earmark-text text-success me-2"></i>
+                                <strong>Petição Completa</strong>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="badge bg-success">{{ credit_costs.full_petition }} créditos</span>
+                            </td>
+                            <td class="py-3 px-4 text-muted">Gera a petição inteira automaticamente</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pacotes de Créditos -->
+    <h4 class="mb-4">
+        <i class="bi bi-bag-plus me-2 text-muted"></i>Comprar Créditos
+    </h4>
+    
+    <div class="row g-4 mb-5">
+        {% for package in packages %}
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 {% if package.is_featured %}border-success border-2{% endif %}">
+                {% if package.is_featured %}
+                <div class="position-absolute top-0 start-50 translate-middle">
+                    <span class="badge bg-success px-3 py-2">
+                        <i class="bi bi-star-fill me-1"></i>Mais Popular
+                    </span>
+                </div>
+                {% endif %}
+                
+                <div class="card-body text-center p-4 {% if package.is_featured %}pt-5{% endif %}">
+                    <h5 class="fw-bold mb-2">{{ package.name }}</h5>
+                    
+                    {% if package.original_price %}
+                    <p class="text-decoration-line-through text-muted mb-0">
+                        R$ {{ "%.2f"|format(package.original_price) }}
+                    </p>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <span class="display-5 fw-bold" style="color: var(--primary-green);">
+                            R$ {{ "%.2f"|format(package.price) }}
+                        </span>
+                    </div>
+                    
+                    <div class="bg-light rounded-3 py-3 px-4 mb-4">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="bi bi-coin text-warning fs-3 me-2"></i>
+                            <span class="h3 fw-bold mb-0">{{ package.credits }}</span>
+                        </div>
+                        <small class="text-muted">créditos</small>
+                        
+                        {% if package.bonus_credits > 0 %}
+                        <div class="mt-2">
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-gift me-1"></i>+{{ package.bonus_credits }} bônus
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if package.description %}
+                    <p class="text-muted small mb-4">{{ package.description }}</p>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('ai.buy_credits', slug=package.slug) }}" 
+                       class="btn {% if package.is_featured %}btn-success{% else %}btn-outline-success{% endif %} w-100">
+                        <i class="bi bi-cart-plus me-2"></i>Comprar
+                    </a>
+                </div>
+                
+                <div class="card-footer bg-white border-0 text-center pb-4">
+                    <small class="text-muted">
+                        <i class="bi bi-calculator me-1"></i>
+                        R$ {{ "%.2f"|format(package.price / package.total_credits) }} por crédito
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Nenhum pacote disponível no momento.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Últimas Transações -->
+    <h4 class="mb-4">
+        <i class="bi bi-clock-history me-2 text-muted"></i>Últimas Transações
+    </h4>
+    
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            {% if transactions %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0 py-3 px-4">Data</th>
+                            <th class="border-0 py-3 px-4">Tipo</th>
+                            <th class="border-0 py-3 px-4">Descrição</th>
+                            <th class="border-0 py-3 px-4 text-end">Créditos</th>
+                            <th class="border-0 py-3 px-4 text-end">Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                        <tr>
+                            <td class="py-3 px-4 text-muted">
+                                {{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}
+                            </td>
+                            <td class="py-3 px-4">
+                                {% if transaction.transaction_type == 'purchase' %}
+                                <span class="badge bg-success-subtle text-success">
+                                    <i class="bi bi-cart-check me-1"></i>Compra
+                                </span>
+                                {% elif transaction.transaction_type == 'usage' %}
+                                <span class="badge bg-primary-subtle text-primary">
+                                    <i class="bi bi-lightning me-1"></i>Uso
+                                </span>
+                                {% elif transaction.transaction_type == 'bonus' %}
+                                <span class="badge bg-warning-subtle text-warning">
+                                    <i class="bi bi-gift me-1"></i>Bônus
+                                </span>
+                                {% elif transaction.transaction_type == 'refund' %}
+                                <span class="badge bg-info-subtle text-info">
+                                    <i class="bi bi-arrow-return-left me-1"></i>Reembolso
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4">{{ transaction.description }}</td>
+                            <td class="py-3 px-4 text-end">
+                                {% if transaction.amount > 0 %}
+                                <span class="text-success fw-bold">+{{ transaction.amount }}</span>
+                                {% else %}
+                                <span class="text-danger">{{ transaction.amount }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-end">
+                                <strong>{{ transaction.balance_after }}</strong>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-4 text-muted"></i>
+                <p class="text-muted mt-3">Nenhuma transação ainda</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if transactions %}
+        <div class="card-footer bg-white text-center py-3">
+            <a href="{{ url_for('ai.credits_history') }}" class="text-decoration-none">
+                Ver histórico completo <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

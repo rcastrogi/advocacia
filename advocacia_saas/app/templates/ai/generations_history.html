@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Histórico de Gerações IA - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold text-dark mb-1">
+                <i class="bi bi-robot text-muted me-2"></i>Gerações com IA
+            </h1>
+            <p class="text-muted mb-0">Histórico de textos gerados automaticamente</p>
+        </div>
+        <a href="{{ url_for('ai.credits_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Voltar
+        </a>
+    </div>
+
+    <!-- Grid de Gerações -->
+    {% if generations.items %}
+    <div class="row g-4">
+        {% for gen in generations.items %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <!-- Tipo de Geração -->
+                            {% if gen.generation_type == 'section' %}
+                            <span class="badge bg-primary mb-2">
+                                <i class="bi bi-paragraph me-1"></i>Seção: {{ gen.section_name or 'N/A' }}
+                            </span>
+                            {% elif gen.generation_type == 'full_petition' %}
+                            <span class="badge bg-success mb-2">
+                                <i class="bi bi-file-text me-1"></i>Petição Completa
+                            </span>
+                            {% elif gen.generation_type == 'improve' %}
+                            <span class="badge bg-info mb-2">
+                                <i class="bi bi-magic me-1"></i>Melhoria de Texto
+                            </span>
+                            {% elif gen.generation_type == 'analyze' %}
+                            <span class="badge bg-secondary mb-2">
+                                <i class="bi bi-search me-1"></i>Análise
+                            </span>
+                            {% endif %}
+                            
+                            {% if gen.petition_type_slug %}
+                            <span class="badge bg-light text-dark mb-2 ms-1">
+                                {{ gen.petition_type_slug }}
+                            </span>
+                            {% endif %}
+                            
+                            <h6 class="mb-0">
+                                {{ gen.created_at.strftime('%d/%m/%Y às %H:%M') }}
+                            </h6>
+                        </div>
+                        
+                        <div class="text-end">
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-coin me-1"></i>{{ gen.credits_used }} crédito{% if gen.credits_used != 1 %}s{% endif %}
+                            </span>
+                            <br>
+                            <small class="text-muted">{{ gen.model_used }}</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview do Conteúdo -->
+                    {% if gen.output_content %}
+                    <div class="bg-light rounded-3 p-3 mb-3">
+                        <p class="mb-0 small text-muted" style="white-space: pre-line; max-height: 150px; overflow: hidden;">{{ gen.output_content[:500] }}{% if gen.output_content|length > 500 %}...{% endif %}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Métricas -->
+                    <div class="d-flex flex-wrap gap-3">
+                        {% if gen.tokens_total %}
+                        <small class="text-muted">
+                            <i class="bi bi-hash me-1"></i>{{ gen.tokens_total }} tokens
+                        </small>
+                        {% endif %}
+                        
+                        {% if gen.response_time_ms %}
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>{{ (gen.response_time_ms / 1000)|round(1) }}s
+                        </small>
+                        {% endif %}
+                        
+                        {% if gen.status == 'completed' %}
+                        <small class="text-success">
+                            <i class="bi bi-check-circle me-1"></i>Concluído
+                        </small>
+                        {% elif gen.status == 'failed' %}
+                        <small class="text-danger">
+                            <i class="bi bi-x-circle me-1"></i>Falhou
+                        </small>
+                        {% endif %}
+                        
+                        {% if gen.user_rating %}
+                        <small class="text-warning">
+                            {% for i in range(gen.user_rating) %}
+                            <i class="bi bi-star-fill"></i>
+                            {% endfor %}
+                        </small>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Ações -->
+                    <div class="mt-3 pt-3 border-top">
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                onclick="copyContent(this, `{{ gen.output_content|e if gen.output_content else '' }}`)">
+                            <i class="bi bi-clipboard me-1"></i>Copiar
+                        </button>
+                        
+                        <!-- Feedback -->
+                        {% if not gen.user_rating %}
+                        <div class="btn-group ms-2" role="group">
+                            <button class="btn btn-sm btn-outline-success" 
+                                    onclick="sendFeedback({{ gen.id }}, 5)"
+                                    title="Bom">
+                                <i class="bi bi-hand-thumbs-up"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    onclick="sendFeedback({{ gen.id }}, 1)"
+                                    title="Ruim">
+                                <i class="bi bi-hand-thumbs-down"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Paginação -->
+    {% if generations.pages > 1 %}
+    <nav class="mt-4" aria-label="Navegação de páginas">
+        <ul class="pagination justify-content-center">
+            {% if generations.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('ai.generations_history', page=generations.prev_num) }}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for page in generations.iter_pages() %}
+                {% if page %}
+                    {% if page == generations.page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('ai.generations_history', page=page) }}">{{ page }}</a>
+                    </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if generations.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('ai.generations_history', page=generations.next_num) }}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-robot display-4 text-muted"></i>
+            <p class="text-muted mt-3">Nenhuma geração com IA ainda</p>
+            <a href="{{ url_for('petitions.new_petition') }}" class="btn btn-success">
+                <i class="bi bi-plus-lg me-2"></i>Criar Petição
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function copyContent(button, content) {
+    navigator.clipboard.writeText(content).then(() => {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check me-1"></i>Copiado!';
+        setTimeout(() => {
+            button.innerHTML = originalText;
+        }, 2000);
+    });
+}
+
+function sendFeedback(generationId, rating) {
+    fetch(`/ai/api/generation/${generationId}/feedback`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rating: rating, was_used: rating >= 3 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -61,4 +61,8 @@ def create_app(config_class=Config):
 
     app.register_blueprint(checkout_bp, url_prefix="/checkout")
 
+    from app.ai import ai_bp
+
+    app.register_blueprint(ai_bp)
+
     return app

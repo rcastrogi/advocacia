@@ -798,3 +798,188 @@ class PetitionAttachment(db.Model):
 
     def __repr__(self):
         return f"<PetitionAttachment {self.filename}>"
+
+
+# =============================================================================
+# SISTEMA DE CRÉDITOS DE IA
+# =============================================================================
+
+
+class CreditPackage(db.Model):
+    """Pacotes de créditos disponíveis para compra"""
+    __tablename__ = 'credit_packages'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(50), unique=True, nullable=False)
+    credits = db.Column(db.Integer, nullable=False)
+    bonus_credits = db.Column(db.Integer, default=0)  # Créditos bônus
+    price = db.Column(db.Numeric(10, 2), nullable=False)  # Em reais
+    original_price = db.Column(db.Numeric(10, 2))  # Preço original (se tiver desconto)
+    currency = db.Column(db.String(3), default='BRL')
+    description = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    is_featured = db.Column(db.Boolean, default=False)  # Destacado na UI
+    stripe_price_id = db.Column(db.String(100))  # ID do preço no Stripe
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    @property
+    def total_credits(self):
+        """Total de créditos (base + bônus)"""
+        return self.credits + (self.bonus_credits or 0)
+    
+    @property
+    def price_per_credit(self):
+        """Preço por crédito"""
+        if self.total_credits and self.total_credits > 0:
+            return float(self.price) / self.total_credits
+        return 0
+    
+    def __repr__(self):
+        return f'<CreditPackage {self.name}: {self.credits} créditos>'
+
+
+class UserCredits(db.Model):
+    """Saldo de créditos de IA do usuário"""
+    __tablename__ = 'user_credits'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    balance = db.Column(db.Integer, default=0)  # Créditos disponíveis
+    total_purchased = db.Column(db.Integer, default=0)  # Total já comprado
+    total_used = db.Column(db.Integer, default=0)  # Total já usado
+    total_bonus = db.Column(db.Integer, default=0)  # Total de bônus recebido
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relacionamento
+    user = db.relationship('User', backref=db.backref('credits', uselist=False, lazy=True))
+    
+    def add_credits(self, amount, source='purchase'):
+        """Adiciona créditos ao saldo"""
+        self.balance += amount
+        if source == 'purchase':
+            self.total_purchased += amount
+        elif source == 'bonus':
+            self.total_bonus += amount
+        self.updated_at = datetime.utcnow()
+        return self.balance
+    
+    def use_credits(self, amount):
+        """Usa créditos (retorna True se teve saldo suficiente)"""
+        if self.balance >= amount:
+            self.balance -= amount
+            self.total_used += amount
+            self.updated_at = datetime.utcnow()
+            return True
+        return False
+    
+    def has_credits(self, amount=1):
+        """Verifica se tem créditos suficientes"""
+        return self.balance >= amount
+    
+    @staticmethod
+    def get_or_create(user_id):
+        """Obtém ou cria registro de créditos para o usuário"""
+        credits = UserCredits.query.filter_by(user_id=user_id).first()
+        if not credits:
+            credits = UserCredits(user_id=user_id, balance=0)
+            db.session.add(credits)
+            db.session.commit()
+        return credits
+    
+    def __repr__(self):
+        return f'<UserCredits user={self.user_id} balance={self.balance}>'
+
+
+class CreditTransaction(db.Model):
+    """Histórico de transações de créditos"""
+    __tablename__ = 'credit_transactions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    transaction_type = db.Column(db.String(20), nullable=False)  # 'purchase', 'usage', 'refund', 'bonus'
+    amount = db.Column(db.Integer, nullable=False)  # Positivo = crédito, Negativo = débito
+    balance_after = db.Column(db.Integer, nullable=False)  # Saldo após transação
+    
+    # Detalhes
+    description = db.Column(db.String(255))
+    package_id = db.Column(db.Integer, db.ForeignKey('credit_packages.id'), nullable=True)
+    generation_id = db.Column(db.Integer, db.ForeignKey('ai_generations.id'), nullable=True)
+    payment_intent_id = db.Column(db.String(100))  # ID do pagamento Stripe
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relacionamentos
+    user = db.relationship('User', backref=db.backref('credit_transactions', lazy='dynamic'))
+    package = db.relationship('CreditPackage', backref='transactions')
+    
+    def __repr__(self):
+        return f'<CreditTransaction {self.transaction_type}: {self.amount}>'
+
+
+class AIGeneration(db.Model):
+    """Registro de cada geração de conteúdo por IA"""
+    __tablename__ = 'ai_generations'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Tipo de geração
+    generation_type = db.Column(db.String(50), nullable=False)  # 'section', 'full_petition', 'improve', 'analyze'
+    petition_type_slug = db.Column(db.String(100))  # Tipo de petição
+    section_name = db.Column(db.String(100))  # Nome da seção (se aplicável)
+    
+    # Custos
+    credits_used = db.Column(db.Integer, nullable=False, default=1)
+    model_used = db.Column(db.String(50), default='gpt-4o-mini')  # Modelo usado
+    tokens_input = db.Column(db.Integer)
+    tokens_output = db.Column(db.Integer)
+    tokens_total = db.Column(db.Integer)
+    cost_usd = db.Column(db.Numeric(10, 6))  # Custo real em USD
+    
+    # Entrada/Saída
+    prompt_summary = db.Column(db.String(500))  # Resumo do prompt (não o completo por privacidade)
+    input_data = db.Column(db.Text)  # Dados de entrada (JSON)
+    output_content = db.Column(db.Text)  # Conteúdo gerado
+    
+    # Status
+    status = db.Column(db.String(20), default='completed')  # 'completed', 'failed', 'cancelled'
+    error_message = db.Column(db.Text)
+    
+    # Feedback
+    user_rating = db.Column(db.Integer)  # 1-5 estrelas
+    was_used = db.Column(db.Boolean, default=False)  # Se o usuário usou o conteúdo
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    response_time_ms = db.Column(db.Integer)  # Tempo de resposta em ms
+    
+    # Relacionamentos
+    user = db.relationship('User', backref=db.backref('ai_generations', lazy='dynamic'))
+    transaction = db.relationship('CreditTransaction', backref='generation', uselist=False)
+    
+    def calculate_cost(self):
+        """Calcula o custo estimado em USD baseado nos tokens"""
+        if not self.tokens_input or not self.tokens_output:
+            return 0
+        
+        # Preços por 1M tokens (Dezembro 2024)
+        prices = {
+            'gpt-4o-mini': {'input': 0.15, 'output': 0.60},
+            'gpt-4o': {'input': 2.50, 'output': 10.00},
+            'gpt-4-turbo': {'input': 10.00, 'output': 30.00},
+        }
+        
+        model_prices = prices.get(self.model_used, prices['gpt-4o-mini'])
+        input_cost = (self.tokens_input / 1_000_000) * model_prices['input']
+        output_cost = (self.tokens_output / 1_000_000) * model_prices['output']
+        
+        self.cost_usd = input_cost + output_cost
+        return self.cost_usd
+    
+    def __repr__(self):
+        return f'<AIGeneration {self.generation_type} - {self.status}>'

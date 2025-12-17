@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Comprar {{ package.name }} - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <a href="{{ url_for('ai.credits_dashboard') }}" class="text-decoration-none text-muted">
+                    <i class="bi bi-arrow-left me-1"></i>Voltar aos créditos
+                </a>
+            </div>
+
+            <!-- Card de Compra -->
+            <div class="card border-0 shadow">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
+                            <i class="bi bi-coin text-success display-4"></i>
+                        </div>
+                        <h2 class="fw-bold">{{ package.name }}</h2>
+                        
+                        {% if package.description %}
+                        <p class="text-muted">{{ package.description }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Detalhes do Pacote -->
+                    <div class="bg-light rounded-3 p-4 mb-4">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Créditos</small>
+                                <span class="h4 fw-bold text-dark">{{ package.credits }}</span>
+                            </div>
+                            {% if package.bonus_credits > 0 %}
+                            <div class="col-6 text-end">
+                                <small class="text-muted d-block">Bônus</small>
+                                <span class="h4 fw-bold text-warning">+{{ package.bonus_credits }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <hr class="my-3">
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Total de créditos:</span>
+                            <span class="h3 fw-bold text-success mb-0">{{ package.total_credits }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Preço -->
+                    <div class="text-center mb-4">
+                        {% if package.original_price %}
+                        <p class="text-decoration-line-through text-muted mb-1">
+                            R$ {{ "%.2f"|format(package.original_price) }}
+                        </p>
+                        {% endif %}
+                        <div class="display-4 fw-bold" style="color: var(--primary-green);">
+                            R$ {{ "%.2f"|format(package.price) }}
+                        </div>
+                        <small class="text-muted">
+                            R$ {{ "%.2f"|format(package.price / package.total_credits) }} por crédito
+                        </small>
+                    </div>
+
+                    <!-- O que você pode fazer -->
+                    <div class="bg-white border rounded-3 p-3 mb-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Com {{ package.total_credits }} créditos você pode:
+                        </h6>
+                        <ul class="list-unstyled mb-0 small">
+                            <li class="mb-2">
+                                <i class="bi bi-check text-success me-2"></i>
+                                Gerar até <strong>{{ package.total_credits }}</strong> seções de petição
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check text-success me-2"></i>
+                                Ou até <strong>{{ (package.total_credits / 5)|int }}</strong> petições completas
+                            </li>
+                            <li>
+                                <i class="bi bi-check text-success me-2"></i>
+                                Ou <strong>{{ (package.total_credits / 3)|int }}</strong> análises jurídicas
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Botão de Compra -->
+                    <form id="payment-form">
+                        <button type="submit" class="btn btn-success btn-lg w-100 py-3" id="submit-button">
+                            <i class="bi bi-credit-card me-2"></i>
+                            Pagar R$ {{ "%.2f"|format(package.price) }}
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            <i class="bi bi-shield-check me-1"></i>
+                            Pagamento seguro via Stripe
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações Adicionais -->
+            <div class="text-center mt-4">
+                <small class="text-muted">
+                    Créditos não expiram e podem ser usados a qualquer momento.<br>
+                    Em caso de dúvidas, entre em contato com nosso suporte.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Integração com Stripe será implementada aqui
+document.getElementById('payment-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const button = document.getElementById('submit-button');
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
+    
+    try {
+        // TODO: Implementar checkout Stripe
+        // const response = await fetch('/payments/create-checkout-session', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({ package_slug: '{{ package.slug }}' })
+        // });
+        
+        // Por enquanto, mostra mensagem
+        alert('Integração de pagamento será implementada em breve!\n\nPor enquanto, os créditos serão adicionados manualmente.');
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao processar pagamento. Tente novamente.');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-credit-card me-2"></i>Pagar R$ {{ "%.2f"|format(package.price) }}';
+    }
+});
+</script>
+{% endblock %}
