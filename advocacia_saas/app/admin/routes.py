@@ -8,23 +8,23 @@ from decimal import Decimal
 
 from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
-from sqlalchemy import func, case, and_
+from sqlalchemy import and_, case, func
 from sqlalchemy.orm import joinedload
 
 from app import db
 from app.admin import bp
 from app.models import (
-    User,
-    Client,
-    PetitionUsage,
-    UserPlan,
-    BillingPlan,
-    Payment,
-    Invoice,
-    UserCredits,
     AIGeneration,
-    CreditTransaction,
+    BillingPlan,
+    Client,
     CreditPackage,
+    CreditTransaction,
+    Invoice,
+    Payment,
+    PetitionUsage,
+    User,
+    UserCredits,
+    UserPlan,
 )
 
 
@@ -39,7 +39,7 @@ def _require_admin():
 def users_list():
     """Lista todos os usuários com métricas detalhadas"""
     _require_admin()
-    
+
     # Parâmetros de filtro e ordenação
     search = request.args.get("search", "").strip()
     status_filter = request.args.get("status", "all")
@@ -48,10 +48,10 @@ def users_list():
     sort_order = request.args.get("order", "desc")
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
-    
+
     # Query base
     query = User.query
-    
+
     # Filtro de busca
     if search:
         search_term = f"%{search}%"
@@ -63,7 +63,7 @@ def users_list():
                 User.oab_number.ilike(search_term),
             )
         )
-    
+
     # Filtro de status
     if status_filter == "active":
         query = query.filter(User.is_active == True)
@@ -73,31 +73,28 @@ def users_list():
         query = query.filter(User.billing_status == "delinquent")
     elif status_filter == "trial":
         query = query.filter(User.billing_status == "trial")
-    
+
     # Filtro de tipo de usuário
     if user_type_filter != "all":
         query = query.filter(User.user_type == user_type_filter)
-    
+
     # Ordenação
     sort_column = getattr(User, sort_by, User.created_at)
     if sort_order == "desc":
         query = query.order_by(sort_column.desc())
     else:
         query = query.order_by(sort_column.asc())
-    
+
     # Paginação
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     users = pagination.items
-    
+
     # Calcular métricas para cada usuário
     users_with_metrics = []
     for user in users:
         metrics = _get_user_metrics(user)
-        users_with_metrics.append({
-            "user": user,
-            "metrics": metrics
-        })
-    
+        users_with_metrics.append({"user": user, "metrics": metrics})
+
     return render_template(
         "admin/users_list.html",
         title="Gerenciar Usuários",
@@ -116,30 +113,42 @@ def users_list():
 def user_detail(user_id):
     """Detalhes completos de um usuário"""
     _require_admin()
-    
+
     user = User.query.get_or_404(user_id)
     metrics = _get_user_metrics(user, detailed=True)
-    
+
     # Histórico de petições
-    petitions = PetitionUsage.query.filter_by(user_id=user_id).order_by(
-        PetitionUsage.generated_at.desc()
-    ).limit(20).all()
-    
+    petitions = (
+        PetitionUsage.query.filter_by(user_id=user_id)
+        .order_by(PetitionUsage.generated_at.desc())
+        .limit(20)
+        .all()
+    )
+
     # Histórico de gerações IA
-    ai_generations = AIGeneration.query.filter_by(user_id=user_id).order_by(
-        AIGeneration.created_at.desc()
-    ).limit(20).all()
-    
+    ai_generations = (
+        AIGeneration.query.filter_by(user_id=user_id)
+        .order_by(AIGeneration.created_at.desc())
+        .limit(20)
+        .all()
+    )
+
     # Histórico de transações de créditos
-    credit_transactions = CreditTransaction.query.filter_by(user_id=user_id).order_by(
-        CreditTransaction.created_at.desc()
-    ).limit(20).all()
-    
+    credit_transactions = (
+        CreditTransaction.query.filter_by(user_id=user_id)
+        .order_by(CreditTransaction.created_at.desc())
+        .limit(20)
+        .all()
+    )
+
     # Histórico de pagamentos
-    payments = Payment.query.filter_by(user_id=user_id).order_by(
-        Payment.paid_at.desc()
-    ).limit(20).all()
-    
+    payments = (
+        Payment.query.filter_by(user_id=user_id)
+        .order_by(Payment.paid_at.desc())
+        .limit(20)
+        .all()
+    )
+
     return render_template(
         "admin/user_detail.html",
         title=f"Usuário: {user.full_name or user.username}",
@@ -157,19 +166,19 @@ def user_detail(user_id):
 def toggle_user_status(user_id):
     """Ativa/desativa um usuário"""
     _require_admin()
-    
+
     user = User.query.get_or_404(user_id)
-    
+
     if user.user_type == "master":
         flash("Não é possível desativar um usuário master.", "danger")
         return redirect(url_for("admin.users_list"))
-    
+
     user.is_active = not user.is_active
     db.session.commit()
-    
+
     status = "ativado" if user.is_active else "desativado"
     flash(f"Usuário {user.username} foi {status} com sucesso.", "success")
-    
+
     return redirect(url_for("admin.user_detail", user_id=user_id))
 
 
@@ -178,21 +187,21 @@ def toggle_user_status(user_id):
 def add_user_credits(user_id):
     """Adiciona créditos de IA para um usuário (bônus admin)"""
     _require_admin()
-    
+
     user = User.query.get_or_404(user_id)
     amount = request.form.get("amount", 0, type=int)
     reason = request.form.get("reason", "Bônus administrativo")
-    
+
     if amount <= 0:
         flash("A quantidade de créditos deve ser maior que zero.", "danger")
         return redirect(url_for("admin.user_detail", user_id=user_id))
-    
+
     # Obtém ou cria registro de créditos
     user_credits = UserCredits.get_or_create(user.id)
-    
+
     # Adiciona os créditos
     new_balance = user_credits.add_credits(amount, source="bonus")
-    
+
     # Registra a transação
     transaction = CreditTransaction(
         user_id=user.id,
@@ -203,9 +212,12 @@ def add_user_credits(user_id):
     )
     db.session.add(transaction)
     db.session.commit()
-    
-    flash(f"{amount} créditos adicionados para {user.username}. Novo saldo: {new_balance}", "success")
-    
+
+    flash(
+        f"{amount} créditos adicionados para {user.username}. Novo saldo: {new_balance}",
+        "success",
+    )
+
     return redirect(url_for("admin.user_detail", user_id=user_id))
 
 
@@ -214,12 +226,12 @@ def add_user_credits(user_id):
 def dashboard():
     """Dashboard administrativo com visão geral da plataforma"""
     _require_admin()
-    
+
     # Período atual
     now = datetime.utcnow()
     current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
-    
+
     # === DADOS PARA GRÁFICOS - Últimos 12 meses ===
     chart_labels = []
     chart_revenue = []  # Faturamento geral
@@ -227,111 +239,129 @@ def dashboard():
     chart_ai_usage = []  # Uso de IA (gerações)
     chart_ai_cost = []  # Custo de IA
     chart_ai_credits_sold = []  # Créditos vendidos
-    
+
     # Buscar planos existentes
     all_plans = BillingPlan.query.filter(BillingPlan.active == True).all()
     for plan in all_plans:
         chart_revenue_by_plan[plan.name] = []
-    chart_revenue_by_plan['Avulso'] = []  # Para pagamentos avulsos/créditos
-    
+    chart_revenue_by_plan["Avulso"] = []  # Para pagamentos avulsos/créditos
+
     # Iterar últimos 12 meses
     for i in range(11, -1, -1):
         # Calcular início e fim do mês
-        month_date = now - timedelta(days=i*30)
-        month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        month_date = now - timedelta(days=i * 30)
+        month_start = month_date.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
         if i > 0:
             next_month = month_date + timedelta(days=32)
-            month_end = next_month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            month_end = next_month.replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
         else:
             month_end = now
-        
+
         # Label do mês
-        chart_labels.append(month_start.strftime('%b/%y'))
-        
+        chart_labels.append(month_start.strftime("%b/%y"))
+
         # Faturamento geral do mês
-        month_revenue = db.session.query(
-            func.coalesce(func.sum(Payment.amount), 0)
-        ).filter(
-            Payment.paid_at >= month_start,
-            Payment.paid_at < month_end,
-            Payment.payment_status == "completed"
-        ).scalar() or 0
-        chart_revenue.append(float(month_revenue))
-        
-        # Faturamento por plano (via user -> current plan)
-        for plan in all_plans:
-            plan_revenue = db.session.query(
-                func.coalesce(func.sum(Payment.amount), 0)
-            ).join(
-                User, Payment.user_id == User.id
-            ).join(
-                UserPlan, and_(
-                    UserPlan.user_id == User.id,
-                    UserPlan.is_current == True
-                )
-            ).filter(
+        month_revenue = (
+            db.session.query(func.coalesce(func.sum(Payment.amount), 0))
+            .filter(
                 Payment.paid_at >= month_start,
                 Payment.paid_at < month_end,
                 Payment.payment_status == "completed",
-                UserPlan.plan_id == plan.id
-            ).scalar() or 0
+            )
+            .scalar()
+            or 0
+        )
+        chart_revenue.append(float(month_revenue))
+
+        # Faturamento por plano (via user -> current plan)
+        for plan in all_plans:
+            plan_revenue = (
+                db.session.query(func.coalesce(func.sum(Payment.amount), 0))
+                .join(User, Payment.user_id == User.id)
+                .join(
+                    UserPlan,
+                    and_(UserPlan.user_id == User.id, UserPlan.is_current == True),
+                )
+                .filter(
+                    Payment.paid_at >= month_start,
+                    Payment.paid_at < month_end,
+                    Payment.payment_status == "completed",
+                    UserPlan.plan_id == plan.id,
+                )
+                .scalar()
+                or 0
+            )
             chart_revenue_by_plan[plan.name].append(float(plan_revenue))
-        
+
         # Faturamento avulso (créditos IA) - via CreditPackage.price
-        credits_revenue = db.session.query(
-            func.coalesce(func.sum(CreditPackage.price), 0)
-        ).join(
-            CreditTransaction, CreditTransaction.package_id == CreditPackage.id
-        ).filter(
-            CreditTransaction.created_at >= month_start,
-            CreditTransaction.created_at < month_end,
-            CreditTransaction.transaction_type == "purchase"
-        ).scalar() or 0
-        chart_revenue_by_plan['Avulso'].append(float(credits_revenue))
-        
+        credits_revenue = (
+            db.session.query(func.coalesce(func.sum(CreditPackage.price), 0))
+            .join(CreditTransaction, CreditTransaction.package_id == CreditPackage.id)
+            .filter(
+                CreditTransaction.created_at >= month_start,
+                CreditTransaction.created_at < month_end,
+                CreditTransaction.transaction_type == "purchase",
+            )
+            .scalar()
+            or 0
+        )
+        chart_revenue_by_plan["Avulso"].append(float(credits_revenue))
+
         # Uso de IA no mês
         ai_gens = AIGeneration.query.filter(
-            AIGeneration.created_at >= month_start,
-            AIGeneration.created_at < month_end
+            AIGeneration.created_at >= month_start, AIGeneration.created_at < month_end
         ).count()
         chart_ai_usage.append(ai_gens)
-        
+
         # Custo de IA no mês
-        ai_cost = db.session.query(
-            func.coalesce(func.sum(AIGeneration.cost_usd), 0)
-        ).filter(
-            AIGeneration.created_at >= month_start,
-            AIGeneration.created_at < month_end
-        ).scalar() or 0
+        ai_cost = (
+            db.session.query(func.coalesce(func.sum(AIGeneration.cost_usd), 0))
+            .filter(
+                AIGeneration.created_at >= month_start,
+                AIGeneration.created_at < month_end,
+            )
+            .scalar()
+            or 0
+        )
         chart_ai_cost.append(float(ai_cost))
-        
+
         # Créditos vendidos no mês
-        credits = db.session.query(
-            func.coalesce(func.sum(CreditTransaction.amount), 0)
-        ).filter(
-            CreditTransaction.created_at >= month_start,
-            CreditTransaction.created_at < month_end,
-            CreditTransaction.transaction_type == "purchase"
-        ).scalar() or 0
+        credits = (
+            db.session.query(func.coalesce(func.sum(CreditTransaction.amount), 0))
+            .filter(
+                CreditTransaction.created_at >= month_start,
+                CreditTransaction.created_at < month_end,
+                CreditTransaction.transaction_type == "purchase",
+            )
+            .scalar()
+            or 0
+        )
         chart_ai_credits_sold.append(int(credits))
-    
+
     # === Métricas de Usuários ===
     total_users = User.query.filter(User.user_type != "master").count()
-    active_users = User.query.filter(User.is_active == True, User.user_type != "master").count()
+    active_users = User.query.filter(
+        User.is_active == True, User.user_type != "master"
+    ).count()
     new_users_month = User.query.filter(
-        User.created_at >= current_month_start,
-        User.user_type != "master"
+        User.created_at >= current_month_start, User.user_type != "master"
     ).count()
     new_users_last_month = User.query.filter(
         User.created_at >= last_month_start,
         User.created_at < current_month_start,
-        User.user_type != "master"
+        User.user_type != "master",
     ).count()
-    
+
     # === Métricas de Clientes ===
     total_clients = Client.query.count()
-    new_clients_month = Client.query.filter(Client.created_at >= current_month_start).count()
-    
+    new_clients_month = Client.query.filter(
+        Client.created_at >= current_month_start
+    ).count()
+
     # === Métricas de Petições ===
     total_petitions = PetitionUsage.query.count()
     petitions_month = PetitionUsage.query.filter(
@@ -339,95 +369,105 @@ def dashboard():
     ).count()
     petitions_last_month = PetitionUsage.query.filter(
         PetitionUsage.generated_at >= last_month_start,
-        PetitionUsage.generated_at < current_month_start
+        PetitionUsage.generated_at < current_month_start,
     ).count()
-    
+
     # Valor total de petições no mês
     petitions_value_month = db.session.query(
         func.coalesce(func.sum(PetitionUsage.amount), 0)
-    ).filter(PetitionUsage.generated_at >= current_month_start).scalar() or Decimal("0.00")
-    
+    ).filter(PetitionUsage.generated_at >= current_month_start).scalar() or Decimal(
+        "0.00"
+    )
+
     # === Métricas de IA ===
     ai_generations_month = AIGeneration.query.filter(
         AIGeneration.created_at >= current_month_start
     ).count()
-    
+
     # Tokens usados no mês
-    tokens_month = db.session.query(
-        func.coalesce(func.sum(AIGeneration.tokens_total), 0)
-    ).filter(AIGeneration.created_at >= current_month_start).scalar() or 0
-    
+    tokens_month = (
+        db.session.query(func.coalesce(func.sum(AIGeneration.tokens_total), 0))
+        .filter(AIGeneration.created_at >= current_month_start)
+        .scalar()
+        or 0
+    )
+
     # Custo de IA no mês (em USD)
     ai_cost_month = db.session.query(
         func.coalesce(func.sum(AIGeneration.cost_usd), 0)
     ).filter(AIGeneration.created_at >= current_month_start).scalar() or Decimal("0.00")
-    
+
     # Créditos vendidos no mês
-    credits_sold_month = db.session.query(
-        func.coalesce(func.sum(CreditTransaction.amount), 0)
-    ).filter(
-        CreditTransaction.created_at >= current_month_start,
-        CreditTransaction.transaction_type == "purchase"
-    ).scalar() or 0
-    
+    credits_sold_month = (
+        db.session.query(func.coalesce(func.sum(CreditTransaction.amount), 0))
+        .filter(
+            CreditTransaction.created_at >= current_month_start,
+            CreditTransaction.transaction_type == "purchase",
+        )
+        .scalar()
+        or 0
+    )
+
     # === Métricas Financeiras ===
     # Pagamentos do mês
     payments_month = db.session.query(
         func.coalesce(func.sum(Payment.amount), 0)
     ).filter(
-        Payment.paid_at >= current_month_start,
-        Payment.payment_status == "completed"
+        Payment.paid_at >= current_month_start, Payment.payment_status == "completed"
     ).scalar() or Decimal("0.00")
-    
+
     # Usuários pagantes (com plano ativo)
-    paying_users = User.query.join(UserPlan).filter(
-        UserPlan.status == "active",
-        UserPlan.is_current == True
-    ).distinct().count()
-    
+    paying_users = (
+        User.query.join(UserPlan)
+        .filter(UserPlan.status == "active", UserPlan.is_current == True)
+        .distinct()
+        .count()
+    )
+
     # === Top Usuários (mais petições no mês) ===
-    top_users_petitions = db.session.query(
-        User.id,
-        User.username,
-        User.full_name,
-        User.email,
-        func.count(PetitionUsage.id).label("petition_count"),
-        func.coalesce(func.sum(PetitionUsage.amount), 0).label("total_value")
-    ).join(
-        PetitionUsage, User.id == PetitionUsage.user_id
-    ).filter(
-        PetitionUsage.generated_at >= current_month_start
-    ).group_by(
-        User.id, User.username, User.full_name, User.email
-    ).order_by(
-        func.count(PetitionUsage.id).desc()
-    ).limit(10).all()
-    
+    top_users_petitions = (
+        db.session.query(
+            User.id,
+            User.username,
+            User.full_name,
+            User.email,
+            func.count(PetitionUsage.id).label("petition_count"),
+            func.coalesce(func.sum(PetitionUsage.amount), 0).label("total_value"),
+        )
+        .join(PetitionUsage, User.id == PetitionUsage.user_id)
+        .filter(PetitionUsage.generated_at >= current_month_start)
+        .group_by(User.id, User.username, User.full_name, User.email)
+        .order_by(func.count(PetitionUsage.id).desc())
+        .limit(10)
+        .all()
+    )
+
     # === Top Usuários (mais uso de IA no mês) ===
-    top_users_ai = db.session.query(
-        User.id,
-        User.username,
-        User.full_name,
-        func.count(AIGeneration.id).label("generation_count"),
-        func.coalesce(func.sum(AIGeneration.tokens_total), 0).label("total_tokens"),
-        func.coalesce(func.sum(AIGeneration.cost_usd), 0).label("total_cost")
-    ).join(
-        AIGeneration, User.id == AIGeneration.user_id
-    ).filter(
-        AIGeneration.created_at >= current_month_start
-    ).group_by(
-        User.id, User.username, User.full_name
-    ).order_by(
-        func.sum(AIGeneration.tokens_total).desc()
-    ).limit(10).all()
-    
+    top_users_ai = (
+        db.session.query(
+            User.id,
+            User.username,
+            User.full_name,
+            func.count(AIGeneration.id).label("generation_count"),
+            func.coalesce(func.sum(AIGeneration.tokens_total), 0).label("total_tokens"),
+            func.coalesce(func.sum(AIGeneration.cost_usd), 0).label("total_cost"),
+        )
+        .join(AIGeneration, User.id == AIGeneration.user_id)
+        .filter(AIGeneration.created_at >= current_month_start)
+        .group_by(User.id, User.username, User.full_name)
+        .order_by(func.sum(AIGeneration.tokens_total).desc())
+        .limit(10)
+        .all()
+    )
+
     # === Usuários recentes ===
-    recent_users = User.query.filter(
-        User.user_type != "master"
-    ).order_by(
-        User.created_at.desc()
-    ).limit(10).all()
-    
+    recent_users = (
+        User.query.filter(User.user_type != "master")
+        .order_by(User.created_at.desc())
+        .limit(10)
+        .all()
+    )
+
     return render_template(
         "admin/dashboard.html",
         title="Dashboard Administrativo",
@@ -473,25 +513,27 @@ def dashboard():
 def export_users():
     """Exporta lista de usuários em JSON"""
     _require_admin()
-    
+
     users = User.query.filter(User.user_type != "master").all()
-    
+
     data = []
     for user in users:
         metrics = _get_user_metrics(user)
-        data.append({
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "full_name": user.full_name,
-            "oab_number": user.oab_number,
-            "user_type": user.user_type,
-            "is_active": user.is_active,
-            "billing_status": user.billing_status,
-            "created_at": user.created_at.isoformat() if user.created_at else None,
-            "metrics": metrics,
-        })
-    
+        data.append(
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "full_name": user.full_name,
+                "oab_number": user.oab_number,
+                "user_type": user.user_type,
+                "is_active": user.is_active,
+                "billing_status": user.billing_status,
+                "created_at": user.created_at.isoformat() if user.created_at else None,
+                "metrics": metrics,
+            }
+        )
+
     return jsonify(data)
 
 
@@ -499,71 +541,73 @@ def _get_user_metrics(user, detailed=False):
     """Calcula métricas de um usuário"""
     now = datetime.utcnow()
     current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    
+
     # Dias na plataforma
     days_on_platform = (now - user.created_at).days if user.created_at else 0
-    
+
     # Clientes (Client usa lawyer_id, não user_id)
     clients_count = Client.query.filter_by(lawyer_id=user.id).count()
-    
+
     # Petições
     petitions_total = PetitionUsage.query.filter_by(user_id=user.id).count()
     petitions_month = PetitionUsage.query.filter(
         PetitionUsage.user_id == user.id,
-        PetitionUsage.generated_at >= current_month_start
+        PetitionUsage.generated_at >= current_month_start,
     ).count()
-    
+
     # Valor total de petições
     petitions_value = db.session.query(
         func.coalesce(func.sum(PetitionUsage.amount), 0)
     ).filter(PetitionUsage.user_id == user.id).scalar() or Decimal("0.00")
-    
+
     # Créditos de IA
     user_credits = UserCredits.query.filter_by(user_id=user.id).first()
     ai_credits_balance = user_credits.balance if user_credits else 0
     ai_credits_used = user_credits.total_used if user_credits else 0
-    
+
     # Uso de IA
     ai_generations_total = AIGeneration.query.filter_by(user_id=user.id).count()
     ai_generations_month = AIGeneration.query.filter(
-        AIGeneration.user_id == user.id,
-        AIGeneration.created_at >= current_month_start
+        AIGeneration.user_id == user.id, AIGeneration.created_at >= current_month_start
     ).count()
-    
+
     # Tokens e custo de IA
-    ai_stats = db.session.query(
-        func.coalesce(func.sum(AIGeneration.tokens_total), 0).label("tokens"),
-        func.coalesce(func.sum(AIGeneration.cost_usd), 0).label("cost")
-    ).filter(AIGeneration.user_id == user.id).first()
-    
+    ai_stats = (
+        db.session.query(
+            func.coalesce(func.sum(AIGeneration.tokens_total), 0).label("tokens"),
+            func.coalesce(func.sum(AIGeneration.cost_usd), 0).label("cost"),
+        )
+        .filter(AIGeneration.user_id == user.id)
+        .first()
+    )
+
     ai_tokens_total = ai_stats.tokens if ai_stats else 0
     ai_cost_total = ai_stats.cost if ai_stats else Decimal("0.00")
-    
+
     # Plano atual
-    current_plan = UserPlan.query.filter_by(
-        user_id=user.id,
-        is_current=True
-    ).first()
-    plan_name = current_plan.plan.name if current_plan and current_plan.plan else "Sem plano"
-    
+    current_plan = UserPlan.query.filter_by(user_id=user.id, is_current=True).first()
+    plan_name = (
+        current_plan.plan.name if current_plan and current_plan.plan else "Sem plano"
+    )
+
     # Dias como pagante
-    first_payment = Payment.query.filter(
-        Payment.user_id == user.id,
-        Payment.payment_status == "completed"
-    ).order_by(Payment.paid_at.asc()).first()
-    
+    first_payment = (
+        Payment.query.filter(
+            Payment.user_id == user.id, Payment.payment_status == "completed"
+        )
+        .order_by(Payment.paid_at.asc())
+        .first()
+    )
+
     days_paying = 0
     if first_payment and first_payment.paid_at:
         days_paying = (now - first_payment.paid_at).days
-    
+
     # Total pago
-    total_paid = db.session.query(
-        func.coalesce(func.sum(Payment.amount), 0)
-    ).filter(
-        Payment.user_id == user.id,
-        Payment.payment_status == "completed"
+    total_paid = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
+        Payment.user_id == user.id, Payment.payment_status == "completed"
     ).scalar() or Decimal("0.00")
-    
+
     metrics = {
         "days_on_platform": days_on_platform,
         "days_paying": days_paying,
@@ -580,5 +624,5 @@ def _get_user_metrics(user, detailed=False):
         "ai_cost_total": float(ai_cost_total),
         "total_paid": float(total_paid),
     }
-    
+
     return metrics
