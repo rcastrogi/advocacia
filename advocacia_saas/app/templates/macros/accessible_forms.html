@@ -1,0 +1,149 @@
+{% macro render_field(field, show_label=True, placeholder=None, help_text=None, input_class='form-control') %}
+<div class="mb-3">
+    {% if show_label %}
+        {{ field.label(class="form-label") }}
+    {% endif %}
+    
+    {% set field_id = field.id or field.name %}
+    {% set field_classes = [input_class] %}
+    
+    {% if field.errors %}
+        {% set field_classes = field_classes + ['is-invalid'] %}
+    {% endif %}
+    
+    {% set field_attrs = {} %}
+    
+    {# Add aria-required for required fields #}
+    {% if field.flags.required %}
+        {% set _ = field_attrs.update({'aria-required': 'true'}) %}
+    {% endif %}
+    
+    {# Add aria-invalid for fields with errors #}
+    {% if field.errors %}
+        {% set _ = field_attrs.update({'aria-invalid': 'true'}) %}
+        {% set _ = field_attrs.update({'aria-describedby': field_id ~ '-error'}) %}
+    {% elif help_text %}
+        {% set _ = field_attrs.update({'aria-describedby': field_id ~ '-help'}) %}
+    {% endif %}
+    
+    {# Add placeholder if provided #}
+    {% if placeholder %}
+        {% set _ = field_attrs.update({'placeholder': placeholder}) %}
+    {% endif %}
+    
+    {{ field(class=field_classes|join(' '), **field_attrs) }}
+    
+    {% if help_text %}
+        <small id="{{ field_id }}-help" class="form-text text-muted">{{ help_text }}</small>
+    {% endif %}
+    
+    {% if field.errors %}
+        <div id="{{ field_id }}-error" class="invalid-feedback" role="alert">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_checkbox(field, help_text=None) %}
+<div class="mb-3 form-check">
+    {% set field_id = field.id or field.name %}
+    {% set field_attrs = {} %}
+    
+    {% if field.errors %}
+        {% set _ = field_attrs.update({'aria-invalid': 'true'}) %}
+        {% set _ = field_attrs.update({'aria-describedby': field_id ~ '-error'}) %}
+    {% elif help_text %}
+        {% set _ = field_attrs.update({'aria-describedby': field_id ~ '-help'}) %}
+    {% endif %}
+    
+    {{ field(class="form-check-input" + (" is-invalid" if field.errors else ""), **field_attrs) }}
+    {{ field.label(class="form-check-label") }}
+    
+    {% if help_text %}
+        <small id="{{ field_id }}-help" class="form-text text-muted d-block">{{ help_text }}</small>
+    {% endif %}
+    
+    {% if field.errors %}
+        <div id="{{ field_id }}-error" class="invalid-feedback" role="alert">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_select(field, show_label=True, help_text=None) %}
+<div class="mb-3">
+    {% if show_label %}
+        {{ field.label(class="form-label") }}
+    {% endif %}
+    
+    {% set field_id = field.id or field.name %}
+    {% set field_attrs = {} %}
+    
+    {% if field.flags.required %}
+        {% set _ = field_attrs.update({'aria-required': 'true'}) %}
+    {% endif %}
+    
+    {% if field.errors %}
+        {% set _ = field_attrs.update({'aria-invalid': 'true'}) %}
+        {% set _ = field_attrs.update({'aria-describedby': field_id ~ '-error'}) %}
+    {% elif help_text %}
+        {% set _ = field_attrs.update({'aria-describedby': field_id ~ '-help'}) %}
+    {% endif %}
+    
+    {{ field(class="form-select" + (" is-invalid" if field.errors else ""), **field_attrs) }}
+    
+    {% if help_text %}
+        <small id="{{ field_id }}-help" class="form-text text-muted">{{ help_text }}</small>
+    {% endif %}
+    
+    {% if field.errors %}
+        <div id="{{ field_id }}-error" class="invalid-feedback" role="alert">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_textarea(field, rows=4, show_label=True, help_text=None) %}
+<div class="mb-3">
+    {% if show_label %}
+        {{ field.label(class="form-label") }}
+    {% endif %}
+    
+    {% set field_id = field.id or field.name %}
+    {% set field_attrs = {'rows': rows} %}
+    
+    {% if field.flags.required %}
+        {% set _ = field_attrs.update({'aria-required': 'true'}) %}
+    {% endif %}
+    
+    {% if field.errors %}
+        {% set _ = field_attrs.update({'aria-invalid': 'true'}) %}
+        {% set _ = field_attrs.update({'aria-describedby': field_id ~ '-error'}) %}
+    {% elif help_text %}
+        {% set _ = field_attrs.update({'aria-describedby': field_id ~ '-help'}) %}
+    {% endif %}
+    
+    {{ field(class="form-control" + (" is-invalid" if field.errors else ""), **field_attrs) }}
+    
+    {% if help_text %}
+        <small id="{{ field_id }}-help" class="form-text text-muted">{{ help_text }}</small>
+    {% endif %}
+    
+    {% if field.errors %}
+        <div id="{{ field_id }}-error" class="invalid-feedback" role="alert">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endmacro %}
