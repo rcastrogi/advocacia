@@ -51,7 +51,6 @@ def index():
 
     return render_template(
         "index.html",
-        title="Petitio",
         pricing_plans=plans,
         petition_types=petition_types,
         testimonials=testimonials,
