@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar de navegação admin -->
+        <div class="col-lg-2 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>Administração
+                    </h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('admin.dashboard') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'admin.dashboard' else '' }}">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    <a href="{{ url_for('admin.users_list') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'users' in request.endpoint else '' }}">
+                        <i class="fas fa-users me-2"></i>Usuários
+                    </a>
+                    <a href="{{ url_for('main.admin_testimonials') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'testimonials' in request.endpoint else '' }}">
+                        <i class="fas fa-comments me-2"></i>Depoimentos
+                    </a>
+                    <a href="{{ url_for('billing.plan_list') }}" 
+                       class="list-group-item list-group-item-action">
+                        <i class="fas fa-tags me-2"></i>Planos
+                    </a>
+                    <a href="{{ url_for('petitions.petition_types') }}" 
+                       class="list-group-item list-group-item-action">
+                        <i class="fas fa-file-alt me-2"></i>Tipos de Petição
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Conteúdo principal -->
+        <div class="col-lg-10">
+            {% block admin_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,407 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin_content %}
+<!-- Cabeçalho -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">
+            <i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard Administrativo
+        </h2>
+        <p class="text-muted mb-0">Visão geral da plataforma - {{ current_month }}</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.users_list') }}" class="btn btn-outline-primary">
+            <i class="fas fa-users me-2"></i>Ver Todos os Usuários
+        </a>
+    </div>
+</div>
+
+<!-- Cards de Métricas Principais -->
+<div class="row g-4 mb-4">
+    <!-- Usuários -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                            <i class="fas fa-users fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">{{ total_users }}</h3>
+                        <small class="text-muted">Usuários Total</small>
+                    </div>
+                </div>
+                <hr class="my-3">
+                <div class="d-flex justify-content-between small">
+                    <span class="text-success">
+                        <i class="fas fa-user-plus me-1"></i>+{{ new_users_month }} este mês
+                    </span>
+                    <span class="text-muted">{{ active_users }} ativos</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Usuários Pagantes -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                            <i class="fas fa-dollar-sign fa-2x text-success"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">{{ paying_users }}</h3>
+                        <small class="text-muted">Usuários Pagantes</small>
+                    </div>
+                </div>
+                <hr class="my-3">
+                <div class="d-flex justify-content-between small">
+                    <span class="text-primary">
+                        {% if total_users > 0 %}
+                        {{ "%.1f"|format(paying_users / total_users * 100) }}% conversão
+                        {% else %}
+                        0% conversão
+                        {% endif %}
+                    </span>
+                    <span class="text-success">
+                        R$ {{ "%.2f"|format(payments_month) }} mês
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Petições -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                            <i class="fas fa-file-signature fa-2x text-info"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">{{ petitions_month }}</h3>
+                        <small class="text-muted">Petições no Mês</small>
+                    </div>
+                </div>
+                <hr class="my-3">
+                <div class="d-flex justify-content-between small">
+                    <span class="text-muted">{{ total_petitions }} total</span>
+                    <span class="text-success">
+                        R$ {{ "%.2f"|format(petitions_value_month) }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Clientes -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                            <i class="fas fa-address-book fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">{{ total_clients }}</h3>
+                        <small class="text-muted">Clientes Cadastrados</small>
+                    </div>
+                </div>
+                <hr class="my-3">
+                <div class="d-flex justify-content-between small">
+                    <span class="text-success">
+                        <i class="fas fa-plus me-1"></i>+{{ new_clients_month }} este mês
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cards de IA -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <h5 class="text-muted mb-3">
+            <i class="fas fa-robot me-2"></i>Métricas de Inteligência Artificial
+        </h5>
+    </div>
+    
+    <!-- Gerações de IA -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100 border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-muted small mb-1">Gerações IA (Mês)</p>
+                        <h4 class="mb-0">{{ ai_generations_month }}</h4>
+                    </div>
+                    <div class="text-primary">
+                        <i class="fas fa-magic fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tokens Usados -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100 border-start border-4 border-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-muted small mb-1">Tokens Usados (Mês)</p>
+                        <h4 class="mb-0">{{ "{:,}".format(tokens_month) }}</h4>
+                    </div>
+                    <div class="text-info">
+                        <i class="fas fa-microchip fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Custo IA -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100 border-start border-4 border-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-muted small mb-1">Custo IA (Mês)</p>
+                        <h4 class="mb-0">$ {{ "%.4f"|format(ai_cost_month) }}</h4>
+                    </div>
+                    <div class="text-danger">
+                        <i class="fas fa-dollar-sign fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Créditos Vendidos -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100 border-start border-4 border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-muted small mb-1">Créditos Vendidos (Mês)</p>
+                        <h4 class="mb-0">{{ credits_sold_month }}</h4>
+                    </div>
+                    <div class="text-success">
+                        <i class="fas fa-coins fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabelas de Rankings -->
+<div class="row g-4">
+    <!-- Top Usuários - Petições -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-trophy text-warning me-2"></i>Top Usuários - Petições (Mês)
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Usuário</th>
+                                <th class="text-center">Petições</th>
+                                <th class="text-end">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in top_users_petitions %}
+                            <tr>
+                                <td>
+                                    {% if loop.index == 1 %}
+                                    <span class="badge bg-warning text-dark">🥇</span>
+                                    {% elif loop.index == 2 %}
+                                    <span class="badge bg-secondary">🥈</span>
+                                    {% elif loop.index == 3 %}
+                                    <span class="badge bg-warning-subtle text-warning">🥉</span>
+                                    {% else %}
+                                    {{ loop.index }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="text-decoration-none">
+                                        {{ user.full_name or user.username }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info">{{ user.petition_count }}</span>
+                                </td>
+                                <td class="text-end">R$ {{ "%.2f"|format(user.total_value) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    Nenhuma petição gerada este mês
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Usuários - IA -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-robot text-primary me-2"></i>Top Usuários - Uso de IA (Mês)
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Usuário</th>
+                                <th class="text-center">Gerações</th>
+                                <th class="text-end">Tokens</th>
+                                <th class="text-end">Custo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in top_users_ai %}
+                            <tr>
+                                <td>
+                                    {% if loop.index == 1 %}
+                                    <span class="badge bg-warning text-dark">🥇</span>
+                                    {% elif loop.index == 2 %}
+                                    <span class="badge bg-secondary">🥈</span>
+                                    {% elif loop.index == 3 %}
+                                    <span class="badge bg-warning-subtle text-warning">🥉</span>
+                                    {% else %}
+                                    {{ loop.index }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="text-decoration-none">
+                                        {{ user.full_name or user.username }}
+                                    </a>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ user.generation_count }}</span>
+                                </td>
+                                <td class="text-end">{{ "{:,}".format(user.total_tokens) }}</td>
+                                <td class="text-end">$ {{ "%.4f"|format(user.total_cost) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    Nenhum uso de IA este mês
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Usuários Recentes -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-user-plus text-success me-2"></i>Usuários Recentes
+                </h6>
+                <a href="{{ url_for('admin.users_list') }}" class="btn btn-sm btn-outline-primary">
+                    Ver Todos
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Email</th>
+                                <th>Tipo</th>
+                                <th>Status</th>
+                                <th>Cadastro</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in recent_users %}
+                            <tr>
+                                <td>
+                                    <strong>{{ user.full_name or user.username }}</strong>
+                                    {% if user.oab_number %}
+                                    <br><small class="text-muted">OAB: {{ user.oab_number }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    {% if user.user_type == 'advogado' %}
+                                    <span class="badge bg-primary">Advogado</span>
+                                    {% elif user.user_type == 'escritorio' %}
+                                    <span class="badge bg-info">Escritório</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ user.user_type }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.is_active %}
+                                    <span class="badge bg-success">Ativo</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Inativo</span>
+                                    {% endif %}
+                                    {% if user.billing_status == 'delinquent' %}
+                                    <span class="badge bg-warning text-dark">Inadimplente</span>
+                                    {% elif user.billing_status == 'trial' %}
+                                    <span class="badge bg-info">Trial</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ user.created_at.strftime('%d/%m/%Y') if user.created_at else '-' }}
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ user.created_at.strftime('%H:%M') if user.created_at else '' }}
+                                    </small>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

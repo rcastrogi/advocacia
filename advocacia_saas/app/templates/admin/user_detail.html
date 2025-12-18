@@ -1,0 +1,514 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin_content %}
+<!-- Cabeçalho -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.users_list') }}">Usuários</a></li>
+                <li class="breadcrumb-item active">{{ user.full_name or user.username }}</li>
+            </ol>
+        </nav>
+        <h2 class="mb-0">
+            <i class="fas fa-user me-2 text-primary"></i>{{ user.full_name or user.username }}
+        </h2>
+    </div>
+    <div>
+        <form action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" method="POST" class="d-inline">
+            {% if user.is_active %}
+            <button type="submit" class="btn btn-outline-danger" 
+                    onclick="return confirm('Deseja realmente desativar este usuário?')">
+                <i class="fas fa-user-slash me-2"></i>Desativar Usuário
+            </button>
+            {% else %}
+            <button type="submit" class="btn btn-outline-success">
+                <i class="fas fa-user-check me-2"></i>Reativar Usuário
+            </button>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Informações do Usuário -->
+<div class="row g-4 mb-4">
+    <!-- Dados Básicos -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-id-card me-2"></i>Dados do Usuário</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="avatar-circle-lg bg-primary text-white mx-auto mb-2">
+                        {{ (user.full_name or user.username)[0]|upper }}
+                    </div>
+                    <h5 class="mb-0">{{ user.full_name or user.username }}</h5>
+                    <small class="text-muted">@{{ user.username }}</small>
+                </div>
+                
+                <hr>
+                
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-envelope text-muted me-2"></i>
+                        <a href="mailto:{{ user.email }}">{{ user.email }}</a>
+                    </li>
+                    {% if user.phone %}
+                    <li class="mb-2">
+                        <i class="fas fa-phone text-muted me-2"></i>
+                        {{ user.phone }}
+                    </li>
+                    {% endif %}
+                    {% if user.oab_number %}
+                    <li class="mb-2">
+                        <i class="fas fa-id-badge text-muted me-2"></i>
+                        OAB: {{ user.oab_number }}
+                    </li>
+                    {% endif %}
+                    <li class="mb-2">
+                        <i class="fas fa-user-tag text-muted me-2"></i>
+                        {% if user.user_type == 'advogado' %}
+                        <span class="badge bg-primary">Advogado</span>
+                        {% elif user.user_type == 'escritorio' %}
+                        <span class="badge bg-info">Escritório</span>
+                        {% elif user.user_type == 'master' %}
+                        <span class="badge bg-danger">Admin</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ user.user_type }}</span>
+                        {% endif %}
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-toggle-on text-muted me-2"></i>
+                        {% if user.is_active %}
+                        <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inativo</span>
+                        {% endif %}
+                        {% if user.billing_status == 'delinquent' %}
+                        <span class="badge bg-warning text-dark">Inadimplente</span>
+                        {% elif user.billing_status == 'trial' %}
+                        <span class="badge bg-info">Trial</span>
+                        {% endif %}
+                    </li>
+                    <li>
+                        <i class="fas fa-calendar text-muted me-2"></i>
+                        Cadastro: {{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '-' }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Métricas Principais -->
+    <div class="col-lg-8">
+        <div class="row g-3">
+            <!-- Tempo na Plataforma -->
+            <div class="col-md-4">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                        <h3 class="mb-0">{{ metrics.days_on_platform }}</h3>
+                        <small class="text-muted">Dias na Plataforma</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dias Pagante -->
+            <div class="col-md-4">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                        <h3 class="mb-0">{{ metrics.days_paying }}</h3>
+                        <small class="text-muted">Dias como Pagante</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Plano Atual -->
+            <div class="col-md-4">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-tags fa-2x text-info mb-2"></i>
+                        <h5 class="mb-0">{{ metrics.plan_name }}</h5>
+                        <small class="text-muted">Plano Atual</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Clientes -->
+            <div class="col-md-3">
+                <div class="card border-0 border-start border-4 border-warning h-100">
+                    <div class="card-body">
+                        <h4 class="mb-0">{{ metrics.total_clients }}</h4>
+                        <small class="text-muted">Clientes</small>
+                        {% if metrics.clients_month %}
+                        <br><small class="text-success">+{{ metrics.clients_month }} mês</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Petições -->
+            <div class="col-md-3">
+                <div class="card border-0 border-start border-4 border-info h-100">
+                    <div class="card-body">
+                        <h4 class="mb-0">{{ metrics.total_petitions }}</h4>
+                        <small class="text-muted">Petições</small>
+                        {% if metrics.petitions_month %}
+                        <br><small class="text-success">+{{ metrics.petitions_month }} mês</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Valor Petições -->
+            <div class="col-md-3">
+                <div class="card border-0 border-start border-4 border-success h-100">
+                    <div class="card-body">
+                        <h5 class="mb-0">R$ {{ "%.2f"|format(metrics.petitions_value_total) }}</h5>
+                        <small class="text-muted">Valor Total Pet.</small>
+                        {% if metrics.petitions_value_month > 0 %}
+                        <br><small class="text-success">+R$ {{ "%.2f"|format(metrics.petitions_value_month) }} mês</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pagamentos -->
+            <div class="col-md-3">
+                <div class="card border-0 border-start border-4 border-primary h-100">
+                    <div class="card-body">
+                        <h5 class="mb-0">R$ {{ "%.2f"|format(metrics.total_payments) }}</h5>
+                        <small class="text-muted">Total Pago</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seção de IA -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-robot text-primary me-2"></i>Uso de Inteligência Artificial
+                </h6>
+                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addCreditsModal">
+                    <i class="fas fa-plus me-1"></i>Adicionar Créditos
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h4 class="text-primary mb-0">{{ metrics.ai_credits_balance }}</h4>
+                            <small class="text-muted">Créditos Atuais</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h4 class="text-info mb-0">{{ metrics.ai_credits_total_used }}</h4>
+                            <small class="text-muted">Créditos Usados</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h4 class="text-warning mb-0">{{ metrics.ai_generations_month }}</h4>
+                            <small class="text-muted">Gerações (Mês)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-secondary mb-0">{{ "{:,}".format(metrics.ai_tokens_month) }}</h5>
+                            <small class="text-muted">Tokens (Mês)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-danger mb-0">$ {{ "%.4f"|format(metrics.ai_cost_month) }}</h5>
+                            <small class="text-muted">Custo (Mês)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-danger mb-0">$ {{ "%.4f"|format(metrics.ai_cost_total) }}</h5>
+                            <small class="text-muted">Custo Total</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Históricos -->
+<div class="row g-4">
+    <!-- Petições Recentes -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-file-signature text-info me-2"></i>Petições Recentes
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 300px;">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Data</th>
+                                <th class="text-end">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for petition in petitions %}
+                            <tr>
+                                <td>
+                                    {{ petition.petition_type.name if petition.petition_type else 'N/A' }}
+                                </td>
+                                <td>
+                                    {{ petition.generated_at.strftime('%d/%m/%Y %H:%M') if petition.generated_at else '-' }}
+                                </td>
+                                <td class="text-end">
+                                    R$ {{ "%.2f"|format(petition.amount) }}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-3">
+                                    Nenhuma petição gerada
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Uso de IA Recente -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-magic text-primary me-2"></i>Gerações de IA Recentes
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 300px;">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Modelo</th>
+                                <th class="text-center">Tokens</th>
+                                <th class="text-end">Custo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for gen in ai_generations %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if gen.generation_type == 'section' else 'success' if gen.generation_type == 'full_petition' else 'info' }}">
+                                        {{ gen.generation_type }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">{{ gen.created_at.strftime('%d/%m %H:%M') }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ gen.model_used }}</small>
+                                </td>
+                                <td class="text-center">
+                                    {{ "{:,}".format(gen.tokens_total or 0) }}
+                                </td>
+                                <td class="text-end">
+                                    $ {{ "%.5f"|format(gen.cost_usd or 0) }}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">
+                                    Nenhum uso de IA registrado
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Transações de Créditos -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-coins text-warning me-2"></i>Transações de Créditos
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 300px;">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Tipo</th>
+                                <th class="text-center">Valor</th>
+                                <th class="text-center">Saldo Após</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trans in credit_transactions %}
+                            <tr>
+                                <td>
+                                    {% if trans.transaction_type == 'purchase' %}
+                                    <span class="badge bg-success">Compra</span>
+                                    {% elif trans.transaction_type == 'usage' %}
+                                    <span class="badge bg-info">Uso</span>
+                                    {% elif trans.transaction_type == 'bonus' %}
+                                    <span class="badge bg-warning text-dark">Bônus</span>
+                                    {% elif trans.transaction_type == 'refund' %}
+                                    <span class="badge bg-secondary">Reembolso</span>
+                                    {% else %}
+                                    <span class="badge bg-light text-dark">{{ trans.transaction_type }}</span>
+                                    {% endif %}
+                                    {% if trans.description %}
+                                    <br><small class="text-muted">{{ trans.description[:30] }}...</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="{{ 'text-success' if trans.amount > 0 else 'text-danger' }}">
+                                        {{ '+' if trans.amount > 0 else '' }}{{ trans.amount }}
+                                    </span>
+                                </td>
+                                <td class="text-center">{{ trans.balance_after }}</td>
+                                <td>
+                                    <small>{{ trans.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">
+                                    Nenhuma transação registrada
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pagamentos -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-credit-card text-success me-2"></i>Pagamentos
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 300px;">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Data</th>
+                                <th>Método</th>
+                                <th>Status</th>
+                                <th class="text-end">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>
+                                    {{ payment.paid_at.strftime('%d/%m/%Y %H:%M') if payment.paid_at else '-' }}
+                                </td>
+                                <td>{{ payment.method or '-' }}</td>
+                                <td>
+                                    {% if payment.payment_status == 'completed' %}
+                                    <span class="badge bg-success">Confirmado</span>
+                                    {% elif payment.payment_status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">Pendente</span>
+                                    {% elif payment.payment_status == 'failed' %}
+                                    <span class="badge bg-danger">Falhou</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ payment.payment_status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    R$ {{ "%.2f"|format(payment.amount) }}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">
+                                    Nenhum pagamento registrado
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Adicionar Créditos -->
+<div class="modal fade" id="addCreditsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle text-success me-2"></i>Adicionar Créditos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('admin.add_user_credits', user_id=user.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Quantidade de Créditos</label>
+                        <input type="number" name="amount" class="form-control" min="1" value="10" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Motivo</label>
+                        <input type="text" name="reason" class="form-control" 
+                               placeholder="Ex: Bônus de boas-vindas" value="Bônus administrativo">
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Saldo atual: <strong>{{ metrics.ai_credits_balance }} créditos</strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>Adicionar Créditos
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle-lg {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
