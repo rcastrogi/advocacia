@@ -166,10 +166,10 @@
             <div class="col-md-3">
                 <div class="card border-0 border-start border-4 border-success h-100">
                     <div class="card-body">
-                        <h5 class="mb-0">R$ {{ "%.2f"|format(metrics.petitions_value_total) }}</h5>
+                        <h5 class="mb-0">R$ {{ "%.2f"|format(metrics.petitions_value) }}</h5>
                         <small class="text-muted">Valor Total Pet.</small>
-                        {% if metrics.petitions_value_month > 0 %}
-                        <br><small class="text-success">+R$ {{ "%.2f"|format(metrics.petitions_value_month) }} mês</small>
+                        {% if metrics.petitions_month > 0 %}
+                        <br><small class="text-success">{{ metrics.petitions_month }} este mês</small>
                         {% endif %}
                     </div>
                 </div>
@@ -179,7 +179,7 @@
             <div class="col-md-3">
                 <div class="card border-0 border-start border-4 border-primary h-100">
                     <div class="card-body">
-                        <h5 class="mb-0">R$ {{ "%.2f"|format(metrics.total_payments) }}</h5>
+                        <h5 class="mb-0">R$ {{ "%.2f"|format(metrics.total_paid) }}</h5>
                         <small class="text-muted">Total Pago</small>
                     </div>
                 </div>
@@ -210,7 +210,7 @@
                     </div>
                     <div class="col-md-2">
                         <div class="text-center p-3 bg-light rounded">
-                            <h4 class="text-info mb-0">{{ metrics.ai_credits_total_used }}</h4>
+                            <h4 class="text-info mb-0">{{ metrics.ai_credits_used }}</h4>
                             <small class="text-muted">Créditos Usados</small>
                         </div>
                     </div>
@@ -222,20 +222,14 @@
                     </div>
                     <div class="col-md-2">
                         <div class="text-center p-3 bg-light rounded">
-                            <h5 class="text-secondary mb-0">{{ "{:,}".format(metrics.ai_tokens_month) }}</h5>
-                            <small class="text-muted">Tokens (Mês)</small>
+                            <h5 class="text-secondary mb-0">{{ "{:,}".format(metrics.ai_tokens_total) }}</h5>
+                            <small class="text-muted">Tokens Total</small>
                         </div>
                     </div>
-                    <div class="col-md-2">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h5 class="text-danger mb-0">$ {{ "%.4f"|format(metrics.ai_cost_month) }}</h5>
-                            <small class="text-muted">Custo (Mês)</small>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
+                    <div class="col-md-4">
                         <div class="text-center p-3 bg-light rounded">
                             <h5 class="text-danger mb-0">$ {{ "%.4f"|format(metrics.ai_cost_total) }}</h5>
-                            <small class="text-muted">Custo Total</small>
+                            <small class="text-muted">Custo Total IA</small>
                         </div>
                     </div>
                 </div>

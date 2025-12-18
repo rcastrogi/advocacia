@@ -1,6 +1,9 @@
 {% extends "admin/base_admin.html" %}
 
 {% block admin_content %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <!-- Cabeçalho -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
@@ -205,6 +208,85 @@
     </div>
 </div>
 
+<!-- SEÇÃO DE GRÁFICOS -->
+<div class="row g-4 mb-4 mt-2">
+    <div class="col-12">
+        <h5 class="text-muted mb-3">
+            <i class="fas fa-chart-line me-2"></i>Evolução nos Últimos 12 Meses
+        </h5>
+    </div>
+    
+    <!-- Gráfico de Faturamento Geral -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-dollar-sign text-success me-2"></i>Faturamento Mensal (R$)
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartRevenue" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico de Faturamento por Plano -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-tags text-primary me-2"></i>Faturamento por Plano (R$)
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartRevenueByPlan" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico de IA - Uso e Custo -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-robot text-info me-2"></i>Uso de IA (Gerações)
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartAIUsage" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico de IA - Custo vs Créditos -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-coins text-warning me-2"></i>Créditos IA Vendidos
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartAICredits" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico de Custo IA -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-area text-danger me-2"></i>Custo de IA (USD)
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartAICost" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Tabelas de Rankings -->
 <div class="row g-4">
     <!-- Top Usuários - Petições -->
@@ -404,4 +486,217 @@
         </div>
     </div>
 </div>
+
+<!-- Scripts dos Gráficos -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados dos gráficos (passados do backend)
+    const labels = {{ chart_labels | tojson }};
+    const revenueData = {{ chart_revenue | tojson }};
+    const revenueByPlan = {{ chart_revenue_by_plan | tojson }};
+    const aiUsageData = {{ chart_ai_usage | tojson }};
+    const aiCostData = {{ chart_ai_cost | tojson }};
+    const aiCreditsData = {{ chart_ai_credits_sold | tojson }};
+    
+    // Cores para os planos
+    const planColors = [
+        'rgba(54, 162, 235, 0.8)',   // Azul
+        'rgba(255, 99, 132, 0.8)',   // Rosa
+        'rgba(75, 192, 192, 0.8)',   // Verde água
+        'rgba(255, 206, 86, 0.8)',   // Amarelo
+        'rgba(153, 102, 255, 0.8)',  // Roxo
+        'rgba(255, 159, 64, 0.8)',   // Laranja
+        'rgba(199, 199, 199, 0.8)',  // Cinza
+    ];
+    
+    // 1. Gráfico de Faturamento Geral
+    new Chart(document.getElementById('chartRevenue'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Faturamento (R$)',
+                data: revenueData,
+                backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 2,
+                borderRadius: 5,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'R$ ' + context.raw.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toLocaleString('pt-BR');
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // 2. Gráfico de Faturamento por Plano (Stacked Bar)
+    const planDatasets = [];
+    let colorIndex = 0;
+    for (const [planName, planData] of Object.entries(revenueByPlan)) {
+        planDatasets.push({
+            label: planName,
+            data: planData,
+            backgroundColor: planColors[colorIndex % planColors.length],
+            borderColor: planColors[colorIndex % planColors.length].replace('0.8', '1'),
+            borderWidth: 1,
+            borderRadius: 3,
+        });
+        colorIndex++;
+    }
+    
+    new Chart(document.getElementById('chartRevenueByPlan'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: planDatasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: { boxWidth: 12, padding: 10 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': R$ ' + context.raw.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { stacked: true },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toLocaleString('pt-BR');
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // 3. Gráfico de Uso de IA (Line)
+    new Chart(document.getElementById('chartAIUsage'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Gerações de IA',
+                data: aiUsageData,
+                borderColor: 'rgba(23, 162, 184, 1)',
+                backgroundColor: 'rgba(23, 162, 184, 0.2)',
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: 'rgba(23, 162, 184, 1)',
+                pointRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+    
+    // 4. Gráfico de Créditos Vendidos (Bar)
+    new Chart(document.getElementById('chartAICredits'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Créditos Vendidos',
+                data: aiCreditsData,
+                backgroundColor: 'rgba(255, 193, 7, 0.6)',
+                borderColor: 'rgba(255, 193, 7, 1)',
+                borderWidth: 2,
+                borderRadius: 5,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 10 }
+                }
+            }
+        }
+    });
+    
+    // 5. Gráfico de Custo IA (Line + Area)
+    new Chart(document.getElementById('chartAICost'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Custo IA (USD)',
+                data: aiCostData,
+                borderColor: 'rgba(220, 53, 69, 1)',
+                backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: 'rgba(220, 53, 69, 1)',
+                pointRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$ ' + context.raw.toFixed(4);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$ ' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
