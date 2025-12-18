@@ -80,6 +80,7 @@ textarea:focus-visible {
     --text-color: #000000;
     --title-color: #000000;
     --subtitle-color: #000000;
+    --gold-color: #ffff00;
 }
 
 .high-contrast body {
@@ -87,10 +88,99 @@ textarea:focus-visible {
     color: #000000 !important;
 }
 
-.high-contrast .navbar,
+/* Variáveis específicas para navbar em alto contraste */
+.high-contrast .navbar {
+    --text-color: #ffffff !important;
+    --title-color: #ffffff !important;
+    --subtitle-color: #ffffff !important;
+}
+
+/* Navbar em modo contraste - fundo preto, texto branco */
+body.high-contrast .navbar,
+.high-contrast .navbar {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+body.high-contrast .navbar[style],
+.high-contrast .navbar[style] {
+    background: #000000 !important;
+}
+
+body.high-contrast .navbar a,
+body.high-contrast .navbar .nav-link,
+body.high-contrast .navbar .navbar-brand,
+body.high-contrast .navbar-brand,
+body.high-contrast a.navbar-brand,
+.high-contrast .navbar a,
+.high-contrast .navbar .nav-link,
+.high-contrast .navbar .navbar-brand,
+.high-contrast .navbar-brand,
+.high-contrast a.navbar-brand {
+    color: #ffffff !important;
+    background: transparent !important;
+}
+
+body.high-contrast .navbar a:hover,
+body.high-contrast .navbar .nav-link:hover,
+.high-contrast .navbar a:hover,
+.high-contrast .navbar .nav-link:hover {
+    color: #ffff00 !important;
+    background: transparent !important;
+}
+
+/* Barra de acessibilidade em modo contraste */
+.high-contrast .accessibility-bar {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-left: 3px solid #000000 !important;
+}
+
+.high-contrast .accessibility-bar h3,
+.high-contrast .accessibility-bar label {
+    color: #000000 !important;
+}
+
+.high-contrast .accessibility-bar button {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+.high-contrast .accessibility-bar button:hover,
+.high-contrast .accessibility-bar button.active {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+/* Seções gerais */
 .high-contrast .hero-section,
 .high-contrast .section {
     background: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* Hero section - forçar TODOS os elementos para preto */
+.high-contrast .hero-section *,
+.high-contrast .hero-section h1,
+.high-contrast .hero-section h2,
+.high-contrast .hero-section p,
+.high-contrast .hero-section span,
+.high-contrast .hero-section div,
+.high-contrast .hero-section .subtitle,
+.high-contrast .hero-section .text-muted,
+.high-contrast .hero-section .badge,
+.high-contrast .hero-section small {
+    color: #000000 !important;
+    background: transparent !important;
+}
+
+/* Badges e elementos com estilos inline */
+.high-contrast .hero-section [style*="background"] {
+    background: #ffffff !important;
+}
+
+.high-contrast .hero-section [style*="color"] {
     color: #000000 !important;
 }
 
@@ -103,34 +193,81 @@ textarea:focus-visible {
     color: #000000 !important;
 }
 
+.high-contrast p,
+.high-contrast span,
+.high-contrast div,
+.high-contrast li,
+.high-contrast small,
+.high-contrast .text-muted,
+.high-contrast .badge {
+    color: #000000 !important;
+}
+
+/* Links */
 .high-contrast a {
-    color: #0000ff !important;
+    color: #0000ee !important;
     text-decoration: underline !important;
 }
 
 .high-contrast a:visited {
-    color: #800080 !important;
+    color: #551a8b !important;
 }
 
-.high-contrast button,
-.high-contrast .btn {
+.high-contrast a:hover {
+    color: #0000ee !important;
+    text-decoration: underline !important;
+    background: #ffff00 !important;
+}
+
+/* Botões gerais */
+.high-contrast button:not(.accessibility-bar button),
+.high-contrast .btn:not(.accessibility-bar button) {
     background: #000000 !important;
-    color: #ffff00 !important;
+    color: #ffffff !important;
     border: 2px solid #000000 !important;
 }
 
-.high-contrast button:hover,
-.high-contrast .btn:hover {
-    background: #ffff00 !important;
+.high-contrast button:not(.accessibility-bar button):hover,
+.high-contrast .btn:not(.accessibility-bar button):hover {
+    background: #ffffff !important;
     color: #000000 !important;
+    border: 2px solid #000000 !important;
 }
 
+/* Cards e formulários */
 .high-contrast .card,
 .high-contrast .form-card {
     background: #ffffff !important;
     border: 3px solid #000000 !important;
+    color: #000000 !important;
 }
 
+/* Inputs */
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+/* Footer */
+.high-contrast .footer {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+.high-contrast .footer a,
+.high-contrast .footer p,
+.high-contrast .footer h5 {
+    color: #ffffff !important;
+}
+
+.high-contrast .footer a:hover {
+    color: #ffff00 !important;
+}
+
+/* Imagens */
 .high-contrast img {
     filter: contrast(1.2) !important;
 }
