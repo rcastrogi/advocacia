@@ -247,10 +247,10 @@
 </head>
 <body x-data="petitioApp()" @keydown.escape="closeModals()" class="{% block body_class %}{% if current_user.is_authenticated %}page-gray-bg{% endif %}{% endblock %}">
     <!-- Loading Spinner Global -->
-    <div id="pageLoader" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.3s ease;">
+    <div id="pageLoader" role="status" aria-live="assertive" aria-label="Carregando página" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.3s ease;">
         <div style="text-align:center;">
             <!-- SVG Spinner - Blocks Shuffle 2 (MIT License - n3r4zzurr0/svg-spinners) -->
-            <svg width="80" height="80" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg width="80" height="80" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                 <rect x="1" y="6" width="2.8" height="12" fill="#1a365d">
                     <animate attributeName="y" values="6;1;6" dur="1.2s" repeatCount="indefinite"/>
                     <animate attributeName="height" values="12;22;12" dur="1.2s" repeatCount="indefinite"/>
@@ -272,7 +272,7 @@
                     <animate attributeName="height" values="12;22;12" begin="0.8s" dur="1.2s" repeatCount="indefinite"/>
                 </rect>
             </svg>
-            <p style="color:#1a365d;font-size:14px;font-weight:500;margin:16px 0 0 0;">Carregando...</p>
+            <p style="color:#1a365d;font-size:14px;font-weight:500;margin:16px 0 0 0;" aria-live="polite">Carregando...</p>
         </div>
     </div>
     
@@ -355,21 +355,21 @@
     </script>
     {% if current_user.is_authenticated %}
     <!-- Authenticated Layout -->
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color));">
+    <nav class="navbar navbar-expand-lg navbar-dark" role="navigation" aria-label="Navegação principal" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color));">
         <div class="container-fluid">
             <div class="d-flex align-items-center">
                 <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}" 
-                     alt="Petitio" class="navbar-brand-logo me-2" height="40">
+                     alt="Logo Petitio" class="navbar-brand-logo me-2" height="40">
                 {% if current_user.logo_filename %}
                 <img src="{{ url_for('static', filename='uploads/' + current_user.logo_filename) }}" 
-                     alt="Logo" class="navbar-brand-logo me-2">
+                     alt="Logo do escritório {{ current_user.full_name }}" class="navbar-brand-logo me-2">
                 {% endif %}
-                <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
+                <a class="navbar-brand" href="{{ url_for('main.dashboard') }}" aria-label="Ir para o Dashboard">
                     Petitio
                 </a>
             </div>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Alternar menu de navegação">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
@@ -490,10 +490,15 @@
     </main>
     
     <!-- Toast Notifications Container -->
-    <div class="toast-container" id="toastContainer" x-ref="toastContainer">
+    <div class="toast-container" id="toastContainer" x-ref="toastContainer" role="region" aria-label="Notificações" aria-live="polite">
         <template x-for="toast in toasts" :key="toast.id">
             <div :class="'toast-notification ' + toast.type + (toast.hiding ? ' hiding' : '')"
+                 role="alert"
                  @click="removeToast(toast.id)"
+                 @keydown.enter="removeToast(toast.id)"
+                 @keydown.space="removeToast(toast.id)"
+                 tabindex="0"
+                 :aria-label="toast.message"
                  x-transition>
                 <i :class="toast.icon" aria-hidden="true"></i>
                 <span x-text="toast.message"></span>
@@ -524,17 +529,17 @@
 
     <!-- Footer -->
     {% if not current_user.is_authenticated %}
-    <footer class="footer">
+    <footer class="footer" role="contentinfo" aria-label="Informações do rodapé">
         <div class="container">
             <div class="row">
                 <div class="col-lg-4 col-md-6 mb-4 mb-lg-0">
                     <h5>Petitio</h5>
                     <p class="mb-3">Solução completa para modernizar a gestão do seu escritório de advocacia.</p>
-                    <div class="d-flex gap-3">
-                        <a href="#" class="text-white"><i class="fab fa-facebook fa-lg"></i></a>
-                        <a href="#" class="text-white"><i class="fab fa-linkedin fa-lg"></i></a>
-                        <a href="#" class="text-white"><i class="fab fa-instagram fa-lg"></i></a>
-                        <a href="#" class="text-white"><i class="fab fa-twitter fa-lg"></i></a>
+                    <div class="d-flex gap-3" role="list" aria-label="Redes sociais">
+                        <a href="#" class="text-white" aria-label="Facebook"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a>
+                        <a href="#" class="text-white" aria-label="LinkedIn"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a>
+                        <a href="#" class="text-white" aria-label="Instagram"><i class="fab fa-instagram fa-lg" aria-hidden="true"></i></a>
+                        <a href="#" class="text-white" aria-label="Twitter"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a>
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
