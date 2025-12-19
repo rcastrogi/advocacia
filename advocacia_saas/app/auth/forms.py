@@ -57,7 +57,7 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user is not None:
             raise ValidationError("Email já cadastrado. Use outro email.")
-    
+
     def validate_password(self, password):
         """Valida força da senha"""
         is_valid, error_msg = validate_strong_password(password.data)
@@ -103,7 +103,9 @@ class ChangePasswordForm(FlaskForm):
             DataRequired(),
             Length(min=8, message="A senha deve ter no mínimo 8 caracteres"),
         ],
-        render_kw={"placeholder": "Mínimo 8 caracteres, maiúsculas, números e símbolos"},
+        render_kw={
+            "placeholder": "Mínimo 8 caracteres, maiúsculas, números e símbolos"
+        },
     )
     confirm_password = PasswordField(
         "Confirmar nova senha",
@@ -114,7 +116,7 @@ class ChangePasswordForm(FlaskForm):
         render_kw={"placeholder": "Digite a nova senha novamente"},
     )
     submit = SubmitField("Alterar senha")
-    
+
     def validate_new_password(self, new_password):
         """Valida força da nova senha"""
         is_valid, error_msg = validate_strong_password(new_password.data)

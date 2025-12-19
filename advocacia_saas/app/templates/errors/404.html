@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Página não encontrada - Petitio{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="error-page">
+                <h1 class="display-1 text-primary">404</h1>
+                <h2 class="mb-4">Página não encontrada</h2>
+                <p class="lead text-muted mb-4">
+                    Desculpe, a página que você está procurando não existe ou foi movida.
+                </p>
+                
+                <div class="mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-muted">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Ir para o Início
+                    </a>
+                    
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    {% endif %}
+                    
+                    <button onclick="history.back()" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                    </button>
+                </div>
+                
+                <div class="mt-5">
+                    <p class="text-muted small">
+                        Se você acredita que isso é um erro, 
+                        <a href="mailto:suporte@petitio.com">entre em contato conosco</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-page {
+    padding: 3rem 0;
+}
+
+.error-page h1 {
+    font-size: 8rem;
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0.8;
+}
+
+.error-page h2 {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.error-page svg {
+    opacity: 0.3;
+}
+</style>
+{% endblock %}

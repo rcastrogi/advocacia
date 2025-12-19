@@ -8,88 +8,102 @@ from flask import url_for
 
 class TestAuthFlow:
     """Testes de fluxo de autenticação"""
-    
+
     def test_login_page_loads(self, client):
         """Testa se página de login carrega"""
-        response = client.get('/auth/login')
+        response = client.get("/auth/login")
         assert response.status_code == 200
-        assert b'Email' in response.data
-        assert b'Senha' in response.data
-    
+        assert b"Email" in response.data
+        assert b"Senha" in response.data
+
     def test_valid_login(self, client, sample_user, app):
         """Testa login com credenciais válidas"""
         with app.app_context():
-            response = client.post('/auth/login', data={
-                'email': 'test@example.com',
-                'password': 'StrongPass123!',
-                'remember_me': False
-            }, follow_redirects=True)
-            
+            response = client.post(
+                "/auth/login",
+                data={
+                    "email": "test@example.com",
+                    "password": "StrongPass123!",
+                    "remember_me": False,
+                },
+                follow_redirects=True,
+            )
+
             assert response.status_code == 200
             # Deve redirecionar para dashboard
-            assert b'Dashboard' in response.data or b'dashboard' in response.data.lower()
-    
+            assert (
+                b"Dashboard" in response.data or b"dashboard" in response.data.lower()
+            )
+
     def test_invalid_login(self, client):
         """Testa login com credenciais inválidas"""
-        response = client.post('/auth/login', data={
-            'email': 'wrong@example.com',
-            'password': 'wrongpassword'
-        }, follow_redirects=True)
-        
+        response = client.post(
+            "/auth/login",
+            data={"email": "wrong@example.com", "password": "wrongpassword"},
+            follow_redirects=True,
+        )
+
         assert response.status_code == 200
         # Deve mostrar erro
-        assert b'inv' in response.data.lower() or b'erro' in response.data.lower()
-    
+        assert b"inv" in response.data.lower() or b"erro" in response.data.lower()
+
     def test_logout(self, authenticated_client):
         """Testa logout"""
-        response = authenticated_client.get('/auth/logout', follow_redirects=True)
-        
+        response = authenticated_client.get("/auth/logout", follow_redirects=True)
+
         assert response.status_code == 200
         # Deve voltar para login
-        assert b'login' in response.data.lower()
+        assert b"login" in response.data.lower()
 
 
 class TestPasswordSecurity:
     """Testes de segurança de senha"""
-    
+
     def test_weak_password_rejected(self, client, db_session):
         """Testa rejeição de senha fraca no registro"""
-        response = client.post('/auth/register', data={
-            'username': 'newuser',
-            'email': 'newuser@example.com',
-            'full_name': 'New User',
-            'password': 'weak',  # Senha fraca
-            'password2': 'weak',
-            'user_type': 'advogado'
-        })
-        
+        response = client.post(
+            "/auth/register",
+            data={
+                "username": "newuser",
+                "email": "newuser@example.com",
+                "full_name": "New User",
+                "password": "weak",  # Senha fraca
+                "password2": "weak",
+                "user_type": "advogado",
+            },
+        )
+
         # Deve falhar validação
-        assert b'senha' in response.data.lower() or b'password' in response.data.lower()
-    
+        assert b"senha" in response.data.lower() or b"password" in response.data.lower()
+
     def test_password_change_flow(self, authenticated_client, sample_user, app):
         """Testa fluxo de mudança de senha"""
         with app.app_context():
-            response = authenticated_client.post('/auth/change-password', data={
-                'current_password': 'StrongPass123!',
-                'new_password': 'NewStrongPass456!@',
-                'confirm_password': 'NewStrongPass456!@'
-            }, follow_redirects=True)
-            
+            response = authenticated_client.post(
+                "/auth/change-password",
+                data={
+                    "current_password": "StrongPass123!",
+                    "new_password": "NewStrongPass456!@",
+                    "confirm_password": "NewStrongPass456!@",
+                },
+                follow_redirects=True,
+            )
+
             assert response.status_code == 200
 
 
 class TestRateLimiting:
     """Testes de rate limiting"""
-    
+
     def test_login_rate_limit(self, client):
         """Testa limite de tentativas de login"""
         # Fazer 11 tentativas (limite é 10/minuto)
         for i in range(11):
-            response = client.post('/auth/login', data={
-                'email': 'test@example.com',
-                'password': 'wrongpassword'
-            })
-            
+            response = client.post(
+                "/auth/login",
+                data={"email": "test@example.com", "password": "wrongpassword"},
+            )
+
             # 11ª tentativa deve ser bloqueada
             if i == 10:
                 assert response.status_code == 429  # Too Many Requests
@@ -97,58 +111,58 @@ class TestRateLimiting:
 
 class TestAdminAccess:
     """Testes de acesso admin"""
-    
+
     def test_admin_dashboard_requires_auth(self, client):
         """Testa que dashboard admin requer autenticação"""
-        response = client.get('/usuarios')
+        response = client.get("/usuarios")
         # Deve redirecionar para login
         assert response.status_code == 302
-    
+
     def test_admin_dashboard_requires_master(self, authenticated_client):
         """Testa que dashboard admin requer privilégios master"""
-        response = authenticated_client.get('/usuarios')
+        response = authenticated_client.get("/usuarios")
         # Usuário normal não tem acesso
         assert response.status_code == 403
-    
+
     def test_admin_dashboard_access(self, admin_client):
         """Testa acesso ao dashboard admin"""
-        response = admin_client.get('/usuarios')
+        response = admin_client.get("/usuarios")
         assert response.status_code == 200
-        assert b'usu' in response.data.lower()  # Deve ter "usuários"
+        assert b"usu" in response.data.lower()  # Deve ter "usuários"
 
 
 class TestNotifications:
     """Testes de sistema de notificações"""
-    
+
     def test_create_notification(self, authenticated_client, sample_user, app):
         """Testa criação de notificação"""
         from app.models import Notification
-        
+
         with app.app_context():
             Notification.create_notification(
                 user_id=sample_user.id,
-                notification_type='test',
-                title='Teste',
-                message='Mensagem de teste'
+                notification_type="test",
+                title="Teste",
+                message="Mensagem de teste",
             )
-            
+
             count = Notification.get_unread_count(sample_user.id)
             assert count == 1
 
 
 class TestCaching:
     """Testes de cache"""
-    
+
     def test_cache_initialization(self, app):
         """Testa se cache foi inicializado"""
         from app import cache
-        
+
         with app.app_context():
             # Testar set/get
-            cache.set('test_key', 'test_value')
-            value = cache.get('test_key')
-            assert value == 'test_value'
-            
+            cache.set("test_key", "test_value")
+            value = cache.get("test_key")
+            assert value == "test_value"
+
             # Limpar
-            cache.delete('test_key')
-            assert cache.get('test_key') is None
+            cache.delete("test_key")
+            assert cache.get("test_key") is None

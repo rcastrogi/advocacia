@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Erro Interno - Petitio{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="error-page">
+                <h1 class="display-1 text-danger">500</h1>
+                <h2 class="mb-4">Erro Interno do Servidor</h2>
+                <p class="lead text-muted mb-4">
+                    Desculpe, algo deu errado. Nossa equipe foi notificada e está trabalhando para resolver.
+                </p>
+                
+                <div class="mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-muted">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </div>
+                
+                <div class="alert alert-info mx-auto" style="max-width: 500px;">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>O que fazer agora?</strong>
+                    <ul class="text-start mt-2 mb-0">
+                        <li>Tente recarregar a página</li>
+                        <li>Volte e tente novamente</li>
+                        <li>Se o erro persistir, entre em contato conosco</li>
+                    </ul>
+                </div>
+                
+                <div class="d-flex gap-3 justify-content-center mt-4">
+                    <button onclick="location.reload()" class="btn btn-primary">
+                        <i class="fas fa-sync-alt me-2"></i>Recarregar Página
+                    </button>
+                    
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-home me-2"></i>Início
+                    </a>
+                    {% endif %}
+                    
+                    <button onclick="history.back()" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                    </button>
+                </div>
+                
+                <div class="mt-5">
+                    <p class="text-muted small">
+                        Precisa de ajuda? 
+                        <a href="mailto:suporte@petitio.com">Entre em contato com nosso suporte</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-page {
+    padding: 3rem 0;
+}
+
+.error-page h1 {
+    font-size: 8rem;
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0.8;
+}
+
+.error-page h2 {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.error-page svg {
+    opacity: 0.3;
+}
+</style>
+{% endblock %}
