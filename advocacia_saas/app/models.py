@@ -1013,3 +1013,72 @@ class AIGeneration(db.Model):
 
     def __repr__(self):
         return f"<AIGeneration {self.generation_type} - {self.status}>"
+
+
+class Notification(db.Model):
+    """
+    Notificações para usuários sobre eventos importantes do sistema.
+    """
+    __tablename__ = 'notifications'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # 'petition_ready', 'credit_low', 'payment_due', 'password_expiring', 'ai_limit', 'system'
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    link = db.Column(db.String(500))  # URL para ação relacionada
+    read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    read_at = db.Column(db.DateTime)
+    
+    # Relacionamento
+    user = db.relationship('User', backref=db.backref('notifications', lazy='dynamic', cascade='all, delete-orphan'))
+    
+    def mark_as_read(self):
+        """Marca a notificação como lida"""
+        self.read = True
+        self.read_at = datetime.utcnow()
+        db.session.commit()
+    
+    @staticmethod
+    def create_notification(user_id, notification_type, title, message, link=None):
+        """
+        Cria uma nova notificação para o usuário.
+        
+        Args:
+            user_id: ID do usuário
+            notification_type: Tipo da notificação
+            title: Título da notificação
+            message: Mensagem detalhada
+            link: URL opcional para ação relacionada
+        
+        Returns:
+            Notification: Objeto da notificação criada
+        """
+        notification = Notification(
+            user_id=user_id,
+            type=notification_type,
+            title=title,
+            message=message,
+            link=link
+        )
+        db.session.add(notification)
+        db.session.commit()
+        return notification
+    
+    @staticmethod
+    def get_unread_count(user_id):
+        """Retorna contagem de notificações não lidas do usuário"""
+        return Notification.query.filter_by(user_id=user_id, read=False).count()
+    
+    @staticmethod
+    def get_recent(user_id, limit=10):
+        """Retorna notificações recentes do usuário"""
+        return Notification.query\
+            .filter_by(user_id=user_id)\
+            .order_by(Notification.created_at.desc())\
+            .limit(limit)\
+            .all()
+    
+    def __repr__(self):
+        return f"<Notification {self.type} - User {self.user_id}>"

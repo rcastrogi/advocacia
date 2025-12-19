@@ -5,7 +5,7 @@ from flask import current_app, flash, redirect, render_template, request, url_fo
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.utils import secure_filename
 
-from app import db
+from app import db, limiter
 from app.auth import bp
 from app.auth.forms import ChangePasswordForm, LoginForm, ProfileForm, RegistrationForm
 from app.models import User
@@ -47,6 +47,7 @@ def check_password_expiration():
 
 
 @bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute")  # Limita a 10 tentativas por minuto
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("main.dashboard"))
@@ -124,6 +125,7 @@ def login():
 
 
 @bp.route("/register", methods=["GET", "POST"])
+@limiter.limit("5 per hour")  # Limita a 5 registros por hora
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("main.dashboard"))

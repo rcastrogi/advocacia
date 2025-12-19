@@ -12,6 +12,7 @@ from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationE
 
 from app.models import User
 from app.quick_actions import build_quick_action_choices
+from app.utils.validators import validate_strong_password
 
 
 class MultiCheckboxField(SelectMultipleField):
@@ -36,7 +37,7 @@ class RegistrationForm(FlaskForm):
     )
     oab_number = StringField("Número da OAB")
     phone = StringField("Telefone")
-    password = PasswordField("Senha", validators=[DataRequired(), Length(min=6)])
+    password = PasswordField("Senha", validators=[DataRequired(), Length(min=8)])
     password2 = PasswordField(
         "Confirmar senha", validators=[DataRequired(), EqualTo("password")]
     )
@@ -56,6 +57,12 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user is not None:
             raise ValidationError("Email já cadastrado. Use outro email.")
+    
+    def validate_password(self, password):
+        """Valida força da senha"""
+        is_valid, error_msg = validate_strong_password(password.data)
+        if not is_valid:
+            raise ValidationError(error_msg)
 
 
 class ProfileForm(FlaskForm):
@@ -96,7 +103,7 @@ class ChangePasswordForm(FlaskForm):
             DataRequired(),
             Length(min=8, message="A senha deve ter no mínimo 8 caracteres"),
         ],
-        render_kw={"placeholder": "Mínimo 8 caracteres"},
+        render_kw={"placeholder": "Mínimo 8 caracteres, maiúsculas, números e símbolos"},
     )
     confirm_password = PasswordField(
         "Confirmar nova senha",
@@ -107,3 +114,9 @@ class ChangePasswordForm(FlaskForm):
         render_kw={"placeholder": "Digite a nova senha novamente"},
     )
     submit = SubmitField("Alterar senha")
+    
+    def validate_new_password(self, new_password):
+        """Valida força da nova senha"""
+        is_valid, error_msg = validate_strong_password(new_password.data)
+        if not is_valid:
+            raise ValidationError(error_msg)

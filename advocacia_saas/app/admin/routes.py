@@ -89,11 +89,8 @@ def users_list():
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     users = pagination.items
 
-    # Calcular métricas para cada usuário
-    users_with_metrics = []
-    for user in users:
-        metrics = _get_user_metrics(user)
-        users_with_metrics.append({"user": user, "metrics": metrics})
+    # Calcular métricas em bulk (evita N+1 queries)
+    users_with_metrics = _get_bulk_user_metrics(users)
 
     return render_template(
         "admin/users_list.html",
@@ -535,6 +532,187 @@ def export_users():
         )
 
     return jsonify(data)
+
+
+def _get_bulk_user_metrics(users):
+    """
+    Calcula métricas para múltiplos usuários em bulk (otimizado).
+    Evita N+1 queries fazendo agregações em uma única consulta.
+    """
+    if not users:
+        return []
+    
+    user_ids = [u.id for u in users]
+    now = datetime.utcnow()
+    current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    # 1. Contagem de clientes (usa lawyer_id)
+    clients_count = dict(
+        db.session.query(
+            Client.lawyer_id,
+            func.count(Client.id)
+        )
+        .filter(Client.lawyer_id.in_(user_ids))
+        .group_by(Client.lawyer_id)
+        .all()
+    )
+    
+    # 2. Petições totais e mensais
+    petitions_total = dict(
+        db.session.query(
+            PetitionUsage.user_id,
+            func.count(PetitionUsage.id)
+        )
+        .filter(PetitionUsage.user_id.in_(user_ids))
+        .group_by(PetitionUsage.user_id)
+        .all()
+    )
+    
+    petitions_month = dict(
+        db.session.query(
+            PetitionUsage.user_id,
+            func.count(PetitionUsage.id)
+        )
+        .filter(
+            PetitionUsage.user_id.in_(user_ids),
+            PetitionUsage.generated_at >= current_month_start
+        )
+        .group_by(PetitionUsage.user_id)
+        .all()
+    )
+    
+    # 3. Valor total de petições
+    petitions_value = dict(
+        db.session.query(
+            PetitionUsage.user_id,
+            func.coalesce(func.sum(PetitionUsage.amount), 0)
+        )
+        .filter(PetitionUsage.user_id.in_(user_ids))
+        .group_by(PetitionUsage.user_id)
+        .all()
+    )
+    
+    # 4. Créditos de IA
+    credits_data = dict(
+        db.session.query(
+            UserCredits.user_id,
+            UserCredits.balance,
+            UserCredits.total_used
+        )
+        .filter(UserCredits.user_id.in_(user_ids))
+        .all()
+    )
+    
+    # 5. Gerações de IA totais e mensais
+    ai_total = dict(
+        db.session.query(
+            AIGeneration.user_id,
+            func.count(AIGeneration.id)
+        )
+        .filter(AIGeneration.user_id.in_(user_ids))
+        .group_by(AIGeneration.user_id)
+        .all()
+    )
+    
+    ai_month = dict(
+        db.session.query(
+            AIGeneration.user_id,
+            func.count(AIGeneration.id)
+        )
+        .filter(
+            AIGeneration.user_id.in_(user_ids),
+            AIGeneration.created_at >= current_month_start
+        )
+        .group_by(AIGeneration.user_id)
+        .all()
+    )
+    
+    # 6. Tokens e custo de IA
+    ai_stats = dict(
+        db.session.query(
+            AIGeneration.user_id,
+            func.coalesce(func.sum(AIGeneration.tokens_total), 0),
+            func.coalesce(func.sum(AIGeneration.cost_usd), 0)
+        )
+        .filter(AIGeneration.user_id.in_(user_ids))
+        .group_by(AIGeneration.user_id)
+        .all()
+    )
+    
+    # 7. Plano atual
+    current_plans = {}
+    plans_query = (
+        db.session.query(UserPlan, BillingPlan)
+        .join(BillingPlan)
+        .filter(
+            UserPlan.user_id.in_(user_ids),
+            UserPlan.is_current == True
+        )
+        .all()
+    )
+    for user_plan, billing_plan in plans_query:
+        current_plans[user_plan.user_id] = billing_plan.name
+    
+    # 8. Total pago
+    total_paid = dict(
+        db.session.query(
+            Payment.user_id,
+            func.coalesce(func.sum(Payment.amount), 0)
+        )
+        .filter(
+            Payment.user_id.in_(user_ids),
+            Payment.payment_status == 'completed'
+        )
+        .group_by(Payment.user_id)
+        .all()
+    )
+    
+    # 9. Primeiro pagamento (para calcular days_paying)
+    first_payments = {}
+    payments_query = (
+        db.session.query(
+            Payment.user_id,
+            func.min(Payment.paid_at)
+        )
+        .filter(
+            Payment.user_id.in_(user_ids),
+            Payment.payment_status == 'completed',
+            Payment.paid_at.isnot(None)
+        )
+        .group_by(Payment.user_id)
+        .all()
+    )
+    for user_id, first_paid_at in payments_query:
+        if first_paid_at:
+            first_payments[user_id] = (now - first_paid_at).days
+    
+    # Montar resultado
+    results = []
+    for user in users:
+        uid = user.id
+        credits = credits_data.get(uid, (0, 0))
+        ai_stat = ai_stats.get(uid, (0, Decimal('0.00')))
+        
+        metrics = {
+            'days_on_platform': (now - user.created_at).days if user.created_at else 0,
+            'days_paying': first_payments.get(uid, 0),
+            'plan_name': current_plans.get(uid, 'Sem plano'),
+            'clients_count': clients_count.get(uid, 0),
+            'petitions_total': petitions_total.get(uid, 0),
+            'petitions_month': petitions_month.get(uid, 0),
+            'petitions_value': float(petitions_value.get(uid, Decimal('0.00'))),
+            'ai_credits_balance': credits[0] if isinstance(credits, tuple) else 0,
+            'ai_credits_used': credits[1] if isinstance(credits, tuple) else 0,
+            'ai_generations_total': ai_total.get(uid, 0),
+            'ai_generations_month': ai_month.get(uid, 0),
+            'ai_tokens_total': ai_stat[0] if len(ai_stat) > 0 else 0,
+            'ai_cost_total': float(ai_stat[1]) if len(ai_stat) > 1 else 0.0,
+            'total_paid': float(total_paid.get(uid, Decimal('0.00')))
+        }
+        
+        results.append({'user': user, 'metrics': metrics})
+    
+    return results
 
 
 def _get_user_metrics(user, detailed=False):
