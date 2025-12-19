@@ -7,8 +7,7 @@ app = 'petitio'
 primary_region = 'gru'
 
 [build]
-  dockerfile = "./Dockerfile"
-  build-target = ""
+  dockerfile = "advocacia_saas/Dockerfile"
 
 [env]
   FLASK_ENV = 'production'

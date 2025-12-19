@@ -77,80 +77,32 @@ function showSuccessToast(message, title = 'Sucesso', duration = 3000) {
     });
 }
 
-// Interceptar fetch global para tratar erros
+// Interceptar fetch global APENAS para erros de rede críticos
+// Não interceptar erros HTTP que devem ser tratados pela aplicação
 const originalFetch = window.fetch;
 window.fetch = function(...args) {
     return originalFetch.apply(this, args)
-        .then(response => {
-            // Se resposta não for OK e for JSON, tentar pegar mensagem de erro
-            if (!response.ok && response.headers.get('content-type')?.includes('application/json')) {
-                return response.json().then(data => {
-                    const errorMessage = data.error || data.message || 'Ocorreu um erro na requisição';
-                    showErrorToast(errorMessage);
-                    throw new Error(errorMessage);
-                });
-            }
-            return response;
-        })
         .catch(error => {
-            // Erros de rede
-            if (error.message === 'Failed to fetch') {
+            // APENAS erros de rede graves (Failed to fetch, timeout, etc)
+            if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
                 showErrorToast(
                     'Não foi possível conectar ao servidor. Verifique sua conexão com a internet.',
                     'Erro de Conexão'
                 );
-            } else if (!error.message.includes('requisição')) {
-                // Só mostrar se não for erro já tratado
-                showErrorToast(error.message || 'Erro desconhecido');
             }
+            // Re-throw para permitir que a aplicação trate o erro
             throw error;
         });
 };
 
-// Interceptar jQuery Ajax se estiver disponível
-if (typeof jQuery !== 'undefined') {
-    jQuery(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
-        let errorMessage = 'Ocorreu um erro na requisição';
-        
-        // Tentar pegar mensagem do JSON de resposta
-        try {
-            const response = JSON.parse(jqXHR.responseText);
-            errorMessage = response.error || response.message || errorMessage;
-        } catch (e) {
-            // Se não for JSON, usar mensagem padrão por código de status
-            switch (jqXHR.status) {
-                case 400:
-                    errorMessage = 'Requisição inválida. Verifique os dados enviados.';
-                    break;
-                case 401:
-                    errorMessage = 'Sua sessão expirou. Por favor, faça login novamente.';
-                    setTimeout(() => window.location.href = '/auth/login', 2000);
-                    break;
-                case 403:
-                    errorMessage = 'Você não tem permissão para realizar esta ação.';
-                    break;
-                case 404:
-                    errorMessage = 'Recurso não encontrado.';
-                    break;
-                case 429:
-                    errorMessage = 'Muitas tentativas. Por favor, aguarde alguns minutos.';
-                    break;
-                case 500:
-                    errorMessage = 'Erro interno do servidor. Nossa equipe foi notificada.';
-                    break;
-                case 503:
-                    errorMessage = 'Serviço temporariamente indisponível. Tente novamente em breve.';
-                    break;
-                default:
-                    if (jqXHR.status === 0) {
-                        errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão.';
-                    }
-            }
-        }
-        
-        showErrorToast(errorMessage);
-    });
-}
+// Interceptor jQuery Ajax DESABILITADO por padrão para evitar toasts duplicados
+// Se necessário, use showErrorToast() manualmente no error handler da requisição
+// 
+// if (typeof jQuery !== 'undefined') {
+//     jQuery(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
+//         // Código desabilitado
+//     });
+// }
 
 // Listener para erros JavaScript não capturados
 window.addEventListener('error', function(event) {
@@ -188,4 +140,18 @@ window.addEventListener('unhandledrejection', function(event) {
 window.showErrorToast = showErrorToast;
 window.showSuccessToast = showSuccessToast;
 
-console.log('✅ Sistema de tratamento de erros inicializado');
+console.log('✅ Sistema de tratamento de erros in - APENAS LOGGING
+// Não mostra toasts automaticamente para evitar spam ao usuário
+window.addEventListener('error', function(event) {
+    console.error('❌ Erro JavaScript não capturado:', event.error);
+    
+    // Apenas log - não mostrar toast automaticamente
+    // Use showErrorToast() manualmente onde necessário
+});
+
+// Listener para promessas rejeitadas não tratadas - APENAS LOGGING
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('❌ Promise rejeitada não tratada:', event.reason);
+    
+    // Apenas log - não mostrar toast automaticamente
+    // Use showErrorToast() manualmente onde necessário

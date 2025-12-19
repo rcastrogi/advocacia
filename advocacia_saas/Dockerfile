@@ -9,11 +9,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements e instalar
-COPY requirements.txt .
+COPY advocacia_saas/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código
-COPY . .
+COPY advocacia_saas/ .
 
 # Expor porta
 EXPOSE 8080
