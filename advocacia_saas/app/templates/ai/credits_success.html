@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Pagamento Realizado - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow">
+                <div class="card-body p-5 text-center">
+                    <!-- Ícone de Sucesso -->
+                    <div class="mb-4">
+                        <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex p-4">
+                            <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Título -->
+                    <h1 class="h2 fw-bold mb-3">Pagamento Realizado com Sucesso!</h1>
+                    <p class="text-muted mb-4">
+                        Seus créditos já foram adicionados à sua conta e estão disponíveis para uso.
+                    </p>
+
+                    <!-- Detalhes da Compra -->
+                    <div class="bg-light rounded-3 p-4 mb-4">
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <h5 class="fw-bold text-dark">{{ package.name }}</h5>
+                                <p class="text-muted small mb-0">{{ package.description }}</p>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-3">
+                        
+                        <div class="row g-3">
+                            <div class="col-6 text-start">
+                                <small class="text-muted d-block">Créditos Base</small>
+                                <span class="h5 fw-bold text-dark">{{ package.credits }}</span>
+                            </div>
+                            {% if package.bonus_credits > 0 %}
+                            <div class="col-6 text-end">
+                                <small class="text-muted d-block">Bônus</small>
+                                <span class="h5 fw-bold text-warning">+{{ package.bonus_credits }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <hr class="my-3">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-dark">Total Recebido:</span>
+                            <span class="h4 fw-bold text-success mb-0">
+                                {{ package.total_credits }} créditos
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Informações de Pagamento -->
+                    {% if payment_id %}
+                    <div class="border rounded-3 p-3 mb-4">
+                        <div class="row small">
+                            <div class="col-6 text-start text-muted">
+                                Valor Pago:
+                            </div>
+                            <div class="col-6 text-end fw-bold">
+                                R$ {{ "%.2f"|format(package.price) }}
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <div class="row small">
+                            <div class="col-6 text-start text-muted">
+                                ID do Pagamento:
+                            </div>
+                            <div class="col-6 text-end">
+                                <code class="small">{{ payment_id }}</code>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- O que fazer agora -->
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Pronto para começar!</strong><br>
+                        <small>Seus créditos já estão disponíveis. Use-os para gerar petições com IA.</small>
+                    </div>
+
+                    <!-- Botões de Ação -->
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.peticionador') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-file-contract me-2"></i>
+                            Começar a Usar IA
+                        </a>
+                        <a href="{{ url_for('ai.credits_dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Ver Meus Créditos
+                        </a>
+                    </div>
+
+                    <!-- Suporte -->
+                    <div class="mt-4">
+                        <small class="text-muted">
+                            Precisa de ajuda? Entre em contato com nosso 
+                            <a href="mailto:suporte@petitio.com.br">suporte</a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recibo -->
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-envelope me-1"></i>
+                    Um recibo foi enviado para <strong>{{ current_user.email }}</strong>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

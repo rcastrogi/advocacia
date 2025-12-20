@@ -1,17 +1,19 @@
 from datetime import datetime
 
-from flask import flash, redirect, render_template, request, url_for
+from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
 from app.billing.decorators import subscription_required
 from app.clients import bp
 from app.clients.forms import ClientForm
-from app.models import Client, Dependent, Estado
+from app.decorators import lawyer_required
+from app.models import Client, Dependent, Estado, User
 
 
 @bp.route("/")
 @login_required
+@lawyer_required
 @subscription_required
 def index():
     page = request.args.get("page", 1, type=int)
@@ -68,6 +70,9 @@ def new():
 
         db.session.add(client)
         db.session.flush()  # Get the client ID
+
+        # Adicionar advogado atual como advogado principal na relação muitos-para-muitos
+        client.add_lawyer(current_user, is_primary=True)
 
         # Add dependents
         for dependent_form in form.dependents:
@@ -155,6 +160,83 @@ def edit(id):
         form=form,
         client=client,
     )
+
+
+@bp.route("/<int:id>/add-lawyer", methods=["POST"])
+@login_required
+@subscription_required
+def add_lawyer(id):
+    """Adiciona um advogado ao cliente"""
+    client = Client.query.filter_by(id=id).first_or_404()
+
+    # Verificar se o usuário atual tem acesso a este cliente
+    if not client.has_lawyer(current_user) and client.lawyer_id != current_user.id:
+        abort(403)
+
+    lawyer_email = request.form.get("lawyer_email")
+    specialty = request.form.get("specialty")
+
+    if not lawyer_email:
+        flash("Email do advogado é obrigatório", "danger")
+        return redirect(url_for("clients.view", id=id))
+
+    # Buscar advogado por email
+    lawyer = User.query.filter_by(email=lawyer_email).first()
+
+    if not lawyer:
+        flash("Advogado não encontrado com este email", "danger")
+        return redirect(url_for("clients.view", id=id))
+
+    if lawyer.user_type not in ["advogado", "escritorio"]:
+        flash("Este usuário não é um advogado", "danger")
+        return redirect(url_for("clients.view", id=id))
+
+    if client.has_lawyer(lawyer):
+        flash("Este advogado já está associado ao cliente", "warning")
+        return redirect(url_for("clients.view", id=id))
+
+    # Adicionar advogado
+    client.add_lawyer(lawyer, specialty=specialty)
+    db.session.commit()
+
+    flash(
+        f"Advogado {lawyer.full_name or lawyer.username} adicionado com sucesso!",
+        "success",
+    )
+    return redirect(url_for("clients.view", id=id))
+
+
+@bp.route("/<int:id>/remove-lawyer/<int:lawyer_id>", methods=["POST"])
+@login_required
+@subscription_required
+def remove_lawyer(id, lawyer_id):
+    """Remove um advogado do cliente"""
+    client = Client.query.filter_by(id=id).first_or_404()
+
+    # Verificar se o usuário atual tem acesso a este cliente
+    if not client.has_lawyer(current_user) and client.lawyer_id != current_user.id:
+        abort(403)
+
+    # Não permitir remover o advogado principal
+    if lawyer_id == client.lawyer_id:
+        flash("Não é possível remover o advogado principal", "danger")
+        return redirect(url_for("clients.view", id=id))
+
+    lawyer = User.query.get_or_404(lawyer_id)
+
+    if not client.has_lawyer(lawyer):
+        flash("Este advogado não está associado ao cliente", "warning")
+        return redirect(url_for("clients.view", id=id))
+
+    # Remover advogado
+    client.remove_lawyer(lawyer)
+    db.session.commit()
+
+    flash(
+        f"Advogado {lawyer.full_name or lawyer.username} removido com sucesso!",
+        "success",
+    )
+    return redirect(url_for("clients.view", id=id))
 
 
 @bp.route("/<int:id>/delete", methods=["POST"])

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Pagamento Pendente - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow">
+                <div class="card-body p-5 text-center">
+                    <!-- Ícone de Pendente -->
+                    <div class="mb-4">
+                        <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex p-4">
+                            <i class="fas fa-clock text-warning" style="font-size: 4rem;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Título -->
+                    <h1 class="h2 fw-bold mb-3">Pagamento Pendente</h1>
+                    <p class="text-muted mb-4">
+                        Seu pagamento está sendo processado. Aguarde a confirmação.
+                    </p>
+
+                    <!-- Informação -->
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>O que acontece agora?</strong><br>
+                        <small>
+                            Pagamentos via boleto ou PIX podem levar até 2 dias úteis para serem compensados.
+                            Você receberá um email quando o pagamento for aprovado e os créditos serão adicionados automaticamente.
+                        </small>
+                    </div>
+
+                    <!-- Tipos de Pagamento -->
+                    <div class="bg-light rounded-3 p-3 mb-4">
+                        <h6 class="fw-bold mb-2">Tempo de Processamento:</h6>
+                        <ul class="list-unstyled small mb-0 text-start">
+                            <li class="mb-2">
+                                <i class="fas fa-qrcode text-primary me-2"></i>
+                                <strong>PIX:</strong> Até 1 dia útil
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-barcode text-info me-2"></i>
+                                <strong>Boleto:</strong> Até 2 dias úteis
+                            </li>
+                            <li>
+                                <i class="fas fa-credit-card text-success me-2"></i>
+                                <strong>Cartão:</strong> Imediato (se aprovado)
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Botões de Ação -->
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('ai.credits_dashboard') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-coins me-2"></i>
+                            Ver Meus Créditos
+                        </a>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-2"></i>
+                            Voltar ao Dashboard
+                        </a>
+                    </div>
+
+                    <!-- Suporte -->
+                    <div class="mt-4">
+                        <small class="text-muted">
+                            <i class="fas fa-envelope me-1"></i>
+                            Você receberá um email de confirmação em: <strong>{{ current_user.email }}</strong>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

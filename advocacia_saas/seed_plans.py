@@ -20,34 +20,36 @@ with app.app_context():
 
     # Plano 1: Por Uso
     plan1 = BillingPlan(
+        slug="essencial",
         name="Essencial",
         plan_type="per_usage",
-        description="Pague apenas pelas petições que gerar. Ideal para escritórios pequenos.",
+        description="Pague apenas pelas petições que gerar. Ideal para escritórios pequenos.\n\nRecursos incluídos:\n• Petições ilimitadas\n• Clientes ilimitados\n• Templates básicos\n• Suporte por email\n• 1 usuário\n• 5GB armazenamento",
         monthly_fee=Decimal("0.00"),
         usage_rate=Decimal("15.00"),
-        max_users=1,
-        max_storage_gb=5,
-        has_support=False,
         active=True,
-        features={
-            "petitions": "unlimited",
-            "clients": "unlimited",
-            "templates": "basic",
-            "support": "email",
-        },
     )
 
     # Plano 2: Mensal Básico
     plan2 = BillingPlan(
+        slug="profissional",
         name="Profissional",
         plan_type="monthly",
-        description="Petições ilimitadas com suporte prioritário. Ideal para escritórios em crescimento.",
+        description="Petições ilimitadas com suporte prioritário. Ideal para escritórios em crescimento.\n\nRecursos incluídos:\n• Petições ilimitadas\n• Clientes ilimitados\n• Templates avançados\n• Suporte prioritário\n• 3 usuários\n• 20GB armazenamento",
         monthly_fee=Decimal("99.00"),
         usage_rate=Decimal("0.00"),
-        max_users=3,
-        max_storage_gb=20,
-        has_support=True,
         active=True,
+    )
+
+    # Plano 3: Mensal Premium
+    plan3 = BillingPlan(
+        slug="escritorio",
+        name="Escritório",
+        plan_type="monthly",
+        description="Solução completa para escritórios estabelecidos com múltiplos usuários.\n\nRecursos incluídos:\n• Petições ilimitadas\n• Clientes ilimitados\n• Templates premium\n• Suporte dedicado\n• 10 usuários\n• 100GB armazenamento\n• Acesso à API",
+        monthly_fee=Decimal("199.00"),
+        usage_rate=Decimal("0.00"),
+        active=True,
+    )
         features={
             "petitions": "unlimited",
             "clients": "unlimited",

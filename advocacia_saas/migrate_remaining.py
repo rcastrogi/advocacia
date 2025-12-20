@@ -91,8 +91,9 @@ for table in tables:
                     (max_id + 1,),
                 )
                 pg_conn.commit()
-        except:
+        except Exception as e:
             pg_conn.rollback()
+            print(f"\n    Erro ao resetar sequence: {e}")
 
 sqlite_conn.close()
 pg_conn.close()

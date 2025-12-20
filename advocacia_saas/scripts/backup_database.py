@@ -44,7 +44,7 @@ def get_database_credentials():
 
 def create_backup(backup_dir="backups"):
     """Cria backup do PostgreSQL"""
-    print(f"🔄 Iniciando backup do banco de dados...")
+    print("🔄 Iniciando backup do banco de dados...")
 
     # Criar diretório de backup
     backup_path = Path(backup_dir)
@@ -79,9 +79,7 @@ def create_backup(backup_dir="backups"):
     ]
 
     try:
-        result = subprocess.run(
-            cmd, env=env, capture_output=True, text=True, check=True
-        )
+        subprocess.run(cmd, env=env, capture_output=True, text=True, check=True)
 
         file_size = filepath.stat().st_size / (1024 * 1024)  # MB
         print(f"✅ Backup criado: {filename} ({file_size:.2f} MB)")

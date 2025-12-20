@@ -71,7 +71,7 @@ def setup_packages():
 
     db.session.commit()
 
-    print(f"\n=== Resumo ===")
+    print("\n=== Resumo ===")
     print(f"Pacotes criados: {created}")
     print(f"Pacotes atualizados: {updated}")
     print(

@@ -194,7 +194,7 @@
                     <div class="col-md-4">
                         <div class="mb-3">
                             {{ form.city.label(class="form-label") }}
-                            {{ form.city(class="form-select", id="city", disabled=true) }}
+                            {{ form.city(class="form-control", id="city") }}
                         </div>
                     </div>
                 </div>
@@ -394,44 +394,6 @@ console.log('Elementos encontrados:', {
     neighborhood: document.getElementById('neighborhood') ? 'OK' : 'ERRO'
 });
 
-// Load cities when state changes
-document.getElementById('uf').addEventListener('change', function() {
-    const uf = this.value;
-    const citySelect = document.getElementById('city');
-    
-    if (!uf) {
-        citySelect.innerHTML = '<option value="">Selecione o estado primeiro...</option>';
-        citySelect.disabled = true;
-        return;
-    }
-    
-    citySelect.disabled = true;
-    citySelect.innerHTML = '<option value="">Carregando...</option>';
-    
-    fetch(`/api/estados/${uf}/cidades`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert(data.error);
-                citySelect.innerHTML = '<option value="">Erro ao carregar cidades</option>';
-            } else {
-                citySelect.innerHTML = '<option value="">Selecione...</option>';
-                data.forEach(cidade => {
-                    const option = document.createElement('option');
-                    option.value = cidade.nome;
-                    option.textContent = cidade.nome;
-                    citySelect.appendChild(option);
-                });
-                citySelect.disabled = false;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Erro ao carregar cidades');
-            citySelect.innerHTML = '<option value="">Erro ao carregar cidades</option>';
-        });
-});
-
 // CEP Search
 document.getElementById('searchCep').addEventListener('click', function() {
     const cep = document.getElementById('cep').value.replace(/\D/g, '');
@@ -447,7 +409,11 @@ document.getElementById('searchCep').addEventListener('click', function() {
                 console.log('📦 Dados recebidos:', data);
                 
                 if (data.error) {
-                    alert(data.error);
+                    if (window.showErrorToast) {
+                        window.showErrorToast(data.error);
+                    } else {
+                        alert(data.error);
+                    }
                 } else {
                     console.log('✅ CEP válido! Preenchendo campos...');
                     
@@ -467,20 +433,13 @@ document.getElementById('searchCep').addEventListener('click', function() {
                     streetField.value = data.street;
                     neighborhoodField.value = data.neighborhood;
                     
-                    // Set UF first
+                    // Set UF and City
                     ufField.value = data.uf;
+                    cityField.value = data.city;
                     
-                    console.log('🔄 Disparando evento change no UF...');
-                    // Trigger change event to load cities
-                    ufField.dispatchEvent(new Event('change'));
-                    
-                    console.log('⏳ Aguardando 500ms para popular cidade...');
-                    // Wait a bit then set city and lock fields
-                    setTimeout(() => {
-                        console.log('⏰ Timeout executado!');
-                        cityField.value = data.city;
-                        
-                        console.log('🔒 INICIANDO BLOQUEIO DOS CAMPOS...');
+                    console.log('✅ Campos preenchidos com sucesso!');
+                    console.log('📍 Cidade preenchida:', data.city, '→', cityField.value);
+                    console.log('🔒 INICIANDO BLOQUEIO DOS CAMPOS...');
                         
                         // Store locked values
                         const lockedValues = {
@@ -554,10 +513,14 @@ document.getElementById('searchCep').addEventListener('click', function() {
                         console.log('🔒 Bloqueando campo CIDADE');
                         cityField.dataset.locked = 'true';
                         cityField.dataset.lockedValue = lockedValues.city;
-                        cityField.disabled = true;
+                        cityField.readOnly = true;
                         cityField.style.pointerEvents = 'none';
-                        cityField.addEventListener('mousedown', preventChange, true);
                         cityField.addEventListener('keydown', preventChange, true);
+                        cityField.addEventListener('keypress', preventChange, true);
+                        cityField.addEventListener('keyup', preventChange, true);
+                        cityField.addEventListener('paste', preventChange, true);
+                        cityField.addEventListener('cut', preventChange, true);
+                        cityField.addEventListener('input', restoreValue(cityField, lockedValues.city), true);
                         cityField.addEventListener('change', restoreValue(cityField, lockedValues.city), true);
                         cityField.addEventListener('focus', preventChange, true);
                         
@@ -580,12 +543,18 @@ document.getElementById('searchCep').addEventListener('click', function() {
                         console.log('✅ CAMPOS BLOQUEADOS COM SUCESSO!');
                         
                         // Show success message
-                        alert('✅ Endereço preenchido automaticamente pelo CEP!\n🔒 Campos bloqueados (altere o CEP para desbloquear)');
-                    }, 500);
+                        if (window.showSuccessToast) {
+                            window.showSuccessToast('✅ Endereço preenchido automaticamente!');
+                        }
                 }
             })
             .catch(error => {
-                alert('Erro ao buscar CEP');
+                console.error('❌ Erro ao buscar CEP:', error);
+                if (window.showErrorToast) {
+                    window.showErrorToast('Erro ao buscar CEP. Verifique sua conexão.');
+                } else {
+                    alert('Erro ao buscar CEP');
+                }
             });
     } else {
         alert('CEP deve conter 8 dígitos');
@@ -770,6 +739,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (isPregnant.checked) {
         document.getElementById('deliveryDateField').style.display = 'block';
+    }
+    
+    // Enable disabled fields before form submission
+    const clientForm = document.getElementById('clientForm');
+    if (clientForm) {
+        clientForm.addEventListener('submit', function(e) {
+            // Enable UF field before submit so its value is sent
+            const ufField = document.getElementById('uf');
+            
+            if (ufField && ufField.disabled) {
+                ufField.disabled = false;
+            }
+        });
     }
 });
 </script>

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Procuração - Petitio{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header mb-4">
+                <h1 class="page-title">
+                    <i class="fas fa-file-signature me-2"></i>
+                    Gerar Procuração
+                </h1>
+                <p class="text-muted">Preencha os dados para gerar uma procuração em PDF</p>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('procuracao.nova') }}">
+                        <!-- Seleção de Cliente -->
+                        <div class="mb-4">
+                            <label for="client_id" class="form-label fw-bold">
+                                <i class="fas fa-user me-2"></i>Cliente *
+                            </label>
+                            <select class="form-select" id="client_id" name="client_id" required>
+                                <option value="">Selecione um cliente...</option>
+                                {% for client in clients %}
+                                <option value="{{ client.id }}">
+                                    {{ client.full_name }} - {{ client.cpf_cnpj }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                O cliente que está outorgando a procuração
+                            </div>
+                        </div>
+
+                        <!-- Tipo de Procuração -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-balance-scale me-2"></i>Tipo de Procuração *
+                            </label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="tipo" 
+                                               id="tipo_ad_judicia" value="ad_judicia" checked>
+                                        <label class="form-check-label" for="tipo_ad_judicia">
+                                            <strong>Ad Judicia</strong>
+                                            <div class="small text-muted">
+                                                Para representação judicial (processos, ações, defesas)
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="tipo" 
+                                               id="tipo_ad_negotia" value="ad_negotia">
+                                        <label class="form-check-label" for="tipo_ad_negotia">
+                                            <strong>Ad Negotia</strong>
+                                            <div class="small text-muted">
+                                                Para negociações e atos administrativos
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Poderes Especiais (Opcional) -->
+                        <div class="mb-4">
+                            <label for="poderes_especiais" class="form-label fw-bold">
+                                <i class="fas fa-plus-circle me-2"></i>Poderes Especiais (Opcional)
+                            </label>
+                            <textarea class="form-control" id="poderes_especiais" name="poderes_especiais" 
+                                      rows="5" placeholder="Digite aqui poderes adicionais específicos que deseja incluir na procuração..."></textarea>
+                            <div class="form-text">
+                                Adicione cláusulas específicas ou poderes especiais que deseja conferir ao procurador
+                            </div>
+                        </div>
+
+                        <!-- Informações do Advogado -->
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle me-2"></i>Dados do Advogado (Outorgado)
+                            </h6>
+                            <p class="mb-0">
+                                Os dados do advogado serão preenchidos automaticamente com base no seu perfil.
+                                Certifique-se de que suas informações estão atualizadas em 
+                                <a href="{{ url_for('main.profile') }}" class="alert-link">Meu Perfil</a>.
+                            </p>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('procuracao.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-file-pdf me-2"></i>Gerar Procuração PDF
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Informações Adicionais -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-question-circle me-2"></i>Como Funciona
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Procuração Ad Judicia</h6>
+                            <p class="small">
+                                Confere poderes amplos para representação judicial, incluindo:
+                            </p>
+                            <ul class="small">
+                                <li>Propor e acompanhar ações</li>
+                                <li>Apresentar defesas e recursos</li>
+                                <li>Transigir e firmar acordos</li>
+                                <li>Substabelecer poderes</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Procuração Ad Negotia</h6>
+                            <p class="small">
+                                Confere poderes para atos administrativos, como:
+                            </p>
+                            <ul class="small">
+                                <li>Assinar documentos e contratos</li>
+                                <li>Realizar pagamentos e recebimentos</li>
+                                <li>Representar em negociações</li>
+                                <li>Movimentar contas bancárias</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

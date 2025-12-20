@@ -2,18 +2,21 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependências do sistema
+# Instalar dependências do sistema (incluindo cairo para pycairo)
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
+    libcairo2-dev \
+    pkg-config \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements e instalar
-COPY advocacia_saas/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código
-COPY advocacia_saas/ .
+COPY . .
 
 # Expor porta
 EXPOSE 8080

@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Minha Assinatura - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-crown me-2"></i>
+                        Minha Assinatura
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    {% if subscription %}
+                        {% set plan = plans[subscription.plan_type] %}
+                        
+                        <!-- Status da Assinatura -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5>Plano Atual</h5>
+                                <p class="h3 text-primary">{{ plan.name }}</p>
+                                <span class="badge {% if subscription.status == 'active' %}bg-success{% else %}bg-warning{% endif %} mb-2">
+                                    {% if subscription.status == 'active' %}Ativo{% else %}{{ subscription.status }}{% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="col-md-6 text-md-end">
+                                <h5>Valor</h5>
+                                <p class="h3">
+                                    R$ {{ "%.2f"|format(subscription.amount) }}
+                                    <small class="text-muted">
+                                        {% if subscription.billing_period == 'monthly' %}/mês{% else %}/ano{% endif %}
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Detalhes -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Período de cobrança:</strong><br>
+                                    {% if subscription.billing_period == 'monthly' %}Mensal{% else %}Anual{% endif %}
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Próxima cobrança:</strong><br>
+                                    {{ subscription.current_period_end.strftime('%d/%m/%Y') if subscription.current_period_end else '-' }}
+                                </p>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Método de pagamento:</strong><br>
+                                    {% if subscription.gateway == 'mercadopago' %}Mercado Pago{% else %}Stripe{% endif %}
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Data de início:</strong><br>
+                                    {{ subscription.created_at.strftime('%d/%m/%Y') }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Features do Plano -->
+                        <h5 class="mb-3">Recursos Incluídos</h5>
+                        <ul class="list-unstyled">
+                            {% for feature in plan.features %}
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ feature }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        
+                        <!-- Ações -->
+                        <hr>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('payments.plans') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-up me-2"></i>
+                                Fazer Upgrade
+                            </a>
+                            
+                            {% if subscription.status == 'active' %}
+                            <button type="button" class="btn btn-outline-danger ms-auto" 
+                                    onclick="cancelSubscription()">
+                                <i class="fas fa-times me-2"></i>
+                                Cancelar Assinatura
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                    {% else %}
+                        <!-- Sem Assinatura -->
+                        <div class="text-center py-5">
+                            <i class="fas fa-crown fa-4x text-muted mb-3"></i>
+                            <h4>Você não possui uma assinatura ativa</h4>
+                            <p class="text-muted">Escolha um plano para começar a usar o Petitio</p>
+                            <a href="{{ url_for('payments.plans') }}" class="btn btn-primary btn-lg mt-3">
+                                <i class="fas fa-rocket me-2"></i>
+                                Ver Planos
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Histórico de Pagamentos -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Histórico de Pagamentos
+                    </h5>
+                </div>
+                
+                <div class="card-body">
+                    {% if payments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Descrição</th>
+                                        <th>Método</th>
+                                        <th>Valor</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in payments %}
+                                    <tr>
+                                        <td>{{ payment.created_at.strftime('%d/%m/%Y') }}</td>
+                                        <td>{{ payment.description }}</td>
+                                        <td>
+                                            {% if payment.payment_method == 'pix' %}
+                                                <i class="fas fa-qrcode me-1"></i> PIX
+                                            {% elif payment.payment_method == 'credit_card' %}
+                                                <i class="fas fa-credit-card me-1"></i> Cartão
+                                            {% else %}
+                                                {{ payment.payment_method }}
+                                            {% endif %}
+                                        </td>
+                                        <td>R$ {{ "%.2f"|format(payment.amount) }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if payment.status == 'paid' %}bg-success
+                                                {% elif payment.status == 'pending' %}bg-warning
+                                                {% elif payment.status == 'failed' %}bg-danger
+                                                {% else %}bg-secondary{% endif %}">
+                                                {% if payment.status == 'paid' %}Pago
+                                                {% elif payment.status == 'pending' %}Pendente
+                                                {% elif payment.status == 'failed' %}Falhou
+                                                {% else %}{{ payment.status }}{% endif %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-4">Nenhum pagamento registrado</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Suporte</h5>
+                </div>
+                <div class="card-body">
+                    <p>Precisa de ajuda com sua assinatura?</p>
+                    <a href="mailto:suporte@petitio.com" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-envelope me-2"></i>
+                        Contatar Suporte
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">FAQ</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    Como cancelar minha assinatura?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Você pode cancelar a qualquer momento clicando no botão "Cancelar Assinatura". 
+                                    Seu acesso continuará até o final do período pago.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    Posso fazer upgrade do plano?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Sim! Clique em "Fazer Upgrade" e escolha um novo plano. 
+                                    O valor será ajustado proporcionalmente.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cancelamento -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancelar Assinatura</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja cancelar sua assinatura?</p>
+                <p class="text-muted">
+                    Seu acesso continuará até {{ subscription.current_period_end.strftime('%d/%m/%Y') if subscription and subscription.current_period_end else '' }}.
+                </p>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="immediateCancel">
+                    <label class="form-check-label" for="immediateCancel">
+                        Cancelar imediatamente (sem reembolso)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmCancel()">Confirmar Cancelamento</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function cancelSubscription() {
+    const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+    modal.show();
+}
+
+async function confirmCancel() {
+    const immediate = document.getElementById('immediateCancel').checked;
+    
+    try {
+        const response = await fetch('/payments/cancel-subscription', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ immediate })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showSuccessToast('Assinatura cancelada com sucesso');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showErrorToast(data.error || 'Erro ao cancelar assinatura');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        showErrorToast('Erro ao processar cancelamento');
+    }
+}
+</script>
+{% endblock %}

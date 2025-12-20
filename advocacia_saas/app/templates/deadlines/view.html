@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}{{ deadline.title }} - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Detalhes do Prazo
+                    </h4>
+                    <span class="badge {% if deadline.status == 'pending' %}bg-warning{% elif deadline.status == 'completed' %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if deadline.status == 'pending' %}Pendente
+                        {% elif deadline.status == 'completed' %}Cumprido
+                        {% else %}Cancelado{% endif %}
+                    </span>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Título -->
+                    <h3 class="mb-3">{{ deadline.title }}</h3>
+                    
+                    <!-- Status e Urgência -->
+                    {% if deadline.status == 'pending' %}
+                        {% if deadline.is_urgent() %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>URGENTE!</strong> Este prazo vence em {{ deadline.days_until() }} dia(s)
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Faltam {{ deadline.days_until() }} dia(s) para o vencimento
+                        </div>
+                        {% endif %}
+                    {% elif deadline.status == 'completed' %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Prazo cumprido em {{ deadline.completed_at.strftime('%d/%m/%Y %H:%M') }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Detalhes -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong><i class="fas fa-calendar me-2"></i>Data e Hora:</strong><br>
+                                {{ deadline.deadline_date.strftime('%d/%m/%Y %H:%M') }}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-tag me-2"></i>Tipo:</strong><br>
+                                <span class="badge bg-secondary">{{ deadline.deadline_type or 'Geral' }}</span>
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-bell me-2"></i>Alerta:</strong><br>
+                                {{ deadline.alert_days_before }} dia(s) antes
+                                {% if deadline.alert_sent %}
+                                <span class="badge bg-success ms-2">Enviado</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong><i class="fas fa-user me-2"></i>Cliente:</strong><br>
+                                {% if deadline.client %}
+                                <a href="{{ url_for('clients.view', client_id=deadline.client_id) }}">
+                                    {{ deadline.client.name }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">Não vinculado</span>
+                                {% endif %}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-briefcase me-2"></i>Dias Úteis:</strong><br>
+                                {{ 'Sim' if deadline.count_business_days else 'Não' }}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-clock me-2"></i>Cadastrado em:</strong><br>
+                                {{ deadline.created_at.strftime('%d/%m/%Y %H:%M') }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Descrição -->
+                    {% if deadline.description %}
+                    <hr>
+                    <h5>Descrição</h5>
+                    <p class="text-muted">{{ deadline.description }}</p>
+                    {% endif %}
+                    
+                    <!-- Notas de Conclusão -->
+                    {% if deadline.completion_notes %}
+                    <hr>
+                    <h5>Observações da Conclusão</h5>
+                    <p class="text-muted">{{ deadline.completion_notes }}</p>
+                    {% endif %}
+                    
+                    <!-- Ações -->
+                    <hr>
+                    <div class="d-flex gap-2">
+                        {% if deadline.status == 'pending' %}
+                        <button type="button" class="btn btn-success" onclick="completeDeadline()">
+                            <i class="fas fa-check me-2"></i>
+                            Marcar como Cumprido
+                        </button>
+                        <a href="{{ url_for('deadlines.edit', deadline_id=deadline.id) }}" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>
+                            Editar
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('deadlines.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Voltar
+                        </a>
+                        
+                        {% if current_user.user_type == 'master' %}
+                        <button type="button" class="btn btn-outline-danger ms-auto" onclick="deleteDeadline()">
+                            <i class="fas fa-trash me-2"></i>
+                            Excluir
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Timeline -->
+            <div class="card shadow mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Histórico
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <i class="fas fa-plus text-primary"></i>
+                            <div>
+                                <strong>Prazo cadastrado</strong>
+                                <br><small class="text-muted">{{ deadline.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                            </div>
+                        </div>
+                        
+                        {% if deadline.alert_sent %}
+                        <div class="timeline-item">
+                            <i class="fas fa-bell text-warning"></i>
+                            <div>
+                                <strong>Alerta enviado</strong>
+                                <br><small class="text-muted">{{ deadline.alert_sent_at.strftime('%d/%m/%Y %H:%M') if deadline.alert_sent_at else '-' }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if deadline.status == 'completed' %}
+                        <div class="timeline-item">
+                            <i class="fas fa-check text-success"></i>
+                            <div>
+                                <strong>Prazo cumprido</strong>
+                                <br><small class="text-muted">{{ deadline.completed_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dicas -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Dica
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0 small">
+                        Configure alertas por email para receber lembretes automáticos antes do vencimento.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Conclusão -->
+<div class="modal fade" id="completeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Marcar Prazo como Cumprido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Deseja marcar este prazo como cumprido?</p>
+                <div class="mb-3">
+                    <label for="completion_notes" class="form-label">Observações (opcional)</label>
+                    <textarea class="form-control" id="completion_notes" rows="3" 
+                              placeholder="Adicione notas sobre a conclusão deste prazo..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="confirmComplete()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+.timeline-item i {
+    position: absolute;
+    left: -30px;
+    top: 3px;
+}
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 20px;
+    bottom: -10px;
+    width: 2px;
+    background: #dee2e6;
+}
+</style>
+
+<script>
+function completeDeadline() {
+    const modal = new bootstrap.Modal(document.getElementById('completeModal'));
+    modal.show();
+}
+
+async function confirmComplete() {
+    const notes = document.getElementById('completion_notes').value;
+    
+    try {
+        const response = await fetch(`/deadlines/{{ deadline.id }}/complete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ notes })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showSuccessToast('Prazo marcado como cumprido!');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorToast(data.error || 'Erro ao atualizar prazo');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        showErrorToast('Erro ao processar solicitação');
+    }
+}
+
+async function deleteDeadline() {
+    if (!confirm('Tem certeza que deseja excluir este prazo? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/deadlines/{{ deadline.id }}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showSuccessToast('Prazo excluído com sucesso!');
+            setTimeout(() => {
+                window.location.href = '{{ url_for("deadlines.index") }}';
+            }, 1500);
+        } else {
+            showErrorToast(data.error || 'Erro ao excluir prazo');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        showErrorToast('Erro ao processar solicitação');
+    }
+}
+</script>
+{% endblock %}

@@ -8,8 +8,7 @@ from decimal import Decimal
 
 from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
-from sqlalchemy import and_, case, func
-from sqlalchemy.orm import joinedload
+from sqlalchemy import and_, func
 
 from app import db
 from app.admin import bp
@@ -19,7 +18,6 @@ from app.models import (
     Client,
     CreditPackage,
     CreditTransaction,
-    Invoice,
     Payment,
     PetitionUsage,
     User,
@@ -66,9 +64,9 @@ def users_list():
 
     # Filtro de status
     if status_filter == "active":
-        query = query.filter(User.is_active == True)
+        query = query.filter(User.is_active.is_(True))
     elif status_filter == "inactive":
-        query = query.filter(User.is_active == False)
+        query = query.filter(User.is_active.is_(False))
     elif status_filter == "delinquent":
         query = query.filter(User.billing_status == "delinquent")
     elif status_filter == "trial":
@@ -238,7 +236,7 @@ def dashboard():
     chart_ai_credits_sold = []  # Créditos vendidos
 
     # Buscar planos existentes
-    all_plans = BillingPlan.query.filter(BillingPlan.active == True).all()
+    all_plans = BillingPlan.query.filter(BillingPlan.active.is_(True)).all()
     for plan in all_plans:
         chart_revenue_by_plan[plan.name] = []
     chart_revenue_by_plan["Avulso"] = []  # Para pagamentos avulsos/créditos
@@ -281,7 +279,7 @@ def dashboard():
                 .join(User, Payment.user_id == User.id)
                 .join(
                     UserPlan,
-                    and_(UserPlan.user_id == User.id, UserPlan.is_current == True),
+                    and_(UserPlan.user_id == User.id, UserPlan.is_current.is_(True)),
                 )
                 .filter(
                     Payment.paid_at >= month_start,
@@ -342,7 +340,7 @@ def dashboard():
     # === Métricas de Usuários ===
     total_users = User.query.filter(User.user_type != "master").count()
     active_users = User.query.filter(
-        User.is_active == True, User.user_type != "master"
+        User.is_active.is_(True), User.user_type != "master"
     ).count()
     new_users_month = User.query.filter(
         User.created_at >= current_month_start, User.user_type != "master"
@@ -416,7 +414,7 @@ def dashboard():
     # Usuários pagantes (com plano ativo)
     paying_users = (
         User.query.join(UserPlan)
-        .filter(UserPlan.status == "active", UserPlan.is_current == True)
+        .filter(UserPlan.status == "active", UserPlan.is_current.is_(True))
         .distinct()
         .count()
     )
@@ -626,7 +624,7 @@ def _get_bulk_user_metrics(users):
     plans_query = (
         db.session.query(UserPlan, BillingPlan)
         .join(BillingPlan)
-        .filter(UserPlan.user_id.in_(user_ids), UserPlan.is_current == True)
+        .filter(UserPlan.user_id.in_(user_ids), UserPlan.is_current.is_(True))
         .all()
     )
     for user_plan, billing_plan in plans_query:

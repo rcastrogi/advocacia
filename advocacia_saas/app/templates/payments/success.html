@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Pagamento Confirmado - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow text-center">
+                <div class="card-body py-5">
+                    <div class="success-animation mb-4">
+                        <i class="fas fa-check-circle fa-5x text-success"></i>
+                    </div>
+                    
+                    <h2 class="mb-3">Pagamento Confirmado!</h2>
+                    <p class="lead text-muted mb-4">
+                        Sua assinatura foi ativada com sucesso.
+                    </p>
+                    
+                    <div class="alert alert-success">
+                        <i class="fas fa-gift me-2"></i>
+                        Bem-vindo ao Petitio! Você agora tem acesso a todos os recursos do seu plano.
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-home me-2"></i>
+                            Ir para Dashboard
+                        </a>
+                        <a href="{{ url_for('payments.my_subscription') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-crown me-2"></i>
+                            Ver Minha Assinatura
+                        </a>
+                    </div>
+                    
+                    <!-- Próximos Passos -->
+                    <div class="mt-5 text-start">
+                        <h5 class="mb-3">Próximos Passos</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <a href="{{ url_for('clients.new') }}">Cadastre seu primeiro cliente</a>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <a href="{{ url_for('petitions.index') }}">Gere petições com IA</a>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <a href="{{ url_for('deadlines.new') }}">Configure prazos e alertas</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes checkmark {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.success-animation i {
+    animation: checkmark 0.5s ease-out;
+}
+</style>
+{% endblock %}

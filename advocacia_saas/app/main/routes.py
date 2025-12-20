@@ -1,14 +1,31 @@
 from datetime import datetime
 
-from flask import flash, redirect, render_template, request, url_for
+from flask import (
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
 from app import db
+from app.billing.analytics import (
+    get_monthly_usage_history,
+    get_usage_insights,
+    predict_limit_date,
+)
 from app.billing.decorators import subscription_required
-from app.billing.utils import current_billing_cycle
+from app.billing.utils import (
+    current_billing_cycle,
+    get_unread_notifications,
+    get_user_petition_usage,
+)
+from app.decorators import lawyer_required
 from app.main import bp
-from app.main.forms import TestimonialForm, TestimonialModerationForm
+from app.main.forms import TestimonialForm
 from app.models import BillingPlan, Client, PetitionType, PetitionUsage, Testimonial
 from app.quick_actions import build_dashboard_actions
 
@@ -36,6 +53,14 @@ CATEGORY_LABELS = {
 }
 
 
+@bp.route("/favicon.ico")
+def favicon():
+    """Serve favicon usando o logo do Petitio"""
+    return send_from_directory(
+        "static/img", "petitio-logo.svg", mimetype="image/svg+xml"
+    )
+
+
 @bp.route("/")
 def index():
     plans = _get_public_plans()
@@ -57,8 +82,15 @@ def index():
     )
 
 
+@bp.route("/recursos")
+def recursos():
+    """Página detalhada de recursos e funcionalidades"""
+    return render_template("recursos.html")
+
+
 @bp.route("/dashboard")
 @login_required
+@lawyer_required
 def dashboard():
     # Get client statistics
     total_clients = Client.query.filter_by(lawyer_id=current_user.id).count()
@@ -73,12 +105,28 @@ def dashboard():
     quick_actions = _build_quick_actions_for(current_user)
     plan_summary = _build_plan_summary(current_user)
 
+    # Get petition usage statistics
+    petition_usage = get_user_petition_usage(current_user)
+
+    # Get analytics data
+    usage_history = get_monthly_usage_history(current_user, months=6)
+    prediction = predict_limit_date(current_user)
+    insights = get_usage_insights(current_user)
+
+    # Get unread notifications
+    notifications = get_unread_notifications(current_user)
+
     return render_template(
         "dashboard.html",
         title="Dashboard",
         stats=stats,
         quick_actions=quick_actions,
         plan_summary=plan_summary,
+        petition_usage=petition_usage,
+        usage_history=usage_history,
+        prediction=prediction,
+        insights=insights,
+        notifications=notifications,
     )
 
 
@@ -481,3 +529,72 @@ def get_approved_testimonials(limit=6, featured_only=False):
     if featured_only:
         query = query.filter_by(is_featured=True)
     return query.order_by(Testimonial.created_at.desc()).limit(limit).all()
+
+
+@bp.route("/notifications")
+@login_required
+@lawyer_required
+def notifications():
+    """Página de histórico de notificações."""
+    from app.models import Notification
+
+    all_notifications = (
+        Notification.query.filter_by(user_id=current_user.id)
+        .order_by(Notification.created_at.desc())
+        .all()
+    )
+
+    unread_count = sum(1 for n in all_notifications if not n.read)
+
+    return render_template(
+        "notifications.html",
+        title="Notificações",
+        notifications=all_notifications,
+        unread_count=unread_count,
+    )
+
+
+@bp.route("/notifications/mark-read/<int:notification_id>", methods=["POST"])
+@login_required
+def mark_notification_read(notification_id):
+    """Marca uma notificação como lida via AJAX."""
+    from flask import jsonify
+
+    from app.billing.utils import mark_notification_as_read
+
+    success = mark_notification_as_read(notification_id, current_user)
+
+    if success:
+        return jsonify(
+            {"status": "success", "message": "Notificação marcada como lida"}
+        ), 200
+    else:
+        return jsonify(
+            {"status": "error", "message": "Notificação não encontrada"}
+        ), 404
+
+
+@bp.route("/notifications/mark-all-read", methods=["POST"])
+@login_required
+def mark_all_notifications_read():
+    """Marca todas as notificações como lidas."""
+    from flask import jsonify
+
+    from app.models import Notification
+
+    notifications = Notification.query.filter_by(
+        user_id=current_user.id, read=False
+    ).all()
+
+    for notification in notifications:
+        notification.read = True
+        notification.read_at = datetime.utcnow()
+
+    db.session.commit()
+
+    return jsonify(
+        {
+            "status": "success",
+            "message": f"{len(notifications)} notificações marcadas como lidas",
+        }
+    ), 200

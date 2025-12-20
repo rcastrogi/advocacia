@@ -1,0 +1,202 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Dashboard - Portal do Cliente{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>Bem-vindo, {{ client.name }}!</h2>
+        <p class="text-muted">Acompanhe aqui todas as informações sobre seus processos</p>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ total_documents }}</h3>
+                        <small class="text-muted">Documentos</small>
+                    </div>
+                    <i class="fas fa-file-alt fa-2x text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ pending_deadlines }}</h3>
+                        <small class="text-muted">Prazos Pendentes</small>
+                    </div>
+                    <i class="fas fa-calendar-alt fa-2x text-warning"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ unread_messages }}</h3>
+                        <small class="text-muted">Mensagens Novas</small>
+                    </div>
+                    <i class="fas fa-envelope fa-2x text-info"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">
+                            <span class="badge bg-success">Ativo</span>
+                        </h3>
+                        <small class="text-muted">Status</small>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Próximos Prazos -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    Próximos Prazos
+                </h5>
+                <a href="{{ url_for('portal.deadlines') }}" class="btn btn-sm btn-outline-primary">
+                    Ver todos
+                </a>
+            </div>
+            <div class="card-body">
+                {% if upcoming_deadlines %}
+                    <div class="list-group list-group-flush">
+                        {% for deadline in upcoming_deadlines %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ deadline.title }}</h6>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ deadline.deadline_date.strftime('%d/%m/%Y %H:%M') }}
+                                    </small>
+                                </div>
+                                {% if deadline.is_urgent() %}
+                                <span class="badge bg-danger">Urgente</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center my-4">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i><br>
+                        Nenhum prazo pendente
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Documentos Recentes -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-folder-open me-2"></i>
+                    Documentos Recentes
+                </h5>
+                <a href="{{ url_for('portal.documents') }}" class="btn btn-sm btn-outline-primary">
+                    Ver todos
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_documents %}
+                    <div class="list-group list-group-flush">
+                        {% for doc in recent_documents %}
+                        <a href="{{ url_for('portal.view_document', doc_id=doc.id) }}" 
+                           class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-file-pdf me-2 text-danger"></i>
+                                        {{ doc.title }}
+                                    </h6>
+                                    <small class="text-muted">
+                                        {{ doc.created_at.strftime('%d/%m/%Y') }}
+                                    </small>
+                                </div>
+                                <i class="fas fa-download text-primary"></i>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center my-4">
+                        <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                        Nenhum documento ainda
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('portal.chat') }}" class="btn btn-outline-primary w-100 h-100">
+                            <i class="fas fa-comments fa-2x mb-2"></i><br>
+                            Enviar Mensagem
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('portal.documents') }}" class="btn btn-outline-success w-100 h-100">
+                            <i class="fas fa-download fa-2x mb-2"></i><br>
+                            Baixar Documentos
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('portal.timeline') }}" class="btn btn-outline-info w-100 h-100">
+                            <i class="fas fa-stream fa-2x mb-2"></i><br>
+                            Ver Timeline
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('portal.help') }}" class="btn btn-outline-warning w-100 h-100">
+                            <i class="fas fa-question-circle fa-2x mb-2"></i><br>
+                            Central de Ajuda
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

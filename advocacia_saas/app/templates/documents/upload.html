@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Documento - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-upload me-2"></i>
+                        Upload de Documento
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <!-- Cliente -->
+                        <div class="mb-3">
+                            <label for="client_id" class="form-label">Cliente *</label>
+                            <select class="form-select" id="client_id" name="client_id" required>
+                                <option value="">Selecione um cliente...</option>
+                                {% for client in clients %}
+                                <option value="{{ client.id }}">{{ client.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Arquivo -->
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Arquivo *</label>
+                            <input type="file" class="form-control" id="file" name="file" required
+                                   accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
+                            <div class="form-text">
+                                Formatos aceitos: PDF, DOC, DOCX, TXT, JPG, PNG, GIF, ZIP, RAR (máx. 50MB)
+                            </div>
+                        </div>
+                        
+                        <!-- Título -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título *</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        
+                        <!-- Descrição -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Tipo -->
+                            <div class="col-md-6 mb-3">
+                                <label for="document_type" class="form-label">Tipo</label>
+                                <select class="form-select" id="document_type" name="document_type">
+                                    <option value="">Selecione...</option>
+                                    <option value="contrato">Contrato</option>
+                                    <option value="peticao">Petição</option>
+                                    <option value="procuracao">Procuração</option>
+                                    <option value="comprovante">Comprovante</option>
+                                    <option value="identidade">Documento de Identidade</option>
+                                    <option value="cpf">CPF</option>
+                                    <option value="certidao">Certidão</option>
+                                    <option value="sentenca">Sentença</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Categoria -->
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Categoria</label>
+                                <input type="text" class="form-control" id="category" name="category" 
+                                       placeholder="Ex: Trabalhista, Cível...">
+                            </div>
+                        </div>
+                        
+                        <!-- Tags -->
+                        <div class="mb-3">
+                            <label for="tags" class="form-label">Tags</label>
+                            <input type="text" class="form-control" id="tags" name="tags" 
+                                   placeholder="Separe por vírgula: urgente, importante...">
+                        </div>
+                        
+                        <!-- Opções -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_visible_to_client" 
+                                       name="is_visible_to_client" checked>
+                                <label class="form-check-label" for="is_visible_to_client">
+                                    Visível para o cliente no portal
+                                </label>
+                            </div>
+                            
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_confidential" 
+                                       name="is_confidential">
+                                <label class="form-check-label" for="is_confidential">
+                                    Marcar como confidencial
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Botões -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>
+                                Fazer Upload
+                            </button>
+                            <a href="{{ url_for('documents.index') }}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Preview do nome do arquivo
+document.getElementById('file').addEventListener('change', function() {
+    const fileName = this.files[0]?.name;
+    if (fileName && !document.getElementById('title').value) {
+        // Preencher título automaticamente com nome do arquivo
+        document.getElementById('title').value = fileName.replace(/\.[^/.]+$/, "");
+    }
+});
+</script>
+{% endblock %}

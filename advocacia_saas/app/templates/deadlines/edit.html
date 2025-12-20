@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Prazo - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Editar Prazo
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Título -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título*</label>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                   value="{{ deadline.title }}">
+                        </div>
+                        
+                        <!-- Descrição -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ deadline.description or '' }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Tipo -->
+                            <div class="col-md-6 mb-3">
+                                <label for="deadline_type" class="form-label">Tipo de Prazo*</label>
+                                <select class="form-select" id="deadline_type" name="deadline_type" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="audiencia" {% if deadline.deadline_type == 'audiencia' %}selected{% endif %}>Audiência</option>
+                                    <option value="recurso" {% if deadline.deadline_type == 'recurso' %}selected{% endif %}>Recurso</option>
+                                    <option value="contestacao" {% if deadline.deadline_type == 'contestacao' %}selected{% endif %}>Contestação</option>
+                                    <option value="peticao" {% if deadline.deadline_type == 'peticao' %}selected{% endif %}>Petição</option>
+                                    <option value="manifestacao" {% if deadline.deadline_type == 'manifestacao' %}selected{% endif %}>Manifestação</option>
+                                    <option value="outro" {% if deadline.deadline_type == 'outro' %}selected{% endif %}>Outro</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Data e Hora -->
+                            <div class="col-md-6 mb-3">
+                                <label for="deadline_date" class="form-label">Data e Hora*</label>
+                                <input type="datetime-local" class="form-control" id="deadline_date" 
+                                       name="deadline_date" required
+                                       value="{{ deadline.deadline_date.strftime('%Y-%m-%dT%H:%M') }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Cliente -->
+                            <div class="col-md-6 mb-3">
+                                <label for="client_id" class="form-label">Cliente (opcional)</label>
+                                <select class="form-select" id="client_id" name="client_id">
+                                    <option value="">Nenhum cliente específico</option>
+                                    {% for client in clients %}
+                                    <option value="{{ client.id }}" {% if deadline.client_id == client.id %}selected{% endif %}>
+                                        {{ client.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Alertar com antecedência -->
+                            <div class="col-md-6 mb-3">
+                                <label for="alert_days_before" class="form-label">Alertar com Antecedência</label>
+                                <select class="form-select" id="alert_days_before" name="alert_days_before">
+                                    <option value="1" {% if deadline.alert_days_before == 1 %}selected{% endif %}>1 dia antes</option>
+                                    <option value="3" {% if deadline.alert_days_before == 3 %}selected{% endif %}>3 dias antes</option>
+                                    <option value="7" {% if deadline.alert_days_before == 7 %}selected{% endif %}>7 dias antes</option>
+                                    <option value="15" {% if deadline.alert_days_before == 15 %}selected{% endif %}>15 dias antes</option>
+                                    <option value="30" {% if deadline.alert_days_before == 30 %}selected{% endif %}>30 dias antes</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Opções -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="count_business_days" 
+                                       name="count_business_days" {% if deadline.count_business_days %}checked{% endif %}>
+                                <label class="form-check-label" for="count_business_days">
+                                    Contar apenas dias úteis
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Botões -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                Salvar Alterações
+                            </button>
+                            <a href="{{ url_for('deadlines.view', deadline_id=deadline.id) }}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -3,11 +3,9 @@ Serviço de Integração com OpenAI para geração de petições jurídicas.
 Suporta modelos híbridos: GPT-4o-mini (rápido/barato) e GPT-4o (premium).
 """
 
-import json
 import os
 import time
-from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 from openai import OpenAI
 

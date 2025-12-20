@@ -7,12 +7,14 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import LoginManager
 from flask_migrate import Migrate
+from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from flask_talisman import Talisman
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
+socketio = SocketIO()
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["200 per day", "50 per hour"],
@@ -53,9 +55,11 @@ def create_app(config_class=Config):
                 "script-src": [
                     "'self'",
                     "'unsafe-inline'",  # Necessário para Alpine.js inline
+                    "'unsafe-eval'",  # Necessário para Alpine.js expressions
                     "cdn.jsdelivr.net",
                     "unpkg.com",
                     "cdnjs.cloudflare.com",
+                    "code.jquery.com",
                 ],
                 "style-src": [
                     "'self'",
@@ -75,6 +79,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     migrate.init_app(app, db)
     limiter.init_app(app)
+    socketio.init_app(app, cors_allowed_origins="*", async_mode="eventlet")
 
     # Initialize cache
     cache.init_app(
@@ -130,6 +135,34 @@ def create_app(config_class=Config):
     from app.admin import bp as admin_bp
 
     app.register_blueprint(admin_bp)
+
+    from app.payments import bp as payments_bp
+
+    app.register_blueprint(payments_bp)
+
+    from app.deadlines import bp as deadlines_bp
+
+    app.register_blueprint(deadlines_bp)
+
+    from app.chat import bp as chat_bp
+
+    app.register_blueprint(chat_bp)
+
+    from app.portal import bp as portal_bp
+
+    app.register_blueprint(portal_bp)
+
+    from app.documents import bp as documents_bp
+
+    app.register_blueprint(documents_bp)
+
+    from app.oab_validation import bp as oab_validation_bp
+
+    app.register_blueprint(oab_validation_bp)
+
+    from app.procuracao import bp as procuracao_bp
+
+    app.register_blueprint(procuracao_bp, url_prefix="/procuracao")
 
     # Register error handlers
     from app.error_handlers import init_logging, register_error_handlers

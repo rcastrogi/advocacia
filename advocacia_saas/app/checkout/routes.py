@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -7,7 +6,6 @@ from flask import (
     current_app,
     flash,
     redirect,
-    render_template,
     request,
     session,
     url_for,
@@ -51,8 +49,6 @@ def create_checkout_session(plan_id):
             )
             current_user.stripe_customer_id = customer.id
             db.session.commit()
-        else:
-            customer_id = current_user.stripe_customer_id
 
         # Determine pricing mode
         if plan.is_per_usage:
@@ -99,7 +95,7 @@ def create_checkout_session(plan_id):
             line_items=line_items,
             mode=mode,
             success_url=current_app.config.get("STRIPE_SUCCESS_URL")
-            + f"?session_id={{CHECKOUT_SESSION_ID}}",
+            + "?session_id={CHECKOUT_SESSION_ID}",
             cancel_url=current_app.config.get("STRIPE_CANCEL_URL"),
             metadata={
                 "user_id": current_user.id,

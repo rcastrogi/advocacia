@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-white mb-2">
+                    <i class="fas fa-bell me-2"></i>Notificações
+                </h1>
+                <p class="text-white opacity-75 mb-0">
+                    Central de notificações e alertas do sistema
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="mb-1" style="font-weight: 600; color: var(--dark-color);">
+                            <i class="fas fa-inbox me-2"></i>Todas as Notificações
+                        </h4>
+                        {% if unread_count > 0 %}
+                        <p class="text-muted mb-0">
+                            <span class="badge bg-danger">{{ unread_count }}</span> não lida{{ 's' if unread_count > 1 else '' }}
+                        </p>
+                        {% else %}
+                        <p class="text-muted mb-0">Nenhuma notificação não lida</p>
+                        {% endif %}
+                    </div>
+                    {% if unread_count > 0 %}
+                    <button class="btn btn-outline-primary btn-sm" id="markAllReadBtn">
+                        <i class="fas fa-check-double me-1"></i>Marcar todas como lidas
+                    </button>
+                    {% endif %}
+                </div>
+
+                {% if notifications %}
+                <div class="list-group">
+                    {% for notification in notifications %}
+                    <div class="list-group-item list-group-item-action notification-item {% if not notification.read %}notification-unread{% endif %}" 
+                         data-notification-id="{{ notification.id }}"
+                         style="border-left: 4px solid {% if notification.type == 'ai_limit' %}#ffc107{% elif notification.type == 'payment_due' %}#dc3545{% elif notification.type == 'system' %}#0d6efd{% else %}#6c757d{% endif %};">
+                        <div class="d-flex w-100 justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="notification-icon me-3">
+                                        {% if notification.type == 'ai_limit' %}
+                                        <i class="fas fa-exclamation-triangle text-warning" style="font-size: 1.5rem;"></i>
+                                        {% elif notification.type == 'payment_due' %}
+                                        <i class="fas fa-credit-card text-danger" style="font-size: 1.5rem;"></i>
+                                        {% elif notification.type == 'petition_ready' %}
+                                        <i class="fas fa-file-check text-success" style="font-size: 1.5rem;"></i>
+                                        {% elif notification.type == 'credit_low' %}
+                                        <i class="fas fa-coins text-warning" style="font-size: 1.5rem;"></i>
+                                        {% elif notification.type == 'system' %}
+                                        <i class="fas fa-info-circle text-info" style="font-size: 1.5rem;"></i>
+                                        {% else %}
+                                        <i class="fas fa-bell text-secondary" style="font-size: 1.5rem;"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1" style="font-weight: 600;">
+                                            {{ notification.title }}
+                                            {% if not notification.read %}
+                                            <span class="badge bg-danger ms-2" style="font-size: 0.7rem;">Novo</span>
+                                            {% endif %}
+                                        </h5>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            {{ notification.created_at.strftime('%d/%m/%Y às %H:%M') }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <p class="mb-2 text-muted">{{ notification.message }}</p>
+                                {% if notification.link %}
+                                <a href="{{ notification.link }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-arrow-right me-1"></i>Ir para ação
+                                </a>
+                                {% endif %}
+                            </div>
+                            {% if not notification.read %}
+                            <button class="btn btn-sm btn-outline-secondary mark-read-btn ms-3" 
+                                    data-notification-id="{{ notification.id }}"
+                                    title="Marcar como lida">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            {% else %}
+                            <span class="text-success ms-3" title="Lida">
+                                <i class="fas fa-check-circle"></i>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">Nenhuma notificação</h4>
+                    <p class="text-muted">Você não tem notificações ainda.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.notification-item {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.notification-unread {
+    background-color: #f8f9fa;
+    font-weight: 500;
+}
+
+.notification-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.notification-icon {
+    flex-shrink: 0;
+}
+
+.mark-read-btn {
+    flex-shrink: 0;
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Marcar notificação individual como lida
+    document.querySelectorAll('.mark-read-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const notificationId = this.dataset.notificationId;
+            markAsRead(notificationId, this);
+        });
+    });
+    
+    // Marcar todas as notificações como lidas
+    const markAllBtn = document.getElementById('markAllReadBtn');
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', function() {
+            if (confirm('Deseja marcar todas as notificações como lidas?')) {
+                markAllAsRead();
+            }
+        });
+    }
+    
+    function markAsRead(notificationId, buttonElement) {
+        fetch(`/notifications/mark-read/${notificationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Atualizar UI
+                const notificationItem = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                if (notificationItem) {
+                    notificationItem.classList.remove('notification-unread');
+                    
+                    // Substituir botão por ícone de check
+                    buttonElement.outerHTML = '<span class="text-success ms-3" title="Lida"><i class="fas fa-check-circle"></i></span>';
+                    
+                    // Remover badge "Novo"
+                    const badge = notificationItem.querySelector('.badge.bg-danger');
+                    if (badge) {
+                        badge.remove();
+                    }
+                    
+                    // Atualizar contador
+                    updateUnreadCount();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao marcar notificação:', error);
+            alert('Erro ao marcar notificação como lida.');
+        });
+    }
+    
+    function markAllAsRead() {
+        fetch('/notifications/mark-all-read', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Recarregar página
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao marcar notificações:', error);
+            alert('Erro ao marcar notificações como lidas.');
+        });
+    }
+    
+    function updateUnreadCount() {
+        const unreadItems = document.querySelectorAll('.notification-unread').length;
+        const unreadCountElement = document.querySelector('.badge.bg-danger');
+        
+        if (unreadCountElement) {
+            if (unreadItems === 0) {
+                unreadCountElement.parentElement.innerHTML = 'Nenhuma notificação não lida';
+                const markAllBtn = document.getElementById('markAllReadBtn');
+                if (markAllBtn) {
+                    markAllBtn.remove();
+                }
+            } else {
+                unreadCountElement.textContent = unreadItems;
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

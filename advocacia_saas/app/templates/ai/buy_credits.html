@@ -17,7 +17,7 @@
                 <div class="card-body p-4 p-md-5">
                     <div class="text-center mb-4">
                         <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
-                            <i class="bi bi-coin text-success display-4"></i>
+                            <i class="fas fa-coins text-success display-4"></i>
                         </div>
                         <h2 class="fw-bold">{{ package.name }}</h2>
                         
@@ -67,20 +67,20 @@
                     <!-- O que você pode fazer -->
                     <div class="bg-white border rounded-3 p-3 mb-4">
                         <h6 class="fw-bold mb-3">
-                            <i class="bi bi-check-circle text-success me-2"></i>
+                            <i class="fas fa-check-circle text-success me-2"></i>
                             Com {{ package.total_credits }} créditos você pode:
                         </h6>
                         <ul class="list-unstyled mb-0 small">
                             <li class="mb-2">
-                                <i class="bi bi-check text-success me-2"></i>
+                                <i class="fas fa-check text-success me-2"></i>
                                 Gerar até <strong>{{ package.total_credits }}</strong> seções de petição
                             </li>
                             <li class="mb-2">
-                                <i class="bi bi-check text-success me-2"></i>
+                                <i class="fas fa-check text-success me-2"></i>
                                 Ou até <strong>{{ (package.total_credits / 5)|int }}</strong> petições completas
                             </li>
                             <li>
-                                <i class="bi bi-check text-success me-2"></i>
+                                <i class="fas fa-check text-success me-2"></i>
                                 Ou <strong>{{ (package.total_credits / 3)|int }}</strong> análises jurídicas
                             </li>
                         </ul>
@@ -89,15 +89,15 @@
                     <!-- Botão de Compra -->
                     <form id="payment-form">
                         <button type="submit" class="btn btn-success btn-lg w-100 py-3" id="submit-button">
-                            <i class="bi bi-credit-card me-2"></i>
+                            <i class="fas fa-credit-card me-2"></i>
                             Pagar R$ {{ "%.2f"|format(package.price) }}
                         </button>
                     </form>
 
                     <div class="text-center mt-4">
                         <small class="text-muted">
-                            <i class="bi bi-shield-check me-1"></i>
-                            Pagamento seguro via Stripe
+                            <i class="fas fa-shield-alt me-1"></i>
+                            Pagamento seguro via Mercado Pago
                         </small>
                     </div>
                 </div>
@@ -114,8 +114,11 @@
     </div>
 </div>
 
+<script src="https://sdk.mercadopago.com/js/v2"></script>
 <script>
-// Integração com Stripe será implementada aqui
+// Integração com Mercado Pago
+const mp = new MercadoPago('{{ mp_public_key }}');
+
 document.getElementById('payment-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -124,22 +127,28 @@ document.getElementById('payment-form').addEventListener('submit', async functio
     button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
     
     try {
-        // TODO: Implementar checkout Stripe
-        // const response = await fetch('/payments/create-checkout-session', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({ package_slug: '{{ package.slug }}' })
-        // });
+        const response = await fetch('/ai/credits/checkout/{{ package.slug }}', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json'
+            }
+        });
         
-        // Por enquanto, mostra mensagem
-        alert('Integração de pagamento será implementada em breve!\n\nPor enquanto, os créditos serão adicionados manualmente.');
+        const data = await response.json();
+        
+        if (response.ok && data.init_point) {
+            // Redirecionar para o checkout do Mercado Pago
+            window.location.href = data.init_point;
+        } else {
+            throw new Error(data.error || 'Erro ao criar sessão de checkout');
+        }
         
     } catch (error) {
         console.error('Erro:', error);
-        alert('Erro ao processar pagamento. Tente novamente.');
-    } finally {
+        alert('Erro ao processar pagamento: ' + error.message);
+        
         button.disabled = false;
-        button.innerHTML = '<i class="bi bi-credit-card me-2"></i>Pagar R$ {{ "%.2f"|format(package.price) }}';
+        button.innerHTML = '<i class="fas fa-credit-card me-2"></i>Pagar R$ {{ "%.2f"|format(package.price) }}';
     }
 });
 </script>

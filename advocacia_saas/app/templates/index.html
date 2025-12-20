@@ -20,7 +20,7 @@
                     <a class="nav-link" href="#peticoes">Petições</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#recursos">Recursos</a>
+                    <a class="nav-link" href="{{ url_for('main.recursos') }}">Recursos</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#acessibilidade">Acessibilidade</a>
@@ -34,6 +34,9 @@
             </ul>
             
             <div class="d-flex gap-2">
+                <a href="{{ url_for('portal.login') }}" class="btn btn-sm btn-light d-flex align-items-center">
+                    <i class="fas fa-user-circle me-1"></i> Portal do Cliente
+                </a>
                 <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-light d-flex align-items-center">
                     <i class="fas fa-sign-in-alt me-1"></i> Entrar
                 </a>
@@ -592,6 +595,20 @@
                     <h4>Segurança e LGPD</h4>
                     <p class="text-muted mb-0">Criptografia, backups automáticos e conformidade com a legislação.</p>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Botão Ver Todos os Recursos -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <a href="{{ url_for('main.recursos') }}" class="btn btn-lg btn-primary btn-hover-effect">
+                    <i class="fas fa-list-ul me-2"></i>
+                    Ver Todos os Recursos Detalhados
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+                <p class="text-muted mt-3 mb-0">
+                    <small>Conheça todas as funcionalidades organizadas por categoria</small>
+                </p>
             </div>
         </div>
     </div>

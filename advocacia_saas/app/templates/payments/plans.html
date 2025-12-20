@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Planos e Preços - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">Escolha seu Plano</h1>
+        <p class="lead text-muted">Modernize seu escritório com o Petitio</p>
+        
+        <!-- Toggle Monthly/Yearly -->
+        <div class="btn-group mt-3" role="group">
+            <input type="radio" class="btn-check" name="billing-toggle" id="monthly-toggle" checked>
+            <label class="btn btn-outline-primary" for="monthly-toggle">Mensal</label>
+            
+            <input type="radio" class="btn-check" name="billing-toggle" id="yearly-toggle">
+            <label class="btn btn-outline-primary" for="yearly-toggle">
+                Anual <span class="badge bg-success ms-1">-17%</span>
+            </label>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        {% for plan in plans %}
+        <div class="col-lg-4">
+            <div class="card h-100 {% if plan.slug == 'profissional' %}border-primary shadow-lg{% endif %}">
+                {% if plan.slug == 'profissional' %}
+                <div class="card-header bg-primary text-white text-center">
+                    <small>⭐ MAIS POPULAR</small>
+                </div>
+                {% endif %}
+
+                <div class="card-body d-flex flex-column">
+                    <h3 class="card-title text-center">{{ plan.name }}</h3>
+
+                    <!-- Preço Mensal -->
+                    <div class="text-center mb-4 price-monthly">
+                        {% if plan.plan_type == 'per_usage' %}
+                        <div class="display-4 fw-bold">
+                            R$ {{ "%.2f"|format(plan.usage_rate) }}
+                        </div>
+                        <small class="text-muted">por petição</small>
+                        {% else %}
+                        <div class="display-4 fw-bold">
+                            R$ {{ "%.2f"|format(plan.monthly_fee) }}
+                        </div>
+                        <small class="text-muted">por mês</small>
+                        {% if plan.monthly_petition_limit %}
+                        <div class="mt-2">
+                            <small class="text-info fw-bold">Até {{ plan.monthly_petition_limit }} petições/mês</small>
+                        </div>
+                        {% else %}
+                        <div class="mt-2">
+                            <small class="text-success fw-bold">Petições ilimitadas</small>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Preço Anual (escondido inicialmente) -->
+                    {% if plan.plan_type == 'monthly' %}
+                    <div class="text-center mb-4 price-yearly d-none">
+                        <div class="display-4 fw-bold">
+                            R$ {{ "%.2f"|format(plan.monthly_fee) }}
+                        </div>
+                        <small class="text-muted">por mês (cobrado anualmente)</small>
+                        <div class="mt-2">
+                            <small class="text-success fw-bold">
+                                Economize R$ {{ "%.2f"|format(plan.monthly_fee) }}/ano
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Descrição/Features -->
+                    <div class="mb-4 flex-grow-1">
+                        {% for line in plan.description.split('\n') %}
+                        {% if line.strip() %}
+                        {% if '•' in line %}
+                        <div class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i> {{ line.replace('•', '').strip() }}
+                        </div>
+                        {% else %}
+                        <p class="text-muted small">{{ line }}</p>
+                        {% endif %}
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- CTA Button -->
+                    {% if plan.plan_type == 'per_usage' %}
+                    <div class="text-center">
+                        <small class="text-muted">Plano por uso - pague apenas pelo que usar</small>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('payments.subscribe', plan_slug=plan.slug, billing_period='monthly') }}"
+                       class="btn {% if plan.slug == 'profissional' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-lg w-100 subscribe-btn"
+                       data-plan="{{ plan.slug }}">
+                        {% if current_subscription and current_subscription.plan_id == plan.id %}
+                            Plano Atual
+                        {% else %}
+                            Escolher Plano
+                        {% endif %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Garantia e Segurança -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-shield-alt me-2"></i>
+                <strong>Garantia de 30 dias</strong> - Não gostou? Devolvemos seu dinheiro, sem perguntas.
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment Methods -->
+    <div class="text-center mt-4">
+        <p class="text-muted mb-3">Formas de pagamento aceitas:</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <span class="badge bg-light text-dark px-3 py-2">
+                <i class="fas fa-credit-card me-1"></i> Cartão de Crédito
+            </span>
+            <span class="badge bg-light text-dark px-3 py-2">
+                <i class="fas fa-qrcode me-1"></i> PIX
+            </span>
+            <span class="badge bg-light text-dark px-3 py-2">
+                <i class="fas fa-barcode me-1"></i> Boleto
+            </span>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const monthlyToggle = document.getElementById('monthly-toggle');
+    const yearlyToggle = document.getElementById('yearly-toggle');
+    const monthlyPrices = document.querySelectorAll('.price-monthly');
+    const yearlyPrices = document.querySelectorAll('.price-yearly');
+    const subscribeButtons = document.querySelectorAll('.subscribe-btn');
+
+    function updatePrices() {
+        const isYearly = yearlyToggle.checked;
+
+        monthlyPrices.forEach(el => el.classList.toggle('d-none', isYearly));
+        yearlyPrices.forEach(el => el.classList.toggle('d-none', !isYearly));
+
+        // Update button links
+        subscribeButtons.forEach(btn => {
+            const plan = btn.dataset.plan;
+            const period = isYearly ? 'yearly' : 'monthly';
+            btn.href = `/payments/subscribe/${plan}/${period}`;
+        });
+    }
+
+    monthlyToggle.addEventListener('change', updatePrices);
+    yearlyToggle.addEventListener('change', updatePrices);
+});
+</script>
+{% endblock %}

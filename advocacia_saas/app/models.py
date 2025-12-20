@@ -10,6 +10,18 @@ from app import db, login_manager
 # Cache para usuário demo em memória
 _demo_user_cache = {}
 
+# Tabela de associação para relação muitos-para-muitos entre clientes e advogados
+client_lawyers = db.Table(
+    "client_lawyers",
+    db.Column("client_id", db.Integer, db.ForeignKey("client.id"), primary_key=True),
+    db.Column("lawyer_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
+    db.Column("created_at", db.DateTime, default=datetime.utcnow),
+    db.Column(
+        "specialty", db.String(100)
+    ),  # área de atuação: 'familiar', 'trabalhista', etc
+    db.Column("is_primary", db.Boolean, default=False),  # advogado principal do cliente
+)
+
 LEGACY_QUICK_ACTION_KEYS = {
     "petitions_civil": "petition:peticao-inicial-civel",
     "petitions_family": "petition:peticao-familia-divorcio",
@@ -48,6 +60,17 @@ class User(UserMixin, db.Model):
     full_name = db.Column(db.String(200))
     oab_number = db.Column(db.String(50))
     phone = db.Column(db.String(20))
+    nationality = db.Column(db.String(50))
+
+    # Address (padronizado como em Client)
+    cep = db.Column(db.String(10))
+    street = db.Column(db.String(200))
+    number = db.Column(db.String(20))
+    uf = db.Column(db.String(2))
+    city = db.Column(db.String(100))
+    neighborhood = db.Column(db.String(100))
+    complement = db.Column(db.String(200))
+
     logo_filename = db.Column(db.String(200))
     billing_status = db.Column(
         db.String(20), default="active"
@@ -64,7 +87,12 @@ class User(UserMixin, db.Model):
     force_password_change = db.Column(db.Boolean, default=False)
 
     # Relationships
-    clients = db.relationship("Client", backref="lawyer", lazy="dynamic")
+    clients = db.relationship(
+        "Client",
+        backref="lawyer",
+        lazy="dynamic",
+        foreign_keys="Client.lawyer_id",
+    )
     plans = db.relationship(
         "UserPlan",
         backref="user",
@@ -181,10 +209,21 @@ class User(UserMixin, db.Model):
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    # Mantido para compatibilidade - representa o advogado que cadastrou/principal
     lawyer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    # Usuário do cliente para acesso ao portal (opcional)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relação muitos-para-muitos com advogados
+    lawyers = db.relationship(
+        "User",
+        secondary=client_lawyers,
+        lazy="dynamic",
+        backref=db.backref("represented_clients", lazy="dynamic"),
     )
 
     # Personal Information
@@ -230,6 +269,78 @@ class Client(db.Model):
 
     def __repr__(self):
         return f"<Client {self.full_name}>"
+
+    def add_lawyer(self, lawyer, specialty=None, is_primary=False):
+        """Adiciona um advogado à lista de advogados do cliente"""
+        if not self.has_lawyer(lawyer):
+            self.lawyers.append(lawyer)
+            # Atualizar metadados na tabela de associação
+            stmt = (
+                client_lawyers.update()
+                .where(
+                    db.and_(
+                        client_lawyers.c.client_id == self.id,
+                        client_lawyers.c.lawyer_id == lawyer.id,
+                    )
+                )
+                .values(specialty=specialty, is_primary=is_primary)
+            )
+            db.session.execute(stmt)
+
+    def remove_lawyer(self, lawyer):
+        """Remove um advogado da lista de advogados do cliente"""
+        if self.has_lawyer(lawyer):
+            self.lawyers.remove(lawyer)
+
+    def has_lawyer(self, lawyer):
+        """Verifica se o advogado já está associado ao cliente"""
+        return self.lawyers.filter_by(id=lawyer.id).count() > 0
+
+    def get_primary_lawyer(self):
+        """Retorna o advogado principal (ou o que cadastrou se não houver principal marcado)"""
+        # Buscar advogado marcado como principal
+        stmt = (
+            db.select(User)
+            .join(client_lawyers)
+            .where(
+                db.and_(
+                    client_lawyers.c.client_id == self.id,
+                    client_lawyers.c.is_primary.is_(True),
+                )
+            )
+        )
+        primary = db.session.execute(stmt).scalar()
+
+        if primary:
+            return primary
+
+        # Se não houver principal, retorna o advogado que cadastrou
+        return User.query.get(self.lawyer_id)
+
+    def get_lawyer_by_specialty(self, specialty):
+        """Retorna o advogado responsável por determinada especialidade"""
+        stmt = (
+            db.select(User)
+            .join(client_lawyers)
+            .where(
+                db.and_(
+                    client_lawyers.c.client_id == self.id,
+                    client_lawyers.c.specialty == specialty,
+                )
+            )
+        )
+        return db.session.execute(stmt).scalar()
+
+    def get_lawyer_specialty(self, lawyer_id):
+        """Retorna a especialidade do advogado para este cliente"""
+        stmt = db.select(client_lawyers.c.specialty).where(
+            db.and_(
+                client_lawyers.c.client_id == self.id,
+                client_lawyers.c.lawyer_id == lawyer_id,
+            )
+        )
+        result = db.session.execute(stmt).scalar()
+        return result
 
 
 class Dependent(db.Model):
@@ -397,6 +508,7 @@ class BillingPlan(db.Model):
     plan_type = db.Column(db.String(20), nullable=False, default="per_usage")
     monthly_fee = db.Column(db.Numeric(10, 2), default=Decimal("0.00"))
     usage_rate = db.Column(db.Numeric(10, 2), default=Decimal("0.00"))
+    monthly_petition_limit = db.Column(db.Integer, default=None)  # None = ilimitado
     description = db.Column(db.Text)
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -477,54 +589,229 @@ class PetitionUsage(db.Model):
 
 
 class Invoice(db.Model):
+    """Faturas/Cobranças para clientes"""
+
     __tablename__ = "invoices"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    billing_cycle = db.Column(db.String(7), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey("client.id"))
+    case_id = db.Column(db.Integer)  # Removida FK: tabela cases não existe
+
+    # Compatibilidade com código antigo
+    billing_cycle = db.Column(db.String(7))
     amount_due = db.Column(db.Numeric(10, 2), default=Decimal("0.00"))
     amount_paid = db.Column(db.Numeric(10, 2), default=Decimal("0.00"))
-    status = db.Column(db.String(20), default="pending")
     issued_at = db.Column(db.DateTime, default=datetime.utcnow)
-    due_date = db.Column(db.DateTime)
 
+    # Detalhes da fatura
+    invoice_number = db.Column(db.String(50), unique=True)
+    amount = db.Column(db.Numeric(10, 2), nullable=False, default=Decimal("0.00"))
+    currency = db.Column(db.String(3), default="BRL")
+    description = db.Column(db.Text)
+    notes = db.Column(db.Text)
+
+    # Datas
+    issue_date = db.Column(db.Date, default=datetime.utcnow)
+    due_date = db.Column(db.DateTime)
+    paid_date = db.Column(db.Date)
+
+    # Status
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # pending, paid, overdue, canceled
+
+    # Recorrência
+    is_recurring = db.Column(db.Boolean, default=False)
+    recurrence_interval = db.Column(db.String(20))  # 'monthly', 'quarterly', 'yearly'
+    next_invoice_date = db.Column(db.Date)
+
+    # Pagamento
+    payment_method = db.Column(db.String(50))
+    boleto_url = db.Column(db.String(500))
+    pix_code = db.Column(db.Text)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships
     payments = db.relationship(
         "Payment",
-        backref="invoice",
+        backref="invoice_rel",
         lazy="dynamic",
+        foreign_keys="Payment.invoice_id",
         cascade="all, delete-orphan",
+    )
+    user = db.relationship("User", backref=db.backref("user_invoices", lazy="dynamic"))
+    client = db.relationship(
+        "Client", backref=db.backref("client_invoices", lazy="dynamic")
     )
 
     def __repr__(self):
+        if self.invoice_number:
+            return f"<Invoice {self.invoice_number} - {self.amount} - {self.status}>"
         return f"<Invoice {self.billing_cycle} user={self.user_id}>"
+
+    def mark_as_paid(self, payment_method=None, paid_date=None):
+        """Marca fatura como paga"""
+        self.status = "paid"
+        self.paid_date = paid_date or datetime.utcnow().date()
+        self.amount_paid = self.amount or self.amount_due
+        if payment_method:
+            self.payment_method = payment_method
+
+        # Se for recorrente, criar próxima fatura
+        if self.is_recurring and self.next_invoice_date:
+            self.create_next_invoice()
+
+        db.session.commit()
+
+    def create_next_invoice(self):
+        """Cria próxima fatura recorrente"""
+        if not self.is_recurring:
+            return None
+
+        # Calcular próxima data
+        if self.recurrence_interval == "monthly":
+            next_due = self.due_date + timedelta(days=30)
+            next_invoice_date = self.next_invoice_date + timedelta(days=30)
+        elif self.recurrence_interval == "quarterly":
+            next_due = self.due_date + timedelta(days=90)
+            next_invoice_date = self.next_invoice_date + timedelta(days=90)
+        elif self.recurrence_interval == "yearly":
+            next_due = self.due_date + timedelta(days=365)
+            next_invoice_date = self.next_invoice_date + timedelta(days=365)
+        else:
+            return None
+
+        # Criar nova fatura
+        next_invoice = Invoice(
+            user_id=self.user_id,
+            client_id=self.client_id,
+            case_id=self.case_id,
+            invoice_number=f"{self.invoice_number.split('-')[0]}-{datetime.utcnow().strftime('%Y%m')}"
+            if self.invoice_number
+            else None,
+            amount=self.amount,
+            currency=self.currency,
+            description=self.description,
+            due_date=next_due,
+            is_recurring=True,
+            recurrence_interval=self.recurrence_interval,
+            next_invoice_date=next_invoice_date,
+        )
+        db.session.add(next_invoice)
+        db.session.commit()
+        return next_invoice
+
+    def is_overdue(self):
+        """Verifica se a fatura está vencida"""
+        if hasattr(self.due_date, "date"):
+            due = self.due_date.date()
+        else:
+            due = self.due_date
+        return self.status == "pending" and due < datetime.utcnow().date()
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "invoice_number": self.invoice_number,
+            "amount": float(self.amount),
+            "currency": self.currency,
+            "status": self.status,
+            "issue_date": self.issue_date.isoformat() if self.issue_date else None,
+            "due_date": self.due_date.isoformat() if self.due_date else None,
+            "paid_date": self.paid_date.isoformat() if self.paid_date else None,
+            "is_overdue": self.is_overdue(),
+        }
 
 
 class Payment(db.Model):
+    """Pagamentos recebidos (assinaturas, faturas ou one-time)"""
+
     __tablename__ = "payments"
 
     id = db.Column(db.Integer, primary_key=True)
-    invoice_id = db.Column(db.Integer, db.ForeignKey("invoices.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    invoice_id = db.Column(db.Integer, db.ForeignKey("invoices.id"))
+    subscription_id = db.Column(db.Integer, db.ForeignKey("subscriptions.id"))
+
+    # Detalhes do pagamento
     amount = db.Column(db.Numeric(10, 2), nullable=False)
-    paid_at = db.Column(db.DateTime, default=datetime.utcnow)
-    method = db.Column(db.String(30))
+    currency = db.Column(db.String(3), default="BRL")
+    payment_type = db.Column(
+        db.String(20), nullable=False, default="one_time"
+    )  # 'subscription', 'invoice', 'one_time'
+    payment_method = db.Column(db.String(50))  # 'pix', 'boleto', 'credit_card'
+    method = db.Column(db.String(30))  # Alias for compatibility
     reference = db.Column(db.String(120))
+    description = db.Column(db.String(500))
+
+    # Status
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # pending, paid, failed, refunded
+    payment_status = db.Column(
+        db.String(30), default="pending"
+    )  # Alias for compatibility
+    paid_at = db.Column(db.DateTime)
+    failed_at = db.Column(db.DateTime)
+    refunded_at = db.Column(db.DateTime)
+    webhook_received_at = db.Column(db.DateTime)
+
+    # Gateway info - Generic
+    gateway = db.Column(db.String(20))  # 'stripe', 'mercadopago'
+    gateway_payment_id = db.Column(db.String(200), unique=True, index=True)
+    gateway_charge_id = db.Column(db.String(200))
 
     # Stripe-specific fields
     stripe_customer_id = db.Column(db.String(120), index=True)
     stripe_payment_intent_id = db.Column(db.String(120), unique=True, index=True)
     stripe_checkout_session_id = db.Column(db.String(120), unique=True, index=True)
     stripe_subscription_id = db.Column(db.String(120), index=True)
-    payment_status = db.Column(
-        db.String(30), default="pending"
-    )  # pending, completed, failed, refunded
-    webhook_received_at = db.Column(db.DateTime)
-    extra_metadata = db.Column(db.JSON)
 
-    user = db.relationship("User", backref="payments")
+    # PIX specific (Mercado Pago)
+    pix_code = db.Column(db.Text)  # QR code data
+    pix_qr_code = db.Column(db.Text)  # Base64 image
+    pix_expires_at = db.Column(db.DateTime)
+
+    # Extra data
+    extra_data = db.Column(db.Text)  # JSON - renamed to avoid SQLAlchemy conflict
+    extra_metadata = db.Column(db.JSON)  # For compatibility
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    user = db.relationship("User", backref=db.backref("user_payments", lazy="dynamic"))
 
     def __repr__(self):
-        return f"<Payment invoice={self.invoice_id} amount={self.amount} status={self.payment_status}>"
+        return f"<Payment {self.id} - {self.amount} {self.currency} - {self.status}>"
+
+    def mark_as_paid(self):
+        """Marca pagamento como pago"""
+        self.status = "paid"
+        self.payment_status = "completed"
+        self.paid_at = datetime.utcnow()
+        db.session.commit()
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "amount": float(self.amount),
+            "currency": self.currency,
+            "status": self.status,
+            "payment_method": self.payment_method,
+            "description": self.description,
+            "created_at": self.created_at.isoformat(),
+            "paid_at": self.paid_at.isoformat() if self.paid_at else None,
+        }
 
 
 class Testimonial(db.Model):
@@ -883,6 +1170,19 @@ class UserCredits(db.Model):
             self.balance -= amount
             self.total_used += amount
             self.updated_at = datetime.utcnow()
+
+            # Criar notificação se créditos ficarem baixos (≤ 10)
+            if self.balance <= 10 and self.balance > 0:
+                from app.billing.utils import create_credit_low_notification
+
+                try:
+                    create_credit_low_notification(
+                        self.user, self.balance, threshold=10
+                    )
+                except Exception as e:
+                    # Não falhar a operação se notificação falhar
+                    print(f"Erro ao criar notificação de créditos baixos: {e}")
+
             return True
         return False
 
@@ -1091,3 +1391,544 @@ class Notification(db.Model):
 
     def __repr__(self):
         return f"<Notification {self.type} - User {self.user_id}>"
+
+
+# =============================================================================
+# PAYMENT MODELS - Sistema de Pagamentos
+# =============================================================================
+
+
+class Subscription(db.Model):
+    """Assinaturas de usuários (planos mensais/anuais)"""
+
+    __tablename__ = "subscriptions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Plano
+    plan_type = db.Column(
+        db.String(50), nullable=False
+    )  # 'basic', 'professional', 'enterprise'
+    billing_period = db.Column(db.String(20), nullable=False)  # 'monthly', 'yearly'
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    currency = db.Column(db.String(3), default="BRL")
+
+    # Status
+    status = db.Column(
+        db.String(20), default="active"
+    )  # active, canceled, past_due, trialing
+    trial_ends_at = db.Column(db.DateTime)
+    current_period_start = db.Column(db.DateTime, default=datetime.utcnow)
+    current_period_end = db.Column(db.DateTime)
+    cancel_at_period_end = db.Column(db.Boolean, default=False)
+    canceled_at = db.Column(db.DateTime)
+
+    # Gateway info
+    gateway = db.Column(db.String(20))  # 'stripe', 'mercadopago'
+    gateway_subscription_id = db.Column(db.String(200), unique=True)
+    gateway_customer_id = db.Column(db.String(200))
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    user = db.relationship("User", backref=db.backref("subscriptions", lazy="dynamic"))
+    payments = db.relationship(
+        "Payment", backref="subscription", lazy="dynamic", cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<Subscription {self.id} - User {self.user_id} - {self.plan_type}>"
+
+    def is_active(self):
+        """Verifica se a assinatura está ativa"""
+        return self.status == "active" and (
+            not self.current_period_end or self.current_period_end > datetime.utcnow()
+        )
+
+    def cancel(self, immediate=False):
+        """Cancela a assinatura"""
+        if immediate:
+            self.status = "canceled"
+            self.canceled_at = datetime.utcnow()
+        else:
+            self.cancel_at_period_end = True
+        db.session.commit()
+
+
+class Expense(db.Model):
+    """Despesas e custos operacionais"""
+
+    __tablename__ = "expenses"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    case_id = db.Column(db.Integer)  # Removida FK: tabela cases não existe
+
+    # Detalhes da despesa
+    description = db.Column(db.String(500), nullable=False)
+    category = db.Column(
+        db.String(100)
+    )  # 'custas', 'honorarios_perito', 'transporte', etc
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    currency = db.Column(db.String(3), default="BRL")
+
+    # Data e pagamento
+    expense_date = db.Column(db.Date, default=datetime.utcnow)
+    payment_method = db.Column(db.String(50))
+
+    # Reembolso
+    reimbursable = db.Column(db.Boolean, default=False)
+    reimbursed = db.Column(db.Boolean, default=False)
+    reimbursed_date = db.Column(db.Date)
+
+    # Comprovante
+    receipt_filename = db.Column(db.String(500))
+    receipt_url = db.Column(db.String(500))
+
+    # Metadata
+    notes = db.Column(db.Text)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    user = db.relationship("User", backref=db.backref("expenses", lazy="dynamic"))
+
+    def __repr__(self):
+        return f"<Expense {self.id} - {self.description} - {self.amount}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "description": self.description,
+            "category": self.category,
+            "amount": float(self.amount),
+            "expense_date": self.expense_date.isoformat(),
+            "reimbursable": self.reimbursable,
+            "reimbursed": self.reimbursed,
+        }
+
+
+# =============================================================================
+# DEADLINE MODELS - Sistema de Prazos
+# =============================================================================
+
+
+class Deadline(db.Model):
+    """Prazos processuais e audiências"""
+
+    __tablename__ = "deadlines"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    case_id = db.Column(db.Integer)  # Removida FK: tabela cases não existe
+    client_id = db.Column(db.Integer, db.ForeignKey("client.id"))
+
+    # Detalhes do prazo
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    deadline_type = db.Column(
+        db.String(50)
+    )  # 'audiencia', 'recurso', 'contestacao', 'peticao'
+    deadline_date = db.Column(db.DateTime, nullable=False)
+
+    # Alertas
+    alert_days_before = db.Column(db.Integer, default=7)
+    alert_sent = db.Column(db.Boolean, default=False)
+    alert_sent_at = db.Column(db.DateTime)
+
+    # Status
+    status = db.Column(db.String(20), default="pending")  # pending, completed, canceled
+    completed_at = db.Column(db.DateTime)
+    completion_notes = db.Column(db.Text)
+
+    # Recorrência
+    is_recurring = db.Column(db.Boolean, default=False)
+    recurrence_pattern = db.Column(db.String(50))  # 'daily', 'weekly', 'monthly'
+    recurrence_end_date = db.Column(db.Date)
+
+    # Dias úteis
+    count_business_days = db.Column(db.Boolean, default=True)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    user = db.relationship("User", backref=db.backref("deadlines", lazy="dynamic"))
+    client = db.relationship("Client", backref=db.backref("deadlines", lazy="dynamic"))
+
+    def __repr__(self):
+        return f"<Deadline {self.id} - {self.title} - {self.deadline_date}>"
+
+    def days_until(self, use_business_days=None):
+        """Calcula dias até o prazo"""
+        if use_business_days is None:
+            use_business_days = self.count_business_days
+
+        if self.status != "pending":
+            return 0
+
+        today = datetime.utcnow()
+        if self.deadline_date <= today:
+            return 0
+
+        if use_business_days:
+            # Calcular dias úteis (aproximação simples)
+            days = (self.deadline_date - today).days
+            # Remove aproximadamente 2 dias de fim de semana por semana
+            weeks = days // 7
+            business_days = days - (weeks * 2)
+            return max(0, business_days)
+        else:
+            return (self.deadline_date - today).days
+
+    def is_urgent(self, days_threshold=3):
+        """Verifica se o prazo é urgente"""
+        return self.status == "pending" and self.days_until() <= days_threshold
+
+    def mark_completed(self, notes=None):
+        """Marca prazo como cumprido"""
+        self.status = "completed"
+        self.completed_at = datetime.utcnow()
+        if notes:
+            self.completion_notes = notes
+        db.session.commit()
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "deadline_type": self.deadline_type,
+            "deadline_date": self.deadline_date.isoformat(),
+            "days_until": self.days_until(),
+            "is_urgent": self.is_urgent(),
+            "status": self.status,
+        }
+
+
+class Message(db.Model):
+    """Mensagens do chat entre advogado e cliente"""
+
+    __tablename__ = "messages"
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    client_id = db.Column(
+        db.Integer, db.ForeignKey("client.id")
+    )  # Opcional: associar a cliente específico
+
+    # Conteúdo
+    content = db.Column(db.Text, nullable=False)
+    message_type = db.Column(db.String(20), default="text")  # text, file, image, system
+
+    # Arquivo anexo
+    attachment_filename = db.Column(db.String(500))
+    attachment_path = db.Column(db.String(500))
+    attachment_size = db.Column(db.Integer)  # Em bytes
+    attachment_type = db.Column(db.String(100))  # MIME type
+
+    # Status
+    is_read = db.Column(db.Boolean, default=False)
+    read_at = db.Column(db.DateTime)
+    is_deleted_by_sender = db.Column(db.Boolean, default=False)
+    is_deleted_by_recipient = db.Column(db.Boolean, default=False)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    sender = db.relationship(
+        "User",
+        foreign_keys=[sender_id],
+        backref=db.backref("sent_messages", lazy="dynamic"),
+    )
+    recipient = db.relationship(
+        "User",
+        foreign_keys=[recipient_id],
+        backref=db.backref("received_messages", lazy="dynamic"),
+    )
+    client = db.relationship("Client", backref=db.backref("messages", lazy="dynamic"))
+
+    def __repr__(self):
+        return f"<Message {self.id} from {self.sender_id} to {self.recipient_id}>"
+
+    def mark_as_read(self):
+        """Marca mensagem como lida"""
+        if not self.is_read:
+            self.is_read = True
+            self.read_at = datetime.utcnow()
+            db.session.commit()
+
+    def to_dict(self):
+        """Serializa para JSON"""
+        return {
+            "id": self.id,
+            "sender_id": self.sender_id,
+            "sender_name": self.sender.name if self.sender else None,
+            "recipient_id": self.recipient_id,
+            "recipient_name": self.recipient.name if self.recipient else None,
+            "client_id": self.client_id,
+            "content": self.content,
+            "message_type": self.message_type,
+            "attachment": {
+                "filename": self.attachment_filename,
+                "size": self.attachment_size,
+                "type": self.attachment_type,
+            }
+            if self.attachment_filename
+            else None,
+            "is_read": self.is_read,
+            "read_at": self.read_at.isoformat() if self.read_at else None,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }
+
+
+class ChatRoom(db.Model):
+    """Salas de chat entre advogado e cliente"""
+
+    __tablename__ = "chat_rooms"
+
+    id = db.Column(db.Integer, primary_key=True)
+    lawyer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey("client.id"), nullable=False)
+
+    # Metadata
+    title = db.Column(db.String(200))  # Opcional: assunto do chat
+    is_active = db.Column(db.Boolean, default=True)
+
+    # Última atividade
+    last_message_at = db.Column(db.DateTime)
+    last_message_preview = db.Column(db.String(200))
+    unread_count_lawyer = db.Column(db.Integer, default=0)
+    unread_count_client = db.Column(db.Integer, default=0)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    lawyer = db.relationship(
+        "User", backref=db.backref("chat_rooms_as_lawyer", lazy="dynamic")
+    )
+    client = db.relationship("Client", backref=db.backref("chat_rooms", lazy="dynamic"))
+
+    # Índice único para evitar duplicação
+    __table_args__ = (
+        db.UniqueConstraint("lawyer_id", "client_id", name="unique_chat_room"),
+    )
+
+    def __repr__(self):
+        return (
+            f"<ChatRoom {self.id} - Lawyer {self.lawyer_id} & Client {self.client_id}>"
+        )
+
+    def update_last_message(self, message):
+        """Atualiza informações da última mensagem"""
+        self.last_message_at = message.created_at
+        self.last_message_preview = (
+            message.content[:200] if len(message.content) > 200 else message.content
+        )
+
+        # Incrementar contador de não lidas
+        if message.sender_id == self.lawyer_id:
+            self.unread_count_client += 1
+        else:
+            self.unread_count_lawyer += 1
+
+        db.session.commit()
+
+    def mark_as_read_by(self, user_id):
+        """Marca todas mensagens como lidas por um usuário"""
+        if user_id == self.lawyer_id:
+            self.unread_count_lawyer = 0
+        else:
+            self.unread_count_client = 0
+        db.session.commit()
+
+    def to_dict(self):
+        """Serializa para JSON"""
+        return {
+            "id": self.id,
+            "lawyer_id": self.lawyer_id,
+            "lawyer_name": self.lawyer.name if self.lawyer else None,
+            "client_id": self.client_id,
+            "client_name": self.client.name if self.client else None,
+            "title": self.title,
+            "is_active": self.is_active,
+            "last_message_at": self.last_message_at.isoformat()
+            if self.last_message_at
+            else None,
+            "last_message_preview": self.last_message_preview,
+            "unread_count_lawyer": self.unread_count_lawyer,
+            "unread_count_client": self.unread_count_client,
+            "created_at": self.created_at.isoformat(),
+        }
+
+
+class Document(db.Model):
+    """Documentos e arquivos dos clientes"""
+
+    __tablename__ = "documents"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey("client.id"), nullable=False)
+
+    # Informações do documento
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    document_type = db.Column(
+        db.String(50)
+    )  # 'contrato', 'peticao', 'procuracao', 'comprovante', 'rg', 'cpf', etc
+    category = db.Column(db.String(100))  # Categoria adicional
+
+    # Arquivo
+    filename = db.Column(db.String(500), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    file_size = db.Column(db.Integer)  # Em bytes
+    file_type = db.Column(db.String(100))  # MIME type
+    file_extension = db.Column(db.String(10))  # .pdf, .docx, etc
+
+    # Controle de versão
+    version = db.Column(db.Integer, default=1)
+    parent_document_id = db.Column(
+        db.Integer, db.ForeignKey("documents.id")
+    )  # Para versões
+    is_latest_version = db.Column(db.Boolean, default=True)
+
+    # Visibilidade
+    is_visible_to_client = db.Column(db.Boolean, default=True)
+    is_confidential = db.Column(db.Boolean, default=False)
+
+    # Status
+    status = db.Column(db.String(20), default="active")  # active, archived, deleted
+
+    # Metadata
+    tags = db.Column(db.String(500))  # Tags separadas por vírgula
+    notes = db.Column(db.Text)  # Notas internas
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+    last_accessed_at = db.Column(db.DateTime)
+
+    # Relationships
+    user = db.relationship("User", backref=db.backref("documents", lazy="dynamic"))
+    client = db.relationship("Client", backref=db.backref("documents", lazy="dynamic"))
+    versions = db.relationship(
+        "Document",
+        backref=db.backref("parent_document", remote_side=[id]),
+        lazy="dynamic",
+    )
+
+    def __repr__(self):
+        return f"<Document {self.id} - {self.title}>"
+
+    def get_size_formatted(self):
+        """Retorna tamanho formatado do arquivo"""
+        if not self.file_size:
+            return "N/A"
+
+        size = self.file_size
+        for unit in ["B", "KB", "MB", "GB"]:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
+
+    def mark_accessed(self):
+        """Marca documento como acessado"""
+        self.last_accessed_at = datetime.utcnow()
+        db.session.commit()
+
+    def create_new_version(
+        self, new_file_path, new_filename, new_file_size, uploaded_by_user_id
+    ):
+        """Cria nova versão do documento"""
+        # Marcar versão atual como não sendo a mais recente
+        self.is_latest_version = False
+
+        # Criar nova versão
+        new_version = Document(
+            user_id=uploaded_by_user_id,
+            client_id=self.client_id,
+            title=self.title,
+            description=self.description,
+            document_type=self.document_type,
+            category=self.category,
+            filename=new_filename,
+            file_path=new_file_path,
+            file_size=new_file_size,
+            file_type=self.file_type,
+            file_extension=self.file_extension,
+            version=self.version + 1,
+            parent_document_id=self.id,
+            is_latest_version=True,
+            is_visible_to_client=self.is_visible_to_client,
+            is_confidential=self.is_confidential,
+            tags=self.tags,
+        )
+
+        db.session.add(new_version)
+        db.session.commit()
+        return new_version
+
+    def archive(self):
+        """Arquivar documento"""
+        self.status = "archived"
+        db.session.commit()
+
+    def delete_document(self):
+        """Marcar como deletado (soft delete)"""
+        self.status = "deleted"
+        db.session.commit()
+
+    def to_dict(self):
+        """Serializa para JSON"""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "document_type": self.document_type,
+            "category": self.category,
+            "filename": self.filename,
+            "file_size": self.file_size,
+            "file_size_formatted": self.get_size_formatted(),
+            "file_type": self.file_type,
+            "file_extension": self.file_extension,
+            "version": self.version,
+            "is_latest_version": self.is_latest_version,
+            "is_visible_to_client": self.is_visible_to_client,
+            "is_confidential": self.is_confidential,
+            "status": self.status,
+            "tags": self.tags.split(",") if self.tags else [],
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "last_accessed_at": self.last_accessed_at.isoformat()
+            if self.last_accessed_at
+            else None,
+            "client": {"id": self.client.id, "name": self.client.name}
+            if self.client
+            else None,
+        }

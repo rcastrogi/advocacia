@@ -84,7 +84,11 @@ function searchCEP(cep) {
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    showAlert('error', data.error);
+                    if (window.showErrorToast) {
+                        window.showErrorToast(data.error);
+                    } else {
+                        showAlert('error', data.error);
+                    }
                 } else {
                     console.log('✅ CEP encontrado! Preenchendo e bloqueando campos...');
                     
@@ -104,30 +108,35 @@ function searchCEP(cep) {
                         $(neighborhoodField).addClass('slide-up');
                     }
                     
-                    // Fill UF and trigger city loading
+                    // Fill UF and City
                     if (ufField && data.uf) {
                         ufField.value = data.uf;
                         $(ufField).addClass('slide-up');
-                        // Trigger change to load cities
-                        ufField.dispatchEvent(new Event('change'));
                     }
                     
-                    // Wait for cities to load, then set city and lock fields
-                    setTimeout(() => {
-                        if (cityField && data.city) {
-                            cityField.value = data.city;
-                            $(cityField).addClass('slide-up');
-                        }
-                        
-                        // Now lock the fields that came from CEP
-                        lockCEPFields(streetField, neighborhoodField, ufField, cityField);
-                    }, 600);
+                    // Fill city field (now a text input)
+                    if (cityField && data.city) {
+                        cityField.value = data.city;
+                        $(cityField).addClass('slide-up');
+                    }
+                    
+                    // Now lock the fields that came from CEP
+                    lockCEPFields(streetField, neighborhoodField, ufField, cityField);
 
-                    showAlert('success', 'Endereço preenchido automaticamente!');
+                    if (window.showSuccessToast) {
+                        window.showSuccessToast('Endereço preenchido automaticamente!');
+                    } else {
+                        showAlert('success', 'Endereço preenchido automaticamente!');
+                    }
                 }
             })
             .catch(error => {
-                showAlert('error', 'Erro ao buscar CEP');
+                console.error('❌ Erro ao buscar CEP:', error);
+                if (window.showErrorToast) {
+                    window.showErrorToast('Erro ao buscar CEP. Verifique sua conexão.');
+                } else {
+                    showAlert('error', 'Erro ao buscar CEP');
+                }
             })
             .finally(() => {
                 // Hide loading

@@ -74,11 +74,7 @@ class ClientForm(FlaskForm):
     number = StringField("Número", validators=[Optional(), Length(max=20)])
     complement = StringField("Complemento", validators=[Optional(), Length(max=200)])
     neighborhood = StringField("Bairro", validators=[Optional(), Length(max=100)])
-    city = SelectField(
-        "Cidade",
-        choices=[("", "Selecione o estado primeiro...")],
-        validators=[Optional()],
-    )
+    city = StringField("Cidade", validators=[Optional(), Length(max=100)])
     uf = SelectField("UF", choices=[("", "Selecione...")], validators=[Optional()])
 
     # Contacts

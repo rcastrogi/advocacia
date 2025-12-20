@@ -3,9 +3,19 @@ Blueprint para funcionalidades de IA e sistema de créditos.
 """
 
 import json
+import os
 from datetime import datetime
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+import mercadopago
+from flask import (
+    Blueprint,
+    current_app,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import current_user, login_required
 
 from app import db
@@ -13,8 +23,6 @@ from app.models import (
     AIGeneration,
     CreditPackage,
     CreditTransaction,
-    PetitionType,
-    User,
     UserCredits,
 )
 from app.services.ai_service import CREDIT_COSTS, ai_service
@@ -156,7 +164,13 @@ def credits_dashboard():
 def buy_credits(slug):
     """Página de compra de pacote específico"""
     package = CreditPackage.query.filter_by(slug=slug, is_active=True).first_or_404()
-    return render_template("ai/buy_credits.html", package=package)
+
+    # Buscar chave pública do Mercado Pago
+    mp_public_key = current_app.config.get("MERCADOPAGO_PUBLIC_KEY")
+
+    return render_template(
+        "ai/buy_credits.html", package=package, mp_public_key=mp_public_key
+    )
 
 
 @ai_bp.route("/credits/history")
@@ -592,3 +606,200 @@ def api_generation_feedback(generation_id):
     db.session.commit()
 
     return jsonify({"success": True})
+
+
+# =============================================================================
+# CHECKOUT MERCADO PAGO - CRÉDITOS IA
+# =============================================================================
+
+
+@ai_bp.route("/credits/checkout/<slug>", methods=["POST"])
+@login_required
+def credits_checkout(slug):
+    """Cria preferência de pagamento no Mercado Pago para créditos"""
+    package = CreditPackage.query.filter_by(slug=slug, is_active=True).first_or_404()
+
+    mp_access_token = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
+    if not mp_access_token:
+        return jsonify({"error": "Mercado Pago não configurado"}), 500
+
+    mp_sdk = mercadopago.SDK(mp_access_token)
+
+    # URLs de retorno
+    success_url = request.host_url.rstrip("/") + url_for(
+        "ai.credits_success", package_id=package.id
+    )
+    failure_url = request.host_url.rstrip("/") + url_for("ai.credits_failure")
+    pending_url = request.host_url.rstrip("/") + url_for("ai.credits_pending")
+
+    # Criar preferência de pagamento
+    preference_data = {
+        "items": [
+            {
+                "title": package.name,
+                "description": f"{package.total_credits} créditos de IA para geração de petições",
+                "quantity": 1,
+                "currency_id": "BRL",
+                "unit_price": float(package.price),
+            }
+        ],
+        "payer": {
+            "name": current_user.full_name or current_user.username,
+            "email": current_user.email,
+        },
+        "back_urls": {
+            "success": success_url,
+            "failure": failure_url,
+            "pending": pending_url,
+        },
+        "auto_return": "approved",
+        "external_reference": f"credits_{current_user.id}_{package.id}",
+        "metadata": {
+            "user_id": current_user.id,
+            "package_id": package.id,
+            "credits": package.credits,
+            "bonus_credits": package.bonus_credits or 0,
+        },
+    }
+
+    try:
+        preference_response = mp_sdk.preference().create(preference_data)
+        preference = preference_response["response"]
+
+        return jsonify(
+            {
+                "success": True,
+                "init_point": preference["init_point"],
+                "preference_id": preference["id"],
+            }
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao criar preferência MP: {str(e)}")
+        return jsonify({"error": "Erro ao processar pagamento"}), 500
+
+
+@ai_bp.route("/credits/success")
+@login_required
+def credits_success():
+    """Página de sucesso após pagamento de créditos"""
+    package_id = request.args.get("package_id", type=int)
+    payment_id = request.args.get("payment_id")
+
+    if not package_id:
+        return redirect(url_for("ai.credits_dashboard"))
+
+    package = CreditPackage.query.get(package_id)
+
+    if payment_id:
+        # Adicionar créditos
+        user_credits = UserCredits.get_or_create(current_user.id)
+        user_credits.add_credits(package.credits, source="purchase")
+
+        if package.bonus_credits:
+            user_credits.add_credits(package.bonus_credits, source="bonus")
+
+        # Registrar transação
+        transaction = CreditTransaction(
+            user_id=current_user.id,
+            transaction_type="purchase",
+            amount=package.credits,
+            balance_after=user_credits.balance,
+            description=f"Compra de {package.name}",
+            package_id=package.id,
+            payment_intent_id=payment_id,
+            metadata=json.dumps({"payment_id": payment_id, "gateway": "mercadopago"}),
+        )
+        db.session.add(transaction)
+
+        if package.bonus_credits:
+            bonus_transaction = CreditTransaction(
+                user_id=current_user.id,
+                transaction_type="bonus",
+                amount=package.bonus_credits,
+                balance_after=user_credits.balance,
+                description=f"Bônus de {package.name}",
+                package_id=package.id,
+            )
+            db.session.add(bonus_transaction)
+
+        db.session.commit()
+
+    return render_template(
+        "ai/credits_success.html", package=package, payment_id=payment_id
+    )
+
+
+@ai_bp.route("/credits/failure")
+@login_required
+def credits_failure():
+    """Página de falha no pagamento"""
+    return render_template("ai/credits_failure.html")
+
+
+@ai_bp.route("/credits/pending")
+@login_required
+def credits_pending():
+    """Página de pagamento pendente"""
+    return render_template("ai/credits_pending.html")
+
+
+@ai_bp.route("/webhook/mercadopago/credits", methods=["POST"])
+def mercadopago_webhook_credits():
+    """Webhook do Mercado Pago para pagamentos de créditos"""
+    data = request.get_json()
+
+    if data.get("type") == "payment":
+        payment_id = data["data"]["id"]
+
+        mp_access_token = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
+        mp_sdk = mercadopago.SDK(mp_access_token)
+
+        try:
+            payment_info = mp_sdk.payment().get(payment_id)
+            payment = payment_info["response"]
+
+            if payment["status"] == "approved":
+                # Extrair metadados
+                metadata = payment.get("metadata", {})
+                user_id = metadata.get("user_id")
+                package_id = metadata.get("package_id")
+
+                if user_id and package_id:
+                    # Verificar duplicata
+                    existing = CreditTransaction.query.filter_by(
+                        payment_intent_id=str(payment_id)
+                    ).first()
+
+                    if not existing:
+                        package = CreditPackage.query.get(package_id)
+                        user_credits = UserCredits.get_or_create(user_id)
+
+                        # Adicionar créditos
+                        user_credits.add_credits(package.credits, source="purchase")
+                        if package.bonus_credits:
+                            user_credits.add_credits(
+                                package.bonus_credits, source="bonus"
+                            )
+
+                        # Registrar transação
+                        transaction = CreditTransaction(
+                            user_id=user_id,
+                            transaction_type="purchase",
+                            amount=package.credits,
+                            balance_after=user_credits.balance,
+                            description="Compra via Mercado Pago",
+                            package_id=package_id,
+                            payment_intent_id=str(payment_id),
+                        )
+                        db.session.add(transaction)
+                        db.session.commit()
+
+                        current_app.logger.info(
+                            f"Créditos adicionados via MP: {package.credits}"
+                        )
+
+        except Exception as e:
+            current_app.logger.error(f"Erro no webhook MP: {str(e)}")
+
+    return jsonify({"status": "ok"}), 200

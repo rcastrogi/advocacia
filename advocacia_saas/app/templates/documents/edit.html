@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Editar {{ document.title }} - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Editar Documento
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Título -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título *</label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   value="{{ document.title }}" required>
+                        </div>
+                        
+                        <!-- Descrição -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="3">{{ document.description or '' }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Tipo -->
+                            <div class="col-md-6 mb-3">
+                                <label for="document_type" class="form-label">Tipo</label>
+                                <select class="form-select" id="document_type" name="document_type">
+                                    <option value="">Selecione...</option>
+                                    <option value="contrato" {% if document.document_type == 'contrato' %}selected{% endif %}>Contrato</option>
+                                    <option value="peticao" {% if document.document_type == 'peticao' %}selected{% endif %}>Petição</option>
+                                    <option value="procuracao" {% if document.document_type == 'procuracao' %}selected{% endif %}>Procuração</option>
+                                    <option value="comprovante" {% if document.document_type == 'comprovante' %}selected{% endif %}>Comprovante</option>
+                                    <option value="identidade" {% if document.document_type == 'identidade' %}selected{% endif %}>Documento de Identidade</option>
+                                    <option value="cpf" {% if document.document_type == 'cpf' %}selected{% endif %}>CPF</option>
+                                    <option value="certidao" {% if document.document_type == 'certidao' %}selected{% endif %}>Certidão</option>
+                                    <option value="sentenca" {% if document.document_type == 'sentenca' %}selected{% endif %}>Sentença</option>
+                                    <option value="outro" {% if document.document_type == 'outro' %}selected{% endif %}>Outro</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Categoria -->
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Categoria</label>
+                                <input type="text" class="form-control" id="category" name="category" 
+                                       value="{{ document.category or '' }}"
+                                       placeholder="Ex: Trabalhista, Cível...">
+                            </div>
+                        </div>
+                        
+                        <!-- Tags -->
+                        <div class="mb-3">
+                            <label for="tags" class="form-label">Tags</label>
+                            <input type="text" class="form-control" id="tags" name="tags" 
+                                   value="{{ document.tags or '' }}"
+                                   placeholder="Separe por vírgula: urgente, importante...">
+                        </div>
+                        
+                        <!-- Notas -->
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notas Internas</label>
+                            <textarea class="form-control" id="notes" name="notes" 
+                                      rows="3">{{ document.notes or '' }}</textarea>
+                            <div class="form-text">
+                                Notas visíveis apenas para advogados/administradores
+                            </div>
+                        </div>
+                        
+                        <!-- Opções -->
+                        <div class="mb-3">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="is_visible_to_client" 
+                                       name="is_visible_to_client" 
+                                       {% if document.is_visible_to_client %}checked{% endif %}>
+                                <label class="form-check-label" for="is_visible_to_client">
+                                    Visível para o cliente no portal
+                                </label>
+                            </div>
+                            
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_confidential" 
+                                       name="is_confidential"
+                                       {% if document.is_confidential %}checked{% endif %}>
+                                <label class="form-check-label" for="is_confidential">
+                                    Marcar como confidencial
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Botões -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                Salvar Alterações
+                            </button>
+                            <a href="{{ url_for('documents.view', doc_id=document.id) }}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Informações do Arquivo -->
+            <div class="card shadow mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Informações do Arquivo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <strong>Nome do arquivo:</strong><br>
+                            {{ document.filename }}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Tamanho:</strong><br>
+                            {{ document.get_size_formatted() }}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Tipo:</strong><br>
+                            {{ document.file_type }}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Versão:</strong><br>
+                            v{{ document.version }}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Para alterar o arquivo, envie uma nova versão na página de visualização.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

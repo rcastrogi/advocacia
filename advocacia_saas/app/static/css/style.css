@@ -2040,3 +2040,95 @@ textarea.form-control {
         background-attachment: scroll;
     }
 }
+
+/* ===== Notification Toast Styles ===== */
+.notification-toast {
+    min-width: 350px;
+    max-width: 400px;
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    animation: slideInRight 0.4s ease-out forwards;
+}
+
+.notification-toast .toast-header {
+    font-weight: 600;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.notification-toast .toast-body {
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.notification-toast .btn-close {
+    filter: brightness(0.8);
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+.notification-toast.hiding {
+    animation: slideOutRight 0.3s ease-in forwards;
+}
+
+#notificationsContainer {
+    pointer-events: none;
+}
+
+#notificationsContainer .toast {
+    pointer-events: auto;
+}
+
+/* Badge de notificações no navbar */
+.notification-badge-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 576px) {
+    #notificationsContainer {
+        left: 0;
+        right: 0;
+        max-width: 100%;
+    }
+    
+    .notification-toast {
+        min-width: auto;
+        max-width: 100%;
+        margin: 0 1rem 1rem 1rem;
+    }
+}

@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.title }} - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Cabeçalho -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('documents.index') }}">Documentos</a></li>
+                    <li class="breadcrumb-item active">{{ document.title }}</li>
+                </ol>
+            </nav>
+            
+            <h2 class="mb-1">
+                <i class="fas fa-file-{{ 'pdf' if document.file_extension == '.pdf' else 'alt' }} me-2 
+                   text-{{ 'danger' if document.file_extension == '.pdf' else 'primary' }}"></i>
+                {{ document.title }}
+                {% if document.is_confidential %}
+                <span class="badge bg-warning ms-2">
+                    <i class="fas fa-lock"></i> Confidencial
+                </span>
+                {% endif %}
+                {% if document.status == 'archived' %}
+                <span class="badge bg-secondary ms-2">Arquivado</span>
+                {% endif %}
+            </h2>
+            
+            <p class="text-muted mb-0">
+                <i class="fas fa-user me-1"></i>
+                <a href="{{ url_for('clients.view', id=document.client_id) }}">
+                    {{ document.client.name }}
+                </a>
+            </p>
+        </div>
+        
+        <div class="col-md-4 text-end">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('documents.download', doc_id=document.id) }}" 
+                   class="btn btn-success">
+                    <i class="fas fa-download me-1"></i>
+                    Download
+                </a>
+                
+                <a href="{{ url_for('documents.edit', doc_id=document.id) }}" 
+                   class="btn btn-warning">
+                    <i class="fas fa-edit me-1"></i>
+                    Editar
+                </a>
+                
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" 
+                        data-bs-target="#deleteModal">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Coluna Principal -->
+        <div class="col-lg-8">
+            <!-- Informações do Documento -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Informações do Documento</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Tipo:</strong><br>
+                            {% if document.document_type %}
+                            <span class="badge bg-info">{{ document.document_type }}</span>
+                            {% else %}
+                            <span class="text-muted">Não especificado</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Tamanho:</strong><br>
+                            {{ document.get_size_formatted() }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Formato:</strong><br>
+                            {{ document.file_type }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Versão:</strong><br>
+                            v{{ document.version }}
+                            {% if not document.is_latest_version %}
+                            <span class="badge bg-warning">Desatualizada</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Descrição:</strong><br>
+                        <p class="mb-0">
+                            {{ document.description if document.description else 'Sem descrição' }}
+                        </p>
+                    </div>
+                    
+                    {% if document.tags %}
+                    <div class="mb-3">
+                        <strong>Tags:</strong><br>
+                        {% for tag in document.tags.split(',') %}
+                        <span class="badge bg-secondary me-1">{{ tag.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Criado em:</strong><br>
+                            {{ document.created_at.strftime('%d/%m/%Y às %H:%M') }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Última modificação:</strong><br>
+                            {{ document.updated_at.strftime('%d/%m/%Y às %H:%M') }}
+                        </div>
+                    </div>
+                    
+                    {% if document.last_accessed_at %}
+                    <div class="mt-2">
+                        <strong>Último acesso:</strong><br>
+                        {{ document.last_accessed_at.strftime('%d/%m/%Y às %H:%M') }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Histórico de Versões -->
+            {% if versions %}
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Histórico de Versões</h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" 
+                            data-bs-target="#newVersionModal">
+                        <i class="fas fa-plus me-1"></i>
+                        Nova Versão
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for version in versions %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Versão {{ version.version }}</strong>
+                                    {% if version.is_latest_version %}
+                                    <span class="badge bg-success ms-2">Atual</span>
+                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ version.created_at.strftime('%d/%m/%Y às %H:%M') }} - 
+                                        {{ version.get_size_formatted() }}
+                                    </small>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('documents.download', doc_id=version.id) }}" 
+                                       class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    <a href="{{ url_for('documents.view', doc_id=version.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Coluna Lateral -->
+        <div class="col-lg-4">
+            <!-- Ações Rápidas -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Ações</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" data-bs-toggle="modal" 
+                                data-bs-target="#newVersionModal">
+                            <i class="fas fa-code-branch me-2"></i>
+                            Nova Versão
+                        </button>
+                        
+                        {% if document.status == 'active' %}
+                        <form method="POST" action="{{ url_for('documents.archive', doc_id=document.id) }}">
+                            <button type="submit" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-archive me-2"></i>
+                                Arquivar
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('documents.by_client', client_id=document.client_id) }}" 
+                           class="btn btn-outline-info">
+                            <i class="fas fa-folder me-2"></i>
+                            Ver Todos do Cliente
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Configurações -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Configurações</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fas fa-eye me-2"></i>
+                        <strong>Visibilidade:</strong><br>
+                        <span class="badge bg-{{ 'success' if document.is_visible_to_client else 'secondary' }}">
+                            {{ 'Visível no portal' if document.is_visible_to_client else 'Privado' }}
+                        </span>
+                    </div>
+                    
+                    <div>
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <strong>Confidencialidade:</strong><br>
+                        <span class="badge bg-{{ 'warning' if document.is_confidential else 'secondary' }}">
+                            {{ 'Confidencial' if document.is_confidential else 'Normal' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nova Versão -->
+<div class="modal fade" id="newVersionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('documents.new_version', doc_id=document.id) }}" 
+                  enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">Enviar Nova Versão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="new_file" class="form-label">Arquivo</label>
+                        <input type="file" class="form-control" id="new_file" name="file" required
+                               accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
+                    </div>
+                    <p class="text-muted small">
+                        A versão atual será mantida no histórico. A nova versão será marcada como v{{ document.version + 1 }}.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Enviar Nova Versão</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Excluir -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o documento <strong>{{ document.title }}</strong>?</p>
+                <p class="text-danger mb-0">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('documents.delete', doc_id=document.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Excluir Documento</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

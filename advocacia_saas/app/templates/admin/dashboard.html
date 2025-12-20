@@ -1,9 +1,6 @@
 {% extends "admin/base_admin.html" %}
 
 {% block admin_content %}
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <!-- Cabeçalho -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
@@ -225,7 +222,7 @@
                 </h6>
             </div>
             <div class="card-body">
-                <canvas id="chartRevenue" height="100"></canvas>
+                <div id="chartRevenue"></div>
             </div>
         </div>
     </div>
@@ -235,11 +232,11 @@
         <div class="card shadow-sm">
             <div class="card-header bg-white">
                 <h6 class="mb-0">
-                    <i class="fas fa-tags text-primary me-2"></i>Faturamento por Plano (R$)
+                    <i class="fas fa-layer-group text-primary me-2"></i>Faturamento por Plano
                 </h6>
             </div>
             <div class="card-body">
-                <canvas id="chartRevenueByPlan" height="150"></canvas>
+                <div id="chartRevenueByPlan"></div>
             </div>
         </div>
     </div>
@@ -253,7 +250,7 @@
                 </h6>
             </div>
             <div class="card-body">
-                <canvas id="chartAIUsage" height="150"></canvas>
+                <div id="chartAIUsage"></div>
             </div>
         </div>
     </div>
@@ -267,7 +264,7 @@
                 </h6>
             </div>
             <div class="card-body">
-                <canvas id="chartAICredits" height="150"></canvas>
+                <div id="chartAICredits"></div>
             </div>
         </div>
     </div>
@@ -281,7 +278,7 @@
                 </h6>
             </div>
             <div class="card-body">
-                <canvas id="chartAICost" height="150"></canvas>
+                <div id="chartAICost"></div>
             </div>
         </div>
     </div>
@@ -487,7 +484,7 @@
     </div>
 </div>
 
-<!-- Scripts dos Gráficos -->
+<!-- Scripts dos Gráficos ApexCharts -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Dados dos gráficos (passados do backend)
@@ -500,203 +497,329 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Cores para os planos
     const planColors = [
-        'rgba(54, 162, 235, 0.8)',   // Azul
-        'rgba(255, 99, 132, 0.8)',   // Rosa
-        'rgba(75, 192, 192, 0.8)',   // Verde água
-        'rgba(255, 206, 86, 0.8)',   // Amarelo
-        'rgba(153, 102, 255, 0.8)',  // Roxo
-        'rgba(255, 159, 64, 0.8)',   // Laranja
-        'rgba(199, 199, 199, 0.8)',  // Cinza
+        '#36a2eb',   // Azul
+        '#ff6384',   // Rosa
+        '#4bc0c0',   // Verde água
+        '#ffce56',   // Amarelo
+        '#9966ff',   // Roxo
+        '#ff9f40',   // Laranja
+        '#c7c7c7',   // Cinza
     ];
     
-    // 1. Gráfico de Faturamento Geral
-    new Chart(document.getElementById('chartRevenue'), {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Faturamento (R$)',
-                data: revenueData,
-                backgroundColor: 'rgba(40, 167, 69, 0.6)',
-                borderColor: 'rgba(40, 167, 69, 1)',
-                borderWidth: 2,
-                borderRadius: 5,
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return 'R$ ' + context.raw.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-                        }
-                    }
+    // 1. Gráfico de Faturamento Geral (Barras)
+    const chartRevenue = new ApexCharts(document.querySelector("#chartRevenue"), {
+        series: [{
+            name: 'Faturamento',
+            data: revenueData
+        }],
+        chart: {
+            type: 'bar',
+            height: 300,
+            toolbar: {
+                show: true,
+                tools: {
+                    download: true,
+                    selection: false,
+                    zoom: false,
+                    zoomin: false,
+                    zoomout: false,
+                    pan: false,
+                    reset: false
                 }
+            }
+        },
+        plotOptions: {
+            bar: {
+                borderRadius: 4,
+                dataLabels: {
+                    position: 'top'
+                }
+            }
+        },
+        dataLabels: {
+            enabled: false
+        },
+        colors: ['#28a745'],
+        xaxis: {
+            categories: labels,
+            title: {
+                text: 'Mês'
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Faturamento (R$)'
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'R$ ' + value.toLocaleString('pt-BR');
-                        }
-                    }
+            labels: {
+                formatter: function(val) {
+                    return 'R$ ' + val.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                }
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function(val) {
+                    return 'R$ ' + val.toLocaleString('pt-BR', {minimumFractionDigits: 2});
                 }
             }
         }
     });
+    chartRevenue.render();
     
-    // 2. Gráfico de Faturamento por Plano (Stacked Bar)
-    const planDatasets = [];
+    // 2. Gráfico de Faturamento por Plano (Barras Empilhadas)
+    const planSeries = [];
     let colorIndex = 0;
     for (const [planName, planData] of Object.entries(revenueByPlan)) {
-        planDatasets.push({
-            label: planName,
-            data: planData,
-            backgroundColor: planColors[colorIndex % planColors.length],
-            borderColor: planColors[colorIndex % planColors.length].replace('0.8', '1'),
-            borderWidth: 1,
-            borderRadius: 3,
+        planSeries.push({
+            name: planName,
+            data: planData
         });
         colorIndex++;
     }
     
-    new Chart(document.getElementById('chartRevenueByPlan'), {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: planDatasets
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { 
-                    position: 'bottom',
-                    labels: { boxWidth: 12, padding: 10 }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': R$ ' + context.raw.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-                        }
-                    }
+    const chartRevenueByPlan = new ApexCharts(document.querySelector("#chartRevenueByPlan"), {
+        series: planSeries,
+        chart: {
+            type: 'bar',
+            height: 300,
+            stacked: true,
+            toolbar: {
+                show: true,
+                tools: {
+                    download: true,
+                    selection: false,
+                    zoom: false,
+                    zoomin: false,
+                    zoomout: false,
+                    pan: false,
+                    reset: false
                 }
+            }
+        },
+        plotOptions: {
+            bar: {
+                horizontal: false,
+                borderRadius: 3
+            }
+        },
+        colors: planColors,
+        xaxis: {
+            categories: labels,
+            title: {
+                text: 'Mês'
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Faturamento (R$)'
             },
-            scales: {
-                x: { stacked: true },
-                y: {
-                    stacked: true,
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'R$ ' + value.toLocaleString('pt-BR');
-                        }
-                    }
+            labels: {
+                formatter: function(val) {
+                    return 'R$ ' + val.toLocaleString('pt-BR');
+                }
+            }
+        },
+        legend: {
+            position: 'bottom',
+            horizontalAlign: 'center'
+        },
+        tooltip: {
+            y: {
+                formatter: function(val) {
+                    return 'R$ ' + val.toLocaleString('pt-BR', {minimumFractionDigits: 2});
                 }
             }
         }
     });
+    chartRevenueByPlan.render();
     
-    // 3. Gráfico de Uso de IA (Line)
-    new Chart(document.getElementById('chartAIUsage'), {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Gerações de IA',
-                data: aiUsageData,
-                borderColor: 'rgba(23, 162, 184, 1)',
-                backgroundColor: 'rgba(23, 162, 184, 0.2)',
-                tension: 0.3,
-                fill: true,
-                pointBackgroundColor: 'rgba(23, 162, 184, 1)',
-                pointRadius: 4,
-            }]
+    // 3. Gráfico de Uso de IA (Linha com Área)
+    const chartAIUsage = new ApexCharts(document.querySelector("#chartAIUsage"), {
+        series: [{
+            name: 'Gerações de IA',
+            data: aiUsageData
+        }],
+        chart: {
+            type: 'area',
+            height: 300,
+            toolbar: {
+                show: true,
+                tools: {
+                    download: true,
+                    selection: false,
+                    zoom: false,
+                    zoomin: false,
+                    zoomout: false,
+                    pan: false,
+                    reset: false
+                }
+            }
         },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false }
+        dataLabels: {
+            enabled: false
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 2
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.5,
+                opacityTo: 0.1
+            }
+        },
+        colors: ['#17a2b8'],
+        xaxis: {
+            categories: labels,
+            title: {
+                text: 'Mês'
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Quantidade'
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 }
+            labels: {
+                formatter: function(val) {
+                    return Math.floor(val);
+                }
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function(val) {
+                    return val + ' gerações';
                 }
             }
         }
     });
+    chartAIUsage.render();
     
-    // 4. Gráfico de Créditos Vendidos (Bar)
-    new Chart(document.getElementById('chartAICredits'), {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Créditos Vendidos',
-                data: aiCreditsData,
-                backgroundColor: 'rgba(255, 193, 7, 0.6)',
-                borderColor: 'rgba(255, 193, 7, 1)',
-                borderWidth: 2,
-                borderRadius: 5,
-            }]
+    // 4. Gráfico de Créditos Vendidos (Barras)
+    const chartAICredits = new ApexCharts(document.querySelector("#chartAICredits"), {
+        series: [{
+            name: 'Créditos Vendidos',
+            data: aiCreditsData
+        }],
+        chart: {
+            type: 'bar',
+            height: 300,
+            toolbar: {
+                show: true,
+                tools: {
+                    download: true,
+                    selection: false,
+                    zoom: false,
+                    zoomin: false,
+                    zoomout: false,
+                    pan: false,
+                    reset: false
+                }
+            }
         },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false }
+        plotOptions: {
+            bar: {
+                borderRadius: 4,
+                dataLabels: {
+                    position: 'top'
+                }
+            }
+        },
+        dataLabels: {
+            enabled: false
+        },
+        colors: ['#ffc107'],
+        xaxis: {
+            categories: labels,
+            title: {
+                text: 'Mês'
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Créditos'
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 10 }
+            labels: {
+                formatter: function(val) {
+                    return Math.floor(val);
+                }
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function(val) {
+                    return val + ' créditos';
                 }
             }
         }
     });
+    chartAICredits.render();
     
-    // 5. Gráfico de Custo IA (Line + Area)
-    new Chart(document.getElementById('chartAICost'), {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Custo IA (USD)',
-                data: aiCostData,
-                borderColor: 'rgba(220, 53, 69, 1)',
-                backgroundColor: 'rgba(220, 53, 69, 0.2)',
-                tension: 0.3,
-                fill: true,
-                pointBackgroundColor: 'rgba(220, 53, 69, 1)',
-                pointRadius: 4,
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return '$ ' + context.raw.toFixed(4);
-                        }
-                    }
+    // 5. Gráfico de Custo IA (Linha com Área)
+    const chartAICost = new ApexCharts(document.querySelector("#chartAICost"), {
+        series: [{
+            name: 'Custo IA',
+            data: aiCostData
+        }],
+        chart: {
+            type: 'area',
+            height: 300,
+            toolbar: {
+                show: true,
+                tools: {
+                    download: true,
+                    selection: false,
+                    zoom: false,
+                    zoomin: false,
+                    zoomout: false,
+                    pan: false,
+                    reset: false
                 }
+            }
+        },
+        dataLabels: {
+            enabled: false
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 2
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.5,
+                opacityTo: 0.1
+            }
+        },
+        colors: ['#dc3545'],
+        xaxis: {
+            categories: labels,
+            title: {
+                text: 'Mês'
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Custo (USD)'
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '$ ' + value.toFixed(2);
-                        }
-                    }
+            labels: {
+                formatter: function(val) {
+                    return '$ ' + val.toFixed(2);
+                }
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function(val) {
+                    return '$ ' + val.toFixed(4);
                 }
             }
         }
     });
+    chartAICost.render();
 });
 </script>
 {% endblock %}

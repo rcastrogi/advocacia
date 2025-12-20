@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Prazos e Alertas - Petitio{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-calendar-alt me-2"></i>Prazos e Alertas</h2>
+            <p class="text-muted">Gerencie todos os seus prazos processuais</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('deadlines.calendar') }}" class="btn btn-outline-primary">
+                <i class="fas fa-calendar me-2"></i>Calendário
+            </a>
+            <a href="{{ url_for('deadlines.new') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Novo Prazo
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="all">Todos</option>
+                        <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pendentes</option>
+                        <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Cumpridos</option>
+                        <option value="canceled" {% if request.args.get('status') == 'canceled' %}selected{% endif %}>Cancelados</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tipo</label>
+                    <select name="type" class="form-select" onchange="this.form.submit()">
+                        <option value="">Todos os tipos</option>
+                        <option value="audiencia" {% if request.args.get('type') == 'audiencia' %}selected{% endif %}>Audiência</option>
+                        <option value="recurso" {% if request.args.get('type') == 'recurso' %}selected{% endif %}>Recurso</option>
+                        <option value="contestacao" {% if request.args.get('type') == 'contestacao' %}selected{% endif %}>Contestação</option>
+                        <option value="peticao" {% if request.args.get('type') == 'peticao' %}selected{% endif %}>Petição</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-secondary w-100">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Prazos Urgentes -->
+    {% if urgent_deadlines %}
+    <div class="card shadow-sm border-danger mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Prazos Urgentes ({{ urgent_deadlines|length }})
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Tipo</th>
+                            <th>Data</th>
+                            <th>Dias Restantes</th>
+                            <th>Cliente</th>
+                            <th width="150">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for deadline in urgent_deadlines %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('deadlines.view', deadline_id=deadline.id) }}" class="text-decoration-none">
+                                    <strong>{{ deadline.title }}</strong>
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ deadline.deadline_type or 'Geral' }}</span>
+                            </td>
+                            <td>{{ deadline.deadline_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ deadline.days_until() }} dia(s)
+                                </span>
+                            </td>
+                            <td>{{ deadline.client.name if deadline.client else '-' }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('deadlines.view', deadline_id=deadline.id) }}" 
+                                       class="btn btn-outline-primary" title="Ver">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button class="btn btn-outline-success" 
+                                            onclick="completeDeadline({{ deadline.id }})" title="Concluir">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Próximos Prazos -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-calendar-check me-2"></i>
+                Próximos Prazos ({{ upcoming_deadlines|length }})
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if upcoming_deadlines %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Tipo</th>
+                            <th>Data</th>
+                            <th>Dias Restantes</th>
+                            <th>Cliente</th>
+                            <th width="150">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for deadline in upcoming_deadlines %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('deadlines.view', deadline_id=deadline.id) }}" class="text-decoration-none">
+                                    <strong>{{ deadline.title }}</strong>
+                                </a>
+                                {% if deadline.description %}
+                                <br><small class="text-muted">{{ deadline.description[:50] }}...</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ deadline.deadline_type or 'Geral' }}</span>
+                            </td>
+                            <td>{{ deadline.deadline_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {{ deadline.days_until() }} dia(s)
+                                </span>
+                            </td>
+                            <td>{{ deadline.client.name if deadline.client else '-' }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('deadlines.view', deadline_id=deadline.id) }}" 
+                                       class="btn btn-outline-primary" title="Ver">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('deadlines.edit', deadline_id=deadline.id) }}" 
+                                       class="btn btn-outline-secondary" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-outline-success" 
+                                            onclick="completeDeadline({{ deadline.id }})" title="Concluir">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-check fa-4x text-muted mb-3"></i>
+                <h5>Nenhum prazo pendente</h5>
+                <p class="text-muted">Cadastre um novo prazo para começar</p>
+                <a href="{{ url_for('deadlines.new') }}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-2"></i>Novo Prazo
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+async function completeDeadline(deadlineId) {
+    if (!confirm('Marcar este prazo como cumprido?')) return;
+    
+    try {
+        const response = await fetch(`/deadlines/${deadlineId}/complete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showSuccessToast('Prazo marcado como cumprido!');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorToast(data.error || 'Erro ao atualizar prazo');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        showErrorToast('Erro ao processar solicitação');
+    }
+}
+</script>
+{% endblock %}

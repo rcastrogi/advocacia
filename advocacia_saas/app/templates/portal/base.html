@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Portal do Cliente - Petitio{% endblock %}</title>
+    
+    <!-- Google Fonts - Modern Professional Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #0d1b2a;       /* Deep Navy Blue - Professional & Elegant */
+            --secondary-color: #c9a85c;     /* Gold/Brass - Luxury Accent */
+            --dark-color: #1a1a1a;
+            --light-color: #f8f9fa;
+            --accent-color: #1b263b;        /* Dark Navy - Gradient accent */
+            --text-color: #ffffff;
+            --text-muted: #b0b0b0;
+            --border-color: #2d3748;
+            --gold-color: #c9a85c;
+            --gold-light: #d4b76a;
+            --gold-dark: #a8893d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+        }
+        
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .portal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .content-wrapper {
+            flex: 1 0 auto;
+        }
+        
+        .portal-nav {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .portal-nav .nav-link {
+            color: #495057;
+            padding: 1rem 1.5rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .portal-nav .nav-link:hover,
+        .portal-nav .nav-link.active {
+            color: var(--gold-color);
+            border-bottom-color: var(--gold-color);
+        }
+        
+        .stat-card {
+            border-left: 4px solid var(--gold-color);
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .timeline-item {
+            border-left: 2px solid #dee2e6;
+            padding-left: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--gold-color);
+        }
+        
+        .footer {
+            background: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+            margin-top: auto;
+            flex-shrink: 0;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Cormorant Garamond', serif;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <div class="portal-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}" 
+                         alt="Logo Petitio" class="me-2" height="40" style="filter: brightness(0) invert(1);">
+                    <h4 class="mb-0">
+                        <span style="font-family: 'Cormorant Garamond', serif; font-weight: 600;">Petitio</span>
+                        <span style="color: var(--gold-color); font-size: 0.9rem; margin-left: 0.5rem;">Portal do Cliente</span>
+                    </h4>
+                </div>
+                <div>
+                    <span class="me-3">
+                        <i class="fas fa-user-circle me-2"></i>
+                        {{ current_user.name if current_user.is_authenticated else 'Visitante' }}
+                    </span>
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('portal.logout') }}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>
+                        Sair
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation -->
+    {% if current_user.is_authenticated %}
+    <div class="portal-nav">
+        <div class="container">
+            <ul class="nav">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'portal.index' %}active{% endif %}" 
+                       href="{{ url_for('portal.index') }}">
+                        <i class="fas fa-home me-2"></i>
+                        Início
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'portal.documents' %}active{% endif %}" 
+                       href="{{ url_for('portal.documents') }}">
+                        <i class="fas fa-folder-open me-2"></i>
+                        Documentos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'portal.deadlines' %}active{% endif %}" 
+                       href="{{ url_for('portal.deadlines') }}">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Prazos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'portal.chat' %}active{% endif %}" 
+                       href="{{ url_for('portal.chat') }}">
+                        <i class="fas fa-comments me-2"></i>
+                        Chat
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'portal.timeline' %}active{% endif %}" 
+                       href="{{ url_for('portal.timeline') }}">
+                        <i class="fas fa-stream me-2"></i>
+                        Timeline
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'portal.profile' %}active{% endif %}" 
+                       href="{{ url_for('portal.profile') }}">
+                        <i class="fas fa-user-cog me-2"></i>
+                        Perfil
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'portal.help' %}active{% endif %}" 
+                       href="{{ url_for('portal.help') }}">
+                        <i class="fas fa-question-circle me-2"></i>
+                        Ajuda
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Content -->ent-wrapper">
+        <div class="container py-4">
+            {% block content %}{% endblock %}
+        </div>
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <div class="container text-center">
+            <p class="mb-2">
+                <span style="font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600;">Petitio</span>
+                <span style="color: var(--gold-color); margin-left: 0.5rem;">Portal do Cliente</span>
+            </p>
+            <p class="mb-0" style="font-size: 0.9rem; opacity: 0.8;">
+                &copy; 2025 Petitio. Todos os direitos reservados.
+            </p>
+            <small style="opacity: 0.7;">
+                Desenvolvido com <i class="fas fa-heart" style="color: var(--gold-color);"></i> para advocacia moderna
+            </small>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Auto-dismiss flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+        
+        // Toast helper
+        function showToast(message, type = 'info') {
+            const colors = {
+                success: '#28a745',
+                error: '#dc3545',
+                warning: '#ffc107',
+                info: '#17a2b8'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = 'position-fixed bottom-0 end-0 p-3';
+            toast.style.zIndex = '9999';
+            toast.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+        
+        window.showSuccessToast = (msg) => showToast(msg, 'success');
+        window.showErrorToast = (msg) => showToast(msg, 'error');
+        window.showWarningToast = (msg) => showToast(msg, 'warning');
+        window.showInfoToast = (msg) => showToast(msg, 'info');
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

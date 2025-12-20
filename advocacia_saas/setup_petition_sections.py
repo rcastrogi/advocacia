@@ -1338,7 +1338,7 @@ def setup_sections():
         print("\n" + "=" * 70)
         print("✅ CONFIGURAÇÃO CONCLUÍDA!")
         print("=" * 70)
-        print(f"\n📊 Resumo:")
+        print("\n📊 Resumo:")
         print(f"   • {len(section_map)} seções no sistema")
         print(f"   • {configured_count} tipos de petição configurados")
         print("\n💡 Próximos passos:")

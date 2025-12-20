@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}Chat com {{ client.name }} - Petitio{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: calc(100vh - 200px);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .messages-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f8f9fa;
+    }
+    
+    .message {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .message.sent {
+        justify-content: flex-end;
+    }
+    
+    .message-bubble {
+        max-width: 70%;
+        padding: 10px 15px;
+        border-radius: 15px;
+        word-wrap: break-word;
+    }
+    
+    .message.sent .message-bubble {
+        background: #007bff;
+        color: white;
+        border-bottom-right-radius: 5px;
+    }
+    
+    .message.received .message-bubble {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-bottom-left-radius: 5px;
+    }
+    
+    .message-info {
+        font-size: 0.75rem;
+        margin-top: 5px;
+        opacity: 0.7;
+    }
+    
+    .message.sent .message-info {
+        text-align: right;
+    }
+    
+    .message-file {
+        padding: 10px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 8px;
+        margin-top: 5px;
+    }
+    
+    .typing-indicator {
+        display: none;
+        padding: 10px;
+        font-style: italic;
+        color: #6c757d;
+    }
+    
+    .typing-indicator.active {
+        display: block;
+    }
+    
+    .input-area {
+        border-top: 1px solid #dee2e6;
+        padding: 15px;
+        background: white;
+    }
+    
+    #message-input {
+        resize: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <!-- Header -->
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{{ url_for('chat.index') }}" class="btn btn-sm btn-outline-secondary me-3">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <i class="fas fa-user-circle fa-2x me-2"></i>
+                        <span class="h5 mb-0">{{ client.name }}</span>
+                        <span class="badge bg-success ms-2" id="online-status" style="display: none;">Online</span>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('clients.view', client_id=client.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>
+                            Ver Cliente
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Messages -->
+                <div class="chat-container">
+                    <div class="messages-container" id="messages-container">
+                        {% for message in messages %}
+                        <div class="message {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}" data-message-id="{{ message.id }}">
+                            <div class="message-bubble">
+                                {% if message.message_type == 'system' %}
+                                    <em class="text-muted">{{ message.content }}</em>
+                                {% else %}
+                                    {{ message.content }}
+                                    
+                                    {% if message.attachment_filename %}
+                                    <div class="message-file">
+                                        <i class="fas fa-paperclip me-2"></i>
+                                        <a href="{{ url_for('chat.download_file', message_id=message.id) }}" 
+                                           class="{% if message.sender_id == current_user.id %}text-white{% endif %}">
+                                            {{ message.attachment_filename }}
+                                        </a>
+                                        <small class="d-block mt-1">
+                                            ({{ (message.attachment_size / 1024) | round(1) }} KB)
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                {% endif %}
+                                
+                                <div class="message-info">
+                                    {{ message.created_at.strftime('%H:%M') }}
+                                    {% if message.sender_id == current_user.id %}
+                                        {% if message.is_read %}
+                                        <i class="fas fa-check-double text-info" title="Lida"></i>
+                                        {% else %}
+                                        <i class="fas fa-check" title="Enviada"></i>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="typing-indicator" id="typing-indicator">
+                        {{ client.name }} está digitando...
+                    </div>
+                    
+                    <!-- Input Area -->
+                    <div class="input-area">
+                        <form id="message-form" enctype="multipart/form-data">
+                            <div class="input-group">
+                                <button type="button" class="btn btn-outline-secondary" id="attach-btn" title="Anexar arquivo">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <input type="file" id="file-input" style="display: none;">
+                                
+                                <textarea class="form-control" id="message-input" rows="1" 
+                                          placeholder="Digite sua mensagem..." maxlength="2000"></textarea>
+                                
+                                <button type="submit" class="btn btn-primary" id="send-btn">
+                                    <i class="fas fa-paper-plane me-1"></i>
+                                    Enviar
+                                </button>
+                            </div>
+                            <small class="text-muted" id="file-info" style="display: none;"></small>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+const ROOM_ID = {{ chat_room.id }};
+const RECIPIENT_ID = {{ client.user_id if client.user_id else 'null' }};
+const CLIENT_ID = {{ client.id }};
+const CURRENT_USER_ID = {{ current_user.id }};
+
+// Conectar ao WebSocket
+const socket = io();
+
+socket.on('connect', function() {
+    console.log('Conectado ao WebSocket');
+    
+    // Entrar na sala
+    socket.emit('join', { room_id: ROOM_ID });
+});
+
+socket.on('disconnect', function() {
+    console.log('Desconectado do WebSocket');
+});
+
+// Receber nova mensagem
+socket.on('new_message', function(data) {
+    if (data.room_id === ROOM_ID) {
+        addMessageToUI(data.message);
+        scrollToBottom();
+        
+        // Marcar como lida se for para mim
+        if (data.message.recipient_id === CURRENT_USER_ID) {
+            markAsRead([data.message.id]);
+        }
+    }
+});
+
+// Usuário digitando
+socket.on('user_typing', function(data) {
+    if (data.room_id === ROOM_ID && data.user_id !== CURRENT_USER_ID) {
+        document.getElementById('typing-indicator').classList.add('active');
+    }
+});
+
+socket.on('user_stop_typing', function(data) {
+    if (data.room_id === ROOM_ID) {
+        document.getElementById('typing-indicator').classList.remove('active');
+    }
+});
+
+// Enviar mensagem
+const messageForm = document.getElementById('message-form');
+const messageInput = document.getElementById('message-input');
+const sendBtn = document.getElementById('send-btn');
+const fileInput = document.getElementById('file-input');
+const attachBtn = document.getElementById('attach-btn');
+const fileInfo = document.getElementById('file-info');
+
+let selectedFile = null;
+let typingTimer = null;
+
+messageForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const content = messageInput.value.trim();
+    
+    if (!content && !selectedFile) return;
+    
+    sendBtn.disabled = true;
+    
+    if (selectedFile) {
+        // Upload de arquivo
+        await uploadFile(content);
+    } else {
+        // Enviar mensagem de texto
+        socket.emit('send_message', {
+            room_id: ROOM_ID,
+            recipient_id: RECIPIENT_ID,
+            client_id: CLIENT_ID,
+            content: content
+        });
+    }
+    
+    messageInput.value = '';
+    selectedFile = null;
+    fileInfo.style.display = 'none';
+    sendBtn.disabled = false;
+    messageInput.focus();
+});
+
+// Detectar digitação
+messageInput.addEventListener('input', function() {
+    if (typingTimer) clearTimeout(typingTimer);
+    
+    socket.emit('typing', { room_id: ROOM_ID });
+    
+    typingTimer = setTimeout(function() {
+        socket.emit('stop_typing', { room_id: ROOM_ID });
+    }, 1000);
+});
+
+// Anexar arquivo
+attachBtn.addEventListener('click', function() {
+    fileInput.click();
+});
+
+fileInput.addEventListener('change', function() {
+    if (this.files.length > 0) {
+        selectedFile = this.files[0];
+        const sizeMB = (selectedFile.size / 1024 / 1024).toFixed(2);
+        fileInfo.textContent = `Arquivo selecionado: ${selectedFile.name} (${sizeMB} MB)`;
+        fileInfo.style.display = 'block';
+    }
+});
+
+// Upload de arquivo
+async function uploadFile(caption) {
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('recipient_id', RECIPIENT_ID);
+    formData.append('client_id', CLIENT_ID);
+    
+    try {
+        const response = await fetch('/chat/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            addMessageToUI(data.message);
+            scrollToBottom();
+        } else {
+            showErrorToast('Erro ao enviar arquivo');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        showErrorToast('Erro ao enviar arquivo');
+    }
+}
+
+// Adicionar mensagem na UI
+function addMessageToUI(message) {
+    const container = document.getElementById('messages-container');
+    const messageDiv = document.createElement('div');
+    const isSent = message.sender_id === CURRENT_USER_ID;
+    
+    messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+    messageDiv.dataset.messageId = message.id;
+    
+    let attachmentHTML = '';
+    if (message.attachment) {
+        attachmentHTML = `
+            <div class="message-file">
+                <i class="fas fa-paperclip me-2"></i>
+                <a href="/chat/download/${message.id}" class="${isSent ? 'text-white' : ''}">
+                    ${message.attachment.filename}
+                </a>
+                <small class="d-block mt-1">
+                    (${(message.attachment.size / 1024).toFixed(1)} KB)
+                </small>
+            </div>
+        `;
+    }
+    
+    const time = new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const readIcon = message.is_read ? '<i class="fas fa-check-double text-info"></i>' : '<i class="fas fa-check"></i>';
+    
+    messageDiv.innerHTML = `
+        <div class="message-bubble">
+            ${message.content}
+            ${attachmentHTML}
+            <div class="message-info">
+                ${time}
+                ${isSent ? readIcon : ''}
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(messageDiv);
+}
+
+// Marcar como lida
+async function markAsRead(messageIds) {
+    try {
+        await fetch('/chat/api/mark-read/' + messageIds[0], {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+    } catch (error) {
+        console.error('Erro ao marcar como lida:', error);
+    }
+}
+
+// Scroll automático
+function scrollToBottom() {
+    const container = document.getElementById('messages-container');
+    container.scrollTop = container.scrollHeight;
+}
+
+// Scroll ao carregar
+window.addEventListener('load', scrollToBottom);
+</script>
+{% endblock %}

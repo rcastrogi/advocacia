@@ -1,0 +1,587 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); padding: 100px 0 80px 0;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-3 text-white mb-4" style="font-weight: 700;">
+                    <span id="animated-text">Recursos Completos para Advocacia Moderna</span>
+                </h1>
+                <p class="lead text-white opacity-90 mb-4">
+                    Conheça todas as funcionalidades que fazem do Petitio a solução mais completa para gestão jurídica e geração de petições com Inteligência Artificial
+                </p>
+                <!-- Novo elemento animado com frases impactantes -->
+                <p class="lead text-white opacity-75 mb-0" id="impact-phrases" style="font-style: italic; font-size: 1.1rem;"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <!-- 1. Inteligência Artificial e Petições -->
+    <div class="row mb-5" id="ia">
+        <div class="col-12">
+            <div class="text-center mb-5">
+                <span class="badge bg-primary px-4 py-2 mb-3" style="font-size: 1rem;">
+                    <i class="fas fa-robot me-2"></i>Inteligência Artificial
+                </span>
+                <h2 class="display-5 mb-3" style="font-weight: 700;">Geração de Petições com IA</h2>
+                <p class="lead text-muted">Tecnologia de ponta para criar petições jurídicas profissionais em minutos</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-warning bg-opacity-10 me-3" style="width: 4rem; height: 4rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-file-lines fa-2x text-warning"></i>
+                                </div>
+                                <h4 class="mb-0">12+ Tipos de Petições</h4>
+                            </div>
+                            <p class="text-muted mb-3">Modelos especializados para diferentes áreas do direito:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Cível (Cobrança, Indenização)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Família (Divórcio, Alimentos, Guarda)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Criminal (Habeas Corpus, Defesa)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Trabalhista (Reclamação, Defesa)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Tributário (Mandado de Segurança)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Petições Personalizadas</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 4rem; height: 4rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-brain fa-2x  text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Geração Inteligente</h4>
+                            </div>
+                            <p class="text-muted mb-3">IA avançada da OpenAI GPT-4 com recursos exclusivos:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Análise de contexto jurídico</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Linguagem técnica adequada</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Fundamentação legal automática</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Adaptação ao caso específico</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Revisão e refinamento</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Download em PDF profissional</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-coins text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Sistema de Créditos IA</h4>
+                            </div>
+                            <p class="text-muted mb-3">Controle total sobre o uso da inteligência artificial:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Pacotes flexíveis de créditos</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Histórico detalhado de uso</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Recarga automática disponível</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Alertas de créditos baixos</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Relatório de tokens consumidos</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-folder-open text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Biblioteca de Petições</h4>
+                            </div>
+                            <p class="text-muted mb-3">Organize e reutilize suas petições:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Salvar petições geradas</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Busca e filtros avançados</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Edição e refinamento</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Histórico completo</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Exportação em múltiplos formatos</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-5">
+
+    <!-- 2. Gestão de Clientes e Processos -->
+    <div class="row mb-5" id="gestao">
+        <div class="col-12">
+            <div class="text-center mb-5">
+                <span class="badge bg-success px-4 py-2 mb-3" style="font-size: 1rem;">
+                    <i class="fas fa-users me-2"></i>Gestão Completa
+                </span>
+                <h2 class="display-5 mb-3" style="font-weight: 700;">Gestão de Clientes e Documentos</h2>
+                <p class="lead text-muted">Organize todo o escritório em um só lugar</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-address-book text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Cadastro de Clientes</h4>
+                            </div>
+                            <p class="text-muted mb-3">Gestão completa da carteira de clientes:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Dados completos (CPF, RG, endereço)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Múltiplos contatos</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Documentos anexados</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Histórico de interações</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Busca inteligente</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Visualização rápida</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-file-signature text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Procurações</h4>
+                            </div>
+                            <p class="text-muted mb-3">Geração e gestão de procurações:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Modelos prontos</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Personalização completa</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Geração automática de PDF</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Vinculação com clientes</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Controle de validade</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Assinatura digital</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-user-tie text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Portal do Cliente</h4>
+                            </div>
+                            <p class="text-muted mb-3">Transparência e comunicação facilitada:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Acesso individual por cliente</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Visualização de documentos</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Acompanhamento de processos</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Mensagens diretas</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Notificações automáticas</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-building text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Multi-usuário</h4>
+                            </div>
+                            <p class="text-muted mb-3">Ideal para escritórios de qualquer tamanho:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Tipos: Advogado individual e Escritório</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Permissões por usuário</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Compartilhamento de clientes</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Colaboração em tempo real</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Auditoria de ações</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-5">
+
+    <!-- 3. Financeiro e Pagamentos -->
+    <div class="row mb-5" id="financeiro">
+        <div class="col-12">
+            <div class="text-center mb-5">
+                <span class="badge bg-warning px-4 py-2 mb-3" style="font-size: 1rem;">
+                    <i class="fas fa-dollar-sign me-2"></i>Sistema Financeiro
+                </span>
+                <h2 class="display-5 mb-3" style="font-weight: 700;">Assinaturas e Pagamentos</h2>
+                <p class="lead text-muted">Planos flexíveis e pagamento facilitado para o Brasil</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-tags text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Planos Flexíveis</h4>
+                            </div>
+                            <p class="text-muted mb-3">Escolha o plano ideal para seu escritório:</p>
+                            <ul class="list-unstyled">
+                                {% for plan in plans %}
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> <strong>{{ plan.name }}:</strong> {{ plan.monthly_limit }} petições por mês</li>
+                                {% endfor %}
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Pagamento mensal recorrente</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Cancelamento a qualquer momento</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Upgrade/downgrade flexível</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-credit-card text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Mercado Pago Integrado</h4>
+                            </div>
+                            <p class="text-muted mb-3">Pagamento 100% nacional e seguro:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> PIX instantâneo</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Cartão de crédito (12x)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Boleto bancário</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Pagamento recorrente automático</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Nota fiscal eletrônica</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-chart-pie text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Controle de Limites</h4>
+                            </div>
+                            <p class="text-muted mb-3">Transparência total no uso:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Dashboard de uso mensal</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Contador em tempo real</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Alertas aos 80% do limite</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Histórico de 6 meses</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Previsão de consumo</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-file-invoice text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Faturamento Automático</h4>
+                            </div>
+                            <p class="text-muted mb-3">Gestão financeira simplificada:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Cobrança automática mensal</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Histórico de pagamentos</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Recibos digitais</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Portal de assinatura</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Atualização de dados de pagamento</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-5">
+
+    <!-- 4. Analytics e Relatórios -->
+    <div class="row mb-5" id="analytics">
+        <div class="col-12">
+            <div class="text-center mb-5">
+                <span class="badge bg-info px-4 py-2 mb-3" style="font-size: 1rem;">
+                    <i class="fas fa-chart-line me-2"></i>Inteligência de Dados
+                </span>
+                <h2 class="display-5 mb-3" style="font-weight: 700;">Analytics e Notificações</h2>
+                <p class="lead text-muted">Decisões baseadas em dados reais</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-light me-3" style="width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-chart-bar text-dark"></i>
+                                </div>
+                                <h4 class="mb-0">Dashboard Inteligente</h4>
+                            </div>
+                            <p class="text-muted mb-3">Visão completa do escritório:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Métricas em tempo real</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Gráficos interativos (ApexCharts)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Resumo de clientes e petições</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Status de assinatura</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Ações rápidas personalizáveis</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                                    <i class="fas fa-chart-bar fa-2x text-success"></i>
+                                </div>
+                                <h4 class="mb-0">Análise de Uso</h4>
+                            </div>
+                            <p class="text-muted mb-3">Entenda seus padrões de trabalho:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Histórico de 6 meses</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Tendência de crescimento</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Dias de maior uso</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Petições pagas vs gratuitas</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Relatórios exportáveis</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                                    <i class="fas fa-bell fa-2x text-warning"></i>
+                                </div>
+                                <h4 class="mb-0">Notificações Push</h4>
+                            </div>
+                            <p class="text-muted mb-3">Nunca perca informações importantes:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Alertas em tempo real no dashboard</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Alerta aos 80% do limite</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Créditos IA baixos</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Assinatura expirando</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Centro de notificações completo</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                                    <i class="fas fa-crystal-ball fa-2x text-info"></i>
+                                </div>
+                                <h4 class="mb-0">Previsões Inteligentes</h4>
+                            </div>
+                            <p class="text-muted mb-3">Planeje com antecedência:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Previsão de quando atingir limite</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Média diária de uso</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Sugestões de upgrade</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Análise de tendências</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Insights personalizados</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-5">
+
+    <!-- 5. Segurança e Qualidade -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="text-center mb-5">
+                <span class="badge bg-danger px-4 py-2 mb-3" style="font-size: 1rem;">
+                    <i class="fas fa-shield-alt me-2"></i>Segurança e Qualidade
+                </span>
+                <h2 class="display-5 mb-3" style="font-weight: 700;">Tecnologia de Ponta</h2>
+                <p class="lead text-muted">Seus dados protegidos com os mais altos padrões</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4 text-center">
+                            <div class="rounded-circle bg-light p-3 d-inline-block mb-3">
+                                <i class="fas fa-lock fa-2x text-dark"></i>
+                            </div>
+                            <h5 class="mb-3">Segurança Avançada</h5>
+                            <ul class="list-unstyled text-start">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Criptografia SSL/TLS</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Autenticação segura</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Backup automático diário</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> LGPD compliant</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4 text-center">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-block mb-3">
+                                <i class="fas fa-universal-access fa-3x text-primary"></i>
+                            </div>
+                            <h5 class="mb-3">Acessibilidade</h5>
+                            <ul class="list-unstyled text-start">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Contraste ajustável</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Tamanho de fonte configurável</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Navegação por teclado</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Leitores de tela compatíveis</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4 text-center">
+                            <div class="rounded-circle bg-success bg-opacity-10 p-3 d-inline-block mb-3">
+                                <i class="fas fa-mobile-alt fa-3x text-success"></i>
+                            </div>
+                            <h5 class="mb-3">100% Responsivo</h5>
+                            <ul class="list-unstyled text-start">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Desktop otimizado</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Tablet e celular</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Design adaptativo</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Performance otimizada</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Final -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-gradient text-white border-0 shadow-lg" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color));">
+                <div class="card-body p-5 text-center">
+                    <h2 class="display-5 mb-3" style="font-weight: 700;">Pronto para Transformar seu Escritório?</h2>
+                    <p class="lead mb-4">Experimente gratuitamente por 7 dias, sem compromisso</p>
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-warning btn-lg px-5">
+                            <i class="fas fa-rocket me-2"></i>Começar Agora
+                        </a>
+                        <a href="{{ url_for('payments.plans') }}" class="btn btn-light btn-lg px-5">
+                            <i class="fas fa-tags me-2"></i>Ver Planos
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos adicionais -->
+<style>
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.badge {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+</style>
+
+<style>
+#animated-text, #impact-phrases {
+    transition: opacity 1.5s ease-in-out;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const phrases = [
+        "Recursos Completos para Advocacia Moderna",
+        "Transforme seu escritório com IA jurídica",
+        "Gere petições em minutos com GPT-4",
+        "Gestão completa de clientes e processos",
+        "Analytics inteligentes para decisões precisas",
+        "Segurança e conformidade LGPD",
+        "Planos flexíveis para qualquer escritório"
+    ];
+    
+    let currentIndex = 0;
+    const animatedText = document.getElementById('animated-text');
+    const impactPhrases = document.getElementById('impact-phrases');
+    
+    function changeText() {
+        animatedText.style.opacity = '0';
+        impactPhrases.style.opacity = '0';
+        setTimeout(() => {
+            animatedText.textContent = phrases[currentIndex];
+            // Adicionar frase impactante adicional se não for a primeira
+            if (currentIndex > 0) {
+                impactPhrases.textContent = `"${phrases[currentIndex]}" - Inovação que acelera seu trabalho`;
+                impactPhrases.style.opacity = '1';
+            } else {
+                impactPhrases.textContent = '';
+            }
+            animatedText.style.opacity = '1';
+            currentIndex = (currentIndex + 1) % phrases.length;
+        }, 1000);
+    }
+    
+    // Iniciar animação após 3 segundos
+    setTimeout(() => {
+        changeText();
+        setInterval(changeText, 6000); // Troca a cada 6 segundos
+    }, 3000);
+});
+</style>
+
+{% endblock %}

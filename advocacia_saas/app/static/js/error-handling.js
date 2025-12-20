@@ -140,7 +140,7 @@ window.addEventListener('unhandledrejection', function(event) {
 window.showErrorToast = showErrorToast;
 window.showSuccessToast = showSuccessToast;
 
-console.log('✅ Sistema de tratamento de erros in - APENAS LOGGING
+console.log('✅ Sistema de tratamento de erros iniciado - APENAS LOGGING');
 // Não mostra toasts automaticamente para evitar spam ao usuário
 window.addEventListener('error', function(event) {
     console.error('❌ Erro JavaScript não capturado:', event.error);
@@ -155,3 +155,4 @@ window.addEventListener('unhandledrejection', function(event) {
     
     // Apenas log - não mostrar toast automaticamente
     // Use showErrorToast() manualmente onde necessário
+});
