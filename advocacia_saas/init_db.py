@@ -2,9 +2,8 @@
 Script para inicializar o banco de dados da aplicação
 """
 
-from app import create_app, db, migrate
+from app import create_app, db
 from app.models import User
-from flask_migrate import upgrade
 
 
 def init_db():
@@ -12,9 +11,9 @@ def init_db():
     app = create_app()
 
     with app.app_context():
-        # Aplicar migrações pendentes
-        upgrade()
-        print("Migrações do banco de dados aplicadas com sucesso!")
+        # Criar todas as tabelas
+        db.create_all()
+        print("Tabelas do banco de dados criadas com sucesso!")
 
         # Verificar se já existe um usuário master
         master_user = User.query.filter_by(user_type="master").first()
