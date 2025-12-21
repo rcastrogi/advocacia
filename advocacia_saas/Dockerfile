@@ -18,12 +18,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código
 COPY . .
 
-# Criar script de inicialização
-RUN echo '#!/bin/bash\n\
-echo "🚀 Iniciando Petitio..."\n\
-python init_db.py\n\
-echo "✅ Banco inicializado"\n\
-exec "$@"' > /app/start.sh && chmod +x /app/start.sh
+# Tornar script executável
+RUN chmod +x start.sh
 
 # Expor porta
 EXPOSE 8080
@@ -33,4 +29,4 @@ ENV FLASK_ENV=production
 ENV PORT=8080
 
 # Comando de inicialização
-CMD ["/app/start.sh", "gunicorn", "run:app", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "4", "--timeout", "120"]
+CMD ["./start.sh", "gunicorn", "run:app", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "4", "--timeout", "120"]
