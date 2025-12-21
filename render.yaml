@@ -19,7 +19,7 @@ services:
       mountPath: /data
       sizeGB: 1
 
-  - type: pgsql
+  - type: postgres
     name: petitio-db
     plan: starter
     ipAllowList: []  # only accessible from other services
