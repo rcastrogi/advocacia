@@ -12,7 +12,7 @@ def make_shell_context():
 if __name__ == "__main__":
     with app.app_context():
         # Só cria tabelas se for desenvolvimento local com SQLite
-        if app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
+        if app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite"):
             db.create_all()
 
             # Create a default master user if no users exist
