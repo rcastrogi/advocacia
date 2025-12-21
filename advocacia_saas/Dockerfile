@@ -29,4 +29,4 @@ ENV FLASK_ENV=production
 ENV PORT=8080
 
 # Comando de inicialização
-CMD ["./start.sh", "gunicorn", "run:app", "--bind", "0.0.0.0:$PORT", "--workers", "2", "--threads", "4", "--timeout", "120"]
+CMD ["sh", "-c", "./start.sh gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120"]
