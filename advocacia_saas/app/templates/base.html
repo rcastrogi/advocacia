@@ -892,6 +892,32 @@
             htmx.config.defaultSettleDelay = 100;
             htmx.config.includeIndicatorStyles = false;
             
+            // Prevent HTMX from intercepting browser back/forward navigation
+            // This fixes the infinite loading issue when clicking browser back button
+            let isBrowserNavigation = false;
+            
+            // Listen for browser navigation events
+            window.addEventListener('popstate', function() {
+                isBrowserNavigation = true;
+                setTimeout(() => { isBrowserNavigation = false; }, 100);
+            });
+            
+            // Prevent HTMX from handling browser back/forward
+            document.body.addEventListener('htmx:beforeRequest', function(e) {
+                if (isBrowserNavigation) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Also prevent HTMX from intercepting links when user is navigating back
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('a[href]') && isBrowserNavigation) {
+                    e.preventDefault();
+                    window.location.href = e.target.href;
+                }
+            });
+            
             // Add CSRF token to all HTMX requests
             document.body.addEventListener('htmx:configRequest', function(e) {
                 const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
