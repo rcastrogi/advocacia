@@ -10,7 +10,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app import create_app, db
-from app.models import PetitionType, PetitionSection, PetitionTemplate
+from app.models import PetitionSection, PetitionTemplate, PetitionType
+
 
 def check_examples():
     """Verifica se os exemplos foram criados"""
@@ -46,6 +47,7 @@ def check_examples():
 
         active = PetitionType.query.filter_by(is_active=True).count()
         print(f"🟢 Tipos ativos: {active}")
+
 
 if __name__ == "__main__":
     check_examples()
