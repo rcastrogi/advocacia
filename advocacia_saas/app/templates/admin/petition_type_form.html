@@ -1,0 +1,153 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">{{ title }}</h1>
+                <a href="{{ url_for('admin.petition_types_list') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Dados do Tipo de Petição</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Nome *</label>
+                                    <input type="text" class="form-control" id="name" name="name"
+                                           value="{{ petition_type.name if petition_type else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="slug">Slug *</label>
+                                    <input type="text" class="form-control" id="slug" name="slug"
+                                           value="{{ petition_type.slug if petition_type else '' }}" required
+                                           pattern="[a-z0-9-]+" title="Apenas letras minúsculas, números e hífens">
+                                    <small class="form-text text-muted">Usado na URL. Ex: acao-de-alimentos</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Descrição</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ petition_type.description if petition_type else '' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="category">Categoria</label>
+                                    <select class="form-control" id="category" name="category">
+                                        <option value="civel" {{ 'selected' if (petition_type and petition_type.category == 'civel') else '' }}>Cível</option>
+                                        <option value="familia" {{ 'selected' if (petition_type and petition_type.category == 'familia') else '' }}>Família</option>
+                                        <option value="trabalhista" {{ 'selected' if (petition_type and petition_type.category == 'trabalhista') else '' }}>Trabalhista</option>
+                                        <option value="criminal" {{ 'selected' if (petition_type and petition_type.category == 'criminal') else '' }}>Criminal</option>
+                                        <option value="administrativo" {{ 'selected' if (petition_type and petition_type.category == 'administrativo') else '' }}>Administrativo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="icon">Ícone FontAwesome</label>
+                                    <input type="text" class="form-control" id="icon" name="icon"
+                                           value="{{ petition_type.icon if petition_type else 'fa-file-alt' }}"
+                                           placeholder="fa-file-alt">
+                                    <small class="form-text text-muted">Ex: fa-gavel, fa-balance-scale</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="color">Cor Bootstrap</label>
+                                    <select class="form-control" id="color" name="color">
+                                        <option value="primary" {{ 'selected' if (petition_type and petition_type.color == 'primary') else '' }}>Azul (Primary)</option>
+                                        <option value="success" {{ 'selected' if (petition_type and petition_type.color == 'success') else '' }}>Verde (Success)</option>
+                                        <option value="danger" {{ 'selected' if (petition_type and petition_type.color == 'danger') else '' }}>Vermelho (Danger)</option>
+                                        <option value="warning" {{ 'selected' if (petition_type and petition_type.color == 'warning') else '' }}>Amarelo (Warning)</option>
+                                        <option value="info" {{ 'selected' if (petition_type and petition_type.color == 'info') else '' }}>Ciano (Info)</option>
+                                        <option value="secondary" {{ 'selected' if (petition_type and petition_type.color == 'secondary') else '' }}>Cinza (Secondary)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="base_price">Preço Base (R$)</label>
+                                    <input type="number" class="form-control" id="base_price" name="base_price"
+                                           value="{{ "%.2f"|format(petition_type.base_price) if petition_type else '0.00' }}"
+                                           step="0.01" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Opções</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_billable" name="is_billable"
+                                               {{ 'checked' if (petition_type and petition_type.is_billable) else '' }}>
+                                        <label class="form-check-label" for="is_billable">
+                                            Cobrável (gera cobrança)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="use_dynamic_form" name="use_dynamic_form"
+                                               {{ 'checked' if (petition_type and petition_type.use_dynamic_form) else '' }}>
+                                        <label class="form-check-label" for="use_dynamic_form">
+                                            Usar formulário dinâmico
+                                        </label>
+                                    </div>
+                                    {% if petition_type %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                               {{ 'checked' if petition_type.is_active else '' }}>
+                                        <label class="form-check-label" for="is_active">
+                                            Ativo
+                                        </label>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Salvar
+                            </button>
+                            <a href="{{ url_for('admin.petition_types_list') }}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-gerar slug a partir do nome
+$('#name').on('input', function() {
+    const name = $(this).val();
+    const slug = name.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
+        .trim()
+        .replace(/\s+/g, '-') // Substitui espaços por hífens
+        .replace(/-+/g, '-'); // Remove hífens duplicados
+
+    $('#slug').val(slug);
+});
+</script>
+{% endblock %}

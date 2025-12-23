@@ -5,6 +5,7 @@ Dashboard completo para gerenciar usuários e métricas da plataforma.
 
 from datetime import datetime, timedelta
 from decimal import Decimal
+import json
 
 from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -19,7 +20,11 @@ from app.models import (
     CreditPackage,
     CreditTransaction,
     Payment,
+    PetitionSection,
+    PetitionType,
+    PetitionTypeSection,
     PetitionUsage,
+    SavedPetition,
     User,
     UserCredits,
     UserPlan,
@@ -772,3 +777,377 @@ def _get_user_metrics(user, detailed=False):
     }
 
     return metrics
+
+
+# =============================================================================
+# GESTÃO DE TIPOS DE PETIÇÃO E SEÇÕES
+# =============================================================================
+
+@bp.route("/petitions")
+@login_required
+def petitions_admin():
+    """Página principal de administração de petições"""
+    _require_admin()
+
+    # Estatísticas gerais
+    total_petition_types = PetitionType.query.count()
+    active_petition_types = PetitionType.query.filter_by(is_active=True).count()
+    dynamic_petition_types = PetitionType.query.filter_by(use_dynamic_form=True).count()
+    total_sections = PetitionSection.query.count()
+    active_sections = PetitionSection.query.filter_by(is_active=True).count()
+
+    return render_template(
+        "admin/petitions_dashboard.html",
+        title="Administração de Petições",
+        total_petition_types=total_petition_types,
+        active_petition_types=active_petition_types,
+        dynamic_petition_types=dynamic_petition_types,
+        total_sections=total_sections,
+        active_sections=active_sections,
+    )
+
+
+@bp.route("/petitions/types")
+@login_required
+def petition_types_list():
+    """Lista todos os tipos de petição"""
+    _require_admin()
+
+    petition_types = PetitionType.query.order_by(PetitionType.name).all()
+
+    return render_template(
+        "admin/petition_types_list.html",
+        title="Tipos de Petição",
+        petition_types=petition_types,
+    )
+
+
+@bp.route("/petitions/types/new", methods=["GET", "POST"])
+@login_required
+def petition_type_new():
+    """Criar novo tipo de petição"""
+    _require_admin()
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        slug = request.form.get("slug")
+        description = request.form.get("description")
+        category = request.form.get("category", "civel")
+        icon = request.form.get("icon", "fa-file-alt")
+        color = request.form.get("color", "primary")
+        is_billable = request.form.get("is_billable") == "on"
+        base_price = request.form.get("base_price", "0.00")
+        use_dynamic_form = request.form.get("use_dynamic_form") == "on"
+
+        # Validar slug único
+        if PetitionType.query.filter_by(slug=slug).first():
+            flash("Slug já existe. Escolha outro.", "danger")
+            return redirect(request.url)
+
+        petition_type = PetitionType(
+            name=name,
+            slug=slug,
+            description=description,
+            category=category,
+            icon=icon,
+            color=color,
+            is_billable=is_billable,
+            base_price=Decimal(base_price),
+            use_dynamic_form=use_dynamic_form,
+        )
+
+        db.session.add(petition_type)
+        db.session.commit()
+
+        flash(f"Tipo de petição '{name}' criado com sucesso!", "success")
+        return redirect(url_for("admin.petition_types_list"))
+
+    return render_template("admin/petition_type_form.html", title="Novo Tipo de Petição")
+
+
+@bp.route("/petitions/types/<int:type_id>/edit", methods=["GET", "POST"])
+@login_required
+def petition_type_edit(type_id):
+    """Editar tipo de petição"""
+    _require_admin()
+
+    petition_type = PetitionType.query.get_or_404(type_id)
+
+    if request.method == "POST":
+        petition_type.name = request.form.get("name")
+        petition_type.slug = request.form.get("slug")
+        petition_type.description = request.form.get("description")
+        petition_type.category = request.form.get("category", "civel")
+        petition_type.icon = request.form.get("icon", "fa-file-alt")
+        petition_type.color = request.form.get("color", "primary")
+        petition_type.is_billable = request.form.get("is_billable") == "on"
+        petition_type.base_price = Decimal(request.form.get("base_price", "0.00"))
+        petition_type.use_dynamic_form = request.form.get("use_dynamic_form") == "on"
+        petition_type.is_active = request.form.get("is_active") == "on"
+
+        # Validar slug único (exceto para o próprio)
+        existing = PetitionType.query.filter_by(slug=petition_type.slug).first()
+        if existing and existing.id != petition_type.id:
+            flash("Slug já existe. Escolha outro.", "danger")
+            return redirect(request.url)
+
+        db.session.commit()
+        flash(f"Tipo de petição '{petition_type.name}' atualizado!", "success")
+        return redirect(url_for("admin.petition_types_list"))
+
+    return render_template(
+        "admin/petition_type_form.html",
+        title=f"Editar: {petition_type.name}",
+        petition_type=petition_type,
+    )
+
+
+@bp.route("/petitions/types/<int:type_id>/delete", methods=["POST"])
+@login_required
+def petition_type_delete(type_id):
+    """Excluir tipo de petição"""
+    _require_admin()
+
+    petition_type = PetitionType.query.get_or_404(type_id)
+
+    # Verificar se há petições salvas usando este tipo
+    saved_count = SavedPetition.query.filter_by(petition_type_id=type_id).count()
+    if saved_count > 0:
+        flash(f"Não é possível excluir. Existem {saved_count} petições salvas usando este tipo.", "danger")
+        return redirect(url_for("admin.petition_types_list"))
+
+    db.session.delete(petition_type)
+    db.session.commit()
+
+    flash(f"Tipo de petição '{petition_type.name}' excluído!", "success")
+    return redirect(url_for("admin.petition_types_list"))
+
+
+@bp.route("/petitions/types/<int:type_id>/sections", methods=["GET", "POST"])
+@login_required
+def petition_type_sections(type_id):
+    """Gerenciar seções de um tipo de petição"""
+    _require_admin()
+
+    petition_type = PetitionType.query.get_or_404(type_id)
+
+    if request.method == "POST":
+        # Atualizar ordem das seções
+        section_orders = request.form.getlist("section_order[]")
+        section_required = request.form.getlist("section_required[]")
+        section_expanded = request.form.getlist("section_expanded[]")
+
+        for i, section_id in enumerate(request.form.getlist("section_id[]")):
+            config = PetitionTypeSection.query.filter_by(
+                petition_type_id=type_id, section_id=int(section_id)
+            ).first()
+
+            if config:
+                config.order = int(section_orders[i]) if i < len(section_orders) else 0
+                config.is_required = str(section_id) in section_required
+                config.is_expanded = str(section_id) in section_expanded
+
+        db.session.commit()
+        flash("Configuração das seções atualizada!", "success")
+        return redirect(request.url)
+
+    # Buscar seções disponíveis
+    available_sections = PetitionSection.query.filter_by(is_active=True).order_by(PetitionSection.name).all()
+
+    # Buscar seções já configuradas para este tipo
+    configured_sections = (
+        db.session.query(PetitionTypeSection, PetitionSection)
+        .join(PetitionSection)
+        .filter(PetitionTypeSection.petition_type_id == type_id)
+        .order_by(PetitionTypeSection.order)
+        .all()
+    )
+
+    return render_template(
+        "admin/petition_type_sections.html",
+        title=f"Seções: {petition_type.name}",
+        petition_type=petition_type,
+        available_sections=available_sections,
+        configured_sections=configured_sections,
+    )
+
+
+@bp.route("/petitions/types/<int:type_id>/sections/add", methods=["POST"])
+@login_required
+def petition_type_section_add(type_id):
+    """Adicionar seção a um tipo de petição"""
+    _require_admin()
+
+    petition_type = PetitionType.query.get_or_404(type_id)
+    section_id = request.form.get("section_id", type=int)
+
+    if not section_id:
+        flash("Seção não especificada.", "danger")
+        return redirect(url_for("admin.petition_type_sections", type_id=type_id))
+
+    # Verificar se já não está configurada
+    existing = PetitionTypeSection.query.filter_by(
+        petition_type_id=type_id, section_id=section_id
+    ).first()
+
+    if existing:
+        flash("Esta seção já está configurada para este tipo.", "warning")
+        return redirect(url_for("admin.petition_type_sections", type_id=type_id))
+
+    # Calcular próxima ordem
+    max_order = (
+        db.session.query(func.max(PetitionTypeSection.order))
+        .filter_by(petition_type_id=type_id)
+        .scalar()
+    ) or 0
+
+    config = PetitionTypeSection(
+        petition_type_id=type_id,
+        section_id=section_id,
+        order=max_order + 1,
+        is_required=False,
+        is_expanded=True,
+    )
+
+    db.session.add(config)
+    db.session.commit()
+
+    flash("Seção adicionada com sucesso!", "success")
+    return redirect(url_for("admin.petition_type_sections", type_id=type_id))
+
+
+@bp.route("/petitions/types/<int:type_id>/sections/<int:section_id>/remove", methods=["POST"])
+@login_required
+def petition_type_section_remove(type_id, section_id):
+    """Remover seção de um tipo de petição"""
+    _require_admin()
+
+    config = PetitionTypeSection.query.filter_by(
+        petition_type_id=type_id, section_id=section_id
+    ).first_or_404()
+
+    db.session.delete(config)
+    db.session.commit()
+
+    flash("Seção removida!", "success")
+    return redirect(url_for("admin.petition_type_sections", type_id=type_id))
+
+
+@bp.route("/petitions/sections")
+@login_required
+def petition_sections_list():
+    """Lista todas as seções de petição"""
+    _require_admin()
+
+    sections = PetitionSection.query.order_by(PetitionSection.name).all()
+
+    return render_template(
+        "admin/petition_sections_list.html",
+        title="Seções de Petição",
+        sections=sections,
+    )
+
+
+@bp.route("/petitions/sections/new", methods=["GET", "POST"])
+@login_required
+def petition_section_new():
+    """Criar nova seção de petição"""
+    _require_admin()
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        slug = request.form.get("slug")
+        description = request.form.get("description")
+        icon = request.form.get("icon", "fa-file-alt")
+        color = request.form.get("color", "primary")
+        fields_schema = request.form.get("fields_schema")
+
+        # Validar slug único
+        if PetitionSection.query.filter_by(slug=slug).first():
+            flash("Slug já existe. Escolha outro.", "danger")
+            return redirect(request.url)
+
+        try:
+            fields_data = json.loads(fields_schema) if fields_schema else []
+        except json.JSONDecodeError:
+            flash("Schema de campos inválido. Deve ser JSON válido.", "danger")
+            return redirect(request.url)
+
+        section = PetitionSection(
+            name=name,
+            slug=slug,
+            description=description,
+            icon=icon,
+            color=color,
+            fields_schema=fields_data,
+        )
+
+        db.session.add(section)
+        db.session.commit()
+
+        flash(f"Seção '{name}' criada com sucesso!", "success")
+        return redirect(url_for("admin.petition_sections_list"))
+
+    return render_template("admin/petition_section_form.html", title="Nova Seção")
+
+
+@bp.route("/petitions/sections/<int:section_id>/edit", methods=["GET", "POST"])
+@login_required
+def petition_section_edit(section_id):
+    """Editar seção de petição"""
+    _require_admin()
+
+    section = PetitionSection.query.get_or_404(section_id)
+
+    if request.method == "POST":
+        section.name = request.form.get("name")
+        section.slug = request.form.get("slug")
+        section.description = request.form.get("description")
+        section.icon = request.form.get("icon", "fa-file-alt")
+        section.color = request.form.get("color", "primary")
+        section.is_active = request.form.get("is_active") == "on"
+        fields_schema = request.form.get("fields_schema")
+
+        # Validar slug único (exceto para o próprio)
+        existing = PetitionSection.query.filter_by(slug=section.slug).first()
+        if existing and existing.id != section.id:
+            flash("Slug já existe. Escolha outro.", "danger")
+            return redirect(request.url)
+
+        try:
+            fields_data = json.loads(fields_schema) if fields_schema else []
+            section.fields_schema = fields_data
+        except json.JSONDecodeError:
+            flash("Schema de campos inválido. Deve ser JSON válido.", "danger")
+            return redirect(request.url)
+
+        db.session.commit()
+        flash(f"Seção '{section.name}' atualizada!", "success")
+        return redirect(url_for("admin.petition_sections_list"))
+
+    return render_template(
+        "admin/petition_section_form.html",
+        title=f"Editar: {section.name}",
+        section=section,
+    )
+
+
+@bp.route("/petitions/sections/<int:section_id>/delete", methods=["POST"])
+@login_required
+def petition_section_delete(section_id):
+    """Excluir seção de petição"""
+    _require_admin()
+
+    section = PetitionSection.query.get_or_404(section_id)
+
+    # Verificar se está sendo usada em algum tipo de petição
+    usage_count = PetitionTypeSection.query.filter_by(section_id=section_id).count()
+    if usage_count > 0:
+        flash(f"Não é possível excluir. Esta seção está sendo usada em {usage_count} tipos de petição.", "danger")
+        return redirect(url_for("admin.petition_sections_list"))
+
+    db.session.delete(section)
+    db.session.commit()
+
+    flash(f"Seção '{section.name}' excluída!", "success")
+    return redirect(url_for("admin.petition_sections_list"))

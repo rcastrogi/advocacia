@@ -1,0 +1,225 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">{{ title }}</h1>
+                <a href="{{ url_for('admin.petition_sections_list') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Dados da Seção</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Nome *</label>
+                                    <input type="text" class="form-control" id="name" name="name"
+                                           value="{{ section.name if section else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="slug">Slug *</label>
+                                    <input type="text" class="form-control" id="slug" name="slug"
+                                           value="{{ section.slug if section else '' }}" required
+                                           pattern="[a-z0-9-]+" title="Apenas letras minúsculas, números e hífens">
+                                    <small class="form-text text-muted">Usado internamente. Ex: qualificacao-partes</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Descrição</label>
+                            <textarea class="form-control" id="description" name="description" rows="2">{{ section.description if section else '' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="icon">Ícone FontAwesome</label>
+                                    <input type="text" class="form-control" id="icon" name="icon"
+                                           value="{{ section.icon if section else 'fa-file-alt' }}"
+                                           placeholder="fa-file-alt">
+                                    <small class="form-text text-muted">Ex: fa-user, fa-gavel, fa-balance-scale</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="color">Cor Bootstrap</label>
+                                    <select class="form-control" id="color" name="color">
+                                        <option value="primary" {{ 'selected' if (section and section.color == 'primary') else '' }}>Azul (Primary)</option>
+                                        <option value="success" {{ 'selected' if (section and section.color == 'success') else '' }}>Verde (Success)</option>
+                                        <option value="danger" {{ 'selected' if (section and section.color == 'danger') else '' }}>Vermelho (Danger)</option>
+                                        <option value="warning" {{ 'selected' if (section and section.color == 'warning') else '' }}>Amarelo (Warning)</option>
+                                        <option value="info" {{ 'selected' if (section and section.color == 'info') else '' }}>Ciano (Info)</option>
+                                        <option value="secondary" {{ 'selected' if (section and section.color == 'secondary') else '' }}>Cinza (Secondary)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if section %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                   {{ 'checked' if section.is_active else '' }}>
+                            <label class="form-check-label" for="is_active">
+                                Ativo
+                            </label>
+                        </div>
+                        {% endif %}
+
+                        <div class="form-group">
+                            <label for="fields_schema">Schema dos Campos (JSON) *</label>
+                            <textarea class="form-control" id="fields_schema" name="fields_schema" rows="15" required
+                                      placeholder='[
+  {
+    "name": "autor_nome",
+    "label": "Nome do Autor",
+    "type": "text",
+    "required": true,
+    "size": "col-md-6",
+    "placeholder": "Nome completo do autor"
+  },
+  {
+    "name": "autor_qualificacao",
+    "label": "Qualificação do Autor",
+    "type": "textarea",
+    "required": true,
+    "size": "col-md-6",
+    "placeholder": "CPF, RG, endereço, etc."
+  }
+]'>{{ section.fields_schema|tojson(indent=2) if section else '' }}</textarea>
+                            <small class="form-text text-muted">
+                                Defina os campos desta seção em formato JSON. Cada campo deve ter: name, label, type, required, size, placeholder.
+                                Tipos suportados: text, textarea, select, date, number.
+                            </small>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Salvar
+                            </button>
+                            <a href="{{ url_for('admin.petition_sections_list') }}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview dos Campos -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Preview dos Campos</h6>
+                </div>
+                <div class="card-body">
+                    <div id="fieldsPreview">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-eye fa-2x mb-2"></i>
+                            <p>Preview será mostrado aqui quando você editar o JSON dos campos.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-gerar slug a partir do nome
+$('#name').on('input', function() {
+    const name = $(this).val();
+    const slug = name.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
+        .trim()
+        .replace(/\s+/g, '-') // Substitui espaços por hífens
+        .replace(/-+/g, '-'); // Remove hífens duplicados
+
+    $('#slug').val(slug);
+});
+
+// Preview dos campos
+function updatePreview() {
+    const jsonText = $('#fields_schema').val();
+    const previewDiv = $('#fieldsPreview');
+
+    if (!jsonText.trim()) {
+        previewDiv.html('<div class="text-center text-muted"><i class="fas fa-eye fa-2x mb-2"></i><p>Preview será mostrado aqui quando você editar o JSON dos campos.</p></div>');
+        return;
+    }
+
+    try {
+        const fields = JSON.parse(jsonText);
+        let html = '<div class="row">';
+
+        fields.forEach(field => {
+            const size = field.size || 'col-md-6';
+            const required = field.required ? '<span class="badge badge-danger ml-1">Obrigatório</span>' : '';
+            const placeholder = field.placeholder || '';
+
+            html += `
+                <div class="${size} mb-3">
+                    <label class="form-label">${field.label || field.name}${required}</label>
+                    ${getFieldHtml(field)}
+                    ${placeholder ? `<small class="form-text text-muted">${placeholder}</small>` : ''}
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        previewDiv.html(html);
+    } catch (e) {
+        previewDiv.html('<div class="alert alert-danger">Erro no JSON: ' + e.message + '</div>');
+    }
+}
+
+function getFieldHtml(field) {
+    const name = field.name || '';
+    const type = field.type || 'text';
+    const options = field.options || [];
+
+    switch (type) {
+        case 'textarea':
+            return `<textarea class="form-control" name="${name}" rows="3"></textarea>`;
+        case 'select':
+            let selectHtml = `<select class="form-control" name="${name}">`;
+            selectHtml += '<option value="">Selecione...</option>';
+            options.forEach(option => {
+                selectHtml += `<option value="${option.value || option}">${option.label || option}</option>`;
+            });
+            selectHtml += '</select>';
+            return selectHtml;
+        case 'date':
+            return `<input type="date" class="form-control" name="${name}">`;
+        case 'number':
+            return `<input type="number" class="form-control" name="${name}">`;
+        default:
+            return `<input type="text" class="form-control" name="${name}">`;
+    }
+}
+
+$('#fields_schema').on('input', updatePreview);
+
+// Inicializar preview
+$(document).ready(function() {
+    updatePreview();
+});
+</script>
+{% endblock %}

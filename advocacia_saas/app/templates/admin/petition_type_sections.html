@@ -1,0 +1,166 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">{{ title }}</h1>
+                <div>
+                    <a href="{{ url_for('admin.petition_types_list') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                    <button class="btn btn-success" data-toggle="modal" data-target="#addSectionModal">
+                        <i class="fas fa-plus"></i> Adicionar Seção
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seções Configuradas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Seções Configuradas</h6>
+                </div>
+                <div class="card-body">
+                    {% if configured_sections %}
+                    <form method="post" id="sectionsForm">
+                        <div id="sectionsList">
+                            {% for config, section in configured_sections %}
+                            <div class="section-item card mb-3" data-section-id="{{ section.id }}">
+                                <div class="card-header bg-light">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-1">
+                                            <input type="hidden" name="section_id[]" value="{{ section.id }}">
+                                            <input type="number" class="form-control form-control-sm" name="section_order[]"
+                                                   value="{{ config.order }}" min="1" style="width: 60px;">
+                                        </div>
+                                        <div class="col-md-7">
+                                            <i class="fas {{ section.icon }} text-{{ section.color }} mr-2"></i>
+                                            <strong>{{ section.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ section.description or 'Sem descrição' }}</small>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="section_required[]"
+                                                       value="{{ section.id }}" id="required_{{ section.id }}"
+                                                       {{ 'checked' if config.is_required else '' }}>
+                                                <label class="form-check-label" for="required_{{ section.id }}">
+                                                    Obrigatória
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="section_expanded[]"
+                                                       value="{{ section.id }}" id="expanded_{{ section.id }}"
+                                                       {{ 'checked' if config.is_expanded else '' }}>
+                                                <label class="form-check-label" for="expanded_{{ section.id }}">
+                                                    Expandida
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 text-right">
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="removeSection({{ section.id }}, '{{ section.name }}')">
+                                                <i class="fas fa-trash"></i> Remover
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        {% for field in config.get_fields() %}
+                                        <div class="col-md-{{ field.get('size', 'col-md-6') }} mb-2">
+                                            <div class="border rounded p-2 bg-light">
+                                                <small class="text-muted">{{ field.get('label', field.get('name', 'Campo')) }}</small>
+                                                {% if field.get('required') %}
+                                                <span class="badge badge-danger">Obrigatório</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Salvar Configuração
+                            </button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-puzzle-piece fa-3x text-muted mb-3"></i>
+                        <h5>Nenhuma seção configurada</h5>
+                        <p class="text-muted">Adicione seções para criar o formulário dinâmico.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Adicionar Seção -->
+<div class="modal fade" id="addSectionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adicionar Seção</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form method="post" action="{{ url_for('admin.petition_type_section_add', type_id=petition_type.id) }}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="section_id">Seção</label>
+                        <select class="form-control" id="section_id" name="section_id" required>
+                            <option value="">Selecione uma seção...</option>
+                            {% for section in available_sections %}
+                            <option value="{{ section.id }}">{{ section.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function removeSection(sectionId, sectionName) {
+    if (confirm(`Tem certeza que deseja remover a seção "${sectionName}"?`)) {
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.action = `{{ url_for('admin.petition_type_section_remove', type_id=petition_type.id, section_id=0) }}`.replace('0', sectionId);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Tornar lista de seções sortable
+$(document).ready(function() {
+    $("#sectionsList").sortable({
+        handle: ".card-header",
+        update: function(event, ui) {
+            // Reordenar números de ordem
+            $("#sectionsList .section-item").each(function(index) {
+                $(this).find("input[name='section_order[]']").val(index + 1);
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

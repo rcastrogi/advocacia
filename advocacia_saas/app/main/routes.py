@@ -321,7 +321,7 @@ def _current_cycle_label(cycle=None):
 def _get_implemented_petition_types():
     """Retorna os tipos de petição implementados para exibição pública."""
     types = (
-        PetitionType.query.filter_by(is_implemented=True, active=True)
+        PetitionType.query.filter_by(is_implemented=True, is_active=True)
         .order_by(PetitionType.category, PetitionType.name)
         .all()
     )
