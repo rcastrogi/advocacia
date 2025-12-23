@@ -9,7 +9,7 @@ from app import create_app, db
 from app.models import PetitionType
 app = create_app()
 with app.app_context():
-    if PetitionType.query.count() == 0:
+    if PetitionType.query.count() == 0:  # REVERTIDO APÓS DEPLOY
         print('📝 Criando exemplos do sistema...')
         exec(open('create_real_case_examples.py').read())
         exec(open('create_real_case_templates.py').read())
