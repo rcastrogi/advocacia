@@ -8,8 +8,18 @@ from wtforms import (
     StringField,
     SubmitField,
     TextAreaField,
+    ValidationError,
 )
 from wtforms.validators import DataRequired, Length, Optional
+import json
+
+
+def validate_json(form, field):
+    """Valida se o campo contém JSON válido"""
+    try:
+        json.loads(field.data)
+    except (json.JSONDecodeError, TypeError):
+        raise ValidationError('JSON inválido. Use o formato: {"1m": 0.0, "3m": 5.0, ...}')
 
 
 class PetitionTypeForm(FlaskForm):
@@ -80,6 +90,12 @@ class BillingPlanForm(FlaskForm):
         places=1,
         default=Decimal("0.0"),
         validators=[Optional()],
+    )
+    period_discounts = TextAreaField(
+        "Descontos por período (JSON)",
+        validators=[Optional(), validate_json],
+        render_kw={"rows": 4, "placeholder": '{"1m": 0.0, "3m": 5.0, "6m": 7.0, "1y": 9.0, "2y": 13.0, "3y": 20.0}'},
+        default='{"1m": 0.0, "3m": 5.0, "6m": 7.0, "1y": 9.0, "2y": 13.0, "3y": 20.0}'
     )
     active = BooleanField("Ativo", default=True)
     submit = SubmitField("Salvar plano")

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
+import json
 
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -153,6 +154,7 @@ def plans():
                 supported_periods=form.supported_periods.data
                 or ["1m", "3m", "6m", "1y", "2y", "3y"],
                 discount_percentage=form.discount_percentage.data or Decimal("0.00"),
+                period_discounts=json.loads(form.period_discounts.data) if form.period_discounts.data else {"1m": 0.0, "3m": 5.0, "6m": 7.0, "1y": 9.0, "2y": 13.0, "3y": 20.0},
                 active=form.active.data,
             )
             db.session.add(plan)

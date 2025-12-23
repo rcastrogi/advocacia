@@ -78,7 +78,12 @@
                         <div class="mb-3">
                             {{ form.discount_percentage.label(class_='form-label') }}
                             {{ form.discount_percentage(class_='form-control') }}
-                            <small class="text-muted">Percentual de desconto aplicado aos preços.</small>
+                            <small class="text-muted">Desconto único (mantido para compatibilidade).</small>
+                        </div>
+                        <div class="mb-3">
+                            {{ form.period_discounts.label(class_='form-label') }}
+                            {{ form.period_discounts(class_='form-control') }}
+                            <small class="text-muted">Configure descontos específicos por período em formato JSON.</small>
                         </div>
                         <div class="form-check form-switch mt-3">
                             {{ form.active(class_='form-check-input') }}
@@ -105,7 +110,7 @@
                                 <th>Mensalidade</th>
                                 <th>Por petição</th>
                                 <th>Períodos</th>
-                                <th>Desconto</th>
+                                <th>Descontos</th>
                                 <th>Preço calculado</th>
                                 <th>Status</th>
                                 <th>Ações</th>
@@ -125,7 +130,8 @@
                                 <td>R$ {{ '%.2f'|format(plan.monthly_fee or 0) }}</td>
                                 <td>R$ {{ '%.2f'|format(plan.usage_rate or 0) }}</td>
                                 <td>
-                                    <div class="plan-periods" data-periods='{{ plan.supported_periods|tojson }}'>
+                                    <div class="plan-periods" data-periods='{{ plan.supported_periods|tojson }}'
+                                         data-discounts='{{ plan.period_discounts|tojson }}'>
                                         {% for period in plan.supported_periods[:3] %}
                                         <small class="badge bg-light text-dark me-1">{{ period }}</small>
                                         {% endfor %}
@@ -134,14 +140,23 @@
                                         {% endif %}
                                     </div>
                                 </td>
-                                <td>{{ '%.1f'|format(plan.discount_percentage or 0) }}%</td>
+                                <td>
+                                    <div class="plan-discounts">
+                                        {% for period, discount in plan.period_discounts.items() %}
+                                            {% if period in plan.supported_periods %}
+                                                <small class="text-muted d-block">{{ period }}: {{ discount }}%</small>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </td>
                                 <td>
                                     <div class="plan-price fw-bold text-primary" data-plan="{{ plan.slug }}"
                                          data-prices='{
                                              {% for period in plan.supported_periods %}
                                              "{{ period }}": {{ plan.get_price_for_period(period) }}{% if not loop.last %},{% endif %}
                                              {% endfor %}
-                                         }'>
+                                         }'
+                                         data-discounts='{{ plan.period_discounts|tojson }}'>
                                         R$ {{ '%.2f'|format(plan.get_price_for_period('1y') or (plan.monthly_fee * 12 if plan.monthly_fee else 0)) }}
                                     </div>
                                     <small class="text-muted period-display">por ano</small>
@@ -193,6 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         planPrices.forEach(planElement => {
             const prices = JSON.parse(planElement.dataset.prices);
+            const discounts = JSON.parse(planElement.dataset.discounts || '{}');
 
             // Skip if period not supported
             if (!prices[selectedPeriod]) {
