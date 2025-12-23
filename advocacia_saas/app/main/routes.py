@@ -2,12 +2,12 @@ from datetime import datetime
 
 from flask import (
     flash,
+    make_response,
     redirect,
     render_template,
     request,
     send_from_directory,
     url_for,
-    make_response,
 )
 from flask_login import current_user, login_required
 from sqlalchemy import func
@@ -612,38 +612,40 @@ def sitemap():
             "loc": url_for("main.index", _external=True),
             "lastmod": datetime.now().strftime("%Y-%m-%d"),
             "changefreq": "weekly",
-            "priority": "1.0"
+            "priority": "1.0",
         },
         {
             "loc": url_for("main.recursos", _external=True),
             "lastmod": datetime.now().strftime("%Y-%m-%d"),
             "changefreq": "monthly",
-            "priority": "0.8"
+            "priority": "0.8",
         },
         {
             "loc": url_for("auth.register", _external=True),
             "lastmod": datetime.now().strftime("%Y-%m-%d"),
             "changefreq": "monthly",
-            "priority": "0.9"
+            "priority": "0.9",
         },
         {
             "loc": url_for("portal.login", _external=True),
             "lastmod": datetime.now().strftime("%Y-%m-%d"),
             "changefreq": "monthly",
-            "priority": "0.7"
-        }
+            "priority": "0.7",
+        },
     ]
 
     # URLs de planos (se existirem)
     try:
         plans = BillingPlan.query.filter_by(active=True).all()
         for plan in plans:
-            urls.append({
-                "loc": url_for("payments.plans", _external=True),
-                "lastmod": datetime.now().strftime("%Y-%m-%d"),
-                "changefreq": "weekly",
-                "priority": "0.8"
-            })
+            urls.append(
+                {
+                    "loc": url_for("payments.plans", _external=True),
+                    "lastmod": datetime.now().strftime("%Y-%m-%d"),
+                    "changefreq": "weekly",
+                    "priority": "0.8",
+                }
+            )
             break  # Só uma URL de planos
     except:
         pass
@@ -652,12 +654,16 @@ def sitemap():
     try:
         petition_types = PetitionType.query.filter_by(active=True).limit(10).all()
         for pt in petition_types:
-            urls.append({
-                "loc": url_for("petitions.create", petition_type_slug=pt.slug, _external=True),
-                "lastmod": datetime.now().strftime("%Y-%m-%d"),
-                "changefreq": "weekly",
-                "priority": "0.8"
-            })
+            urls.append(
+                {
+                    "loc": url_for(
+                        "petitions.create", petition_type_slug=pt.slug, _external=True
+                    ),
+                    "lastmod": datetime.now().strftime("%Y-%m-%d"),
+                    "changefreq": "weekly",
+                    "priority": "0.8",
+                }
+            )
     except:
         pass
 
@@ -689,7 +695,7 @@ Disallow: /dashboard
 Disallow: /api/
 
 # Sitemap
-Sitemap: {url_for('main.sitemap', _external=True)}
+Sitemap: {url_for("main.sitemap", _external=True)}
 """
 
     response = make_response(robots_content)

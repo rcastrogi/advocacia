@@ -110,8 +110,10 @@ def create_pix_payment():
             return jsonify({"error": "Plano inválido"}), 400
 
         # Validar que é pay-per-use (não subscription)
-        if plan.plan_type != 'per_usage':
-            return jsonify({"error": "PIX disponível apenas para planos pay-per-use"}), 400
+        if plan.plan_type != "per_usage":
+            return jsonify(
+                {"error": "PIX disponível apenas para planos pay-per-use"}
+            ), 400
 
         # Para planos mensais, usar monthly_fee; para yearly, calcular baseado no monthly_fee
         if billing_period == "monthly":
@@ -187,8 +189,10 @@ def create_mercadopago_subscription():
             return jsonify({"error": "Plano inválido"}), 400
 
         # Validar que é subscription (não pay-per-use)
-        if plan.plan_type == 'per_usage':
-            return jsonify({"error": "Preapproval disponível apenas para assinaturas"}), 400
+        if plan.plan_type == "per_usage":
+            return jsonify(
+                {"error": "Preapproval disponível apenas para assinaturas"}
+            ), 400
 
         # Para planos mensais, usar monthly_fee; para yearly, calcular baseado no monthly_fee
         if billing_period == "monthly":
@@ -206,9 +210,9 @@ def create_mercadopago_subscription():
                 "frequency": 1,
                 "frequency_type": "months" if billing_period == "monthly" else "years",
                 "transaction_amount": amount,
-                "currency_id": "BRL"
+                "currency_id": "BRL",
             },
-            "status": "pending"
+            "status": "pending",
         }
 
         result = mp_sdk.preapproval().create(preapproval_data)
@@ -235,10 +239,12 @@ def create_mercadopago_subscription():
         db.session.add(subscription)
         db.session.commit()
 
-        return jsonify({
-            "preapproval_url": preapproval["init_point"],
-            "preapproval_id": preapproval["id"]
-        })
+        return jsonify(
+            {
+                "preapproval_url": preapproval["init_point"],
+                "preapproval_id": preapproval["id"],
+            }
+        )
 
     except Exception as e:
         current_app.logger.error(f"Erro ao criar preapproval Mercado Pago: {str(e)}")
@@ -289,9 +295,7 @@ def _validate_mercadopago_webhook_signature(request_data, headers):
 
         # Calcular assinatura esperada usando HMAC-SHA256
         expected_signature = hmac.new(
-            webhook_secret.encode('utf-8'),
-            template.encode('utf-8'),
-            hashlib.sha256
+            webhook_secret.encode("utf-8"), template.encode("utf-8"), hashlib.sha256
         ).hexdigest()
 
         # Comparar assinaturas
@@ -343,9 +347,7 @@ def _handle_payment_webhook(payment_id):
 
     if payment_data["status"] == "approved":
         # Encontrar pagamento no banco
-        payment = Payment.query.filter_by(
-            gateway_payment_id=str(payment_id)
-        ).first()
+        payment = Payment.query.filter_by(gateway_payment_id=str(payment_id)).first()
 
         if payment and payment.status == "pending":
             payment.mark_as_paid()
@@ -406,7 +408,9 @@ def _handle_preapproval_webhook(preapproval_id):
             user.billing_status = "inactive"
 
         db.session.commit()
-        current_app.logger.info(f"❌ Assinatura Mercado Pago cancelada: {preapproval_id}")
+        current_app.logger.info(
+            f"❌ Assinatura Mercado Pago cancelada: {preapproval_id}"
+        )
 
     elif preapproval_data["status"] == "paused":
         # Assinatura pausada
@@ -415,7 +419,9 @@ def _handle_preapproval_webhook(preapproval_id):
         user.billing_status = "inactive"
 
         db.session.commit()
-        current_app.logger.warning(f"⏸️ Assinatura Mercado Pago pausada: {preapproval_id}")
+        current_app.logger.warning(
+            f"⏸️ Assinatura Mercado Pago pausada: {preapproval_id}"
+        )
 
     elif preapproval_data["status"] == "expired":
         # Assinatura expirada
@@ -424,10 +430,14 @@ def _handle_preapproval_webhook(preapproval_id):
         user.billing_status = "inactive"
 
         db.session.commit()
-        current_app.logger.warning(f"⏰ Assinatura Mercado Pago expirada: {preapproval_id}")
+        current_app.logger.warning(
+            f"⏰ Assinatura Mercado Pago expirada: {preapproval_id}"
+        )
 
     else:
-        current_app.logger.info(f"ℹ️ Status de preapproval não tratado: {preapproval_data['status']} para {preapproval_id}")
+        current_app.logger.info(
+            f"ℹ️ Status de preapproval não tratado: {preapproval_data['status']} para {preapproval_id}"
+        )
 
     # Handle the event
     if event["type"] == "checkout.session.completed":
