@@ -52,17 +52,20 @@ def portal():
 def upgrade():
     """Página para upgrade de plano"""
     current_plan = current_user.get_active_plan()
-    
+
     # Buscar planos disponíveis para upgrade (excluindo o atual e planos por uso)
-    available_plans = BillingPlan.query.filter(
-        BillingPlan.active == True,
-        BillingPlan.plan_type != 'per_usage'
-    ).order_by(BillingPlan.monthly_fee).all()
-    
+    available_plans = (
+        BillingPlan.query.filter(
+            BillingPlan.active == True, BillingPlan.plan_type != "per_usage"
+        )
+        .order_by(BillingPlan.monthly_fee)
+        .all()
+    )
+
     # Remover o plano atual da lista se existir
     if current_plan:
         available_plans = [p for p in available_plans if p.id != current_plan.plan.id]
-    
+
     return render_template(
         "billing/upgrade.html",
         title="Fazer Upgrade de Plano",

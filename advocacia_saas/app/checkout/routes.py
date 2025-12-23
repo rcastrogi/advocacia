@@ -60,13 +60,17 @@ def create_checkout_session(plan_id):
         should_apply_proration = False
 
         if current_plan:
-            if (current_plan.plan.plan_type in ['limited', 'flat_monthly'] and 
-                plan.plan_type == 'unlimited'):
+            if (
+                current_plan.plan.plan_type in ["limited", "flat_monthly"]
+                and plan.plan_type == "unlimited"
+            ):
                 # Limited to unlimited upgrade
                 should_apply_proration = True
-            elif (current_plan.plan.plan_type == 'unlimited' and 
-                  plan.plan_type == 'unlimited' and
-                  plan.monthly_fee > current_plan.plan.monthly_fee):
+            elif (
+                current_plan.plan.plan_type == "unlimited"
+                and plan.plan_type == "unlimited"
+                and plan.monthly_fee > current_plan.plan.monthly_fee
+            ):
                 # Unlimited to unlimited upgrade (higher price)
                 should_apply_proration = True
 
@@ -74,9 +78,7 @@ def create_checkout_session(plan_id):
             # Look for active Stripe subscription
             try:
                 subscriptions = stripe_client.Subscription.list(
-                    customer=current_user.stripe_customer_id,
-                    status='active',
-                    limit=1
+                    customer=current_user.stripe_customer_id, status="active", limit=1
                 )
                 if subscriptions.data:
                     existing_subscription = subscriptions.data[0]
@@ -113,42 +115,54 @@ def create_checkout_session(plan_id):
                     proration = stripe_client.Invoice.upcoming(
                         customer=current_user.stripe_customer_id,
                         subscription=existing_subscription.id,
-                        subscription_items=[{
-                            'id': current_item.id,
-                            'price_data': {
-                                'currency': 'brl',
-                                'product_data': {
-                                    'name': plan.name,
-                                    'description': plan.description or f"Plano {plan.name} - Mensal",
+                        subscription_items=[
+                            {
+                                "id": current_item.id,
+                                "price_data": {
+                                    "currency": "brl",
+                                    "product_data": {
+                                        "name": plan.name,
+                                        "description": plan.description
+                                        or f"Plano {plan.name} - Mensal",
+                                    },
+                                    "unit_amount": int(float(plan.monthly_fee) * 100),
+                                    "recurring": {"interval": "month"},
                                 },
-                                'unit_amount': int(float(plan.monthly_fee) * 100),
-                                'recurring': {'interval': 'month'},
-                            },
-                        }],
-                        subscription_proration_behavior='always_invoice',
+                            }
+                        ],
+                        subscription_proration_behavior="always_invoice",
                     )
 
                     # Create checkout session for upgrade with proration
                     checkout_session = stripe_client.checkout.Session.create(
                         customer=current_user.stripe_customer_id,
                         payment_method_types=["card"],
-                        line_items=[{
-                            "price": proration.lines.data[-1].price.id,  # Use the prorated price
-                            "quantity": 1,
-                        }],
+                        line_items=[
+                            {
+                                "price": proration.lines.data[
+                                    -1
+                                ].price.id,  # Use the prorated price
+                                "quantity": 1,
+                            }
+                        ],
                         mode="subscription",
                         subscription_data={
-                            "items": [{
-                                'price_data': {
-                                    'currency': 'brl',
-                                    'product_data': {
-                                        'name': plan.name,
-                                        'description': plan.description or f"Plano {plan.name} - Mensal",
+                            "items": [
+                                {
+                                    "price_data": {
+                                        "currency": "brl",
+                                        "product_data": {
+                                            "name": plan.name,
+                                            "description": plan.description
+                                            or f"Plano {plan.name} - Mensal",
+                                        },
+                                        "unit_amount": int(
+                                            float(plan.monthly_fee) * 100
+                                        ),
+                                        "recurring": {"interval": "month"},
                                     },
-                                    'unit_amount': int(float(plan.monthly_fee) * 100),
-                                    'recurring': {'interval': 'month'},
-                                },
-                            }],
+                                }
+                            ],
                             "proration_behavior": "always_invoice",
                         },
                         success_url=current_app.config.get("STRIPE_SUCCESS_URL")
@@ -166,7 +180,9 @@ def create_checkout_session(plan_id):
 
                 except stripe.error.StripeError as e:
                     # If proration fails, fall back to new subscription
-                    current_app.logger.warning(f"Proration failed, creating new subscription: {str(e)}")
+                    current_app.logger.warning(
+                        f"Proration failed, creating new subscription: {str(e)}"
+                    )
                     existing_subscription = None
 
             if not existing_subscription:
