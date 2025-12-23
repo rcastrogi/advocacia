@@ -150,7 +150,8 @@ def plans():
                 plan_type=form.plan_type.data,
                 monthly_fee=form.monthly_fee.data or Decimal("0.00"),
                 usage_rate=form.usage_rate.data or Decimal("0.00"),
-                supported_periods=form.supported_periods.data or ["1m", "3m", "6m", "1y", "2y", "3y"],
+                supported_periods=form.supported_periods.data
+                or ["1m", "3m", "6m", "1y", "2y", "3y"],
                 discount_percentage=form.discount_percentage.data or Decimal("0.00"),
                 active=form.active.data,
             )
