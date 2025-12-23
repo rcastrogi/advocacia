@@ -12,6 +12,31 @@
         </a>
     </div>
 
+    <!-- Seleção de Período para Visualização -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="card-title mb-0">Visualizar Preços por Período</h5>
+                    <small class="text-muted">Selecione um período para ver os preços calculados com desconto</small>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex gap-2 align-items-center">
+                        <label for="billing-period-select" class="form-label fw-bold mb-0">Período:</label>
+                        <select class="form-select" id="billing-period-select">
+                            <option value="1m">1 mês</option>
+                            <option value="3m">3 meses</option>
+                            <option value="6m">6 meses</option>
+                            <option value="1y" selected>1 ano</option>
+                            <option value="2y">2 anos</option>
+                            <option value="3y">3 anos</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-lg-4">
             <div class="card shadow-sm mb-4">
@@ -45,6 +70,16 @@
                                 <small class="text-muted">Valor por petição.</small>
                             </div>
                         </div>
+                        <div class="mb-3">
+                            {{ form.supported_periods.label(class_='form-label') }}
+                            {{ form.supported_periods(class_='form-select', multiple=True) }}
+                            <small class="text-muted">Selecione os períodos que este plano suporta (Ctrl+click para múltiplos).</small>
+                        </div>
+                        <div class="mb-3">
+                            {{ form.discount_percentage.label(class_='form-label') }}
+                            {{ form.discount_percentage(class_='form-control') }}
+                            <small class="text-muted">Percentual de desconto aplicado aos preços.</small>
+                        </div>
                         <div class="form-check form-switch mt-3">
                             {{ form.active(class_='form-check-input') }}
                             {{ form.active.label(class_='form-check-label') }}
@@ -68,7 +103,10 @@
                                 <th>Nome</th>
                                 <th>Tipo</th>
                                 <th>Mensalidade</th>
-                                <th>Valor por petição</th>
+                                <th>Por petição</th>
+                                <th>Períodos</th>
+                                <th>Desconto</th>
+                                <th>Preço calculado</th>
                                 <th>Status</th>
                                 <th>Ações</th>
                             </tr>
@@ -87,6 +125,28 @@
                                 <td>R$ {{ '%.2f'|format(plan.monthly_fee or 0) }}</td>
                                 <td>R$ {{ '%.2f'|format(plan.usage_rate or 0) }}</td>
                                 <td>
+                                    <div class="plan-periods" data-periods='{{ plan.supported_periods|tojson }}'>
+                                        {% for period in plan.supported_periods[:3] %}
+                                        <small class="badge bg-light text-dark me-1">{{ period }}</small>
+                                        {% endfor %}
+                                        {% if plan.supported_periods|length > 3 %}
+                                        <small class="text-muted">+{{ plan.supported_periods|length - 3 }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ '%.1f'|format(plan.discount_percentage or 0) }}%</td>
+                                <td>
+                                    <div class="plan-price fw-bold text-primary" data-plan="{{ plan.slug }}"
+                                         data-prices='{
+                                             {% for period in plan.supported_periods %}
+                                             "{{ period }}": {{ plan.get_price_for_period(period) }}{% if not loop.last %},{% endif %}
+                                             {% endfor %}
+                                         }'>
+                                        R$ {{ '%.2f'|format(plan.get_price_for_period('1y') or (plan.monthly_fee * 12 if plan.monthly_fee else 0)) }}
+                                    </div>
+                                    <small class="text-muted period-display">por ano</small>
+                                </td>
+                                <td>
                                     {% if plan.active %}
                                         <span class="badge bg-success">Ativo</span>
                                     {% else %}
@@ -103,7 +163,7 @@
                             </tr>
                         {% else %}
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">Nenhum plano cadastrado.</td>
+                                <td colspan="9" class="text-center text-muted py-4">Nenhum plano cadastrado.</td>
                             </tr>
                         {% endfor %}
                         </tbody>
@@ -113,4 +173,51 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const periodSelect = document.getElementById('billing-period-select');
+    const planPrices = document.querySelectorAll('.plan-price');
+
+    const periodLabels = {
+        '1m': 'por mês',
+        '3m': 'por 3 meses',
+        '6m': 'por 6 meses',
+        '1y': 'por ano',
+        '2y': 'por 2 anos',
+        '3y': 'por 3 anos'
+    };
+
+    function updatePrices() {
+        const selectedPeriod = periodSelect.value;
+
+        planPrices.forEach(planElement => {
+            const prices = JSON.parse(planElement.dataset.prices);
+
+            // Skip if period not supported
+            if (!prices[selectedPeriod]) {
+                planElement.textContent = 'N/A';
+                planElement.nextElementSibling.textContent = '';
+                return;
+            }
+
+            const price = prices[selectedPeriod];
+            const periodDisplay = planElement.nextElementSibling;
+
+            // Update price
+            planElement.textContent = `R$ ${price.toFixed(2)}`;
+
+            // Update period label
+            if (periodDisplay && periodDisplay.classList.contains('period-display')) {
+                periodDisplay.textContent = periodLabels[selectedPeriod];
+            }
+        });
+    }
+
+    periodSelect.addEventListener('change', updatePrices);
+
+    // Initialize with default selection
+    updatePrices();
+});
+</script>
 {% endblock %}

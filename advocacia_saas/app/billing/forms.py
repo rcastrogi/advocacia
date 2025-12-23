@@ -63,6 +63,24 @@ class BillingPlanForm(FlaskForm):
         default=Decimal("0.00"),
         validators=[Optional()],
     )
+    supported_periods = SelectField(
+        "Períodos suportados",
+        choices=[
+            ("1m", "1 mês"),
+            ("3m", "3 meses"),
+            ("6m", "6 meses"),
+            ("1y", "1 ano"),
+            ("2y", "2 anos"),
+            ("3y", "3 anos"),
+        ],
+        default=["1m", "3m", "6m", "1y", "2y", "3y"],
+    )
+    discount_percentage = DecimalField(
+        "Desconto (%)",
+        places=1,
+        default=Decimal("0.0"),
+        validators=[Optional()],
+    )
     active = BooleanField("Ativo", default=True)
     submit = SubmitField("Salvar plano")
 

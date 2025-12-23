@@ -7,19 +7,6 @@
     <div class="text-center mb-5">
         <h1 class="display-4 fw-bold">Escolha seu Plano</h1>
         <p class="lead text-muted">Modernize seu escritório com o Petitio</p>
-        
-        <!-- Seleção de Período -->
-        <div class="mt-3">
-            <label for="billing-period-select" class="form-label fw-bold">Período de cobrança:</label>
-            <select class="form-select" id="billing-period-select" style="max-width: 200px; margin: 0 auto;">
-                <option value="1m">1 mês</option>
-                <option value="3m">3 meses</option>
-                <option value="6m">6 meses</option>
-                <option value="1y" selected>1 ano</option>
-                <option value="2y">2 anos</option>
-                <option value="3y">3 anos</option>
-            </select>
-        </div>
     </div>
     
     <div class="row g-4">
@@ -35,19 +22,20 @@
                 <div class="card-body d-flex flex-column">
                     <h3 class="card-title text-center">{{ plan.name }}</h3>
 
-                    <!-- Preço Dinâmico -->
-                    <div class="text-center mb-4 plan-price" data-plan="{{ plan.slug }}"
-                         data-prices='{
-                             {% for period in plan.supported_periods %}
-                             "{{ period }}": {{ plan.get_price_for_period(period) }}{% if not loop.last %},{% endif %}
-                             {% endfor %}
-                         }'>
+                    <!-- Preço Fixo (Mensal) -->
+                    <div class="text-center mb-4">
                         {% if plan.plan_type == 'per_usage' %}
-                        <div class="display-4 fw-bold price-display">
+                        <div class="display-4 fw-bold">
                             R$ {{ "%.2f"|format(plan.usage_rate) }}
                         </div>
                         <small class="text-muted">por petição</small>
                         {% else %}
+                        <div class="display-4 fw-bold">
+                            R$ {{ "%.2f"|format(plan.monthly_fee) }}
+                        </div>
+                        <small class="text-muted">por mês</small>
+                        {% endif %}
+                    </div>
                         <div class="display-4 fw-bold price-display">
                             R$ {{ "%.2f"|format(plan.get_price_for_period('1y') or plan.monthly_fee * 12) }}
                         </div>
@@ -92,9 +80,8 @@
                         <small class="text-muted">Plano por uso - pague apenas pelo que usar</small>
                     </div>
                     {% else %}
-                    <a href="{{ url_for('payments.subscribe', plan_slug=plan.slug, billing_period='monthly') }}"
-                       class="btn {% if plan.slug == 'profissional' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-lg w-100 subscribe-btn"
-                       data-plan="{{ plan.slug }}">
+                    <a href="{{ url_for('payments.subscribe', plan_slug=plan.slug, billing_period='1m') }}"
+                       class="btn {% if plan.slug == 'profissional' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-lg w-100">
                         {% if current_subscription and current_subscription.plan_id == plan.id %}
                             Plano Atual
                         {% else %}
@@ -139,72 +126,4 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const periodSelect = document.getElementById('billing-period-select');
-    const planPrices = document.querySelectorAll('.plan-price');
-    const subscribeButtons = document.querySelectorAll('.subscribe-btn');
-
-    const periodLabels = {
-        '1m': 'por mês',
-        '3m': 'por 3 meses',
-        '6m': 'por 6 meses',
-        '1y': 'por ano',
-        '2y': 'por 2 anos',
-        '3y': 'por 3 anos'
-    };
-
-    function updatePrices() {
-        const selectedPeriod = periodSelect.value;
-
-        planPrices.forEach(planElement => {
-            const planSlug = planElement.dataset.plan;
-            const prices = JSON.parse(planElement.dataset.prices);
-
-            // Skip pay-per-use plans
-            if (!prices[selectedPeriod]) return;
-
-            const price = prices[selectedPeriod];
-            const priceDisplay = planElement.querySelector('.price-display');
-            const periodDisplay = planElement.querySelector('.period-display');
-            const discountDisplay = planElement.querySelector('.discount-display');
-
-            // Update price
-            priceDisplay.textContent = `R$ ${price.toFixed(2)}`;
-
-            // Update period label
-            if (periodDisplay) {
-                periodDisplay.textContent = periodLabels[selectedPeriod];
-            }
-
-            // Show/hide discount info
-            if (discountDisplay) {
-                const basePrice = prices['1m'] * (selectedPeriod === '1m' ? 1 :
-                                selectedPeriod === '3m' ? 3 :
-                                selectedPeriod === '6m' ? 6 :
-                                selectedPeriod === '1y' ? 12 :
-                                selectedPeriod === '2y' ? 24 : 36);
-                const discountAmount = basePrice - price;
-                if (discountAmount > 0) {
-                    discountDisplay.textContent = `Economia de R$ ${discountAmount.toFixed(2)}`;
-                    discountDisplay.style.display = 'block';
-                } else {
-                    discountDisplay.style.display = 'none';
-                }
-            }
-        });
-
-        // Update subscribe button links
-        subscribeButtons.forEach(btn => {
-            const plan = btn.dataset.plan;
-            btn.href = `/payments/subscribe/${plan}/${selectedPeriod}`;
-        });
-    }
-
-    periodSelect.addEventListener('change', updatePrices);
-
-    // Initialize with default selection
-    updatePrices();
-});
-</script>
 {% endblock %}
