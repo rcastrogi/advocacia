@@ -1,13 +1,16 @@
 """
-Rotas de pagamento - Mercado Pago + Stripe
+Rotas de pagamento - Mercado Pago Único
+PIX: Pagamentos únicos instantâneos
+Preapprovals: Assinaturas recorrentes automáticas
 """
 
+import hashlib
+import hmac
 import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 
 import mercadopago
-import stripe
 from flask import (
     abort,
     current_app,
@@ -24,8 +27,7 @@ from app import db
 from app.models import BillingPlan, Payment, Subscription, User
 from app.payments import bp
 
-# Configurar gateways (lazy initialization para evitar erros se não configurado)
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_dummy")
+# Configurar Mercado Pago
 mp_access_token = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
 mp_sdk = mercadopago.SDK(mp_access_token) if mp_access_token else None
 
@@ -86,8 +88,9 @@ def subscribe(plan_slug, billing_period):
 
     return render_template(
         "payments/checkout.html",
-        plan_type=plan_type,
-        plan_name=plan["name"],
+        plan_slug=plan_slug,
+        plan_type=plan.plan_type,
+        plan_name=plan.name,
         billing_period=billing_period,
         amount=amount,
     )
@@ -96,7 +99,7 @@ def subscribe(plan_slug, billing_period):
 @bp.route("/create-pix-payment", methods=["POST"])
 @login_required
 def create_pix_payment():
-    """Criar pagamento PIX via Mercado Pago"""
+    """Criar pagamento PIX via Mercado Pago (apenas para pay-per-use)"""
     try:
         data = request.get_json()
         plan_slug = data.get("plan_slug")
@@ -105,6 +108,10 @@ def create_pix_payment():
         plan = BillingPlan.query.filter_by(slug=plan_slug, active=True).first()
         if not plan:
             return jsonify({"error": "Plano inválido"}), 400
+
+        # Validar que é pay-per-use (não subscription)
+        if plan.plan_type != 'per_usage':
+            return jsonify({"error": "PIX disponível apenas para planos pay-per-use"}), 400
 
         # Para planos mensais, usar monthly_fee; para yearly, calcular baseado no monthly_fee
         if billing_period == "monthly":
@@ -115,7 +122,7 @@ def create_pix_payment():
         # Criar pagamento no Mercado Pago
         payment_data = {
             "transaction_amount": amount,
-            "description": f"Assinatura Petitio - {plan.name} ({billing_period})",
+            "description": f"Petitio - {plan.name} ({billing_period})",
             "payment_method_id": "pix",
             "payer": {
                 "email": current_user.email,
@@ -134,7 +141,7 @@ def create_pix_payment():
             user_id=current_user.id,
             amount=Decimal(str(amount)),
             currency="BRL",
-            payment_type="subscription",
+            payment_type="one_time",  # Pagamento único
             payment_method="pix",
             status="pending",
             gateway="mercadopago",
@@ -149,28 +156,6 @@ def create_pix_payment():
             pix_expires_at=datetime.utcnow() + timedelta(hours=24),
         )
         db.session.add(payment)
-
-        # Criar subscription pendente
-        period_end = datetime.utcnow()
-        if billing_period == "monthly":
-            period_end += timedelta(days=30)
-        else:
-            period_end += timedelta(days=365)
-
-        subscription = Subscription(
-            user_id=current_user.id,
-            plan_type=plan_type,
-            billing_period=billing_period,
-            amount=Decimal(str(amount)),
-            status="pending",
-            current_period_start=datetime.utcnow(),
-            current_period_end=period_end,
-            gateway="mercadopago",
-            gateway_payment_id=str(payment_response["id"]),
-        )
-        db.session.add(subscription)
-        payment.subscription = subscription
-
         db.session.commit()
 
         return jsonify(
@@ -188,10 +173,10 @@ def create_pix_payment():
         return jsonify({"error": "Erro ao processar pagamento"}), 500
 
 
-@bp.route("/create-stripe-checkout", methods=["POST"])
+@bp.route("/create-mercadopago-subscription", methods=["POST"])
 @login_required
-def create_stripe_checkout():
-    """Criar sessão de checkout Stripe (cartão internacional)"""
+def create_mercadopago_subscription():
+    """Criar assinatura recorrente (preapproval) no Mercado Pago"""
     try:
         data = request.get_json()
         plan_slug = data.get("plan_slug")
@@ -201,84 +186,147 @@ def create_stripe_checkout():
         if not plan:
             return jsonify({"error": "Plano inválido"}), 400
 
+        # Validar que é subscription (não pay-per-use)
+        if plan.plan_type == 'per_usage':
+            return jsonify({"error": "Preapproval disponível apenas para assinaturas"}), 400
+
         # Para planos mensais, usar monthly_fee; para yearly, calcular baseado no monthly_fee
         if billing_period == "monthly":
-            amount = int(float(plan.monthly_fee) * 100)  # Centavos
+            amount = float(plan.monthly_fee)
         else:  # yearly
-            amount = int(float(plan.monthly_fee) * 12 * 100)  # Centavos
+            amount = float(plan.monthly_fee) * 12
 
-        # Criar sessão de checkout
-        session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
-            line_items=[
-                {
-                    "price_data": {
-                        "currency": "brl",
-                        "product_data": {
-                            "name": f"Petitio - {plan.name}",
-                            "description": f"Assinatura {billing_period}",
-                        },
-                        "unit_amount": amount,
-                        "recurring": {
-                            "interval": "month"
-                            if billing_period == "monthly"
-                            else "year"
-                        },
-                    },
-                    "quantity": 1,
-                }
-            ],
-            mode="subscription",
-            success_url=url_for("payments.success", _external=True)
-            + "?session_id={CHECKOUT_SESSION_ID}",
-            cancel_url=url_for("payments.plans", _external=True),
-            customer_email=current_user.email,
-            metadata={
-                "user_id": current_user.id,
-                "plan_type": plan_type,
-                "billing_period": billing_period,
+        # Criar preapproval (assinatura recorrente)
+        preapproval_data = {
+            "payer_email": current_user.email,
+            "back_url": url_for("payments.success", _external=True),
+            "reason": f"Petitio - {plan.name} ({billing_period})",
+            "external_reference": f"sub_{current_user.id}_{plan.id}_{billing_period}",
+            "auto_recurring": {
+                "frequency": 1,
+                "frequency_type": "months" if billing_period == "monthly" else "years",
+                "transaction_amount": amount,
+                "currency_id": "BRL"
             },
-        )
+            "status": "pending"
+        }
 
-        return jsonify({"checkout_url": session.url})
+        result = mp_sdk.preapproval().create(preapproval_data)
+
+        if result["status"] != 201:
+            current_app.logger.error(f"Mercado Pago preapproval error: {result}")
+            return jsonify({"error": "Erro ao criar assinatura"}), 500
+
+        preapproval = result["response"]
+
+        # Salvar assinatura no banco
+        subscription = Subscription(
+            user_id=current_user.id,
+            plan_type=plan.plan_type,
+            billing_period=billing_period,
+            amount=Decimal(str(amount)),
+            status="pending",
+            gateway="mercadopago",
+            gateway_subscription_id=preapproval["id"],
+            gateway_customer_id=None,  # MP não tem customer_id como Stripe
+            started_at=None,  # Será definido quando aprovado
+            renewal_date=None,  # Será definido quando aprovado
+        )
+        db.session.add(subscription)
+        db.session.commit()
+
+        return jsonify({
+            "preapproval_url": preapproval["init_point"],
+            "preapproval_id": preapproval["id"]
+        })
 
     except Exception as e:
-        current_app.logger.error(f"Erro ao criar checkout Stripe: {str(e)}")
-        return jsonify({"error": "Erro ao processar pagamento"}), 500
+        current_app.logger.error(f"Erro ao criar preapproval Mercado Pago: {str(e)}")
+        return jsonify({"error": "Erro ao processar assinatura"}), 500
+
+
+def _validate_mercadopago_webhook_signature(request_data, headers):
+    """Valida a assinatura do webhook do Mercado Pago"""
+    try:
+        # Obter chave secreta
+        webhook_secret = current_app.config.get("MERCADOPAGO_WEBHOOK_SECRET")
+        if not webhook_secret:
+            current_app.logger.warning("MERCADOPAGO_WEBHOOK_SECRET não configurado")
+            return False
+
+        # Extrair headers necessários
+        x_signature = headers.get("x-signature")
+        x_request_id = headers.get("x-request-id")
+
+        if not x_signature or not x_request_id:
+            current_app.logger.warning("Headers x-signature ou x-request-id ausentes")
+            return False
+
+        # Parse do x-signature: ts=1704908010,v1=signature
+        try:
+            parts = x_signature.split(",")
+            ts = None
+            signature = None
+
+            for part in parts:
+                if part.startswith("ts="):
+                    ts = part.split("=", 1)[1]
+                elif part.startswith("v1="):
+                    signature = part.split("=", 1)[1]
+
+            if not ts or not signature:
+                current_app.logger.warning("Formato inválido do header x-signature")
+                return False
+
+        except Exception as e:
+            current_app.logger.error(f"Erro ao parsear x-signature: {str(e)}")
+            return False
+
+        # Criar template para assinatura
+        # id:[data.id];request-id:[x-request-id];ts:[ts];
+        data_id = str(request_data.get("data", {}).get("id", "")).lower()
+        template = f"id:{data_id};request-id:{x_request_id};ts:{ts};"
+
+        # Calcular assinatura esperada usando HMAC-SHA256
+        expected_signature = hmac.new(
+            webhook_secret.encode('utf-8'),
+            template.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+
+        # Comparar assinaturas
+        if hmac.compare_digest(signature, expected_signature):
+            return True
+        else:
+            current_app.logger.warning("Assinatura do webhook inválida")
+            return False
+
+    except Exception as e:
+        current_app.logger.error(f"Erro na validação da assinatura: {str(e)}")
+        return False
 
 
 @bp.route("/webhook/mercadopago", methods=["POST"])
 def mercadopago_webhook():
-    """Webhook do Mercado Pago"""
+    """Webhook do Mercado Pago (pagamentos únicos e recorrentes)"""
     try:
+        # Validar assinatura do webhook
         data = request.get_json()
+        if not _validate_mercadopago_webhook_signature(data, request.headers):
+            current_app.logger.warning("Webhook Mercado Pago com assinatura inválida")
+            return jsonify({"error": "Invalid signature"}), 401
 
-        if data.get("type") == "payment":
+        event_type = data.get("type")
+
+        if event_type == "payment":
+            # Pagamento único (PIX ou cartão)
             payment_id = data["data"]["id"]
+            _handle_payment_webhook(payment_id)
 
-            # Buscar detalhes do pagamento
-            payment_info = mp_sdk.payment().get(payment_id)
-            payment_data = payment_info["response"]
-
-            if payment_data["status"] == "approved":
-                # Encontrar pagamento no banco
-                payment = Payment.query.filter_by(
-                    gateway_payment_id=str(payment_id)
-                ).first()
-
-                if payment and payment.status == "pending":
-                    payment.mark_as_paid()
-
-                    # Ativar assinatura
-                    if payment.subscription:
-                        payment.subscription.status = "active"
-                        payment.subscription.gateway_subscription_id = str(payment_id)
-                        db.session.commit()
-
-                        # Atualizar status do usuário
-                        user = User.query.get(payment.user_id)
-                        user.billing_status = "active"
-                        db.session.commit()
+        elif event_type == "preapproval":
+            # Assinatura recorrente (preapproval)
+            preapproval_id = data["data"]["id"]
+            _handle_preapproval_webhook(preapproval_id)
 
         return jsonify({"received": True}), 200
 
@@ -287,19 +335,99 @@ def mercadopago_webhook():
         return jsonify({"error": str(e)}), 500
 
 
-@bp.route("/webhook/stripe", methods=["POST"])
-def stripe_webhook():
-    """Webhook do Stripe"""
-    payload = request.data
-    sig_header = request.headers.get("Stripe-Signature")
-    webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+def _handle_payment_webhook(payment_id):
+    """Processa webhook de pagamento único"""
+    # Buscar detalhes do pagamento
+    payment_info = mp_sdk.payment().get(payment_id)
+    payment_data = payment_info["response"]
 
-    try:
-        event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
-    except ValueError:
-        return jsonify({"error": "Invalid payload"}), 400
-    except stripe.error.SignatureVerificationError:
-        return jsonify({"error": "Invalid signature"}), 400
+    if payment_data["status"] == "approved":
+        # Encontrar pagamento no banco
+        payment = Payment.query.filter_by(
+            gateway_payment_id=str(payment_id)
+        ).first()
+
+        if payment and payment.status == "pending":
+            payment.mark_as_paid()
+
+            # Para pay-per-use, ativar plano imediatamente
+            if payment.payment_type == "one_time":
+                user = User.query.get(payment.user_id)
+                user.billing_status = "active"
+                db.session.commit()
+
+            current_app.logger.info(f"✅ Pagamento Mercado Pago aprovado: {payment_id}")
+
+
+def _handle_preapproval_webhook(preapproval_id):
+    """Processa webhook de preapproval (assinatura)"""
+    # Buscar detalhes da assinatura
+    preapproval_info = mp_sdk.preapproval().get(preapproval_id)
+    preapproval_data = preapproval_info["response"]
+
+    # Encontrar assinatura no banco
+    subscription = Subscription.query.filter_by(
+        gateway_subscription_id=str(preapproval_id)
+    ).first()
+
+    if not subscription:
+        current_app.logger.warning(f"Preapproval não encontrado: {preapproval_id}")
+        return
+
+    if preapproval_data["status"] == "authorized":
+        # Assinatura aprovada - ativar
+        subscription.status = "active"
+        subscription.started_at = datetime.utcnow()
+
+        # Calcular próxima renovação
+        if subscription.billing_period == "monthly":
+            subscription.renewal_date = datetime.utcnow() + timedelta(days=30)
+        else:  # yearly
+            subscription.renewal_date = datetime.utcnow() + timedelta(days=365)
+
+        # Ativar usuário
+        user = subscription.user
+        user.billing_status = "active"
+
+        db.session.commit()
+        current_app.logger.info(f"✅ Assinatura Mercado Pago ativada: {preapproval_id}")
+
+    elif preapproval_data["status"] == "cancelled":
+        # Assinatura cancelada
+        subscription.status = "cancelled"
+
+        # Desativar usuário se não tiver outras assinaturas ativas
+        user = subscription.user
+        active_subs = Subscription.query.filter_by(
+            user_id=user.id, status="active"
+        ).count()
+
+        if active_subs == 0:
+            user.billing_status = "inactive"
+
+        db.session.commit()
+        current_app.logger.info(f"❌ Assinatura Mercado Pago cancelada: {preapproval_id}")
+
+    elif preapproval_data["status"] == "paused":
+        # Assinatura pausada
+        subscription.status = "paused"
+        user = subscription.user
+        user.billing_status = "inactive"
+
+        db.session.commit()
+        current_app.logger.warning(f"⏸️ Assinatura Mercado Pago pausada: {preapproval_id}")
+
+    elif preapproval_data["status"] == "expired":
+        # Assinatura expirada
+        subscription.status = "expired"
+        user = subscription.user
+        user.billing_status = "inactive"
+
+        db.session.commit()
+        current_app.logger.warning(f"⏰ Assinatura Mercado Pago expirada: {preapproval_id}")
+
+    else:
+        current_app.logger.info(f"ℹ️ Status de preapproval não tratado: {preapproval_data['status']} para {preapproval_id}")
 
     # Handle the event
     if event["type"] == "checkout.session.completed":

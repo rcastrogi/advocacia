@@ -13,7 +13,7 @@
                         Finalizar Assinatura
                     </h4>
                 </div>
-                
+
                 <div class="card-body">
                     <!-- Resumo do Plano -->
                     <div class="alert alert-light border">
@@ -39,44 +39,42 @@
                             </span>
                         </div>
                     </div>
-                    
-                    <!-- Métodos de Pagamento -->
+
+                    <!-- Método de Pagamento - Híbrido -->
                     <h5 class="mb-3">Escolha a forma de pagamento</h5>
-                    
-                    <!-- PIX -->
+
+                    {% if plan_type == 'per_usage' %}
+                    <!-- Pay-per-use: PIX via Mercado Pago -->
                     <div class="payment-method mb-3">
-                        <button type="button" class="btn btn-outline-primary w-100 text-start p-3" 
+                        <button type="button" class="btn btn-outline-success w-100 text-start p-3"
                                 onclick="selectPaymentMethod('pix')">
                             <div class="d-flex align-items-center">
-                                <i class="fas fa-qrcode fa-2x me-3"></i>
+                                <i class="fas fa-qrcode fa-2x me-3 text-success"></i>
                                 <div>
-                                    <h6 class="mb-0">PIX</h6>
-                                    <small class="text-muted">Pagamento instantâneo</small>
+                                    <h6 class="mb-0">PIX - Pagamento Imediato</h6>
+                                    <small class="text-muted">Aprovação instantânea • Sem recorrência</small>
                                 </div>
                                 <i class="fas fa-check-circle text-success ms-auto d-none" id="pix-check"></i>
                             </div>
                         </button>
                     </div>
-                    
-                    <!-- Cartão de Crédito -->
-                    <div class="payment-method mb-3">
-                        <button type="button" class="btn btn-outline-primary w-100 text-start p-3"
-                                onclick="selectPaymentMethod('card')">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-credit-card fa-2x me-3"></i>
-                                <div>
-                                    <h6 class="mb-0">Cartão de Crédito</h6>
-                                    <small class="text-muted">Parcela em até 12x</small>
-                                </div>
-                                <i class="fas fa-check-circle text-success ms-auto d-none" id="card-check"></i>
+                    {% else %}
+                    <!-- Subscription: Mercado Pago -->
+                    <div class="alert alert-success">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-money-bill-wave fa-2x me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Mercado Pago - Assinatura Automática</h6>
+                                <small class="text-muted">Renovação automática • PIX ou cartão</small>
                             </div>
-                        </button>
+                        </div>
                     </div>
-                    
-                    <!-- Área de Pagamento PIX (inicialmente oculta) -->
-                    <div id="pix-area" class="d-none mt-4">
+                    {% endif %}
+
+                    <!-- Área de Pagamento PIX (pay-per-use) -->
+                    <div id="pix-area" class="{% if plan_type != 'per_usage' %}d-none{% endif %} mt-4">
                         <div class="text-center">
-                            <h5>Escaneie o QR Code</h5>
+                            <h5>Escaneie o QR Code PIX</h5>
                             <div id="pix-qr-code" class="my-4">
                                 <!-- QR Code será inserido aqui -->
                             </div>
@@ -93,23 +91,23 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Área de Pagamento Cartão (inicialmente oculta) -->
-                    <div id="card-area" class="d-none mt-4">
+
+                    <!-- Área de Pagamento Mercado Pago (subscription) -->
+                    <div id="mercadopago-area" class="{% if plan_type == 'per_usage' %}d-none{% endif %} mt-4">
                         <div class="text-center">
-                            <p>Você será redirecionado para finalizar o pagamento de forma segura.</p>
-                            <button type="button" class="btn btn-primary btn-lg" onclick="processCardPayment()">
-                                <i class="fas fa-lock me-2"></i>
-                                Pagar com Cartão
+                            <p class="mb-3">Você será redirecionado para o checkout seguro do Mercado Pago.</p>
+                            <button type="button" class="btn btn-success btn-lg" onclick="processMercadoPagoSubscription()">
+                                <i class="fas fa-money-bill-wave me-2"></i>
+                                Continuar para o Pagamento
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- Segurança -->
                     <div class="text-center mt-4">
                         <small class="text-muted">
                             <i class="fas fa-shield-alt me-1"></i>
-                            Pagamento 100% seguro e criptografado
+                            Pagamento 100% seguro com Mercado Pago
                         </small>
                     </div>
                 </div>
@@ -124,28 +122,25 @@ let paymentCheckInterval = null;
 
 function selectPaymentMethod(method) {
     selectedMethod = method;
-    
+
     // Reset checks
     document.querySelectorAll('.fa-check-circle').forEach(el => el.classList.add('d-none'));
     document.querySelectorAll('.payment-method button').forEach(btn => {
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-outline-primary');
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-success');
     });
-    
+
     // Highlight selected
     const btn = event.target.closest('button');
-    btn.classList.remove('btn-outline-primary');
-    btn.classList.add('btn-primary');
+    btn.classList.remove('btn-outline-success');
+    btn.classList.add('btn-success');
     document.getElementById(`${method}-check`).classList.remove('d-none');
-    
+
     // Show payment area
     document.getElementById('pix-area').classList.add('d-none');
-    document.getElementById('card-area').classList.add('d-none');
-    
+
     if (method === 'pix') {
         createPixPayment();
-    } else if (method === 'card') {
-        document.getElementById('card-area').classList.remove('d-none');
     }
 }
 
@@ -157,20 +152,24 @@ async function createPixPayment() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                plan_type: '{{ plan_type }}',
+                plan_slug: '{{ plan_type }}',
                 billing_period: '{{ billing_period }}'
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
-            // Show QR Code
-            document.getElementById('pix-qr-code').innerHTML = 
-                `<img src="data:image/png;base64,${data.pix_qr_code}" alt="QR Code PIX" class="img-fluid" style="max-width: 300px;">`;
-            document.getElementById('pix-code-text').value = data.pix_code;
             document.getElementById('pix-area').classList.remove('d-none');
-            
+
+            // Set QR code if available
+            if (data.pix_qr_code) {
+                document.getElementById('pix-qr-code').innerHTML = `<img src="${data.pix_qr_code}" alt="QR Code PIX" class="img-fluid">`;
+            }
+
+            // Set PIX code
+            document.getElementById('pix-code-text').value = data.pix_code;
+
             // Start checking payment status
             startPaymentCheck(data.payment_id);
         } else {
@@ -178,7 +177,7 @@ async function createPixPayment() {
         }
     } catch (error) {
         console.error('Erro:', error);
-        showErrorToast('Erro ao processar pagamento');
+        showErrorToast('Erro ao criar pagamento PIX');
     }
 }
 
@@ -194,7 +193,7 @@ function startPaymentCheck(paymentId) {
         try {
             const response = await fetch(`/payments/payment-status/${paymentId}`);
             const data = await response.json();
-            
+
             if (data.status === 'paid') {
                 clearInterval(paymentCheckInterval);
                 showSuccessToast('Pagamento confirmado!', 'Sucesso');
@@ -208,30 +207,54 @@ function startPaymentCheck(paymentId) {
     }, 3000); // Check every 3 seconds
 }
 
-async function processCardPayment() {
+async function processMercadoPagoSubscription() {
     try {
-        const response = await fetch('/payments/create-stripe-checkout', {
+        // Show loading
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processando...';
+        btn.disabled = true;
+
+        const response = await fetch('/payments/create-mercadopago-subscription', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                plan_type: '{{ plan_type }}',
+                plan_slug: '{{ plan_slug }}',
                 billing_period: '{{ billing_period }}'
             })
         });
-        
+
         const data = await response.json();
-        
-        if (data.checkout_url) {
-            window.location.href = data.checkout_url;
+
+        if (data.preapproval_url) {
+            window.location.href = data.preapproval_url;
         } else {
-            showErrorToast(data.error || 'Erro ao processar pagamento');
+            // Reset button
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            showErrorToast(data.error || 'Erro ao processar assinatura');
         }
     } catch (error) {
         console.error('Erro:', error);
-        showErrorToast('Erro ao processar pagamento');
+        // Reset button
+        const btn = event.target;
+        btn.innerHTML = '<i class="fas fa-money-bill-wave me-2"></i>Continuar para o Pagamento';
+        btn.disabled = false;
+        showErrorToast('Erro ao processar assinatura');
     }
+}
+
+// Toast functions (assuming they exist in base template)
+function showErrorToast(message) {
+    // Fallback if toast not available
+    alert(message);
+}
+
+function showSuccessToast(message, title, duration) {
+    // Fallback if toast not available
+    alert(message);
 }
 
 // Cleanup on page unload

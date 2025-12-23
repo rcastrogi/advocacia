@@ -165,7 +165,7 @@ def buy_credits(slug):
     """Página de compra de pacote específico"""
     package = CreditPackage.query.filter_by(slug=slug, is_active=True).first_or_404()
 
-    # Buscar chave pública do Mercado Pago
+    # Buscar chave pública do Mercado Pago para pagamentos únicos
     mp_public_key = current_app.config.get("MERCADOPAGO_PUBLIC_KEY")
 
     return render_template(
@@ -616,7 +616,7 @@ def api_generation_feedback(generation_id):
 @ai_bp.route("/credits/checkout/<slug>", methods=["POST"])
 @login_required
 def credits_checkout(slug):
-    """Cria preferência de pagamento no Mercado Pago para créditos"""
+    """Cria preferência de pagamento no Mercado Pago para créditos (pagamentos únicos)"""
     package = CreditPackage.query.filter_by(slug=slug, is_active=True).first_or_404()
 
     mp_access_token = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
@@ -737,16 +737,9 @@ def credits_failure():
     return render_template("ai/credits_failure.html")
 
 
-@ai_bp.route("/credits/pending")
-@login_required
-def credits_pending():
-    """Página de pagamento pendente"""
-    return render_template("ai/credits_pending.html")
-
-
 @ai_bp.route("/webhook/mercadopago/credits", methods=["POST"])
 def mercadopago_webhook_credits():
-    """Webhook do Mercado Pago para pagamentos de créditos"""
+    """Webhook do Mercado Pago para pagamentos de créditos (pagamentos únicos)"""
     data = request.get_json()
 
     if data.get("type") == "payment":

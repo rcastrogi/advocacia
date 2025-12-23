@@ -48,6 +48,7 @@ class Config:
     # Mercado Pago Payment Settings (Brasil)
     MERCADOPAGO_ACCESS_TOKEN = os.environ.get("MERCADOPAGO_ACCESS_TOKEN")
     MERCADOPAGO_PUBLIC_KEY = os.environ.get("MERCADOPAGO_PUBLIC_KEY")
+    MERCADOPAGO_WEBHOOK_SECRET = os.environ.get("MERCADOPAGO_WEBHOOK_SECRET")
 
     # Sentry Error Tracking
     SENTRY_DSN = os.environ.get("SENTRY_DSN")

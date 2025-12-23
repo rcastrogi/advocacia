@@ -7,6 +7,7 @@ from flask import (
     request,
     send_from_directory,
     url_for,
+    make_response,
 )
 from flask_login import current_user, login_required
 from sqlalchemy import func
@@ -598,3 +599,99 @@ def mark_all_notifications_read():
             "message": f"{len(notifications)} notificações marcadas como lidas",
         }
     ), 200
+
+
+@bp.route("/sitemap.xml")
+def sitemap():
+    """Sitemap XML dinâmico para SEO"""
+    from datetime import datetime, timedelta
+
+    # URLs principais
+    urls = [
+        {
+            "loc": url_for("main.index", _external=True),
+            "lastmod": datetime.now().strftime("%Y-%m-%d"),
+            "changefreq": "weekly",
+            "priority": "1.0"
+        },
+        {
+            "loc": url_for("main.recursos", _external=True),
+            "lastmod": datetime.now().strftime("%Y-%m-%d"),
+            "changefreq": "monthly",
+            "priority": "0.8"
+        },
+        {
+            "loc": url_for("auth.register", _external=True),
+            "lastmod": datetime.now().strftime("%Y-%m-%d"),
+            "changefreq": "monthly",
+            "priority": "0.9"
+        },
+        {
+            "loc": url_for("portal.login", _external=True),
+            "lastmod": datetime.now().strftime("%Y-%m-%d"),
+            "changefreq": "monthly",
+            "priority": "0.7"
+        }
+    ]
+
+    # URLs de planos (se existirem)
+    try:
+        plans = BillingPlan.query.filter_by(active=True).all()
+        for plan in plans:
+            urls.append({
+                "loc": url_for("payments.plans", _external=True),
+                "lastmod": datetime.now().strftime("%Y-%m-%d"),
+                "changefreq": "weekly",
+                "priority": "0.8"
+            })
+            break  # Só uma URL de planos
+    except:
+        pass
+
+    # URLs de tipos de petição
+    try:
+        petition_types = PetitionType.query.filter_by(active=True).limit(10).all()
+        for pt in petition_types:
+            urls.append({
+                "loc": url_for("petitions.create", petition_type_slug=pt.slug, _external=True),
+                "lastmod": datetime.now().strftime("%Y-%m-%d"),
+                "changefreq": "weekly",
+                "priority": "0.8"
+            })
+    except:
+        pass
+
+    # Renderizar template XML
+    xml_content = render_template("sitemap.xml", urls=urls)
+    response = make_response(xml_content)
+    response.headers["Content-Type"] = "application/xml"
+    return response
+
+
+@bp.route("/robots.txt")
+def robots():
+    """Arquivo robots.txt para SEO"""
+    from flask import make_response
+
+    robots_content = f"""User-agent: *
+Allow: /
+
+# Páginas importantes para geração de petições
+Allow: /
+Allow: /recursos
+Allow: /auth/register
+
+# Bloquear áreas administrativas
+Disallow: /admin/
+Disallow: /auth/login
+Disallow: /portal/
+Disallow: /dashboard
+Disallow: /api/
+
+# Sitemap
+Sitemap: {url_for('main.sitemap', _external=True)}
+"""
+
+    response = make_response(robots_content)
+    response.headers["Content-Type"] = "text/plain"
+    return response

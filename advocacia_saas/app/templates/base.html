@@ -3,8 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Petitio - Sistema de Gestão para Advogados">
-    <title>{% if title %}{{ title }} - {% endif %}Petitio</title>
+    <meta name="description" content="{% block meta_description %}Petitio - Gerador inteligente de petições jurídicas com IA. Crie petições automaticamente, gerencie modelos e acelere seu trabalho advocatício.{% endblock %}">
+    <meta name="keywords" content="gerador petições, petições automáticas, criar petições online, modelos petições, petições jurídicas, advocacia digital, automação jurídica, IA advocacia, gerador petições IA">
+    <meta name="author" content="Petitio">
+    <meta name="robots" content="index, follow">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ request.url_root[:-1] }}{{ request.path }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url_root[:-1] }}{{ request.path }}">
+    <meta property="og:title" content="{% block og_title %}{{ title or 'Petitio' }} - Sistema de Gestão para Advogados{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Sistema completo de gestão para escritórios de advocacia. Automatize petições, gerencie clientes e aumente sua produtividade.{% endblock %}">
+    <meta property="og:image" content="{{ url_for('static', filename='img/petitio-og-image.jpg', _external=True) }}">
+    <meta property="og:site_name" content="Petitio">
+    <meta property="og:locale" content="pt_BR">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ title or 'Petitio' }} - Sistema de Gestão para Advogados{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Sistema completo de gestão para escritórios de advocacia. Automatize petições, gerencie clientes e aumente sua produtividade.{% endblock %}">
+    <meta name="twitter:image" content="{{ url_for('static', filename='img/petitio-twitter-image.jpg', _external=True) }}">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon-16x16.png') }}">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Petitio",
+        "description": "Gerador inteligente de petições jurídicas com Inteligência Artificial",
+        "url": "{{ request.url_root[:-1] }}",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "BRL"
+        },
+        "creator": {
+            "@type": "Organization",
+            "name": "Petitio"
+        },
+        "featureList": [
+            "Geração automática de petições com IA",
+            "Modelos de petições personalizáveis",
+            "Gestão de clientes e processos",
+            "Automação jurídica inteligente",
+            "Portal do cliente integrado"
+        ],
+        "potentialAction": {
+            "@type": "CreateAction",
+            "target": "{{ url_for('auth.register', _external=True) }}",
+            "result": {
+                "@type": "Document",
+                "name": "Petição Jurídica"
+            }
+        }
+    }
+    </script>
+
+    <title>{% if title %}{{ title }} - {% endif %}Petitio - Gerador de Petições com IA</title>
     
     <!-- Google Fonts - Modern Professional Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
