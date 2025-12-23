@@ -3,19 +3,24 @@ echo "🚀 Iniciando Petitio..."
 python init_db.py
 echo "✅ Banco inicializado"
 
-# Executar scripts de exemplo (apenas se tabelas estiverem vazias)
+# Executar scripts de exemplo (FORÇANDO EXECUÇÃO PARA RENDER)
 python -c "
 from app import create_app, db
 from app.models import PetitionType
 app = create_app()
 with app.app_context():
-    if PetitionType.query.count() == 0:  # REVERTIDO APÓS DEPLOY
+    try:
+        count = PetitionType.query.count()
+        print(f'📊 Tipos de petição existentes: {count}')
         print('📝 Criando exemplos do sistema...')
         exec(open('create_real_case_examples.py').read())
         exec(open('create_real_case_templates.py').read())
-        print('✅ Exemplos criados!')
-    else:
-        print('ℹ️ Exemplos já existem, pulando criação...')
+        new_count = PetitionType.query.count()
+        print(f'✅ Exemplos criados! Total: {new_count} tipos')
+    except Exception as e:
+        print(f'❌ Erro ao criar exemplos: {e}')
+        import traceback
+        traceback.print_exc()
 "
 
 exec "$@"
