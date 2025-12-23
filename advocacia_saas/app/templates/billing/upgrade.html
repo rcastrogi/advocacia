@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="fas fa-arrow-up"></i> Fazer Upgrade de Plano</h1>
+            <p class="text-muted mb-0">Escolha um plano superior para expandir seus limites.</p>
+        </div>
+        <a href="{{ url_for('billing.portal') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar ao Portal
+        </a>
+    </div>
+
+    {% if current_plan %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <strong>Seu Plano Atual</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-1">{{ current_plan.plan.name }}</h5>
+                            <p class="text-muted mb-2">{{ current_plan.plan.description[:100] }}{% if current_plan.plan.description|length > 100 %}...{% endif %}</p>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <small class="text-muted">Valor mensal</small>
+                                    <div class="h6 mb-0">R$ {{ '%.2f'|format(current_plan.plan.monthly_fee) }}</div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <small class="text-muted">Limite de petições</small>
+                                    <div class="h6 mb-0">
+                                        {% if current_plan.plan.monthly_petition_limit %}
+                                            {{ current_plan.plan.monthly_petition_limit }}/mês
+                                        {% else %}
+                                            <span class="text-success">Ilimitado</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <small class="text-muted">Status</small>
+                                    <div class="h6 mb-0">
+                                        <span class="badge bg-{{ 'success' if current_plan.status == 'active' else 'warning' }}">
+                                            {{ current_plan.status }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge bg-info">Plano Atual</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">Planos Disponíveis para Upgrade</h4>
+        </div>
+    </div>
+
+    {% if available_plans %}
+    <div class="row g-3">
+        {% for plan in available_plans %}
+        <div class="col-lg-6 col-xl-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title mb-0">{{ plan.name }}</h5>
+                        <div>
+                            {% if (plan.plan_type == 'unlimited' and current_plan and 
+                                   (current_plan.plan.plan_type in ['limited', 'flat_monthly'] or 
+                                    (current_plan.plan.plan_type == 'unlimited' and plan.monthly_fee > current_plan.plan.monthly_fee))) %}
+                            <span class="badge bg-success me-1">Proration</span>
+                            {% endif %}
+                            {% if not current_plan or plan.monthly_fee > current_plan.plan.monthly_fee %}
+                            <span class="badge bg-success">Upgrade</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="h4 text-primary mb-1">
+                            R$ {{ '%.2f'|format(plan.monthly_fee) }}
+                            <small class="text-muted fw-normal">/mês</small>
+                        </div>
+                        {% if plan.discount_percentage > 0 %}
+                        <small class="text-success">
+                            <i class="fas fa-tag"></i> {{ '%.0f'|format(plan.discount_percentage) }}% desconto
+                        </small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border-end">
+                                    <small class="text-muted d-block">Petições</small>
+                                    <strong>
+                                        {% if plan.monthly_petition_limit %}
+                                            {{ plan.monthly_petition_limit }}/mês
+                                        {% else %}
+                                            <span class="text-success">∞</span>
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Tipo</small>
+                                <strong>
+                                    {% if plan.plan_type == 'limited' %}
+                                        Limitado
+                                    {% else %}
+                                        Ilimitado
+                                    {% endif %}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if plan.description %}
+                    <div class="mb-3 flex-grow-1">
+                        <small class="text-muted">{{ plan.description[:120] }}{% if plan.description|length > 120 %}...{% endif %}</small>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-auto">
+                        <a href="{{ url_for('checkout.create_checkout_session', plan_id=plan.id) }}"
+                           class="btn btn-primary w-100">
+                            <i class="fas fa-arrow-up"></i> Fazer Upgrade
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                <h5>Não há planos disponíveis para upgrade</h5>
+                <p class="mb-0">Você já possui o plano mais avançado disponível ou não há planos mensais ativos no momento.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h6><i class="fas fa-calculator text-info"></i> Como funciona o Proration</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Exemplo 1 - Limitado → Ilimitado:</strong>
+                        <ul class="mb-2 small">
+                            <li>Plano atual: Limitado R$ 50/mês (dia 15)</li>
+                            <li>Upgrade para: Ilimitado R$ 100/mês</li>
+                            <li>Diferença: R$ 50 × 50% restante = <strong>R$ 25</strong></li>
+                        </ul>
+                        <strong>Exemplo 2 - Ilimitado → Ilimitado:</strong>
+                        <ul class="mb-2 small">
+                            <li>Plano atual: Ilimitado R$ 100/mês (dia 15)</li>
+                            <li>Upgrade para: Ilimitado R$ 150/mês</li>
+                            <li>Diferença: R$ 50 × 50% restante = <strong>R$ 25</strong></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Quando Proration é aplicado:</strong>
+                        <ul class="mb-2 small">
+                            <li>✅ Limitado → Ilimitado (qualquer valor)</li>
+                            <li>✅ Ilimitado → Ilimitado (valor maior)</li>
+                            <li>❌ Outros upgrades = nova assinatura</li>
+                        </ul>
+                        <strong>Próximos meses:</strong>
+                        <ul class="mb-0 small">
+                            <li>Sempre o valor completo do novo plano</li>
+                            <li>Proration só no mês do upgrade</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="alert alert-light">
+                <h6><i class="fas fa-info-circle text-info"></i> Informações Gerais</h6>
+                <ul class="mb-0 small">
+                    <li>O upgrade entra em vigor imediatamente após a confirmação do pagamento</li>
+                    <li><strong>Proration aplicado:</strong> Para upgrades limitado→ilimitado e ilimitado→ilimitado (com valor maior)</li>
+                    <li><strong>Sem proration:</strong> Para outros tipos de upgrade, será criada uma nova assinatura completa</li>
+                    <li>Seus créditos restantes serão mantidos</li>
+                    <li>Você pode cancelar a qualquer momento</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

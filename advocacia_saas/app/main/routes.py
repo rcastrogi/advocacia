@@ -240,7 +240,7 @@ def _build_plan_summary(user):
     plan = plan_rel.plan
     plan_type_label = PLAN_TYPE_LABELS.get(plan.plan_type, plan.plan_type.title())
     monthly_fee_display = _format_currency(plan.monthly_fee)
-    usage_rate_display = _format_currency(plan.usage_rate)
+    # usage_rate_display removido - sistema simplificado
 
     cycle = current_billing_cycle()
     cycle_label = _current_cycle_label(cycle)
@@ -262,7 +262,6 @@ def _build_plan_summary(user):
             "plan_name": plan.name,
             "plan_type_label": plan_type_label,
             "monthly_fee_display": monthly_fee_display,
-            "usage_rate_display": usage_rate_display,
             "cycle_usage_total": usage_total,
             "cycle_usage_amount_display": _format_currency(billable_amount),
             "cycle_label": cycle_label,
@@ -289,7 +288,7 @@ def _get_public_plans():
                     plan.plan_type, plan.plan_type.title()
                 ),
                 "monthly_fee": _format_currency(plan.monthly_fee),
-                "usage_rate": _format_currency(plan.usage_rate),
+                # usage_rate removido - sistema simplificado
                 "is_per_usage": plan.plan_type == "per_usage",
             }
         )

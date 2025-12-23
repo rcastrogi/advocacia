@@ -4,19 +4,19 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h3 mb-1"><i class="fas fa-tags"></i> Planos de cobrança</h1>
-            <p class="text-muted mb-0">Configure planos por uso ou mensais e controle quais estão ativos.</p>
+            <h1 class="h3 mb-1"><i class="fas fa-edit"></i> Editar Plano</h1>
+            <p class="text-muted mb-0">Modifique as informações do plano "{{ plan.name }}"</p>
         </div>
-        <a href="{{ url_for('billing.users') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-users-cog"></i> Usuários / planos
+        <a href="{{ url_for('billing.plans') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
         </a>
     </div>
 
     <div class="row">
-        <div class="col-lg-4">
-            <div class="card shadow-sm mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <strong>Novo plano</strong>
+                    <strong>Editar Plano</strong>
                 </div>
                 <div class="card-body">
                     <form method="post">
@@ -59,90 +59,48 @@
                             {{ form.active(class_='form-check-input') }}
                             {{ form.active.label(class_='form-check-label') }}
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 mt-3">
-                            <i class="fas fa-save"></i> {{ form.submit.label.text }}
-                        </button>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Salvar Alterações
+                            </button>
+                            <a href="{{ url_for('billing.plans') }}" class="btn btn-outline-secondary ms-2">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
-        <div class="col-lg-8">
+
+        <div class="col-lg-4">
             <div class="card shadow-sm">
-                <div class="card-header">
-                    <strong>Planos cadastrados</strong>
+                <div class="card-header bg-info text-white">
+                    <strong>Informações do Plano</strong>
                 </div>
-                <div class="table-responsive">
-                    <table class="table mb-0">
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Tipo</th>
-                                <th>Período</th>
-                                <th>Valor</th>
-                                <th>Desconto</th>
-                                <th>Preço Final</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for plan in plans %}
-                            <tr>
-                                <td>
-                                    <strong>{{ plan.name }}</strong>
-                                    {% if plan.description %}
-                                    <br><small class="text-muted">{{ plan.description[:50] }}{% if plan.description|length > 50 %}...{% endif %}</small>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if plan.plan_type == 'per_usage' %}
-                                        <span class="badge bg-info text-dark">Por uso</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Mensal</span>
-                                    {% endif %}
-                                    {% if plan.monthly_petition_limit %}
-                                    <br><small class="text-muted">{{ plan.monthly_petition_limit }} petições/mês</small>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <span class="badge bg-light text-dark">{{ plan.get_period_label(plan.supported_periods) }}</span>
-                                </td>
-                                <td>R$ {{ '%.2f'|format(plan.monthly_fee or 0) }}</td>
-                                <td>{{ '%.1f'|format(plan.discount_percentage or 0) }}%</td>
-                                <td>
-                                    <strong class="text-primary">R$ {{ '%.2f'|format(plan.get_price_for_period() or 0) }}</strong>
-                                </td>
-                                <td>
-                                    {% if plan.active %}
-                                        <span class="badge bg-success">Ativo</span>
-                                    {% else %}
-                                        <span class="badge bg-danger">Inativo</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ url_for('billing.edit_plan', plan_id=plan.id) }}" 
-                                           class="btn btn-sm btn-outline-primary" 
-                                           title="Editar plano">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form method="post" action="{{ url_for('billing.toggle_plan', plan_id=plan.id) }}" class="d-inline">
-                                            <button type="submit" 
-                                                    class="btn btn-sm btn-outline-secondary" 
-                                                    title="{{ 'Desativar plano' if plan.active else 'Ativar plano' }}">
-                                                <i class="fas fa-{{ 'ban' if plan.active else 'check' }}"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% else %}
-                            <tr>
-                                <td colspan="8" class="text-center text-muted py-4">Nenhum plano cadastrado.</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-5">Criado em:</dt>
+                        <dd class="col-sm-7">{{ plan.created_at.strftime('%d/%m/%Y %H:%M') }}</dd>
+                        
+                        <dt class="col-sm-5">Slug:</dt>
+                        <dd class="col-sm-7"><code>{{ plan.slug }}</code></dd>
+                        
+                        <dt class="col-sm-5">ID:</dt>
+                        <dd class="col-sm-7">{{ plan.id }}</dd>
+                    </dl>
+                    
+                    <hr>
+                    
+                    <h6>Preço Calculado:</h6>
+                    <div class="alert alert-success">
+                        <strong>R$ {{ '%.2f'|format(plan.get_price_for_period() or 0) }}</strong>
+                        <br>
+                        <small>por {{ plan.get_period_label(plan.supported_periods) }}</small>
+                        {% if plan.discount_percentage and plan.discount_percentage > 0 %}
+                        <br>
+                        <small class="text-muted">Desconto: {{ '%.1f'|format(plan.discount_percentage) }}%</small>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -226,15 +184,15 @@ function togglePetitionLimitField() {
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');
     const planTypeSelect = document.querySelector('select[name="plan_type"]');
-    
+
     // Inicializar estado do campo
     togglePetitionLimitField();
-    
+
     // Adicionar listener para mudanças no tipo de plano
     if (planTypeSelect) {
         planTypeSelect.addEventListener('change', togglePetitionLimitField);
     }
-    
+
     if (form) {
         form.addEventListener('submit', function(e) {
             const monthlyFee = document.querySelector('input[name="monthly_fee"]');
@@ -251,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return false;
                 }
             }
-            
+
             // Validar limite para planos limitados
             if (planType === 'limited' && limitField) {
                 const limitValue = parseInt(limitField.value) || 0;

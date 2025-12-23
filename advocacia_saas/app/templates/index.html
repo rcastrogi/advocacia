@@ -728,13 +728,8 @@
                             <span class="badge bg-primary mb-3">{{ plan.plan_type_label }}</span>
                             <p class="text-muted mb-3">{{ plan.description or 'Plano flexível para escritórios em crescimento que valorizam suporte dedicado.' }}</p>
                             <div class="pricing-highlight mb-3">
-                                {% if plan.is_per_usage %}
-                                    <span class="display-6 fw-bold text-primary">{{ plan.usage_rate }}</span>
-                                    <small class="text-muted ms-2">por petição</small>
-                                {% else %}
-                                    <span class="display-6 fw-bold text-primary">{{ plan.monthly_fee }}</span>
-                                    <small class="text-muted ms-2">/ mês</small>
-                                {% endif %}
+                                <span class="display-6 fw-bold text-primary">{{ plan.monthly_fee }}</span>
+                                <small class="text-muted ms-2">/ mês</small>
                             </div>
                             <p class="text-muted small mb-3">Sem fidelidade. Cancele quando quiser.</p>
                             <ul class="list-unstyled mb-4 text-muted">

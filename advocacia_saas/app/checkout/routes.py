@@ -50,7 +50,41 @@ def create_checkout_session(plan_id):
             current_user.stripe_customer_id = customer.id
             db.session.commit()
 
-        # Determine pricing mode
+        # Check if user has an active Stripe subscription for upgrade
+        existing_subscription = None
+        current_plan = current_user.get_active_plan()
+
+        # Apply proration for:
+        # 1. Limited → Unlimited upgrades
+        # 2. Unlimited → Unlimited upgrades (different periods)
+        should_apply_proration = False
+
+        if current_plan:
+            if (current_plan.plan.plan_type in ['limited', 'flat_monthly'] and 
+                plan.plan_type == 'unlimited'):
+                # Limited to unlimited upgrade
+                should_apply_proration = True
+            elif (current_plan.plan.plan_type == 'unlimited' and 
+                  plan.plan_type == 'unlimited' and
+                  plan.monthly_fee > current_plan.plan.monthly_fee):
+                # Unlimited to unlimited upgrade (higher price)
+                should_apply_proration = True
+
+        if should_apply_proration:
+            # Look for active Stripe subscription
+            try:
+                subscriptions = stripe_client.Subscription.list(
+                    customer=current_user.stripe_customer_id,
+                    status='active',
+                    limit=1
+                )
+                if subscriptions.data:
+                    existing_subscription = subscriptions.data[0]
+            except stripe.error.StripeError:
+                # If there's an error retrieving subscription, continue with new subscription
+                pass
+
+        # Determine pricing mode and handle upgrades
         if plan.is_per_usage:
             # Pay-per-use: One-time payment for initial setup
             line_items = [
@@ -59,7 +93,7 @@ def create_checkout_session(plan_id):
                         "currency": "brl",
                         "product_data": {
                             "name": f"{plan.name} - Taxa de Adesão",
-                            "description": f"Pagamento por uso: {plan.usage_rate} por petição",
+                            "description": f"Plano por uso - pague apenas pelo que utilizar",
                         },
                         "unit_amount": 0,  # Free to start, pay per petition
                     },
@@ -69,41 +103,109 @@ def create_checkout_session(plan_id):
             mode = "payment"
         else:
             # Monthly subscription
-            line_items = [
-                {
-                    "price_data": {
-                        "currency": "brl",
-                        "product_data": {
-                            "name": plan.name,
-                            "description": plan.description
-                            or f"Plano {plan.name} - Mensal",
-                        },
-                        "unit_amount": int(
-                            float(plan.monthly_fee) * 100
-                        ),  # Convert to cents
-                        "recurring": {"interval": "month"},
-                    },
-                    "quantity": 1,
-                }
-            ]
-            mode = "subscription"
+            if existing_subscription and current_plan:
+                # This is an upgrade - calculate proration
+                try:
+                    # Get current subscription item
+                    current_item = existing_subscription.items.data[0]
 
-        # Create Checkout Session
-        checkout_session = stripe_client.checkout.Session.create(
-            customer=current_user.stripe_customer_id,
-            payment_method_types=["card"],
-            line_items=line_items,
-            mode=mode,
-            success_url=current_app.config.get("STRIPE_SUCCESS_URL")
-            + "?session_id={CHECKOUT_SESSION_ID}",
-            cancel_url=current_app.config.get("STRIPE_CANCEL_URL"),
-            metadata={
-                "user_id": current_user.id,
-                "plan_id": plan.id,
-            },
-            allow_promotion_codes=True,
-            billing_address_collection="required",
-        )
+                    # Calculate proration for upgrade
+                    proration = stripe_client.Invoice.upcoming(
+                        customer=current_user.stripe_customer_id,
+                        subscription=existing_subscription.id,
+                        subscription_items=[{
+                            'id': current_item.id,
+                            'price_data': {
+                                'currency': 'brl',
+                                'product_data': {
+                                    'name': plan.name,
+                                    'description': plan.description or f"Plano {plan.name} - Mensal",
+                                },
+                                'unit_amount': int(float(plan.monthly_fee) * 100),
+                                'recurring': {'interval': 'month'},
+                            },
+                        }],
+                        subscription_proration_behavior='always_invoice',
+                    )
+
+                    # Create checkout session for upgrade with proration
+                    checkout_session = stripe_client.checkout.Session.create(
+                        customer=current_user.stripe_customer_id,
+                        payment_method_types=["card"],
+                        line_items=[{
+                            "price": proration.lines.data[-1].price.id,  # Use the prorated price
+                            "quantity": 1,
+                        }],
+                        mode="subscription",
+                        subscription_data={
+                            "items": [{
+                                'price_data': {
+                                    'currency': 'brl',
+                                    'product_data': {
+                                        'name': plan.name,
+                                        'description': plan.description or f"Plano {plan.name} - Mensal",
+                                    },
+                                    'unit_amount': int(float(plan.monthly_fee) * 100),
+                                    'recurring': {'interval': 'month'},
+                                },
+                            }],
+                            "proration_behavior": "always_invoice",
+                        },
+                        success_url=current_app.config.get("STRIPE_SUCCESS_URL")
+                        + "?session_id={CHECKOUT_SESSION_ID}",
+                        cancel_url=current_app.config.get("STRIPE_CANCEL_URL"),
+                        metadata={
+                            "user_id": current_user.id,
+                            "plan_id": plan.id,
+                            "upgrade": "true",
+                            "old_plan_id": current_plan.plan.id,
+                        },
+                        allow_promotion_codes=True,
+                        billing_address_collection="required",
+                    )
+
+                except stripe.error.StripeError as e:
+                    # If proration fails, fall back to new subscription
+                    current_app.logger.warning(f"Proration failed, creating new subscription: {str(e)}")
+                    existing_subscription = None
+
+            if not existing_subscription:
+                # New subscription or fallback
+                line_items = [
+                    {
+                        "price_data": {
+                            "currency": "brl",
+                            "product_data": {
+                                "name": plan.name,
+                                "description": plan.description
+                                or f"Plano {plan.name} - Mensal",
+                            },
+                            "unit_amount": int(
+                                float(plan.monthly_fee) * 100
+                            ),  # Convert to cents
+                            "recurring": {"interval": "month"},
+                        },
+                        "quantity": 1,
+                    }
+                ]
+                mode = "subscription"
+
+                # Create Checkout Session
+                checkout_session = stripe_client.checkout.Session.create(
+                    customer=current_user.stripe_customer_id,
+                    payment_method_types=["card"],
+                    line_items=line_items,
+                    mode=mode,
+                    success_url=current_app.config.get("STRIPE_SUCCESS_URL")
+                    + "?session_id={CHECKOUT_SESSION_ID}",
+                    cancel_url=current_app.config.get("STRIPE_CANCEL_URL"),
+                    metadata={
+                        "user_id": current_user.id,
+                        "plan_id": plan.id,
+                    },
+                    allow_promotion_codes=True,
+                    billing_address_collection="required",
+                )
 
         # Store session ID in user session for later verification
         session["pending_checkout_session_id"] = checkout_session.id

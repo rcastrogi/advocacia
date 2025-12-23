@@ -507,7 +507,6 @@ class BillingPlan(db.Model):
     name = db.Column(db.String(120), nullable=False)
     plan_type = db.Column(db.String(20), nullable=False, default="per_usage")
     monthly_fee = db.Column(db.Numeric(10, 2), default=Decimal("0.00"))
-    usage_rate = db.Column(db.Numeric(10, 2), default=Decimal("0.00"))
     monthly_petition_limit = db.Column(db.Integer, default=None)  # None = ilimitado
     description = db.Column(db.Text)
     active = db.Column(db.Boolean, default=True)
@@ -515,11 +514,11 @@ class BillingPlan(db.Model):
 
     # Novos campos para períodos flexíveis
     supported_periods = db.Column(
-        db.JSON, default=["1m", "3m", "6m", "1y", "2y", "3y"]
-    )  # Períodos suportados
-    period_discounts = db.Column(
-        db.JSON, default={"1m": 0.0, "3m": 5.0, "6m": 7.0, "1y": 9.0, "2y": 13.0, "3y": 20.0}
-    )  # Desconto específico por período (%)
+        db.String(10), default="1m"
+    )  # Período único suportado
+    discount_percentage = db.Column(
+        db.Numeric(5, 2), default=Decimal("0.00")
+    )  # Desconto único para o período
 
     petition_types = db.relationship(
         "PetitionType",
@@ -536,21 +535,26 @@ class BillingPlan(db.Model):
     def includes_petition(self, petition_type):
         return petition_type in self.petition_types
 
-    def get_price_for_period(self, period):
-        """Calcula o preço para um período específico com desconto específico do período"""
-        if period not in self.supported_periods:
+    def get_price_for_period(self, period=None):
+        """Calcula o preço para o período do plano com desconto"""
+        # Se não especificar período, usa o período do plano
+        if period is None:
+            period = self.supported_periods
+
+        # Se o período solicitado não é o suportado pelo plano, retorna None
+        if period != self.supported_periods:
             return None
 
         # Converter período para meses
         period_months = self._period_to_months(period)
         base_price = float(self.monthly_fee) * period_months
 
-        # Aplicar desconto específico do período
-        discounts = self.period_discounts or {}
-        discount_percentage = discounts.get(period, 0.0)
-        discount_amount = base_price * (discount_percentage / 100.0)
+        # Aplicar desconto se houver
+        if self.discount_percentage and self.discount_percentage > 0:
+            discount = base_price * (float(self.discount_percentage) / 100)
+            return round(base_price - discount, 2)
 
-        return round(base_price - discount_amount, 2)
+        return round(base_price, 2)
 
     def _period_to_months(self, period):
         """Converte período para meses"""
@@ -578,7 +582,9 @@ class BillingPlan(db.Model):
     def plan_type_label(self):
         """Get friendly label for plan type"""
         labels = {
-            "per_usage": "Pague por uso",
+            "per_usage": "Por petição",
+            "limited": "Mensal limitado",
+            "unlimited": "Mensal ilimitado",
             "flat_monthly": "Mensal",
             "monthly": "Mensal",
             "annual": "Anual",

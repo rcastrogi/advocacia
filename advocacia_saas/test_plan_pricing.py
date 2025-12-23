@@ -4,6 +4,7 @@
 from app import create_app
 from app.models import BillingPlan
 
+
 def test_plan_pricing():
     """Testa o cálculo de preços para diferentes períodos"""
     app = create_app()
@@ -11,7 +12,9 @@ def test_plan_pricing():
 
     # Simular plano para teste de cálculo
     class MockPlan:
-        def __init__(self, name, plan_type, monthly_fee, supported_periods, period_discounts):
+        def __init__(
+            self, name, plan_type, monthly_fee, supported_periods, period_discounts
+        ):
             self.name = name
             self.plan_type = plan_type
             self.monthly_fee = monthly_fee
@@ -43,8 +46,15 @@ def test_plan_pricing():
         name="Plano Profissional",
         plan_type="monthly",
         monthly_fee=99.90,
-        supported_periods=['1m', '3m', '6m', '1y', '2y'],
-        period_discounts={'1m': 0.0, '3m': 5.0, '6m': 7.0, '1y': 9.0, '2y': 13.0, '3y': 20.0}
+        supported_periods=["1m", "3m", "6m", "1y", "2y"],
+        period_discounts={
+            "1m": 0.0,
+            "3m": 5.0,
+            "6m": 7.0,
+            "1y": 9.0,
+            "2y": 13.0,
+            "3y": 20.0,
+        },
     )
 
     print("🧪 TESTE DO SISTEMA DE PREÇOS")
@@ -62,7 +72,7 @@ def test_plan_pricing():
     print("📊 PREÇOS CALCULADOS POR PERÍODO:")
     print("-" * 40)
 
-    for period in ['1m', '3m', '6m', '1y', '2y', '3y']:
+    for period in ["1m", "3m", "6m", "1y", "2y", "3y"]:
         if period in plan.supported_periods:
             price = plan.get_price_for_period(period)
             print(f"  {period}: R$ {price}")
@@ -70,6 +80,7 @@ def test_plan_pricing():
             print(f"  {period}: NÃO SUPORTADO")
     print()
     print("✅ Teste concluído!")
+
 
 if __name__ == "__main__":
     test_plan_pricing()

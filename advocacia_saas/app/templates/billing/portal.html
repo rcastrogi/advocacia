@@ -8,11 +8,16 @@
                 <h1 class="h3 mb-1"><i class="fas fa-credit-card"></i> Minha assinatura</h1>
                 <p class="text-muted mb-0">Veja o plano atual, uso de petições e situação de pagamento.</p>
             </div>
-            {% if current_user.user_type == 'master' %}
-            <a href="{{ url_for('billing.petition_types') }}" class="btn btn-outline-primary">
-                <i class="fas fa-layer-group"></i> Gerenciar tipos
-            </a>
-            {% endif %}
+            <div>
+                <a href="{{ url_for('billing.upgrade') }}" class="btn btn-success me-2">
+                    <i class="fas fa-arrow-up"></i> Fazer Upgrade
+                </a>
+                {% if current_user.user_type == 'master' %}
+                <a href="{{ url_for('billing.petition_types') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-layer-group"></i> Gerenciar tipos
+                </a>
+                {% endif %}
+            </div>
         </div>
     </div>
 

@@ -24,17 +24,11 @@
 
                     <!-- Preço Fixo (Mensal) -->
                     <div class="text-center mb-4">
-                        {% if plan.plan_type == 'per_usage' %}
-                        <div class="display-4 fw-bold">
-                            R$ {{ "%.2f"|format(plan.usage_rate) }}
-                        </div>
-                        <small class="text-muted">por petição</small>
-                        {% else %}
                         <div class="display-4 fw-bold">
                             R$ {{ "%.2f"|format(plan.monthly_fee) }}
                         </div>
                         <small class="text-muted">por mês</small>
-                        {% endif %}
+                    </div>
                     </div>
                         <div class="display-4 fw-bold price-display">
                             R$ {{ "%.2f"|format(plan.get_price_for_period('1y') or plan.monthly_fee * 12) }}

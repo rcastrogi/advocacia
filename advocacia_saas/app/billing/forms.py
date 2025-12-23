@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 
 from flask_wtf import FlaskForm
@@ -11,7 +12,6 @@ from wtforms import (
     ValidationError,
 )
 from wtforms.validators import DataRequired, Length, Optional
-import json
 
 
 def validate_json(form, field):
@@ -19,7 +19,9 @@ def validate_json(form, field):
     try:
         json.loads(field.data)
     except (json.JSONDecodeError, TypeError):
-        raise ValidationError('JSON inválido. Use o formato: {"1m": 0.0, "3m": 5.0, ...}')
+        raise ValidationError(
+            'JSON inválido. Use o formato: {"1m": 0.0, "3m": 5.0, ...}'
+        )
 
 
 class PetitionTypeForm(FlaskForm):
@@ -58,7 +60,11 @@ class BillingPlanForm(FlaskForm):
     )
     plan_type = SelectField(
         "Tipo de cobrança",
-        choices=[("per_usage", "Por petição"), ("flat_monthly", "Mensal ilimitado")],
+        choices=[
+            ("per_usage", "Por petição"),
+            ("limited", "Mensal limitado"),
+            ("unlimited", "Mensal ilimitado"),
+        ],
         validators=[DataRequired()],
     )
     monthly_fee = DecimalField(
@@ -67,14 +73,13 @@ class BillingPlanForm(FlaskForm):
         default=Decimal("0.00"),
         validators=[Optional()],
     )
-    usage_rate = DecimalField(
-        "Valor por petição (R$)",
-        places=2,
-        default=Decimal("0.00"),
+    monthly_petition_limit = StringField(
+        "Limite de petições por mês",
         validators=[Optional()],
+        render_kw={"placeholder": "Ex: 50, ilimitado, etc."},
     )
     supported_periods = SelectField(
-        "Períodos suportados",
+        "Período de cobrança",
         choices=[
             ("1m", "1 mês"),
             ("3m", "3 meses"),
@@ -83,19 +88,13 @@ class BillingPlanForm(FlaskForm):
             ("2y", "2 anos"),
             ("3y", "3 anos"),
         ],
-        default=["1m", "3m", "6m", "1y", "2y", "3y"],
+        validators=[DataRequired()],
     )
     discount_percentage = DecimalField(
         "Desconto (%)",
         places=1,
         default=Decimal("0.0"),
         validators=[Optional()],
-    )
-    period_discounts = TextAreaField(
-        "Descontos por período (JSON)",
-        validators=[Optional(), validate_json],
-        render_kw={"rows": 4, "placeholder": '{"1m": 0.0, "3m": 5.0, "6m": 7.0, "1y": 9.0, "2y": 13.0, "3y": 20.0}'},
-        default='{"1m": 0.0, "3m": 5.0, "6m": 7.0, "1y": 9.0, "2y": 13.0, "3y": 20.0}'
     )
     active = BooleanField("Ativo", default=True)
     submit = SubmitField("Salvar plano")

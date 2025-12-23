@@ -1,6 +1,6 @@
+import json
 from datetime import datetime, timedelta
 from decimal import Decimal
-import json
 
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -44,6 +44,30 @@ def portal():
         cycle=cycle,
         usages=usages,
         totals=totals,
+    )
+
+
+@bp.route("/upgrade")
+@login_required
+def upgrade():
+    """Página para upgrade de plano"""
+    current_plan = current_user.get_active_plan()
+    
+    # Buscar planos disponíveis para upgrade (excluindo o atual e planos por uso)
+    available_plans = BillingPlan.query.filter(
+        BillingPlan.active == True,
+        BillingPlan.plan_type != 'per_usage'
+    ).order_by(BillingPlan.monthly_fee).all()
+    
+    # Remover o plano atual da lista se existir
+    if current_plan:
+        available_plans = [p for p in available_plans if p.id != current_plan.plan.id]
+    
+    return render_template(
+        "billing/upgrade.html",
+        title="Fazer Upgrade de Plano",
+        current_plan=current_plan,
+        available_plans=available_plans,
     )
 
 
@@ -151,10 +175,12 @@ def plans():
                 plan_type=form.plan_type.data,
                 monthly_fee=form.monthly_fee.data or Decimal("0.00"),
                 usage_rate=form.usage_rate.data or Decimal("0.00"),
-                supported_periods=form.supported_periods.data
-                or ["1m", "3m", "6m", "1y", "2y", "3y"],
+                monthly_petition_limit=int(form.monthly_petition_limit.data)
+                if form.monthly_petition_limit.data
+                and form.monthly_petition_limit.data.isdigit()
+                else None,
+                supported_periods=form.supported_periods.data,
                 discount_percentage=form.discount_percentage.data or Decimal("0.00"),
-                period_discounts=json.loads(form.period_discounts.data) if form.period_discounts.data else {"1m": 0.0, "3m": 5.0, "6m": 7.0, "1y": 9.0, "2y": 13.0, "3y": 20.0},
                 active=form.active.data,
             )
             db.session.add(plan)
@@ -177,6 +203,61 @@ def toggle_plan(plan_id):
     db.session.commit()
     flash("Plano atualizado!", "success")
     return redirect(url_for("billing.plans"))
+
+
+@bp.route("/plans/<int:plan_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_plan(plan_id):
+    _require_admin()
+
+    plan = BillingPlan.query.get_or_404(plan_id)
+    form = BillingPlanForm()
+
+    if form.validate_on_submit():
+        # Verificar se o novo nome não conflita com outros planos
+        new_slug = slugify(form.name.data)
+        existing_plan = BillingPlan.query.filter_by(slug=new_slug).first()
+        if existing_plan and existing_plan.id != plan.id:
+            flash("Já existe um plano com este nome.", "warning")
+        else:
+            plan.slug = new_slug
+            plan.name = form.name.data
+            plan.description = form.description.data
+            plan.plan_type = form.plan_type.data
+            plan.monthly_fee = form.monthly_fee.data or Decimal("0.00")
+            plan.monthly_petition_limit = (
+                int(form.monthly_petition_limit.data)
+                if form.monthly_petition_limit.data
+                and form.monthly_petition_limit.data.isdigit()
+                else None
+            )
+            plan.supported_periods = form.supported_periods.data
+            plan.discount_percentage = form.discount_percentage.data or Decimal("0.00")
+            plan.active = form.active.data
+
+            db.session.commit()
+            flash("Plano atualizado com sucesso!", "success")
+            return redirect(url_for("billing.plans"))
+
+    # Preencher o formulário com os dados atuais do plano
+    elif request.method == "GET":
+        form.name.data = plan.name
+        form.description.data = plan.description
+        form.plan_type.data = plan.plan_type
+        form.monthly_fee.data = plan.monthly_fee
+        form.monthly_petition_limit.data = (
+            str(plan.monthly_petition_limit) if plan.monthly_petition_limit else ""
+        )
+        form.supported_periods.data = plan.supported_periods
+        form.discount_percentage.data = plan.discount_percentage
+        form.active.data = plan.active
+
+    return render_template(
+        "billing/edit_plan.html",
+        title=f"Editar Plano - {plan.name}",
+        form=form,
+        plan=plan,
+    )
 
 
 @bp.route("/users", methods=["GET", "POST"])
