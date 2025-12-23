@@ -513,6 +513,14 @@ class BillingPlan(db.Model):
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Novos campos para períodos flexíveis
+    supported_periods = db.Column(
+        db.JSON, default=["1m", "3m", "6m", "1y", "2y", "3y"]
+    )  # Períodos suportados
+    discount_percentage = db.Column(
+        db.Numeric(5, 2), default=Decimal("0.00")
+    )  # Desconto para períodos maiores
+
     petition_types = db.relationship(
         "PetitionType",
         secondary=plan_petition_types,
@@ -527,6 +535,39 @@ class BillingPlan(db.Model):
 
     def includes_petition(self, petition_type):
         return petition_type in self.petition_types
+
+    def get_price_for_period(self, period):
+        """Calcula o preço para um período específico com desconto"""
+        if period not in self.supported_periods:
+            return None
+
+        # Converter período para meses
+        period_months = self._period_to_months(period)
+        base_price = float(self.monthly_fee) * period_months
+
+        # Aplicar desconto se houver
+        if self.discount_percentage > 0:
+            discount = base_price * (float(self.discount_percentage) / 100)
+            return base_price - discount
+
+        return base_price
+
+    def _period_to_months(self, period):
+        """Converte período para meses"""
+        period_map = {"1m": 1, "3m": 3, "6m": 6, "1y": 12, "2y": 24, "3y": 36}
+        return period_map.get(period, 1)
+
+    def get_period_label(self, period):
+        """Retorna o rótulo amigável para o período"""
+        period_labels = {
+            "1m": "1 mês",
+            "3m": "3 meses",
+            "6m": "6 meses",
+            "1y": "1 ano",
+            "2y": "2 anos",
+            "3y": "3 anos",
+        }
+        return period_labels.get(period, period)
 
     @property
     def is_per_usage(self):
@@ -1410,7 +1451,9 @@ class Subscription(db.Model):
     plan_type = db.Column(
         db.String(50), nullable=False
     )  # 'basic', 'professional', 'enterprise'
-    billing_period = db.Column(db.String(20), nullable=False)  # 'monthly', 'yearly'
+    billing_period = db.Column(
+        db.String(20), nullable=False
+    )  # '1m', '3m', '6m', '1y', '2y', '3y'
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     currency = db.Column(db.String(3), default="BRL")
 
@@ -1423,6 +1466,13 @@ class Subscription(db.Model):
     current_period_end = db.Column(db.DateTime)
     cancel_at_period_end = db.Column(db.Boolean, default=False)
     canceled_at = db.Column(db.DateTime)
+
+    # Política de reembolso
+    refund_policy = db.Column(
+        db.String(20), default="no_refund"
+    )  # 'no_refund', 'proportional', 'credit'
+    refund_amount = db.Column(db.Numeric(10, 2))  # Valor a reembolsar (se aplicável)
+    refund_processed_at = db.Column(db.DateTime)
 
     # Gateway info
     gateway = db.Column(db.String(20))  # 'stripe', 'mercadopago'
@@ -1451,13 +1501,36 @@ class Subscription(db.Model):
         )
 
     def cancel(self, immediate=False):
-        """Cancela a assinatura"""
-        if immediate:
-            self.status = "canceled"
-            self.canceled_at = datetime.utcnow()
-        else:
+        """Cancela a assinatura - LEGACY: use cancel_with_policy"""
+        return self.cancel_with_policy(immediate=immediate)
+
+    def cancel_with_policy(self, immediate=False, refund_policy="no_refund"):
+        """
+        Cancela assinatura seguindo política padrão.
+
+        Política padrão: Cancelamento ao fim do período, sem reembolso.
+        Para planos com desconto, mantém acesso até o fim do período pago.
+        """
+        # Política padrão: sempre cancelar ao fim do período para planos com desconto
+        if self.billing_period != "1m":
+            # Planos maiores (3m, 6m, 1y, etc.) sempre cancelam ao fim do período
             self.cancel_at_period_end = True
+            self.refund_policy = "no_refund"
+            print(
+                f"✅ Plano {self.billing_period} cancelado ao fim do período (política padrão)"
+            )
+        else:
+            # Planos mensais podem cancelar imediatamente se solicitado
+            if immediate:
+                self.status = "canceled"
+                self.canceled_at = datetime.utcnow()
+                self.refund_policy = refund_policy
+            else:
+                self.cancel_at_period_end = True
+                self.refund_policy = "no_refund"
+
         db.session.commit()
+        return True
 
 
 class Expense(db.Model):

@@ -21,13 +21,19 @@ class Config:
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # PostgreSQL connection pool settings
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_pre_ping": True,  # Verify connection before using
-        "pool_recycle": 300,  # Recycle connections every 5 minutes
-        "pool_size": 5,  # Number of connections to keep
-        "max_overflow": 10,  # Extra connections when pool is full
-    }
+    # PostgreSQL connection pool settings (only for PostgreSQL)
+    if DATABASE_URL.startswith("postgresql://") or DATABASE_URL.startswith(
+        "postgres://"
+    ):
+        SQLALCHEMY_ENGINE_OPTIONS = {
+            "pool_pre_ping": True,  # Verify connection before using
+            "pool_recycle": 300,  # Recycle connections every 5 minutes
+            "pool_size": 5,  # Number of connections to keep
+            "max_overflow": 10,  # Extra connections when pool is full
+        }
+    else:
+        # SQLite doesn't support connection pooling
+        SQLALCHEMY_ENGINE_OPTIONS = {}
 
     UPLOAD_FOLDER = os.path.join(basedir, "app", "static", "uploads")
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size

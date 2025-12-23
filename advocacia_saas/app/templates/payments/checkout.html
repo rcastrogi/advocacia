@@ -24,9 +24,7 @@
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Período:</span>
-                            <strong>
-                                {% if billing_period == 'monthly' %}Mensal{% else %}Anual{% endif %}
-                            </strong>
+                            <strong>{{ period_label }}</strong>
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between">
@@ -34,7 +32,7 @@
                             <span class="h5 text-primary">
                                 R$ {{ "%.2f"|format(amount) }}
                                 <small class="text-muted">
-                                    {% if billing_period == 'yearly' %}/ano{% else %}/mês{% endif %}
+                                    {% if billing_period in ['1m', '3m', '6m'] %}({{ period_label }}){% else %}({{ period_label }}){% endif %}
                                 </small>
                             </span>
                         </div>
@@ -94,9 +92,31 @@
 
                     <!-- Área de Pagamento Mercado Pago (subscription) -->
                     <div id="mercadopago-area" class="{% if plan_type == 'per_usage' %}d-none{% endif %} mt-4">
+                        <!-- Termo de Adesão à Política de Cancelamento -->
+                        <div class="alert alert-warning border">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-exclamation-triangle text-warning fa-lg me-3 mt-1"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-2">Política de Cancelamento e Reembolso</h6>
+                                    <p class="mb-2 small">
+                                        Antes de prosseguir, leia e confirme que está ciente da nossa
+                                        <a href="{{ url_for('payments.cancellation_policy') }}" target="_blank" class="text-decoration-underline">
+                                            política de cancelamento
+                                        </a>.
+                                    </p>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="cancellationPolicyCheck" required>
+                                        <label class="form-check-label small" for="cancellationPolicyCheck">
+                                            <strong>Declaro que li e concordo com a política de cancelamento e reembolso.</strong>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="text-center">
                             <p class="mb-3">Você será redirecionado para o checkout seguro do Mercado Pago.</p>
-                            <button type="button" class="btn btn-success btn-lg" onclick="processMercadoPagoSubscription()">
+                            <button type="button" class="btn btn-success btn-lg" id="paymentBtn" onclick="processMercadoPagoSubscription()" disabled>
                                 <i class="fas fa-money-bill-wave me-2"></i>
                                 Continuar para o Pagamento
                             </button>
@@ -111,6 +131,113 @@
                         </small>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal da Política de Cancelamento -->
+<div class="modal fade" id="cancellationPolicyModal" tabindex="-1" aria-labelledby="cancellationPolicyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="cancellationPolicyModalLabel">
+                    <i class="fas fa-file-contract me-2"></i>
+                    Política de Cancelamento e Reembolso
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Importante:</strong> Esta política se aplica exclusivamente a advogados e profissionais do direito.
+                </div>
+
+                <h6 class="text-primary mb-3"><i class="fas fa-calendar-times me-2"></i>Política de Cancelamento</h6>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border-success mb-3">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Planos Mensais (1 mês)</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-0">
+                                    <li><i class="fas fa-arrow-right text-success me-2"></i>Cancelamento imediato disponível</li>
+                                    <li><i class="fas fa-arrow-right text-success me-2"></i>Ou cancelamento ao fim do período</li>
+                                    <li><i class="fas fa-arrow-right text-success me-2"></i>Sem reembolso proporcional</li>
+                                    <li><i class="fas fa-arrow-right text-success me-2"></i>Acesso mantido até o cancelamento</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-warning mb-3">
+                            <div class="card-header bg-warning text-dark">
+                                <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Planos com Desconto (3m, 6m, 1y, etc.)</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-0">
+                                    <li><i class="fas fa-arrow-right text-warning me-2"></i><strong>Sempre cancela ao fim do período</strong></li>
+                                    <li><i class="fas fa-arrow-right text-warning me-2"></i><strong>Sem reembolso</strong></li>
+                                    <li><i class="fas fa-arrow-right text-warning me-2"></i>Acesso completo até o fim</li>
+                                    <li><i class="fas fa-arrow-right text-warning me-2"></i>Você já recebeu o desconto antecipado</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="text-primary mb-3 mt-4"><i class="fas fa-handshake me-2"></i>Por que esta política?</h6>
+
+                <div class="alert alert-light border">
+                    <p class="mb-2"><strong>Para Advogados:</strong> Como profissional do direito, você entende a importância de contratos claros e previsíveis.</p>
+                    <p class="mb-2"><strong>Justiça:</strong> Planos com desconto antecipado não permitem reembolso porque você já recebeu o benefício do valor reduzido.</p>
+                    <p class="mb-2"><strong>Transparência:</strong> Você sabe exatamente o que está contratando e por quanto tempo terá acesso.</p>
+                    <p class="mb-0"><strong>Proteção:</strong> Esta política evita disputas e garante que ambos os lados cumpram o acordado.</p>
+                </div>
+
+                <h6 class="text-primary mb-3"><i class="fas fa-balance-scale me-2"></i>Exemplos Práticos</h6>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Plano Contratado</th>
+                                <th>Situação</th>
+                                <th>Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Profissional Anual<br><small class="text-muted">R$ 1.009,80 (15% desconto)</small></td>
+                                <td>Cancelamento no 6º mês</td>
+                                <td><span class="badge bg-warning">Acesso mantido até 12º mês<br><small>Sem reembolso</small></span></td>
+                            </tr>
+                            <tr>
+                                <td>Básico Mensal<br><small class="text-muted">R$ 49,00/mês</small></td>
+                                <td>Cancelamento imediato</td>
+                                <td><span class="badge bg-success">Cancelado imediatamente<br><small>Sem reembolso</small></span></td>
+                            </tr>
+                            <tr>
+                                <td>Enterprise Trimestral<br><small class="text-muted">R$ 252,45 (15% desconto)</small></td>
+                                <td>Cancelamento solicitado</td>
+                                <td><span class="badge bg-warning">Acesso mantido até 3º mês<br><small>Sem reembolso</small></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-secondary">
+                    <h6 class="mb-2"><i class="fas fa-question-circle me-2"></i>Dúvidas?</h6>
+                    <p class="mb-0">Entre em contato conosco antes de assinar se tiver dúvidas sobre esta política.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                    <i class="fas fa-check me-2"></i>Entendi a Política
+                </button>
             </div>
         </div>
     </div>
@@ -256,6 +383,25 @@ function showSuccessToast(message, title, duration) {
     // Fallback if toast not available
     alert(message);
 }
+
+// Controle do checkbox da política de cancelamento
+document.addEventListener('DOMContentLoaded', function() {
+    const policyCheck = document.getElementById('cancellationPolicyCheck');
+    const paymentBtn = document.getElementById('paymentBtn');
+
+    if (policyCheck && paymentBtn) {
+        policyCheck.addEventListener('change', function() {
+            paymentBtn.disabled = !this.checked;
+            if (this.checked) {
+                paymentBtn.classList.remove('btn-secondary');
+                paymentBtn.classList.add('btn-success');
+            } else {
+                paymentBtn.classList.remove('btn-success');
+                paymentBtn.classList.add('btn-secondary');
+            }
+        });
+    }
+});
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {

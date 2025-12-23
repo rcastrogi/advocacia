@@ -66,16 +66,22 @@ def subscribe(plan_slug, billing_period):
         flash("Plano inválido", "error")
         return redirect(url_for("payments.plans"))
 
-    if billing_period not in ["monthly", "yearly"]:
+    # Validar período de cobrança
+    valid_periods = ["1m", "3m", "6m", "1y", "2y", "3y"]
+    if billing_period not in valid_periods:
         flash("Período de cobrança inválido", "error")
         return redirect(url_for("payments.plans"))
 
-    # Para planos mensais, usar monthly_fee; para yearly, calcular baseado no monthly_fee
-    if billing_period == "monthly":
-        amount = float(plan.monthly_fee)
-    else:  # yearly
-        amount = float(plan.monthly_fee) * 12
-    amount = plan[billing_period]
+    # Verificar se o plano suporta este período
+    if billing_period not in plan.supported_periods:
+        flash("Este plano não suporta o período selecionado", "error")
+        return redirect(url_for("payments.plans"))
+
+    # Calcular valor usando o método do modelo
+    amount = plan.get_price_for_period(billing_period)
+    if amount is None:
+        flash("Erro ao calcular preço", "error")
+        return redirect(url_for("payments.plans"))
 
     # Verificar se já tem assinatura ativa
     existing = Subscription.query.filter_by(
@@ -93,6 +99,7 @@ def subscribe(plan_slug, billing_period):
         plan_name=plan.name,
         billing_period=billing_period,
         amount=amount,
+        period_label=plan.get_period_label(billing_period),
     )
 
 
@@ -530,3 +537,9 @@ def payment_status(payment_id):
         abort(403)
 
     return jsonify(payment.to_dict())
+
+
+@bp.route("/cancellation-policy")
+def cancellation_policy():
+    """Página da política de cancelamento e reembolso"""
+    return render_template("payments/cancellation_policy.html")

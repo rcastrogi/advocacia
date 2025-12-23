@@ -8,15 +8,17 @@
         <h1 class="display-4 fw-bold">Escolha seu Plano</h1>
         <p class="lead text-muted">Modernize seu escritório com o Petitio</p>
         
-        <!-- Toggle Monthly/Yearly -->
-        <div class="btn-group mt-3" role="group">
-            <input type="radio" class="btn-check" name="billing-toggle" id="monthly-toggle" checked>
-            <label class="btn btn-outline-primary" for="monthly-toggle">Mensal</label>
-            
-            <input type="radio" class="btn-check" name="billing-toggle" id="yearly-toggle">
-            <label class="btn btn-outline-primary" for="yearly-toggle">
-                Anual <span class="badge bg-success ms-1">-17%</span>
-            </label>
+        <!-- Seleção de Período -->
+        <div class="mt-3">
+            <label for="billing-period-select" class="form-label fw-bold">Período de cobrança:</label>
+            <select class="form-select" id="billing-period-select" style="max-width: 200px; margin: 0 auto;">
+                <option value="1m">1 mês</option>
+                <option value="3m">3 meses</option>
+                <option value="6m">6 meses</option>
+                <option value="1y" selected>1 ano</option>
+                <option value="2y">2 anos</option>
+                <option value="3y">3 anos</option>
+            </select>
         </div>
     </div>
     
@@ -33,18 +35,30 @@
                 <div class="card-body d-flex flex-column">
                     <h3 class="card-title text-center">{{ plan.name }}</h3>
 
-                    <!-- Preço Mensal -->
-                    <div class="text-center mb-4 price-monthly">
+                    <!-- Preço Dinâmico -->
+                    <div class="text-center mb-4 plan-price" data-plan="{{ plan.slug }}"
+                         data-prices='{
+                             {% for period in plan.supported_periods %}
+                             "{{ period }}": {{ plan.get_price_for_period(period) }}{% if not loop.last %},{% endif %}
+                             {% endfor %}
+                         }'>
                         {% if plan.plan_type == 'per_usage' %}
-                        <div class="display-4 fw-bold">
+                        <div class="display-4 fw-bold price-display">
                             R$ {{ "%.2f"|format(plan.usage_rate) }}
                         </div>
                         <small class="text-muted">por petição</small>
                         {% else %}
-                        <div class="display-4 fw-bold">
-                            R$ {{ "%.2f"|format(plan.monthly_fee) }}
+                        <div class="display-4 fw-bold price-display">
+                            R$ {{ "%.2f"|format(plan.get_price_for_period('1y') or plan.monthly_fee * 12) }}
                         </div>
-                        <small class="text-muted">por mês</small>
+                        <small class="text-muted period-display">por ano</small>
+                        {% if plan.discount_percentage > 0 %}
+                        <div class="mt-2">
+                            <small class="text-success fw-bold discount-display">
+                                Desconto de {{ "%.0f"|format(plan.discount_percentage) }}%
+                            </small>
+                        </div>
+                        {% endif %}
                         {% if plan.monthly_petition_limit %}
                         <div class="mt-2">
                             <small class="text-info fw-bold">Até {{ plan.monthly_petition_limit }} petições/mês</small>
@@ -56,21 +70,6 @@
                         {% endif %}
                         {% endif %}
                     </div>
-
-                    <!-- Preço Anual (escondido inicialmente) -->
-                    {% if plan.plan_type == 'monthly' %}
-                    <div class="text-center mb-4 price-yearly d-none">
-                        <div class="display-4 fw-bold">
-                            R$ {{ "%.2f"|format(plan.monthly_fee) }}
-                        </div>
-                        <small class="text-muted">por mês (cobrado anualmente)</small>
-                        <div class="mt-2">
-                            <small class="text-success fw-bold">
-                                Economize R$ {{ "%.2f"|format(plan.monthly_fee) }}/ano
-                            </small>
-                        </div>
-                    </div>
-                    {% endif %}
 
                     <!-- Descrição/Features -->
                     <div class="mb-4 flex-grow-1">
@@ -142,28 +141,70 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const monthlyToggle = document.getElementById('monthly-toggle');
-    const yearlyToggle = document.getElementById('yearly-toggle');
-    const monthlyPrices = document.querySelectorAll('.price-monthly');
-    const yearlyPrices = document.querySelectorAll('.price-yearly');
+    const periodSelect = document.getElementById('billing-period-select');
+    const planPrices = document.querySelectorAll('.plan-price');
     const subscribeButtons = document.querySelectorAll('.subscribe-btn');
 
+    const periodLabels = {
+        '1m': 'por mês',
+        '3m': 'por 3 meses',
+        '6m': 'por 6 meses',
+        '1y': 'por ano',
+        '2y': 'por 2 anos',
+        '3y': 'por 3 anos'
+    };
+
     function updatePrices() {
-        const isYearly = yearlyToggle.checked;
+        const selectedPeriod = periodSelect.value;
 
-        monthlyPrices.forEach(el => el.classList.toggle('d-none', isYearly));
-        yearlyPrices.forEach(el => el.classList.toggle('d-none', !isYearly));
+        planPrices.forEach(planElement => {
+            const planSlug = planElement.dataset.plan;
+            const prices = JSON.parse(planElement.dataset.prices);
 
-        // Update button links
+            // Skip pay-per-use plans
+            if (!prices[selectedPeriod]) return;
+
+            const price = prices[selectedPeriod];
+            const priceDisplay = planElement.querySelector('.price-display');
+            const periodDisplay = planElement.querySelector('.period-display');
+            const discountDisplay = planElement.querySelector('.discount-display');
+
+            // Update price
+            priceDisplay.textContent = `R$ ${price.toFixed(2)}`;
+
+            // Update period label
+            if (periodDisplay) {
+                periodDisplay.textContent = periodLabels[selectedPeriod];
+            }
+
+            // Show/hide discount info
+            if (discountDisplay) {
+                const basePrice = prices['1m'] * (selectedPeriod === '1m' ? 1 :
+                                selectedPeriod === '3m' ? 3 :
+                                selectedPeriod === '6m' ? 6 :
+                                selectedPeriod === '1y' ? 12 :
+                                selectedPeriod === '2y' ? 24 : 36);
+                const discountAmount = basePrice - price;
+                if (discountAmount > 0) {
+                    discountDisplay.textContent = `Economia de R$ ${discountAmount.toFixed(2)}`;
+                    discountDisplay.style.display = 'block';
+                } else {
+                    discountDisplay.style.display = 'none';
+                }
+            }
+        });
+
+        // Update subscribe button links
         subscribeButtons.forEach(btn => {
             const plan = btn.dataset.plan;
-            const period = isYearly ? 'yearly' : 'monthly';
-            btn.href = `/payments/subscribe/${plan}/${period}`;
+            btn.href = `/payments/subscribe/${plan}/${selectedPeriod}`;
         });
     }
 
-    monthlyToggle.addEventListener('change', updatePrices);
-    yearlyToggle.addEventListener('change', updatePrices);
+    periodSelect.addEventListener('change', updatePrices);
+
+    // Initialize with default selection
+    updatePrices();
 });
 </script>
 {% endblock %}
