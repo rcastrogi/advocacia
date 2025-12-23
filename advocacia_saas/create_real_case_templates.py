@@ -12,16 +12,25 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Importar a configuração da aplicação
 from app import db
-from app.models import PetitionType, PetitionTypeSection, PetitionSection, PetitionTemplate
+from app.models import (
+    PetitionSection,
+    PetitionTemplate,
+    PetitionType,
+    PetitionTypeSection,
+)
 
 # Configurar Flask app para scripts
 from flask import Flask
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/advocacia_saas')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/advocacia_saas"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Inicializar SQLAlchemy com a app
 db.init_app(app)
+
 
 def create_real_case_templates():
     """Cria templates realistas baseados em casos reais"""
@@ -128,8 +137,8 @@ def create_real_case_templates():
                 "default_values": {
                     "foro": "Foro Regional de Santana - Comarca de São Paulo",
                     "vara": "2ª Vara Cível",
-                    "tipo_acidente": "colisao_traseira"
-                }
+                    "tipo_acidente": "colisao_traseira",
+                },
             },
             {
                 "petition_slug": "acao-trabalhista-rescisao-indireta",
@@ -222,8 +231,8 @@ def create_real_case_templates():
                     "foro": "Forum Trabalhista de São Paulo",
                     "vara": "Vara do Trabalho de São Paulo",
                     "tipo_contrato": "indeterminado",
-                    "tipo_rescisao": "rescisao_indireta"
-                }
+                    "tipo_rescisao": "rescisao_indireta",
+                },
             },
             {
                 "petition_slug": "acao-despejo-fim-contrato",
@@ -316,8 +325,8 @@ def create_real_case_templates():
                 "default_values": {
                     "foro": "Foro Central da Comarca de São Paulo",
                     "vara": "3ª Vara Cível",
-                    "tipo_imovel": "apartamento"
-                }
+                    "tipo_imovel": "apartamento",
+                },
             },
             {
                 "petition_slug": "acao-consumidor-fornecedor",
@@ -398,39 +407,46 @@ def create_real_case_templates():
                 "default_values": {
                     "foro": "Foro Central da Comarca de São Paulo",
                     "vara": "Vara Especializada em Defesa do Consumidor",
-                    "tipo_produto_servico": "produto"
-                }
-            }
+                    "tipo_produto_servico": "produto",
+                },
+            },
         ]
 
         # Criar templates realistas
         for template_data in real_templates:
             # Verificar se já existe
-            existing = PetitionTemplate.query.filter_by(slug=template_data['template_slug']).first()
+            existing = PetitionTemplate.query.filter_by(
+                slug=template_data["template_slug"]
+            ).first()
             if existing:
                 print(f"⚠ Template já existe: {template_data['template_name']}")
                 continue
 
             # Buscar o tipo de petição
-            pt = PetitionType.query.filter_by(slug=template_data['petition_slug']).first()
+            pt = PetitionType.query.filter_by(
+                slug=template_data["petition_slug"]
+            ).first()
             if not pt:
-                print(f"⚠ Tipo de petição não encontrado: {template_data['petition_slug']}")
+                print(
+                    f"⚠ Tipo de petição não encontrado: {template_data['petition_slug']}"
+                )
                 continue
 
             # Criar template
             template = PetitionTemplate(
                 petition_type=pt,
-                name=template_data['template_name'],
-                slug=template_data['template_slug'],
-                content=template_data['content'],
-                default_values=json.dumps(template_data['default_values']),
-                is_active=True
+                name=template_data["template_name"],
+                slug=template_data["template_slug"],
+                content=template_data["content"],
+                default_values=json.dumps(template_data["default_values"]),
+                is_active=True,
             )
             db.session.add(template)
             print(f"✓ Criado template realista: {template.name}")
 
         db.session.commit()
         print(f"\n📄 Criados {len(real_templates)} templates realistas!")
+
 
 if __name__ == "__main__":
     create_real_case_templates()

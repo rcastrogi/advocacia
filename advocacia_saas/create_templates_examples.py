@@ -12,16 +12,25 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Importar a configuração da aplicação
 from app import db
-from app.models import PetitionType, PetitionTypeSection, PetitionSection, PetitionTemplate
+from app.models import (
+    PetitionSection,
+    PetitionTemplate,
+    PetitionType,
+    PetitionTypeSection,
+)
 
 # Configurar Flask app para scripts
 from flask import Flask
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/advocacia_saas')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/advocacia_saas"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Inicializar SQLAlchemy com a app
 db.init_app(app)
+
 
 def create_templates():
     """Cria templates específicos para os tipos de petição"""
@@ -80,8 +89,8 @@ def create_templates():
                 "default_values": {
                     "foro": "Foro Central da Comarca de São Paulo",
                     "vara": "Vara de Família e Sucessões",
-                    "tipo_alimentos": "provisorios_definitivos"
-                }
+                    "tipo_alimentos": "provisorios_definitivos",
+                },
             },
             {
                 "petition_slug": "acao-de-divorcio-litigioso",
@@ -138,8 +147,8 @@ def create_templates():
                     "foro": "Foro Central da Comarca de São Paulo",
                     "vara": "Vara de Família e Sucessões",
                     "regime_casamento": "comunhao_parcial",
-                    "pacto_antenupcial": "nao"
-                }
+                    "pacto_antenupcial": "nao",
+                },
             },
             {
                 "petition_slug": "reclamacao-trabalhista",
@@ -201,8 +210,8 @@ def create_templates():
 """,
                 "default_values": {
                     "foro": "Foro Central da Comarca de São Paulo",
-                    "vara": "Vara do Trabalho"
-                }
+                    "vara": "Vara do Trabalho",
+                },
             },
             {
                 "petition_slug": "acao-de-cobranca",
@@ -256,33 +265,39 @@ def create_templates():
 """,
                 "default_values": {
                     "foro": "Foro Central da Comarca de São Paulo",
-                    "vara": "1ª Vara Cível"
-                }
-            }
+                    "vara": "1ª Vara Cível",
+                },
+            },
         ]
 
         for template_data in templates_data:
             # Buscar o tipo de petição
-            petition_type = PetitionType.query.filter_by(slug=template_data['petition_slug']).first()
+            petition_type = PetitionType.query.filter_by(
+                slug=template_data["petition_slug"]
+            ).first()
             if not petition_type:
-                print(f"⚠️ Tipo de petição não encontrado: {template_data['petition_slug']}")
+                print(
+                    f"⚠️ Tipo de petição não encontrado: {template_data['petition_slug']}"
+                )
                 continue
 
             # Verificar se template já existe
-            existing = PetitionTemplate.query.filter_by(slug=template_data['template_slug']).first()
+            existing = PetitionTemplate.query.filter_by(
+                slug=template_data["template_slug"]
+            ).first()
             if existing:
                 print(f"⚠️ Template já existe: {existing.name}")
                 continue
 
             # Criar template
             template = PetitionTemplate(
-                name=template_data['template_name'],
-                slug=template_data['template_slug'],
+                name=template_data["template_name"],
+                slug=template_data["template_slug"],
                 description=f"Template padrão para {petition_type.name}",
-                content=template_data['content'],
-                default_values=json.dumps(template_data['default_values']),
+                content=template_data["content"],
+                default_values=json.dumps(template_data["default_values"]),
                 is_global=True,
-                petition_type_id=petition_type.id
+                petition_type_id=petition_type.id,
             )
 
             db.session.add(template)
@@ -291,6 +306,7 @@ def create_templates():
             print(f"✓ Template criado: {template.name} para {petition_type.name}")
 
         print("\n🎉 Templates criados com sucesso!")
+
 
 if __name__ == "__main__":
     create_templates()

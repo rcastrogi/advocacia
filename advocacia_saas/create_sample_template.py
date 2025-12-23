@@ -6,13 +6,16 @@ Script para criar um template básico para o tipo de petição de exemplo.
 from app import create_app, db
 from app.models import PetitionTemplate, PetitionType
 
+
 def create_sample_template():
     """Cria um template básico para o tipo de petição de exemplo"""
 
     app = create_app()
     with app.app_context():
         # Buscar o tipo de petição
-        petition_type = PetitionType.query.filter_by(slug="acao-civel-indenizatoria").first()
+        petition_type = PetitionType.query.filter_by(
+            slug="acao-civel-indenizatoria"
+        ).first()
         if not petition_type:
             print("❌ Tipo de petição não encontrado")
             return
@@ -63,7 +66,7 @@ def create_sample_template():
         default_values = {
             "foro": "Foro Central da Comarca de São Paulo",
             "vara": "1ª Vara Cível",
-            "comarca": "São Paulo/SP"
+            "comarca": "São Paulo/SP",
         }
 
         # Criar template
@@ -74,7 +77,7 @@ def create_sample_template():
             content=template_content,
             default_values=json.dumps(default_values),
             is_global=True,
-            petition_type_id=petition_type.id
+            petition_type_id=petition_type.id,
         )
 
         db.session.add(template)
@@ -84,6 +87,8 @@ def create_sample_template():
         print(f"📝 Slug: {template.slug}")
         print("🎉 Template associado ao tipo de petição com sucesso!")
 
+
 if __name__ == "__main__":
     import json
+
     create_sample_template()

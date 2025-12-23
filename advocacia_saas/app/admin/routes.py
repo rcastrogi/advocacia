@@ -3,9 +3,9 @@ Rotas de Administração de Usuários
 Dashboard completo para gerenciar usuários e métricas da plataforma.
 """
 
+import json
 from datetime import datetime, timedelta
 from decimal import Decimal
-import json
 
 from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -783,6 +783,7 @@ def _get_user_metrics(user, detailed=False):
 # GESTÃO DE TIPOS DE PETIÇÃO E SEÇÕES
 # =============================================================================
 
+
 @bp.route("/petitions")
 @login_required
 def petitions_admin():
@@ -862,7 +863,9 @@ def petition_type_new():
         flash(f"Tipo de petição '{name}' criado com sucesso!", "success")
         return redirect(url_for("admin.petition_types_list"))
 
-    return render_template("admin/petition_type_form.html", title="Novo Tipo de Petição")
+    return render_template(
+        "admin/petition_type_form.html", title="Novo Tipo de Petição"
+    )
 
 
 @bp.route("/petitions/types/<int:type_id>/edit", methods=["GET", "POST"])
@@ -913,7 +916,10 @@ def petition_type_delete(type_id):
     # Verificar se há petições salvas usando este tipo
     saved_count = SavedPetition.query.filter_by(petition_type_id=type_id).count()
     if saved_count > 0:
-        flash(f"Não é possível excluir. Existem {saved_count} petições salvas usando este tipo.", "danger")
+        flash(
+            f"Não é possível excluir. Existem {saved_count} petições salvas usando este tipo.",
+            "danger",
+        )
         return redirect(url_for("admin.petition_types_list"))
 
     db.session.delete(petition_type)
@@ -952,7 +958,11 @@ def petition_type_sections(type_id):
         return redirect(request.url)
 
     # Buscar seções disponíveis
-    available_sections = PetitionSection.query.filter_by(is_active=True).order_by(PetitionSection.name).all()
+    available_sections = (
+        PetitionSection.query.filter_by(is_active=True)
+        .order_by(PetitionSection.name)
+        .all()
+    )
 
     # Buscar seções já configuradas para este tipo
     configured_sections = (
@@ -1016,7 +1026,9 @@ def petition_type_section_add(type_id):
     return redirect(url_for("admin.petition_type_sections", type_id=type_id))
 
 
-@bp.route("/petitions/types/<int:type_id>/sections/<int:section_id>/remove", methods=["POST"])
+@bp.route(
+    "/petitions/types/<int:type_id>/sections/<int:section_id>/remove", methods=["POST"]
+)
 @login_required
 def petition_type_section_remove(type_id, section_id):
     """Remover seção de um tipo de petição"""
@@ -1143,7 +1155,10 @@ def petition_section_delete(section_id):
     # Verificar se está sendo usada em algum tipo de petição
     usage_count = PetitionTypeSection.query.filter_by(section_id=section_id).count()
     if usage_count > 0:
-        flash(f"Não é possível excluir. Esta seção está sendo usada em {usage_count} tipos de petição.", "danger")
+        flash(
+            f"Não é possível excluir. Esta seção está sendo usada em {usage_count} tipos de petição.",
+            "danger",
+        )
         return redirect(url_for("admin.petition_sections_list"))
 
     db.session.delete(section)

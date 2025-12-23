@@ -5,8 +5,10 @@ Executar após migrações: python populate_basic_sections.py
 """
 
 import json
+
 from app import create_app, db
 from app.models import PetitionSection
+
 
 def create_basic_sections():
     """Cria seções básicas para petições"""
@@ -25,7 +27,7 @@ def create_basic_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Nome completo do autor da ação"
+                    "placeholder": "Nome completo do autor da ação",
                 },
                 {
                     "name": "autor_qualificacao",
@@ -33,7 +35,7 @@ def create_basic_sections():
                     "type": "textarea",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "CPF, RG, endereço completo, profissão, estado civil, etc."
+                    "placeholder": "CPF, RG, endereço completo, profissão, estado civil, etc.",
                 },
                 {
                     "name": "reu_nome",
@@ -41,7 +43,7 @@ def create_basic_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Nome completo do réu da ação"
+                    "placeholder": "Nome completo do réu da ação",
                 },
                 {
                     "name": "reu_qualificacao",
@@ -49,9 +51,9 @@ def create_basic_sections():
                     "type": "textarea",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "CPF, RG, endereço completo, profissão, estado civil, etc."
-                }
-            ]
+                    "placeholder": "CPF, RG, endereço completo, profissão, estado civil, etc.",
+                },
+            ],
         },
         {
             "name": "Dos Fatos",
@@ -66,9 +68,9 @@ def create_basic_sections():
                     "type": "textarea",
                     "required": True,
                     "size": "col-md-12",
-                    "placeholder": "Descreva detalhadamente os fatos que motivaram a presente ação..."
+                    "placeholder": "Descreva detalhadamente os fatos que motivaram a presente ação...",
                 }
-            ]
+            ],
         },
         {
             "name": "Do Direito",
@@ -83,9 +85,9 @@ def create_basic_sections():
                     "type": "textarea",
                     "required": True,
                     "size": "col-md-12",
-                    "placeholder": "Cite os dispositivos legais aplicáveis ao caso..."
+                    "placeholder": "Cite os dispositivos legais aplicáveis ao caso...",
                 }
-            ]
+            ],
         },
         {
             "name": "Dos Pedidos",
@@ -100,9 +102,9 @@ def create_basic_sections():
                     "type": "textarea",
                     "required": True,
                     "size": "col-md-12",
-                    "placeholder": "Formule os pedidos da ação..."
+                    "placeholder": "Formule os pedidos da ação...",
                 }
-            ]
+            ],
         },
         {
             "name": "Do Valor da Causa",
@@ -117,7 +119,7 @@ def create_basic_sections():
                     "type": "number",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "0.00"
+                    "placeholder": "0.00",
                 },
                 {
                     "name": "justificativa_valor",
@@ -125,9 +127,9 @@ def create_basic_sections():
                     "type": "textarea",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "Explique como chegou ao valor da causa..."
-                }
-            ]
+                    "placeholder": "Explique como chegou ao valor da causa...",
+                },
+            ],
         },
         {
             "name": "Cabeçalho do Processo",
@@ -142,7 +144,7 @@ def create_basic_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Ex: Foro Central da Comarca de São Paulo"
+                    "placeholder": "Ex: Foro Central da Comarca de São Paulo",
                 },
                 {
                     "name": "vara",
@@ -150,7 +152,7 @@ def create_basic_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Ex: 1ª Vara Cível"
+                    "placeholder": "Ex: 1ª Vara Cível",
                 },
                 {
                     "name": "processo_numero",
@@ -158,7 +160,7 @@ def create_basic_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "Caso já exista processo"
+                    "placeholder": "Caso já exista processo",
                 },
                 {
                     "name": "comarca",
@@ -166,9 +168,9 @@ def create_basic_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Ex: São Paulo/SP"
-                }
-            ]
+                    "placeholder": "Ex: São Paulo/SP",
+                },
+            ],
         },
         {
             "name": "Assinatura",
@@ -183,7 +185,7 @@ def create_basic_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Nome completo do advogado"
+                    "placeholder": "Nome completo do advogado",
                 },
                 {
                     "name": "advogado_oab",
@@ -191,7 +193,7 @@ def create_basic_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Número da OAB (UF)"
+                    "placeholder": "Número da OAB (UF)",
                 },
                 {
                     "name": "cidade_assinatura",
@@ -199,7 +201,7 @@ def create_basic_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-4",
-                    "placeholder": "Cidade da assinatura"
+                    "placeholder": "Cidade da assinatura",
                 },
                 {
                     "name": "data_assinatura",
@@ -207,7 +209,7 @@ def create_basic_sections():
                     "type": "date",
                     "required": True,
                     "size": "col-md-4",
-                    "placeholder": "Data da assinatura"
+                    "placeholder": "Data da assinatura",
                 },
                 {
                     "name": "estado_assinatura",
@@ -215,10 +217,10 @@ def create_basic_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-4",
-                    "placeholder": "Estado (UF)"
-                }
-            ]
-        }
+                    "placeholder": "Estado (UF)",
+                },
+            ],
+        },
     ]
 
     app = create_app()
@@ -228,26 +230,28 @@ def create_basic_sections():
 
         for section_data in sections_data:
             # Verificar se já existe
-            existing = PetitionSection.query.filter_by(slug=section_data['slug']).first()
+            existing = PetitionSection.query.filter_by(
+                slug=section_data["slug"]
+            ).first()
 
             if existing:
                 # Atualizar se necessário
-                existing.name = section_data['name']
-                existing.description = section_data['description']
-                existing.icon = section_data['icon']
-                existing.color = section_data['color']
-                existing.fields_schema = section_data['fields_schema']
+                existing.name = section_data["name"]
+                existing.description = section_data["description"]
+                existing.icon = section_data["icon"]
+                existing.color = section_data["color"]
+                existing.fields_schema = section_data["fields_schema"]
                 updated_count += 1
                 print(f"✓ Atualizado: {existing.name}")
             else:
                 # Criar novo
                 section = PetitionSection(
-                    name=section_data['name'],
-                    slug=section_data['slug'],
-                    description=section_data['description'],
-                    icon=section_data['icon'],
-                    color=section_data['color'],
-                    fields_schema=section_data['fields_schema']
+                    name=section_data["name"],
+                    slug=section_data["slug"],
+                    description=section_data["description"],
+                    icon=section_data["icon"],
+                    color=section_data["color"],
+                    fields_schema=section_data["fields_schema"],
                 )
                 db.session.add(section)
                 created_count += 1
@@ -256,6 +260,7 @@ def create_basic_sections():
         db.session.commit()
         print(f"\n📊 Resumo: {created_count} criados, {updated_count} atualizados")
         print("🎉 Seções básicas populadas com sucesso!")
+
 
 if __name__ == "__main__":
     create_basic_sections()

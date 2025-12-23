@@ -12,16 +12,25 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Importar a configuração da aplicação
 from app import db
-from app.models import PetitionType, PetitionTypeSection, PetitionSection, PetitionTemplate
+from app.models import (
+    PetitionSection,
+    PetitionTemplate,
+    PetitionType,
+    PetitionTypeSection,
+)
 
 # Configurar Flask app para scripts
 from flask import Flask
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/advocacia_saas')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/advocacia_saas"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Inicializar SQLAlchemy com a app
 db.init_app(app)
+
 
 def demonstrate_system():
     """Demonstra o sistema funcionando"""
@@ -95,6 +104,7 @@ def demonstrate_system():
         print("   2. Crie tipo em /admin/petitions/types")
         print("   3. Configure seções no tipo criado")
         print("   4. Crie template personalizado")
+
 
 if __name__ == "__main__":
     demonstrate_system()

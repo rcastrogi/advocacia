@@ -5,7 +5,8 @@ Executar após popular seções: python create_sample_petition_type.py
 """
 
 from app import create_app, db
-from app.models import PetitionType, PetitionTypeSection, PetitionSection
+from app.models import PetitionSection, PetitionType, PetitionTypeSection
+
 
 def create_sample_petition_type():
     """Cria um tipo de petição de exemplo usando seções dinâmicas"""
@@ -22,7 +23,7 @@ def create_sample_petition_type():
             color="primary",
             is_billable=True,
             base_price=150.00,
-            use_dynamic_form=True
+            use_dynamic_form=True,
         )
 
         db.session.add(petition_type)
@@ -38,7 +39,7 @@ def create_sample_petition_type():
             "do-direito",
             "dos-pedidos",
             "valor-causa",
-            "assinatura"
+            "assinatura",
         ]
 
         order = 1
@@ -50,7 +51,7 @@ def create_sample_petition_type():
                     section_id=section.id,
                     order=order,
                     is_required=True,
-                    is_expanded=True
+                    is_expanded=True,
                 )
                 db.session.add(config)
                 print(f"✓ Adicionada seção: {section.name} (ordem {order})")
@@ -60,6 +61,7 @@ def create_sample_petition_type():
         print(f"\n🎉 Tipo de petição '{petition_type.name}' criado com sucesso!")
         print(f"📝 Slug: {petition_type.slug}")
         print(f"🔗 URL: /dynamic/{petition_type.slug}")
+
 
 if __name__ == "__main__":
     create_sample_petition_type()
