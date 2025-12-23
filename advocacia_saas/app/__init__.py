@@ -44,7 +44,7 @@ def create_app(config_class=Config):
         )
 
     # Initialize security headers (HTTPS, HSTS, CSP)
-    if not app.config.get("DEBUG"):
+    if app.config.get("FORCE_HTTPS", False):
         Talisman(
             app,
             force_https=True,
