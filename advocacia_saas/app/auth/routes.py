@@ -349,11 +349,12 @@ def change_password():
 @login_required
 def update_timezone():
     """Update user's timezone preference"""
-    timezone = request.form.get('timezone')
+    timezone = request.form.get("timezone")
 
     if timezone:
         # Validate timezone
         import pytz
+
         try:
             pytz.timezone(timezone)
             current_user.timezone = timezone
@@ -364,4 +365,4 @@ def update_timezone():
     else:
         flash("Fuso horário não fornecido.", "error")
 
-    return redirect(request.referrer or url_for('auth.profile'))
+    return redirect(request.referrer or url_for("auth.profile"))

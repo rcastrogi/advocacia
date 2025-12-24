@@ -17,7 +17,12 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("user", sa.Column("timezone", sa.String(length=50), nullable=True, default="America/Sao_Paulo"))
+    op.add_column(
+        "user",
+        sa.Column(
+            "timezone", sa.String(length=50), nullable=True, default="America/Sao_Paulo"
+        ),
+    )
 
 
 def downgrade() -> None:

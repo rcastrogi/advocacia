@@ -1,8 +1,6 @@
 import os
-from datetime import datetime
-
-import pytz
-
+from datetime import datetime, timezone
+import zoneinfo
 from config import Config
 from flask import Flask
 from flask_caching import Cache
@@ -31,8 +29,8 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
 
     # Configure timezone for Brazil (São Paulo)
-    app.config['TIMEZONE'] = pytz.timezone('America/Sao_Paulo')
-    app.config['TIMEZONE_NAME'] = 'America/Sao_Paulo'
+    app.config["TIMEZONE"] = zoneinfo.ZoneInfo("America/Sao_Paulo")
+    app.config["TIMEZONE_NAME"] = "America/Sao_Paulo"
 
     # Configure JSON and response encoding
     app.config["JSON_AS_ASCII"] = False
@@ -189,35 +187,51 @@ def create_app(config_class=Config):
     init_logging(app)
 
     # Register custom Jinja2 filters
-    @app.template_filter('local_datetime')
-    def local_datetime_filter(dt, format_string='%d/%m/%Y às %H:%M', user_timezone=None):
+    @app.template_filter("local_datetime")
+    def local_datetime_filter(
+        dt, format_string="%d/%m/%Y às %H:%M", user_timezone=None
+    ):
         """Convert UTC datetime to local timezone (user's timezone or São Paulo by default)"""
         if dt is None:
-            return '-'
+            return "-"
         if dt.tzinfo is None:
             # Assume UTC if naive
-            dt = pytz.utc.localize(dt)
+            dt = dt.replace(tzinfo=timezone.utc)
 
-        # Use user timezone if provided, otherwise use app default (São Paulo)
-        target_tz = pytz.timezone(user_timezone) if user_timezone else app.config['TIMEZONE']
+        # Use user timezone if provided, otherwise use app default
+        if user_timezone:
+            try:
+                target_tz = zoneinfo.ZoneInfo(user_timezone)
+            except zoneinfo.ZoneInfoNotFoundError:
+                target_tz = app.config["TIMEZONE"]
+        else:
+            target_tz = app.config["TIMEZONE"]
+
         local_dt = dt.astimezone(target_tz)
         return local_dt.strftime(format_string)
 
-    @app.template_filter('local_date')
-    def local_date_filter(dt, format_string='%d/%m/%Y', user_timezone=None):
+    @app.template_filter("local_date")
+    def local_date_filter(dt, format_string="%d/%m/%Y", user_timezone=None):
         """Convert UTC date to local timezone (user's timezone or São Paulo by default)"""
         if dt is None:
-            return '-'
-        if hasattr(dt, 'tzinfo') and dt.tzinfo is None:
+            return "-"
+        if hasattr(dt, "tzinfo") and dt.tzinfo is None:
             # Assume UTC if naive
-            dt = pytz.utc.localize(dt)
-        elif not hasattr(dt, 'tzinfo'):
+            dt = dt.replace(tzinfo=timezone.utc)
+        elif not hasattr(dt, "tzinfo"):
             # If it's a date object, convert to datetime first
             dt = datetime.combine(dt, datetime.min.time())
-            dt = pytz.utc.localize(dt)
+            dt = dt.replace(tzinfo=timezone.utc)
 
-        # Use user timezone if provided, otherwise use app default (São Paulo)
-        target_tz = pytz.timezone(user_timezone) if user_timezone else app.config['TIMEZONE']
+        # Use user timezone if provided, otherwise use app default
+        if user_timezone:
+            try:
+                target_tz = zoneinfo.ZoneInfo(user_timezone)
+            except zoneinfo.ZoneInfoNotFoundError:
+                target_tz = app.config["TIMEZONE"]
+        else:
+            target_tz = app.config["TIMEZONE"]
+
         local_dt = dt.astimezone(target_tz)
         return local_dt.strftime(format_string)
 

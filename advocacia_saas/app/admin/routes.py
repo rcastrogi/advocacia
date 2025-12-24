@@ -839,7 +839,9 @@ def dashboard_regional():
     # === CRESCIMENTO REGIONAL (últimos 6 meses) ===
     regional_growth = []
     for months_back in range(5, -1, -1):
-        start_date_growth = datetime.now(timezone.utc) - timedelta(days=30 * months_back)
+        start_date_growth = datetime.now(timezone.utc) - timedelta(
+            days=30 * months_back
+        )
         end_date_growth = start_date_growth + timedelta(days=30)
 
         growth_data = (
@@ -1844,7 +1846,16 @@ def _get_bulk_user_metrics(users):
         ai_stat = ai_stats.get(uid, (0, Decimal("0.00")))
 
         metrics = {
-            "days_on_platform": (now - (user.created_at.replace(tzinfo=timezone.utc) if user.created_at and user.created_at.tzinfo is None else user.created_at)).days if user.created_at else 0,
+            "days_on_platform": (
+                now
+                - (
+                    user.created_at.replace(tzinfo=timezone.utc)
+                    if user.created_at and user.created_at.tzinfo is None
+                    else user.created_at
+                )
+            ).days
+            if user.created_at
+            else 0,
             "days_paying": first_payments.get(uid, 0),
             "plan_name": current_plans.get(uid, "Sem plano"),
             "total_clients": clients_count.get(uid, 0),
