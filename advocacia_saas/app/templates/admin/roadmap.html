@@ -1,0 +1,288 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-road text-primary"></i> {{ title }}
+            </h1>
+            <p class="text-muted mt-1">Gerencie o roadmap de desenvolvimento da plataforma</p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.roadmap_items') }}" class="btn btn-primary">
+                <i class="fas fa-list"></i> Ver Todos os Itens
+            </a>
+            <a href="{{ url_for('admin.new_roadmap_item') }}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Novo Item
+            </a>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Cards de Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total de Itens
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_items }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Concluídos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ completed_items }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Em Andamento
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ in_progress_items }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Visíveis aos Usuários
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ public_items }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-eye fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações Rápidas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bolt"></i> Ações Rápidas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('admin.roadmap_categories') }}" class="btn btn-outline-primary btn-block">
+                                <i class="fas fa-tags"></i> Gerenciar Categorias
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('admin.roadmap_stats') }}" class="btn btn-outline-info btn-block">
+                                <i class="fas fa-chart-bar"></i> Ver Estatísticas
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('main.roadmap') }}" class="btn btn-outline-success btn-block" target="_blank">
+                                <i class="fas fa-external-link-alt"></i> Ver Roadmap Público
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-secondary btn-block" onclick="exportRoadmap()">
+                                <i class="fas fa-download"></i> Exportar Roadmap
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categorias -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-tags"></i> Categorias Ativas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for category in categories %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-left-{{ category.color }} h-100">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="mr-3">
+                                            <i class="fas {{ category.icon }} fa-2x text-{{ category.color }}"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="card-title mb-1">{{ category.name }}</h6>
+                                            <small class="text-muted">{{ category.items.count() }} itens</small>
+                                        </div>
+                                    </div>
+                                    {% if category.description %}
+                                    <p class="card-text small mt-2">{{ category.description }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Itens Recentes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clock"></i> Itens Recentes
+                    </h6>
+                    <a href="{{ url_for('admin.roadmap_items') }}" class="btn btn-sm btn-outline-primary">
+                        Ver Todos
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Categoria</th>
+                                    <th>Status</th>
+                                    <th>Prioridade</th>
+                                    <th>Visibilidade</th>
+                                    <th>Última Atualização</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in recent_items %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ item.title }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ item.description[:50] }}...</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ item.category.color }}">
+                                            <i class="fas {{ item.category.icon }}"></i> {{ item.category.name }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% set status_display = item.get_status_display() %}
+                                        <span class="badge badge-{{ status_display[1] }}">
+                                            {{ status_display[0] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% set priority_display = item.get_priority_display() %}
+                                        <span class="badge badge-{{ priority_display[1] }}">
+                                            {{ priority_display[0] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if item.visible_to_users %}
+                                            <i class="fas fa-eye text-success" title="Visível aos usuários"></i>
+                                        {% else %}
+                                            <i class="fas fa-eye-slash text-muted" title="Oculto aos usuários"></i>
+                                        {% endif %}
+                                        {% if item.internal_only %}
+                                            <i class="fas fa-lock text-warning ml-1" title="Uso interno"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.edit_roadmap_item', item_id=item.id) }}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('admin.toggle_roadmap_item_visibility', item_id=item.id) }}"
+                                              class="d-inline" onsubmit="return confirm('Alterar visibilidade?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                <i class="fas fa-eye{% if not item.visible_to_users %}-slash{% endif %}"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum item encontrado</h5>
+                        <p class="text-muted">Comece criando seu primeiro item do roadmap.</p>
+                        <a href="{{ url_for('admin.new_roadmap_item') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Criar Primeiro Item
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportRoadmap() {
+    // Implementar exportação do roadmap
+    alert('Funcionalidade de exportação será implementada em breve.');
+}
+</script>
+{% endblock %}

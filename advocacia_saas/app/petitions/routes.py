@@ -1950,20 +1950,6 @@ def api_save_petition():
         "processo_number"
     )
 
-    # Gerar título automático
-    autor = form_data.get("autor_nome", "").strip()
-    reu = form_data.get("reu_nome", "").strip()
-    petition_type = PetitionType.query.get(petition_type_id)
-
-    if autor and reu:
-        petition.title = f"{petition_type.name} - {autor} x {reu}"
-    elif autor:
-        petition.title = f"{petition_type.name} - {autor}"
-    else:
-        petition.title = (
-            f"{petition_type.name} - #{petition.id if petition.id else 'Novo'}"
-        )
-
     # Ações
     if action == "complete":
         petition.status = "completed"
@@ -1976,6 +1962,21 @@ def api_save_petition():
             petition.status = "draft"
 
     try:
+        db.session.commit()
+
+        # Gerar título automático após commit (para ter o ID)
+        if not petition.title:  # Só gerar se não tiver título
+            autor = form_data.get("autor_nome", "").strip()
+            reu = form_data.get("reu_nome", "").strip()
+            petition_type = PetitionType.query.get(petition_type_id)
+
+            if autor and reu:
+                petition.title = f"{petition_type.name} - {autor} x {reu}"
+            elif autor:
+                petition.title = f"{petition_type.name} - {autor}"
+            else:
+                petition.title = f"{petition_type.name} - #{petition.id}"
+
         db.session.commit()
 
         return jsonify(

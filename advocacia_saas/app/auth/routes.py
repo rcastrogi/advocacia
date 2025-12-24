@@ -144,6 +144,14 @@ def register():
             full_name=form.full_name.data,
             oab_number=form.oab_number.data,
             phone=form.phone.data,
+            # Address fields
+            cep=form.cep.data,
+            street=form.street.data,
+            number=form.number.data,
+            uf=form.uf.data,
+            city=form.city.data,
+            neighborhood=form.neighborhood.data,
+            complement=form.complement.data,
             user_type=form.user_type.data,
             billing_status=billing_status,
         )
@@ -212,6 +220,14 @@ def profile():
         current_user.email = form.email.data
         current_user.oab_number = form.oab_number.data
         current_user.phone = form.phone.data
+        # Address fields
+        current_user.cep = form.cep.data
+        current_user.street = form.street.data
+        current_user.number = form.number.data
+        current_user.uf = form.uf.data
+        current_user.city = form.city.data
+        current_user.neighborhood = form.neighborhood.data
+        current_user.complement = form.complement.data
         current_user.set_specialties(form.specialties.data)
         current_user.set_quick_actions(form.quick_actions.data)
         db.session.commit()
@@ -222,6 +238,14 @@ def profile():
         form.email.data = current_user.email
         form.oab_number.data = current_user.oab_number
         form.phone.data = current_user.phone
+        # Address fields
+        form.cep.data = current_user.cep
+        form.street.data = current_user.street
+        form.number.data = current_user.number
+        form.uf.data = current_user.uf
+        form.city.data = current_user.city
+        form.neighborhood.data = current_user.neighborhood
+        form.complement.data = current_user.complement
         form.specialties.data = current_user.get_specialties()
         form.quick_actions.data = current_user.get_quick_actions()
     return render_template(

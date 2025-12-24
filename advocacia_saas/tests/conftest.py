@@ -17,6 +17,10 @@ class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     WTF_CSRF_ENABLED = False
     SERVER_NAME = "localhost.localdomain"
+    # SQLite não suporta pool de conexões
+    SQLALCHEMY_ENGINE_OPTIONS = {}
+    # Disable rate limiting in tests
+    RATELIMIT_ENABLED = False
 
 
 @pytest.fixture(scope="session")
@@ -52,9 +56,13 @@ def db_session(app):
 
         yield db.session
 
-        # Rollback e limpar
+        # Rollback, limpar dados e remover sessão
         db.session.rollback()
         db.session.remove()
+
+        # Limpar todas as tabelas para garantir isolamento
+        db.drop_all()
+        db.create_all()
 
 
 @pytest.fixture

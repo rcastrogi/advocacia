@@ -180,7 +180,7 @@ def record_petition_usage(user, petition_type: PetitionType) -> PetitionUsage:
     # Calcular valor apenas se for billable no plano per_usage
     amount = Decimal("0.00")
     if will_be_billable:
-        amount = petition_type.base_price or plan.plan.usage_rate or Decimal("0.00")
+        amount = petition_type.base_price or Decimal("0.00")
 
     usage = PetitionUsage(
         user_id=user.id,
@@ -252,7 +252,7 @@ def ensure_default_plan():
             slug="per-usage",
             name="Pay per use",
             plan_type="per_usage",
-            usage_rate=Decimal("10.00"),
+            monthly_fee=Decimal("0.00"),
             description="Cobrança por petição billable.",
         )
         db.session.add(plan)

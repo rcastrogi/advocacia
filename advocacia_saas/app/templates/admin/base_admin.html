@@ -36,6 +36,14 @@
                        class="list-group-item list-group-item-action {{ 'active' if 'petitions' in request.endpoint and 'billing' not in request.endpoint else '' }}">
                         <i class="fas fa-puzzle-piece me-2"></i>Seções de Petição
                     </a>
+                    <a href="{{ url_for('admin.roadmap') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'roadmap' in request.endpoint and 'feedback' not in request.endpoint else '' }}">
+                        <i class="fas fa-road me-2"></i>Roadmap
+                    </a>
+                    <a href="{{ url_for('admin.roadmap_feedback') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'roadmap_feedback' in request.endpoint else '' }}">
+                        <i class="fas fa-comments me-2"></i>Feedback Roadmap
+                    </a>
                 </div>
             </div>
         </div>

@@ -16,6 +16,34 @@
     </div>
 </div>
 
+<!-- Navegação por Dashboards -->
+<ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'overview' %}active{% endif %}" 
+           href="{{ url_for('admin.dashboard') }}">
+            <i class="fas fa-chart-line me-2"></i>Visão Geral
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'regional' %}active{% endif %}" 
+           href="{{ url_for('admin.dashboard_regional') }}">
+            <i class="fas fa-map-marker-alt me-2"></i>Regional
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'peticoes' %}active{% endif %}" 
+           href="{{ url_for('admin.dashboard_peticoes') }}">
+            <i class="fas fa-file-alt me-2"></i>Petições
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'financeiro' %}active{% endif %}" 
+           href="{{ url_for('admin.dashboard_financeiro') }}">
+            <i class="fas fa-dollar-sign me-2"></i>Financeiro
+        </a>
+    </li>
+</ul>
+
 <!-- Cards de Métricas Principais -->
 <div class="row g-4 mb-4">
     <!-- Usuários -->

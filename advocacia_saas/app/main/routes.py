@@ -27,7 +27,16 @@ from app.billing.utils import (
 from app.decorators import lawyer_required
 from app.main import bp
 from app.main.forms import TestimonialForm
-from app.models import BillingPlan, Client, PetitionType, PetitionUsage, Testimonial
+from app.models import (
+    BillingPlan,
+    Client,
+    PetitionType,
+    PetitionUsage,
+    RoadmapCategory,
+    RoadmapFeedback,
+    RoadmapItem,
+    Testimonial,
+)
 from app.quick_actions import build_dashboard_actions
 
 # Ícones para categorias de petições
@@ -712,3 +721,184 @@ Sitemap: {url_for("main.sitemap", _external=True)}
     response = make_response(robots_content)
     response.headers["Content-Type"] = "text/plain"
     return response
+
+
+# =============================================================================
+# ROADMAP PUBLIC ROUTES
+# =============================================================================
+
+
+@bp.route("/roadmap")
+def roadmap():
+    """Página pública do roadmap de desenvolvimento"""
+
+    # Buscar apenas itens visíveis aos usuários
+    public_items = (
+        RoadmapItem.query.filter_by(visible_to_users=True).join(RoadmapCategory).all()
+    )
+
+    # Agrupar por categoria
+    categories = {}
+    for item in public_items:
+        cat_slug = item.category.slug
+        if cat_slug not in categories:
+            categories[cat_slug] = {"category": item.category, "items": []}
+        categories[cat_slug]["items"].append(item)
+
+    # Ordenar categorias por ordem definida
+    sorted_categories = sorted(categories.values(), key=lambda x: x["category"].order)
+
+    # Estatísticas públicas
+    total_features = len(public_items)
+    completed_features = len(
+        [item for item in public_items if item.status == "completed"]
+    )
+    in_progress_features = len(
+        [item for item in public_items if item.status == "in_progress"]
+    )
+
+    # Calcular progresso geral
+    if total_features > 0:
+        overall_progress = (completed_features / total_features) * 100
+    else:
+        overall_progress = 0
+
+    return render_template(
+        "main/roadmap.html",
+        title="Roadmap de Desenvolvimento",
+        categories=sorted_categories,
+        total_features=total_features,
+        completed_features=completed_features,
+        in_progress_features=in_progress_features,
+        overall_progress=round(overall_progress, 1),
+    )
+
+
+@bp.route("/roadmap/<slug>")
+def roadmap_item(slug):
+    """Página detalhada de um item do roadmap"""
+
+    item = RoadmapItem.query.filter_by(slug=slug, visible_to_users=True).first_or_404()
+
+    # Buscar itens relacionados (mesma categoria)
+    related_items = (
+        RoadmapItem.query.filter(
+            RoadmapItem.category_id == item.category_id,
+            RoadmapItem.id != item.id,
+            RoadmapItem.visible_to_users == True,
+        )
+        .limit(5)
+        .all()
+    )
+
+    return render_template(
+        "main/roadmap_item.html",
+        title=item.title,
+        item=item,
+        related_items=related_items,
+    )
+
+
+# =============================================================================
+# ROADMAP FEEDBACK ROUTES
+# =============================================================================
+
+
+@bp.route("/roadmap/<slug>/feedback", methods=["GET", "POST"])
+@login_required
+def roadmap_item_feedback(slug):
+    """Página para usuários darem feedback sobre uma funcionalidade implementada"""
+
+    item = RoadmapItem.query.filter_by(slug=slug, visible_to_users=True).first_or_404()
+
+    # Verificar se o item está implementado (completed)
+    if item.status != "completed":
+        flash("Esta funcionalidade ainda não foi implementada.", "warning")
+        return redirect(url_for("main.roadmap_item", slug=slug))
+
+    # Verificar se o usuário já deu feedback
+    existing_feedback = RoadmapFeedback.query.filter_by(
+        roadmap_item_id=item.id, user_id=current_user.id
+    ).first()
+
+    if request.method == "POST":
+        # Processar o feedback
+        rating = int(request.form.get("rating", 5))
+        rating_category = request.form.get("rating_category")
+        title = request.form.get("title", "").strip()
+        comment = request.form.get("comment", "").strip()
+        pros = request.form.get("pros", "").strip()
+        cons = request.form.get("cons", "").strip()
+        suggestions = request.form.get("suggestions", "").strip()
+        usage_frequency = request.form.get("usage_frequency")
+        ease_of_use = request.form.get("ease_of_use")
+        is_anonymous = request.form.get("is_anonymous") == "on"
+
+        # Validar rating
+        if not 1 <= rating <= 5:
+            flash("Avaliação deve ser entre 1 e 5 estrelas.", "danger")
+            return redirect(request.url)
+
+        if existing_feedback:
+            # Atualizar feedback existente
+            existing_feedback.rating = rating
+            existing_feedback.rating_category = rating_category
+            existing_feedback.title = title
+            existing_feedback.comment = comment
+            existing_feedback.pros = pros
+            existing_feedback.cons = cons
+            existing_feedback.suggestions = suggestions
+            existing_feedback.usage_frequency = usage_frequency
+            existing_feedback.ease_of_use = ease_of_use
+            existing_feedback.is_anonymous = is_anonymous
+            existing_feedback.updated_at = datetime.utcnow()
+            db.session.commit()
+            flash("Seu feedback foi atualizado com sucesso!", "success")
+        else:
+            # Criar novo feedback
+            feedback = RoadmapFeedback(
+                roadmap_item_id=item.id,
+                user_id=current_user.id,
+                rating=rating,
+                rating_category=rating_category,
+                title=title,
+                comment=comment,
+                pros=pros,
+                cons=cons,
+                suggestions=suggestions,
+                usage_frequency=usage_frequency,
+                ease_of_use=ease_of_use,
+                is_anonymous=is_anonymous,
+                user_agent=request.headers.get("User-Agent"),
+                ip_address=request.remote_addr,
+                session_id=request.cookies.get("session", ""),
+            )
+            db.session.add(feedback)
+            db.session.commit()
+            flash(
+                "Obrigado pelo seu feedback! Ele nos ajuda a melhorar continuamente.",
+                "success",
+            )
+
+        return redirect(url_for("main.roadmap_item", slug=slug))
+
+    return render_template(
+        "main/roadmap_feedback.html",
+        title=f"Feedback - {item.title}",
+        item=item,
+        existing_feedback=existing_feedback,
+    )
+
+
+@bp.route("/roadmap/<slug>/feedback/thanks")
+@login_required
+def roadmap_feedback_thanks(slug):
+    """Página de agradecimento após enviar feedback"""
+
+    item = RoadmapItem.query.filter_by(slug=slug, visible_to_users=True).first_or_404()
+
+    return render_template(
+        "main/roadmap_feedback_thanks.html",
+        title="Obrigado pelo Feedback",
+        item=item,
+    )

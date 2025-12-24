@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Início</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.roadmap') }}">Roadmap</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.roadmap_item', slug=item.slug) }}">{{ item.title }}</a></li>
+                    <li class="breadcrumb-item active">Feedback</li>
+                </ol>
+            </nav>
+
+            <!-- Header -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-comments text-primary fa-3x mb-3"></i>
+                    <h1 class="h3 mb-2">O que você achou da funcionalidade?</h1>
+                    <h2 class="h5 text-muted mb-3">{{ item.title }}</h2>
+                    <p class="text-muted mb-0">
+                        Sua opinião é muito importante para nós! Nos ajude a melhorar compartilhando sua experiência com esta funcionalidade.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feedback Form -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star text-warning mr-2"></i>
+                        {% if existing_feedback %}
+                            Atualizar seu Feedback
+                        {% else %}
+                            Deixar Feedback
+                        {% endif %}
+                    </h5>
+                </div>
+
+                <form method="POST" id="feedbackForm">
+                    <div class="card-body">
+                        <!-- Rating -->
+                        <div class="form-group mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-star text-warning mr-1"></i>
+                                Avaliação Geral <span class="text-danger">*</span>
+                            </label>
+                            <div class="rating-stars mb-2" id="ratingStars">
+                                {% for i in range(1, 6) %}
+                                <i class="far fa-star star-rating"
+                                   data-rating="{{ i }}"
+                                   style="cursor: pointer; font-size: 1.5rem; margin: 0 2px;"></i>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="rating" id="ratingInput" value="{{ existing_feedback.rating if existing_feedback else 5 }}" required>
+                            <small class="form-text text-muted">
+                                Clique nas estrelas para avaliar (1 = Muito ruim, 5 = Excelente)
+                            </small>
+                        </div>
+
+                        <!-- Rating Category -->
+                        <div class="form-group mb-4">
+                            <label for="rating_category" class="form-label fw-bold">
+                                <i class="fas fa-tag mr-1"></i>
+                                Categoria da Avaliação
+                            </label>
+                            <select name="rating_category" id="rating_category" class="form-control">
+                                <option value="">-- Selecione uma categoria --</option>
+                                <option value="usabilidade" {{ 'selected' if existing_feedback and existing_feedback.rating_category == 'usabilidade' }}>
+                                    Usabilidade
+                                </option>
+                                <option value="funcionalidade" {{ 'selected' if existing_feedback and existing_feedback.rating_category == 'funcionalidade' }}>
+                                    Funcionalidade
+                                </option>
+                                <option value="performance" {{ 'selected' if existing_feedback and existing_feedback.rating_category == 'performance' }}>
+                                    Performance
+                                </option>
+                                <option value="design" {{ 'selected' if existing_feedback and existing_feedback.rating_category == 'design' }}>
+                                    Design
+                                </option>
+                                <option value="geral" {{ 'selected' if existing_feedback and existing_feedback.rating_category == 'geral' }}>
+                                    Avaliação Geral
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Title -->
+                        <div class="form-group mb-3">
+                            <label for="title" class="form-label fw-bold">
+                                <i class="fas fa-heading mr-1"></i>
+                                Título do Feedback (opcional)
+                            </label>
+                            <input type="text" name="title" id="title" class="form-control"
+                                   placeholder="Ex: Interface muito intuitiva!"
+                                   value="{{ existing_feedback.title if existing_feedback }}">
+                            <small class="form-text text-muted">
+                                Um título curto para resumir seu feedback
+                            </small>
+                        </div>
+
+                        <!-- Comment -->
+                        <div class="form-group mb-3">
+                            <label for="comment" class="form-label fw-bold">
+                                <i class="fas fa-comment mr-1"></i>
+                                Comentário Geral
+                            </label>
+                            <textarea name="comment" id="comment" class="form-control" rows="4"
+                                      placeholder="Conte-nos sua experiência com esta funcionalidade...">{{ existing_feedback.comment if existing_feedback }}</textarea>
+                        </div>
+
+                        <!-- Pros -->
+                        <div class="form-group mb-3">
+                            <label for="pros" class="form-label fw-bold text-success">
+                                <i class="fas fa-plus-circle mr-1"></i>
+                                Pontos Positivos
+                            </label>
+                            <textarea name="pros" id="pros" class="form-control" rows="3"
+                                      placeholder="O que você gostou nesta funcionalidade?">{{ existing_feedback.pros if existing_feedback }}</textarea>
+                        </div>
+
+                        <!-- Cons -->
+                        <div class="form-group mb-3">
+                            <label for="cons" class="form-label fw-bold text-danger">
+                                <i class="fas fa-minus-circle mr-1"></i>
+                                Pontos de Melhoria
+                            </label>
+                            <textarea name="cons" id="cons" class="form-control" rows="3"
+                                      placeholder="O que poderia ser melhorado?">{{ existing_feedback.cons if existing_feedback }}</textarea>
+                        </div>
+
+                        <!-- Suggestions -->
+                        <div class="form-group mb-3">
+                            <label for="suggestions" class="form-label fw-bold text-info">
+                                <i class="fas fa-lightbulb mr-1"></i>
+                                Sugestões
+                            </label>
+                            <textarea name="suggestions" id="suggestions" class="form-control" rows="3"
+                                      placeholder="Ideias para tornar esta funcionalidade ainda melhor...">{{ existing_feedback.suggestions if existing_feedback }}</textarea>
+                        </div>
+
+                        <!-- Usage Info -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="usage_frequency" class="form-label fw-bold">
+                                        <i class="fas fa-calendar-alt mr-1"></i>
+                                        Frequência de Uso
+                                    </label>
+                                    <select name="usage_frequency" id="usage_frequency" class="form-control">
+                                        <option value="">-- Selecione --</option>
+                                        <option value="daily" {{ 'selected' if existing_feedback and existing_feedback.usage_frequency == 'daily' }}>
+                                            Diariamente
+                                        </option>
+                                        <option value="weekly" {{ 'selected' if existing_feedback and existing_feedback.usage_frequency == 'weekly' }}>
+                                            Semanalmente
+                                        </option>
+                                        <option value="monthly" {{ 'selected' if existing_feedback and existing_feedback.usage_frequency == 'monthly' }}>
+                                            Mensalmente
+                                        </option>
+                                        <option value="rarely" {{ 'selected' if existing_feedback and existing_feedback.usage_frequency == 'rarely' }}>
+                                            Raramente
+                                        </option>
+                                        <option value="first_time" {{ 'selected' if existing_feedback and existing_feedback.usage_frequency == 'first_time' }}>
+                                            Primeira vez
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="ease_of_use" class="form-label fw-bold">
+                                        <i class="fas fa-thumbs-up mr-1"></i>
+                                        Facilidade de Uso
+                                    </label>
+                                    <select name="ease_of_use" id="ease_of_use" class="form-control">
+                                        <option value="">-- Selecione --</option>
+                                        <option value="very_easy" {{ 'selected' if existing_feedback and existing_feedback.ease_of_use == 'very_easy' }}>
+                                            Muito fácil
+                                        </option>
+                                        <option value="easy" {{ 'selected' if existing_feedback and existing_feedback.ease_of_use == 'easy' }}>
+                                            Fácil
+                                        </option>
+                                        <option value="neutral" {{ 'selected' if existing_feedback and existing_feedback.ease_of_use == 'neutral' }}>
+                                            Neutro
+                                        </option>
+                                        <option value="difficult" {{ 'selected' if existing_feedback and existing_feedback.ease_of_use == 'difficult' }}>
+                                            Difícil
+                                        </option>
+                                        <option value="very_difficult" {{ 'selected' if existing_feedback and existing_feedback.ease_of_use == 'very_difficult' }}>
+                                            Muito difícil
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Anonymous Option -->
+                        <div class="form-group mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="is_anonymous" id="is_anonymous" class="form-check-input"
+                                       {{ 'checked' if existing_feedback and existing_feedback.is_anonymous }}>
+                                <label for="is_anonymous" class="form-check-label">
+                                    <i class="fas fa-user-secret mr-1"></i>
+                                    Enviar feedback anonimamente
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Seu nome não será exibido publicamente, mas ainda poderemos entrar em contato se necessário.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-light">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <a href="{{ url_for('main.roadmap_item', slug=item.slug) }}" class="btn btn-outline-secondary btn-block">
+                                    <i class="fas fa-arrow-left mr-1"></i>
+                                    Voltar
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fas fa-paper-plane mr-1"></i>
+                                    {% if existing_feedback %}
+                                        Atualizar Feedback
+                                    {% else %}
+                                        Enviar Feedback
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Info Box -->
+            <div class="alert alert-info mt-4">
+                <i class="fas fa-info-circle mr-2"></i>
+                <strong>Privacidade:</strong> Seu feedback nos ajuda a melhorar o produto.
+                Você pode escolher enviar anonimamente, e todas as informações são tratadas com confidencialidade.
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+// Rating stars functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('.star-rating');
+    const ratingInput = document.getElementById('ratingInput');
+
+    function updateStars(rating) {
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.remove('far');
+                star.classList.add('fas', 'text-warning');
+            } else {
+                star.classList.remove('fas', 'text-warning');
+                star.classList.add('far');
+            }
+        });
+        ratingInput.value = rating;
+    }
+
+    // Set initial rating
+    const initialRating = parseInt(ratingInput.value) || 5;
+    updateStars(initialRating);
+
+    // Handle star clicks
+    stars.forEach((star, index) => {
+        star.addEventListener('click', function() {
+            const rating = index + 1;
+            updateStars(rating);
+        });
+
+        star.addEventListener('mouseenter', function() {
+            const rating = index + 1;
+            stars.forEach((s, i) => {
+                if (i <= index) {
+                    s.classList.remove('far');
+                    s.classList.add('fas', 'text-warning');
+                } else {
+                    s.classList.remove('fas', 'text-warning');
+                    s.classList.add('far');
+                }
+            });
+        });
+
+        star.addEventListener('mouseleave', function() {
+            const currentRating = parseInt(ratingInput.value) || 5;
+            updateStars(currentRating);
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

@@ -401,6 +401,38 @@ class Client(db.Model):
         result = db.session.execute(stmt).scalar()
         return result
 
+    def to_dict(self):
+        """Convert client to dictionary for API responses."""
+        return {
+            "id": self.id,
+            "full_name": self.full_name,
+            "email": self.email,
+            "cpf_cnpj": self.cpf_cnpj,
+            "mobile_phone": self.mobile_phone,
+            "landline_phone": self.landline_phone,
+            "rg": self.rg,
+            "civil_status": self.civil_status,
+            "birth_date": self.birth_date.isoformat() if self.birth_date else None,
+            "profession": self.profession,
+            "nationality": self.nationality,
+            "birth_place": self.birth_place,
+            "mother_name": self.mother_name,
+            "father_name": self.father_name,
+            "address_type": self.address_type,
+            "cep": self.cep,
+            "street": self.street,
+            "number": self.number,
+            "uf": self.uf,
+            "city": self.city,
+            "neighborhood": self.neighborhood,
+            "complement": self.complement,
+            "lgbt_declared": self.lgbt_declared,
+            "has_disability": self.has_disability,
+            "disability_types": self.disability_types,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
 
 class Dependent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1735,6 +1767,10 @@ class Deadline(db.Model):
         """Verifica se o prazo é urgente"""
         return self.status == "pending" and self.days_until() <= days_threshold
 
+    def is_overdue(self):
+        """Verifica se o prazo está vencido"""
+        return self.status == "pending" and self.deadline_date < datetime.utcnow()
+
     def mark_completed(self, notes=None):
         """Marca prazo como cumprido"""
         self.status = "completed"
@@ -2068,5 +2104,393 @@ class Document(db.Model):
             else None,
             "client": {"id": self.client.id, "name": self.client.name}
             if self.client
+            else None,
+        }
+
+
+# =============================================================================
+# ROADMAP MODELS - Sistema de Roadmap e Sugestões
+# =============================================================================
+
+
+class RoadmapCategory(db.Model):
+    """Categorias para organizar itens do roadmap"""
+
+    __tablename__ = "roadmap_categories"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(50), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    icon = db.Column(db.String(50), default="fa-lightbulb")  # Ícone FontAwesome
+    color = db.Column(db.String(20), default="primary")  # Cor Bootstrap
+    order = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relacionamento
+    items = db.relationship(
+        "RoadmapItem",
+        backref="category",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+        order_by="RoadmapItem.priority.desc()",
+    )
+
+    def __repr__(self):
+        return f"<RoadmapCategory {self.name}>"
+
+
+class RoadmapItem(db.Model):
+    """Itens do roadmap com sugestões de implementação"""
+
+    __tablename__ = "roadmap_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    category_id = db.Column(
+        db.Integer, db.ForeignKey("roadmap_categories.id"), nullable=False
+    )
+
+    # Informações básicas
+    title = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    detailed_description = db.Column(db.Text)  # Descrição mais detalhada
+
+    # Status e prioridade
+    status = db.Column(
+        db.String(20), default="planned"
+    )  # planned, in_progress, completed, cancelled, on_hold
+    priority = db.Column(db.String(20), default="medium")  # low, medium, high, critical
+    estimated_effort = db.Column(
+        db.String(20), default="medium"
+    )  # small, medium, large, xlarge
+
+    # Visibilidade
+    visible_to_users = db.Column(
+        db.Boolean, default=False
+    )  # Aparece para usuários normais?
+    internal_only = db.Column(db.Boolean, default=False)  # Apenas para uso interno?
+
+    # Timeline
+    planned_start_date = db.Column(db.Date)
+    planned_completion_date = db.Column(db.Date)
+    actual_start_date = db.Column(db.Date)
+    actual_completion_date = db.Column(db.Date)
+    implemented_at = db.Column(db.DateTime)  # Data efetiva de implementação
+
+    # Benefícios e impacto
+    business_value = db.Column(db.Text)  # Valor para o negócio
+    technical_complexity = db.Column(
+        db.String(20), default="medium"
+    )  # low, medium, high
+    user_impact = db.Column(db.String(20), default="medium")  # low, medium, high
+
+    # Dependências
+    dependencies = db.Column(db.Text)  # IDs de outros itens separados por vírgula
+    blockers = db.Column(db.Text)  # Bloqueadores conhecidos
+
+    # Metadata
+    tags = db.Column(db.String(500))  # Tags separadas por vírgula
+    notes = db.Column(db.Text)  # Notas internas
+
+    # Controle
+    created_by = db.Column(db.Integer, db.ForeignKey("user.id"))
+    assigned_to = db.Column(db.Integer, db.ForeignKey("user.id"))
+    last_updated_by = db.Column(db.Integer, db.ForeignKey("user.id"))
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relacionamentos
+    creator = db.relationship("User", foreign_keys=[created_by])
+    assignee = db.relationship("User", foreign_keys=[assigned_to])
+    updater = db.relationship("User", foreign_keys=[last_updated_by])
+
+    def __repr__(self):
+        return f"<RoadmapItem {self.title} - {self.status}>"
+
+    def get_status_display(self):
+        """Retorna o status formatado para exibição"""
+        status_map = {
+            "planned": ("Planejado", "secondary"),
+            "in_progress": ("Em Andamento", "primary"),
+            "completed": ("Concluído", "success"),
+            "cancelled": ("Cancelado", "danger"),
+            "on_hold": ("Em Espera", "warning"),
+        }
+        return status_map.get(self.status, ("Desconhecido", "secondary"))
+
+    def get_priority_display(self):
+        """Retorna a prioridade formatada"""
+        priority_map = {
+            "low": ("Baixa", "secondary"),
+            "medium": ("Média", "primary"),
+            "high": ("Alta", "warning"),
+            "critical": ("Crítica", "danger"),
+        }
+        return priority_map.get(self.priority, ("Média", "primary"))
+
+    def get_effort_display(self):
+        """Retorna o esforço estimado formatado"""
+        effort_map = {
+            "small": ("Pequeno", "1-2 dias"),
+            "medium": ("Médio", "1-2 semanas"),
+            "large": ("Grande", "1-2 meses"),
+            "xlarge": ("Muito Grande", "3+ meses"),
+        }
+        return effort_map.get(self.estimated_effort, ("Médio", "1-2 semanas"))
+
+    def get_tags_list(self):
+        """Retorna lista de tags"""
+        return [tag.strip() for tag in self.tags.split(",")] if self.tags else []
+
+    def get_dependencies_list(self):
+        """Retorna lista de dependências"""
+        return (
+            [dep.strip() for dep in self.dependencies.split(",")]
+            if self.dependencies
+            else []
+        )
+
+    def is_overdue(self):
+        """Verifica se está atrasado"""
+        if self.status in ["completed", "cancelled"]:
+            return False
+        if self.planned_completion_date:
+            return datetime.utcnow().date() > self.planned_completion_date
+        return False
+
+    def get_progress_percentage(self):
+        """Retorna porcentagem de progresso baseada no status"""
+        progress_map = {
+            "planned": 0,
+            "in_progress": 50,
+            "completed": 100,
+            "cancelled": 0,
+            "on_hold": 25,
+        }
+        return progress_map.get(self.status, 0)
+
+    def to_dict(self):
+        """Serializa para JSON"""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "status": self.status,
+            "status_display": self.get_status_display(),
+            "priority": self.priority,
+            "priority_display": self.get_priority_display(),
+            "estimated_effort": self.estimated_effort,
+            "effort_display": self.get_effort_display(),
+            "visible_to_users": self.visible_to_users,
+            "internal_only": self.internal_only,
+            "planned_start_date": self.planned_start_date.isoformat()
+            if self.planned_start_date
+            else None,
+            "planned_completion_date": self.planned_completion_date.isoformat()
+            if self.planned_completion_date
+            else None,
+            "actual_start_date": self.actual_start_date.isoformat()
+            if self.actual_start_date
+            else None,
+            "actual_completion_date": self.actual_completion_date.isoformat()
+            if self.actual_completion_date
+            else None,
+            "implemented_at": self.implemented_at.isoformat()
+            if self.implemented_at
+            else None,
+            "business_value": self.business_value,
+            "technical_complexity": self.technical_complexity,
+            "user_impact": self.user_impact,
+            "tags": self.get_tags_list(),
+            "is_overdue": self.is_overdue(),
+            "progress_percentage": self.get_progress_percentage(),
+            "category": {
+                "id": self.category.id,
+                "name": self.category.name,
+                "slug": self.category.slug,
+                "color": self.category.color,
+                "icon": self.category.icon,
+            }
+            if self.category
+            else None,
+        }
+
+
+class RoadmapFeedback(db.Model):
+    """Feedback dos usuários sobre funcionalidades implementadas"""
+
+    __tablename__ = "roadmap_feedback"
+
+    id = db.Column(db.Integer, primary_key=True)
+    roadmap_item_id = db.Column(
+        db.Integer, db.ForeignKey("roadmap_items.id"), nullable=False
+    )
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Avaliação
+    rating = db.Column(db.Integer, nullable=False)  # 1-5 estrelas
+    rating_category = db.Column(
+        db.String(50)
+    )  # 'usabilidade', 'funcionalidade', 'performance', 'design', 'geral'
+
+    # Feedback detalhado
+    title = db.Column(db.String(200))  # Título opcional do feedback
+    comment = db.Column(db.Text)  # Comentário detalhado
+    pros = db.Column(db.Text)  # Pontos positivos
+    cons = db.Column(db.Text)  # Pontos de melhoria
+    suggestions = db.Column(db.Text)  # Sugestões específicas
+
+    # Contexto de uso
+    usage_frequency = db.Column(
+        db.String(20)
+    )  # 'daily', 'weekly', 'monthly', 'rarely', 'first_time'
+    ease_of_use = db.Column(
+        db.String(20)
+    )  # 'very_easy', 'easy', 'neutral', 'difficult', 'very_difficult'
+
+    # Metadata
+    user_agent = db.Column(db.String(500))  # Browser/dispositivo usado
+    ip_address = db.Column(db.String(45))  # IPv4/IPv6
+    session_id = db.Column(db.String(100))  # Para agrupar feedback da mesma sessão
+
+    # Status
+    is_anonymous = db.Column(db.Boolean, default=False)  # Feedback anônimo?
+    is_featured = db.Column(db.Boolean, default=False)  # Destacar no admin?
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # pending, reviewed, addressed, dismissed
+
+    # Resposta do admin
+    admin_response = db.Column(db.Text)  # Resposta da equipe
+    responded_by = db.Column(db.Integer, db.ForeignKey("user.id"))
+    responded_at = db.Column(db.DateTime)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relacionamentos
+    roadmap_item = db.relationship(
+        "RoadmapItem",
+        backref=db.backref("feedback", lazy="dynamic", cascade="all, delete-orphan"),
+    )
+    user = db.relationship("User", foreign_keys=[user_id])
+    responder = db.relationship("User", foreign_keys=[responded_by])
+
+    def __repr__(self):
+        return f"<RoadmapFeedback {self.id} - Item {self.roadmap_item_id} - {self.rating}⭐>"
+
+    def get_rating_display(self):
+        """Retorna representação visual da avaliação"""
+        stars = "⭐" * self.rating
+        return f"{self.rating}/5 {stars}"
+
+    def get_rating_category_display(self):
+        """Retorna categoria formatada"""
+        categories = {
+            "usabilidade": "Usabilidade",
+            "funcionalidade": "Funcionalidade",
+            "performance": "Performance",
+            "design": "Design",
+            "geral": "Avaliação Geral",
+        }
+        return categories.get(self.rating_category, self.rating_category.title())
+
+    def get_usage_frequency_display(self):
+        """Retorna frequência de uso formatada"""
+        frequencies = {
+            "daily": "Diariamente",
+            "weekly": "Semanalmente",
+            "monthly": "Mensalmente",
+            "rarely": "Raramente",
+            "first_time": "Primeira vez",
+        }
+        return frequencies.get(self.usage_frequency, self.usage_frequency.title())
+
+    def get_ease_of_use_display(self):
+        """Retorna facilidade de uso formatada"""
+        ease_levels = {
+            "very_easy": "Muito fácil",
+            "easy": "Fácil",
+            "neutral": "Neutro",
+            "difficult": "Difícil",
+            "very_difficult": "Muito difícil",
+        }
+        return ease_levels.get(self.ease_of_use, self.ease_of_use.title())
+
+    def get_status_display(self):
+        """Retorna status formatado"""
+        status_map = {
+            "pending": ("Pendente", "warning"),
+            "reviewed": ("Revisado", "info"),
+            "addressed": ("Tratado", "success"),
+            "dismissed": ("Descartado", "secondary"),
+        }
+        return status_map.get(self.status, ("Desconhecido", "secondary"))
+
+    def mark_as_reviewed(self, admin_user=None):
+        """Marca feedback como revisado"""
+        self.status = "reviewed"
+        if admin_user:
+            self.responded_by = admin_user.id
+            self.responded_at = datetime.utcnow()
+        db.session.commit()
+
+    def add_response(self, response_text, admin_user):
+        """Adiciona resposta do admin"""
+        self.admin_response = response_text
+        self.responded_by = admin_user.id
+        self.responded_at = datetime.utcnow()
+        self.status = "addressed"
+        db.session.commit()
+
+    def to_dict(self):
+        """Serializa para JSON"""
+        return {
+            "id": self.id,
+            "roadmap_item_id": self.roadmap_item_id,
+            "user_id": self.user_id,
+            "rating": self.rating,
+            "rating_display": self.get_rating_display(),
+            "rating_category": self.rating_category,
+            "rating_category_display": self.get_rating_category_display(),
+            "title": self.title,
+            "comment": self.comment,
+            "pros": self.pros,
+            "cons": self.cons,
+            "suggestions": self.suggestions,
+            "usage_frequency": self.usage_frequency,
+            "usage_frequency_display": self.get_usage_frequency_display(),
+            "ease_of_use": self.ease_of_use,
+            "ease_of_use_display": self.get_ease_of_use_display(),
+            "is_anonymous": self.is_anonymous,
+            "is_featured": self.is_featured,
+            "status": self.status,
+            "status_display": self.get_status_display(),
+            "admin_response": self.admin_response,
+            "responded_at": self.responded_at.isoformat()
+            if self.responded_at
+            else None,
+            "created_at": self.created_at.isoformat(),
+            "user": {
+                "id": self.user.id,
+                "name": self.user.name,
+                "email": self.user.email,
+            }
+            if not self.is_anonymous and self.user
+            else None,
+            "responder": {
+                "id": self.responder.id,
+                "name": self.responder.name,
+            }
+            if self.responder
             else None,
         }

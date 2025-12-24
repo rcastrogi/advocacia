@@ -123,7 +123,7 @@ def create_pix_payment():
             ), 400
 
         # Para planos mensais, usar monthly_fee; para yearly, calcular baseado no monthly_fee
-        if billing_period == "monthly":
+        if billing_period in ["monthly", "1m"]:
             amount = float(plan.monthly_fee)
         else:  # yearly
             amount = float(plan.monthly_fee) * 12
@@ -240,8 +240,6 @@ def create_mercadopago_subscription():
             gateway="mercadopago",
             gateway_subscription_id=preapproval["id"],
             gateway_customer_id=None,  # MP não tem customer_id como Stripe
-            started_at=None,  # Será definido quando aprovado
-            renewal_date=None,  # Será definido quando aprovado
         )
         db.session.add(subscription)
         db.session.commit()

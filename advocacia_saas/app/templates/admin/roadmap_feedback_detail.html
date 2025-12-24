@@ -1,0 +1,235 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-comment mr-2"></i>
+                        Detalhes do Feedback
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{{ url_for('admin.roadmap_feedback') }}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Informações do Feedback -->
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="card-title">
+                                        <i class="fas fa-star text-warning mr-2"></i>
+                                        {{ feedback.get_rating_display() }}
+                                        {% if feedback.rating_category %}
+                                        <small class="text-muted">({{ feedback.get_rating_category_display() }})</small>
+                                        {% endif %}
+                                    </h4>
+                                    <div class="card-tools">
+                                        {% set status_display = feedback.get_status_display() %}
+                                        <span class="badge badge-{{ status_display[1] }}">
+                                            {{ status_display[0] }}
+                                        </span>
+                                        {% if feedback.is_featured %}
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-star"></i> Destacado
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="card-body">
+                                    {% if feedback.title %}
+                                    <h5>{{ feedback.title }}</h5>
+                                    {% endif %}
+
+                                    {% if feedback.comment %}
+                                    <p class="mb-3">{{ feedback.comment }}</p>
+                                    {% endif %}
+
+                                    {% if feedback.pros %}
+                                    <div class="mb-3">
+                                        <strong class="text-success">
+                                            <i class="fas fa-plus-circle"></i> Pontos Positivos:
+                                        </strong>
+                                        <p class="text-success">{{ feedback.pros }}</p>
+                                    </div>
+                                    {% endif %}
+
+                                    {% if feedback.cons %}
+                                    <div class="mb-3">
+                                        <strong class="text-danger">
+                                            <i class="fas fa-minus-circle"></i> Pontos de Melhoria:
+                                        </strong>
+                                        <p class="text-danger">{{ feedback.cons }}</p>
+                                    </div>
+                                    {% endif %}
+
+                                    {% if feedback.suggestions %}
+                                    <div class="mb-3">
+                                        <strong class="text-info">
+                                            <i class="fas fa-lightbulb"></i> Sugestões:
+                                        </strong>
+                                        <p class="text-info">{{ feedback.suggestions }}</p>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="row">
+                                        {% if feedback.usage_frequency %}
+                                        <div class="col-md-6">
+                                            <strong>Frequência de Uso:</strong>
+                                            {{ feedback.get_usage_frequency_display() }}
+                                        </div>
+                                        {% endif %}
+                                        {% if feedback.ease_of_use %}
+                                        <div class="col-md-6">
+                                            <strong>Facilidade de Uso:</strong>
+                                            {{ feedback.get_ease_of_use_display() }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resposta do Admin -->
+                            {% if feedback.admin_response %}
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-reply"></i> Resposta da Equipe
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>{{ feedback.admin_response }}</p>
+                                    {% if feedback.responded_at %}
+                                    <small class="text-muted">
+                                        Respondido em {{ feedback.responded_at.strftime('%d/%m/%Y às %H:%M') }}
+                                        {% if feedback.responder %}
+                                        por {{ feedback.responder.name }}
+                                        {% endif %}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Sidebar com Informações -->
+                        <div class="col-md-4">
+                            <!-- Informações do Usuário -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-user"></i> Usuário
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if feedback.is_anonymous %}
+                                    <p><em>Feedback anônimo</em></p>
+                                    {% else %}
+                                    <p><strong>{{ feedback.user.name if feedback.user else 'Usuário removido' }}</strong></p>
+                                    {% if feedback.user %}
+                                    <p><small>{{ feedback.user.email }}</small></p>
+                                    {% endif %}
+                                    {% endif %}
+                                    <p><small>Data: {{ feedback.created_at.strftime('%d/%m/%Y às %H:%M') }}</small></p>
+                                </div>
+                            </div>
+
+                            <!-- Funcionalidade Avaliada -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-cogs"></i> Funcionalidade
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <h6>{{ feedback.roadmap_item.title }}</h6>
+                                    <p class="text-muted">{{ feedback.roadmap_item.category.name }}</p>
+                                    <p><strong>Status:</strong> {{ feedback.roadmap_item.get_status_display()[0] }}</p>
+                                    {% if feedback.roadmap_item.implemented_at %}
+                                    <p><strong>Implementado em:</strong> {{ feedback.roadmap_item.implemented_at.strftime('%d/%m/%Y') }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Ações -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-tools"></i> Ações
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Alterar Status -->
+                                    <form method="POST" action="{{ url_for('admin.roadmap_feedback_status', feedback_id=feedback.id) }}" class="mb-3">
+                                        <div class="form-group">
+                                            <label for="status">Status:</label>
+                                            <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
+                                                <option value="pending" {{ 'selected' if feedback.status == 'pending' }}>Pendente</option>
+                                                <option value="reviewed" {{ 'selected' if feedback.status == 'reviewed' }}>Revisado</option>
+                                                <option value="addressed" {{ 'selected' if feedback.status == 'addressed' }}>Tratado</option>
+                                                <option value="dismissed" {{ 'selected' if feedback.status == 'dismissed' }}>Descartado</option>
+                                            </select>
+                                        </div>
+                                    </form>
+
+                                    <!-- Toggle Destaque -->
+                                    <form method="POST" action="{{ url_for('admin.roadmap_feedback_toggle_featured', feedback_id=feedback.id) }}" class="mb-3">
+                                        <button type="submit" class="btn btn-sm {{ 'btn-warning' if feedback.is_featured else 'btn-outline-warning' }} btn-block">
+                                            <i class="fas fa-star"></i>
+                                            {{ 'Remover Destaque' if feedback.is_featured else 'Destacar Feedback' }}
+                                        </button>
+                                    </form>
+
+                                    <!-- Responder (se não foi respondido ainda) -->
+                                    {% if not feedback.admin_response %}
+                                    <button type="button" class="btn btn-primary btn-sm btn-block" data-toggle="modal" data-target="#respondModal">
+                                        <i class="fas fa-reply"></i> Responder
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Responder -->
+<div class="modal fade" id="respondModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin.roadmap_feedback_respond', feedback_id=feedback.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Responder ao Feedback</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="response">Sua resposta:</label>
+                        <textarea name="response" class="form-control" rows="5" required
+                                  placeholder="Digite sua resposta para o usuário..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Enviar Resposta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

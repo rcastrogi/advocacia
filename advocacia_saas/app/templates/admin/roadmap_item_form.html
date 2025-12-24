@@ -1,0 +1,324 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.form-section {
+    border: 1px solid #e3e6f0;
+    border-radius: 0.35rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background-color: #f8f9fc;
+}
+
+.form-section h5 {
+    color: #5a5c69;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #bac8f3;
+    padding-bottom: 0.5rem;
+}
+
+.tag-input {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid #d1d3e2;
+    border-radius: 0.35rem;
+    min-height: 2.5rem;
+}
+
+.tag {
+    background-color: #e3e6f0;
+    color: #5a5c69;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.tag .remove-tag {
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.tag .remove-tag:hover {
+    color: #dc3545;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-edit text-primary"></i> {{ title }}
+            </h1>
+            <p class="text-muted mt-1">
+                {% if item %}
+                    Edite as informações do item do roadmap
+                {% else %}
+                    Crie um novo item para o roadmap
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.roadmap_items') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Formulário -->
+    <form method="POST" id="roadmapForm">
+        <!-- Informações Básicas -->
+        <div class="form-section">
+            <h5><i class="fas fa-info-circle"></i> Informações Básicas</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="title" class="form-label">Título <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="title" name="title"
+                           value="{{ item.title if item else '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="slug" name="slug"
+                           value="{{ item.slug if item else '' }}" required>
+                    <div class="form-text">Identificador único (usado em URLs)</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="category_id" class="form-label">Categoria <span class="text-danger">*</span></label>
+                    <select class="form-select" id="category_id" name="category_id" required>
+                        <option value="">Selecione uma categoria</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {{ 'selected' if item and item.category_id == category.id }}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="assigned_to" class="form-label">Responsável</label>
+                    <select class="form-select" id="assigned_to" name="assigned_to">
+                        <option value="">Não atribuído</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {{ 'selected' if item and item.assigned_to == user.id }}>
+                            {{ user.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Descrição <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="description" name="description" rows="3" required>{{ item.description if item else '' }}</textarea>
+                <div class="form-text">Breve descrição do item (aparece nas listagens)</div>
+            </div>
+            <div class="mb-3">
+                <label for="detailed_description" class="form-label">Descrição Detalhada</label>
+                <textarea class="form-control" id="detailed_description" name="detailed_description" rows="5">{{ item.detailed_description if item else '' }}</textarea>
+                <div class="form-text">Descrição mais completa com todos os detalhes</div>
+            </div>
+        </div>
+
+        <!-- Status e Prioridade -->
+        <div class="form-section">
+            <h5><i class="fas fa-tasks"></i> Status e Prioridade</h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="planned" {{ 'selected' if item and item.status == 'planned' }}>Planejado</option>
+                        <option value="in_progress" {{ 'selected' if item and item.status == 'in_progress' }}>Em Andamento</option>
+                        <option value="completed" {{ 'selected' if item and item.status == 'completed' }}>Concluído</option>
+                        <option value="cancelled" {{ 'selected' if item and item.status == 'cancelled' }}>Cancelado</option>
+                        <option value="on_hold" {{ 'selected' if item and item.status == 'on_hold' }}>Em Espera</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="priority" class="form-label">Prioridade <span class="text-danger">*</span></label>
+                    <select class="form-select" id="priority" name="priority" required>
+                        <option value="low" {{ 'selected' if item and item.priority == 'low' }}>Baixa</option>
+                        <option value="medium" {{ 'selected' if item and item.priority == 'medium' }}>Média</option>
+                        <option value="high" {{ 'selected' if item and item.priority == 'high' }}>Alta</option>
+                        <option value="critical" {{ 'selected' if item and item.priority == 'critical' }}>Crítica</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="estimated_effort" class="form-label">Esforço Estimado <span class="text-danger">*</span></label>
+                    <select class="form-select" id="estimated_effort" name="estimated_effort" required>
+                        <option value="small" {{ 'selected' if item and item.estimated_effort == 'small' }}>Pequeno (1-2 dias)</option>
+                        <option value="medium" {{ 'selected' if item and item.estimated_effort == 'medium' }}>Médio (1-2 semanas)</option>
+                        <option value="large" {{ 'selected' if item and item.estimated_effort == 'large' }}>Grande (1-2 meses)</option>
+                        <option value="xlarge" {{ 'selected' if item and item.estimated_effort == 'xlarge' }}>Muito Grande (3+ meses)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visibilidade -->
+        <div class="form-section">
+            <h5><i class="fas fa-eye"></i> Visibilidade</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="visible_to_users" name="visible_to_users"
+                               {{ 'checked' if item and item.visible_to_users }}>
+                        <label class="form-check-label" for="visible_to_users">
+                            <strong>Visível aos usuários</strong>
+                        </label>
+                        <div class="form-text">Este item aparecerá no roadmap público para todos os usuários</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="internal_only" name="internal_only"
+                               {{ 'checked' if item and item.internal_only }}>
+                        <label class="form-check-label" for="internal_only">
+                            <strong>Uso interno apenas</strong>
+                        </label>
+                        <div class="form-text">Este item é apenas para planejamento interno da equipe</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="form-section">
+            <h5><i class="fas fa-calendar"></i> Timeline</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="planned_start_date" class="form-label">Data de Início Planejada</label>
+                    <input type="date" class="form-control" id="planned_start_date" name="planned_start_date"
+                           value="{{ item.planned_start_date.isoformat() if item and item.planned_start_date else '' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="planned_completion_date" class="form-label">Data de Conclusão Planejada</label>
+                    <input type="date" class="form-control" id="planned_completion_date" name="planned_completion_date"
+                           value="{{ item.planned_completion_date.isoformat() if item and item.planned_completion_date else '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalhes Técnicos -->
+        <div class="form-section">
+            <h5><i class="fas fa-cogs"></i> Detalhes Técnicos</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="technical_complexity" class="form-label">Complexidade Técnica</label>
+                    <select class="form-select" id="technical_complexity" name="technical_complexity">
+                        <option value="low" {{ 'selected' if item and item.technical_complexity == 'low' }}>Baixa</option>
+                        <option value="medium" {{ 'selected' if item and item.technical_complexity == 'medium' }}>Média</option>
+                        <option value="high" {{ 'selected' if item and item.technical_complexity == 'high' }}>Alta</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="user_impact" class="form-label">Impacto no Usuário</label>
+                    <select class="form-select" id="user_impact" name="user_impact">
+                        <option value="low" {{ 'selected' if item and item.user_impact == 'low' }}>Baixo</option>
+                        <option value="medium" {{ 'selected' if item and item.user_impact == 'medium' }}>Médio</option>
+                        <option value="high" {{ 'selected' if item and item.user_impact == 'high' }}>Alto</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="business_value" class="form-label">Valor para o Negócio</label>
+                <textarea class="form-control" id="business_value" name="business_value" rows="3">{{ item.business_value if item else '' }}</textarea>
+                <div class="form-text">Como este item impacta os objetivos de negócio</div>
+            </div>
+        </div>
+
+        <!-- Relacionamentos -->
+        <div class="form-section">
+            <h5><i class="fas fa-link"></i> Relacionamentos</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="dependencies" class="form-label">Dependências</label>
+                    <textarea class="form-control" id="dependencies" name="dependencies" rows="3"
+                              placeholder="IDs dos itens dos quais este depende (separados por vírgula)">{{ item.dependencies if item else '' }}</textarea>
+                    <div class="form-text">Outros itens que precisam ser concluídos antes deste</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="blockers" class="form-label">Bloqueadores</label>
+                    <textarea class="form-control" id="blockers" name="blockers" rows="3"
+                              placeholder="Problemas ou impedimentos conhecidos">{{ item.blockers if item else '' }}</textarea>
+                    <div class="form-text">Razões pelas quais este item não pode ser iniciado</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="tags" class="form-label">Tags</label>
+                <input type="text" class="form-control" id="tags" name="tags"
+                       value="{{ item.tags if item else '' }}"
+                       placeholder="Tags separadas por vírgula (ex: mobile, api, frontend)">
+                <div class="form-text">Palavras-chave para categorizar e buscar este item</div>
+            </div>
+        </div>
+
+        <!-- Notas Internas -->
+        <div class="form-section">
+            <h5><i class="fas fa-sticky-note"></i> Notas Internas</h5>
+            <div class="mb-3">
+                <label for="notes" class="form-label">Notas da Equipe</label>
+                <textarea class="form-control" id="notes" name="notes" rows="4"
+                          placeholder="Notas internas, discussões, decisões tomadas...">{{ item.notes if item else '' }}</textarea>
+                <div class="form-text">Informações confidenciais para uso interno da equipe</div>
+            </div>
+        </div>
+
+        <!-- Botões -->
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('admin.roadmap_items') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Salvar Item
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Auto-gerar slug a partir do título
+document.getElementById('title').addEventListener('input', function() {
+    const title = this.value;
+    const slug = title.toLowerCase()
+        .replace(/[^\w\s-]/g, '') // Remove caracteres especiais
+        .replace(/\s+/g, '-') // Substitui espaços por hífens
+        .replace(/-+/g, '-') // Remove hífens consecutivos
+        .trim(); // Remove espaços no início e fim
+
+    document.getElementById('slug').value = slug;
+});
+
+// Validação do formulário
+document.getElementById('roadmapForm').addEventListener('submit', function(e) {
+    const visibleToUsers = document.getElementById('visible_to_users').checked;
+    const internalOnly = document.getElementById('internal_only').checked;
+
+    if (visibleToUsers && internalOnly) {
+        e.preventDefault();
+        alert('Um item não pode ser visível aos usuários E ser apenas para uso interno ao mesmo tempo.');
+        return false;
+    }
+});
+</script>
+{% endblock %}

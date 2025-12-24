@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block meta_description %}Veja o roadmap de desenvolvimento da Petitio SaaS - novas funcionalidades, melhorias e inovações que estão por vir.{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3">Roadmap de Desenvolvimento</h1>
+                <p class="lead mb-4">
+                    Conheça as próximas funcionalidades e melhorias que estamos desenvolvendo para tornar sua experiência ainda melhor.
+                </p>
+                <div class="d-flex align-items-center mb-4">
+                    <div class="me-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span class="fw-bold">{{ completed_features }}</span>
+                            <span class="ms-1">concluídas</span>
+                        </div>
+                    </div>
+                    <div class="me-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-play-circle text-primary me-2"></i>
+                            <span class="fw-bold">{{ in_progress_features }}</span>
+                            <span class="ms-1">em andamento</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-clock text-warning me-2"></i>
+                            <span class="fw-bold">{{ total_features - completed_features - in_progress_features }}</span>
+                            <span class="ms-1">planejadas</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="text-center">
+                    <div class="progress-circle" style="width: 150px; height: 150px; margin: 0 auto;">
+                        <svg width="150" height="150" viewBox="0 0 150 150">
+                            <circle cx="75" cy="75" r="60" stroke="#e9ecef" stroke-width="8" fill="none"/>
+                            <circle cx="75" cy="75" r="60" stroke="#007bff" stroke-width="8" fill="none"
+                                    stroke-dasharray="376.99" stroke-dashoffset="{{ 376.99 - (376.99 * overall_progress / 100) }}"
+                                    transform="rotate(-90 75 75)"/>
+                        </svg>
+                        <div class="progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                            <div class="h4 mb-0">{{ overall_progress }}%</div>
+                            <small>Concluído</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Roadmap Content -->
+<section class="py-5">
+    <div class="container">
+        {% if categories %}
+            {% for category_data in categories %}
+            <div class="row mb-5">
+                <div class="col-12">
+                    <!-- Category Header -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="category-icon me-3">
+                                    <i class="fas {{ category_data.category.icon }} fa-2x text-{{ category_data.category.color }}"></i>
+                                </div>
+                                <div>
+                                    <h3 class="h4 mb-1">{{ category_data.category.name }}</h3>
+                                    <p class="text-muted mb-0">{{ category_data.category.description }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Items -->
+                    <div class="row">
+                        {% for item in category_data.items %}
+                        <div class="col-lg-6 col-xl-4 mb-4">
+                            <div class="card h-100 border-0 shadow-sm hover-lift">
+                                <div class="card-body">
+                                    <!-- Status Badge -->
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        {% set status_display = item.get_status_display() %}
+                                        <span class="badge badge-{{ status_display[1] }} fs-6">
+                                            {{ status_display[0] }}
+                                        </span>
+                                        {% if item.is_overdue() %}
+                                        <span class="badge badge-danger">
+                                            <i class="fas fa-exclamation-triangle"></i> Atrasado
+                                        </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Title -->
+                                    <h5 class="card-title mb-2">
+                                        <a href="{{ url_for('main.roadmap_item', slug=item.slug) }}" class="text-decoration-none text-dark">
+                                            {{ item.title }}
+                                        </a>
+                                    </h5>
+
+                                    <!-- Description -->
+                                    <p class="card-text text-muted small mb-3">
+                                        {{ item.description }}
+                                    </p>
+
+                                    <!-- Priority and Effort -->
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        {% set priority_display = item.get_priority_display() %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-flag text-{{ priority_display[1] }}"></i>
+                                            {{ priority_display[0] }}
+                                        </small>
+                                        {% set effort_display = item.get_effort_display() %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock"></i>
+                                            {{ effort_display[1] }}
+                                        </small>
+                                    </div>
+
+                                    <!-- Progress Bar -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <small class="text-muted">Progresso</small>
+                                            <small class="text-muted">{{ item.get_progress_percentage() }}%</small>
+                                        </div>
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar bg-{{ status_display[1] }}"
+                                                 style="width: {{ item.get_progress_percentage() }}%"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Dates -->
+                                    {% if item.planned_completion_date %}
+                                    <div class="mb-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar"></i>
+                                            Previsão: {{ item.planned_completion_date.strftime('%d/%m/%Y') }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Tags -->
+                                    {% if item.get_tags_list() %}
+                                    <div class="mb-3">
+                                        {% for tag in item.get_tags_list()[:3] %}
+                                        <span class="badge badge-outline-secondary me-1">{{ tag }}</span>
+                                        {% endfor %}
+                                        {% if item.get_tags_list()|length > 3 %}
+                                        <span class="badge badge-outline-secondary">+{{ item.get_tags_list()|length - 3 }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Action Button -->
+                                    <a href="{{ url_for('main.roadmap_item', slug=item.slug) }}"
+                                       class="btn btn-outline-primary btn-sm w-100">
+                                        <i class="fas fa-eye"></i> Ver Detalhes
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="empty-state">
+                    <i class="fas fa-road fa-4x text-muted mb-4"></i>
+                    <h3 class="text-muted">Roadmap em Construção</h3>
+                    <p class="text-muted mb-4">
+                        Estamos trabalhando duro para trazer novas funcionalidades incríveis.
+                        Em breve compartilharemos nossas próximas inovações!
+                    </p>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                        <i class="fas fa-home"></i> Voltar ao Início
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="bg-light py-5">
+    <div class="container text-center">
+        <h3 class="mb-3">Quer sugerir uma funcionalidade?</h3>
+        <p class="text-muted mb-4">
+            Suas ideias são importantes para nós! Entre em contato e nos ajude a construir a plataforma dos seus sonhos.
+        </p>
+        <a href="{{ url_for('main.contact') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-envelope"></i> Enviar Sugestão
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+<style>
+.hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+.progress-circle {
+    position: relative;
+}
+
+.badge-outline-secondary {
+    background-color: transparent;
+    border: 1px solid #6c757d;
+    color: #6c757d;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+</style>

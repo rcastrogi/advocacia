@@ -141,6 +141,7 @@
                 <tbody>
                     {% for data in users %}
                     {% set user = data.user %}
+                    {% set metrics = data.metrics %}
                     <tr>
                         <td>
                             <div class="d-flex align-items-center">
@@ -182,44 +183,44 @@
                         </td>
                         <td class="text-center">
                             <span class="badge bg-light text-dark">
-                                {{ data.days_on_platform }} dias
+                                {{ metrics.days_on_platform }} dias
                             </span>
-                            {% if data.days_paying > 0 %}
+                            {% if metrics.days_paying > 0 %}
                             <br>
-                            <small class="text-success">{{ data.days_paying }}d pagante</small>
+                            <small class="text-success">{{ metrics.days_paying }}d pagante</small>
                             {% endif %}
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-warning text-dark">{{ data.total_clients }}</span>
+                            <span class="badge bg-warning text-dark">{{ metrics.total_clients }}</span>
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-info">{{ data.total_petitions }}</span>
-                            {% if data.petitions_month > 0 %}
+                            <span class="badge bg-info">{{ metrics.total_petitions }}</span>
+                            {% if metrics.petitions_month > 0 %}
                             <br>
-                            <small class="text-success">+{{ data.petitions_month }} mês</small>
+                            <small class="text-success">+{{ metrics.petitions_month }} mês</small>
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            R$ {{ "%.2f"|format(data.petitions_value_total) }}
-                            {% if data.petitions_value_month > 0 %}
+                            R$ {{ "%.2f"|format(metrics.petitions_value_total) }}
+                            {% if metrics.petitions_value_month > 0 %}
                             <br>
-                            <small class="text-success">+{{ "%.2f"|format(data.petitions_value_month) }} mês</small>
+                            <small class="text-success">+{{ "%.2f"|format(metrics.petitions_value_month) }} mês</small>
                             {% endif %}
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-primary">{{ data.ai_credits_balance }}</span>
-                            {% if data.ai_credits_total_used > 0 %}
+                            <span class="badge bg-primary">{{ metrics.ai_credits_balance }}</span>
+                            {% if metrics.ai_credits_total_used > 0 %}
                             <br>
-                            <small class="text-muted">{{ data.ai_credits_total_used }} usados</small>
+                            <small class="text-muted">{{ metrics.ai_credits_total_used }} usados</small>
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            {% if data.ai_tokens_month > 0 %}
-                            <small class="text-muted">{{ "{:,}".format(data.ai_tokens_month) }} tok</small>
+                            {% if metrics.ai_tokens_month > 0 %}
+                            <small class="text-muted">{{ "{:,}".format(metrics.ai_tokens_month) }} tok</small>
                             <br>
                             {% endif %}
-                            <span class="{% if data.ai_cost_month > 0 %}text-danger{% else %}text-muted{% endif %}">
-                                $ {{ "%.4f"|format(data.ai_cost_month) }}
+                            <span class="{% if metrics.ai_cost_month > 0 %}text-danger{% else %}text-muted{% endif %}">
+                                $ {{ "%.4f"|format(metrics.ai_cost_month) }}
                             </span>
                         </td>
                         <td class="text-end">

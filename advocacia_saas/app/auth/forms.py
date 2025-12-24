@@ -37,6 +37,46 @@ class RegistrationForm(FlaskForm):
     )
     oab_number = StringField("Número da OAB")
     phone = StringField("Telefone")
+    # Address fields
+    cep = StringField("CEP", validators=[Length(max=10)])
+    street = StringField("Endereço", validators=[Length(max=200)])
+    number = StringField("Número", validators=[Length(max=20)])
+    uf = SelectField(
+        "UF",
+        choices=[
+            ("", "Selecione..."),
+            ("AC", "Acre"),
+            ("AL", "Alagoas"),
+            ("AP", "Amapá"),
+            ("AM", "Amazonas"),
+            ("BA", "Bahia"),
+            ("CE", "Ceará"),
+            ("DF", "Distrito Federal"),
+            ("ES", "Espírito Santo"),
+            ("GO", "Goiás"),
+            ("MA", "Maranhão"),
+            ("MT", "Mato Grosso"),
+            ("MS", "Mato Grosso do Sul"),
+            ("MG", "Minas Gerais"),
+            ("PA", "Pará"),
+            ("PB", "Paraíba"),
+            ("PR", "Paraná"),
+            ("PE", "Pernambuco"),
+            ("PI", "Piauí"),
+            ("RJ", "Rio de Janeiro"),
+            ("RN", "Rio Grande do Norte"),
+            ("RS", "Rio Grande do Sul"),
+            ("RO", "Rondônia"),
+            ("RR", "Roraima"),
+            ("SC", "Santa Catarina"),
+            ("SP", "São Paulo"),
+            ("SE", "Sergipe"),
+            ("TO", "Tocantins"),
+        ],
+    )
+    city = StringField("Cidade", validators=[Length(max=100)])
+    neighborhood = StringField("Bairro", validators=[Length(max=100)])
+    complement = StringField("Complemento", validators=[Length(max=200)])
     specialties = MultiCheckboxField(
         "Áreas de atuação",
         choices=[
@@ -88,6 +128,46 @@ class ProfileForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])
     oab_number = StringField("Número da OAB")
     phone = StringField("Telefone")
+    # Address fields
+    cep = StringField("CEP", validators=[Length(max=10)])
+    street = StringField("Endereço", validators=[Length(max=200)])
+    number = StringField("Número", validators=[Length(max=20)])
+    uf = SelectField(
+        "UF",
+        choices=[
+            ("", "Selecione..."),
+            ("AC", "Acre"),
+            ("AL", "Alagoas"),
+            ("AP", "Amapá"),
+            ("AM", "Amazonas"),
+            ("BA", "Bahia"),
+            ("CE", "Ceará"),
+            ("DF", "Distrito Federal"),
+            ("ES", "Espírito Santo"),
+            ("GO", "Goiás"),
+            ("MA", "Maranhão"),
+            ("MT", "Mato Grosso"),
+            ("MS", "Mato Grosso do Sul"),
+            ("MG", "Minas Gerais"),
+            ("PA", "Pará"),
+            ("PB", "Paraíba"),
+            ("PR", "Paraná"),
+            ("PE", "Pernambuco"),
+            ("PI", "Piauí"),
+            ("RJ", "Rio de Janeiro"),
+            ("RN", "Rio Grande do Norte"),
+            ("RS", "Rio Grande do Sul"),
+            ("RO", "Rondônia"),
+            ("RR", "Roraima"),
+            ("SC", "Santa Catarina"),
+            ("SP", "São Paulo"),
+            ("SE", "Sergipe"),
+            ("TO", "Tocantins"),
+        ],
+    )
+    city = StringField("Cidade", validators=[Length(max=100)])
+    neighborhood = StringField("Bairro", validators=[Length(max=100)])
+    complement = StringField("Complemento", validators=[Length(max=200)])
     specialties = MultiCheckboxField(
         "Áreas de atuação",
         choices=[

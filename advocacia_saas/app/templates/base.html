@@ -443,6 +443,9 @@
                         <a class="nav-link" href="{{ url_for('main.recursos') }}">Recursos</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.roadmap') }}">Roadmap</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#acessibilidade">Acessibilidade</a>
                     </li>
                     <li class="nav-item">
@@ -573,6 +576,9 @@
                             {% endif %}
                             <li><a class="dropdown-item" href="{{ url_for('billing.portal') }}">
                                 <i class="fas fa-credit-card"></i> Minha assinatura
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.roadmap') }}">
+                                <i class="fas fa-road"></i> Roadmap
                             </a></li>
                             {% if current_user.user_type == 'master' %}
                             <li><a class="dropdown-item text-danger fw-bold" href="{{ url_for('admin.dashboard') }}">

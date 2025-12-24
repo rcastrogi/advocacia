@@ -1,0 +1,533 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin_content %}
+<!-- Container de Toasts (posicionado fixo no topo direito) -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    {% if alerts %}
+        {% for alert in alerts %}
+        <div class="toast align-items-center text-white bg-{{ alert.type }} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="{{ alert.icon }} me-2"></i>
+                    <strong>{{ alert.title }}</strong>: {{ alert.message }}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<!-- Cabeçalho -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">
+            <i class="fas fa-dollar-sign me-2 text-primary"></i>Dashboard Financeiro
+        </h2>
+        <p class="text-muted mb-0">Análise financeira detalhada da plataforma</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.users_list') }}" class="btn btn-outline-primary">
+            <i class="fas fa-users me-2"></i>Ver Todos os Usuários
+        </a>
+    </div>
+</div>
+
+<!-- Navegação por Dashboards -->
+<ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'overview' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard') }}">
+            <i class="fas fa-chart-line me-2"></i>Visão Geral
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'regional' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard_regional') }}">
+            <i class="fas fa-map-marker-alt me-2"></i>Regional
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'peticoes' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard_peticoes') }}">
+            <i class="fas fa-file-alt me-2"></i>Petições
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'financeiro' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard_financeiro') }}">
+            <i class="fas fa-dollar-sign me-2"></i>Financeiro
+        </a>
+    </li>
+</ul>
+
+<!-- Filtros e Export -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="period" class="form-label">Período</label>
+                <select name="period" id="period" class="form-select">
+                    <option value="6months" {% if period == '6months' %}selected{% endif %}>Últimos 6 meses</option>
+                    <option value="12months" {% if period == '12months' %}selected{% endif %}>Últimos 12 meses</option>
+                    <option value="24months" {% if period == '24months' %}selected{% endif %}>Últimos 24 meses</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="plan" class="form-label">Plano</label>
+                <select name="plan" id="plan" class="form-select">
+                    {% for plan_option in plan_options %}
+                    <option value="{{ plan_option }}" {% if plan_filter == plan_option %}selected{% endif %}>
+                        {{ 'Todos os Planos' if plan_option == 'all' else plan_option }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Todos</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Ativos</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inativos</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                    <a href="{{ url_for('admin.export_dashboard_financeiro', period=period, plan=plan_filter, status=status_filter) }}"
+                       class="btn btn-outline-success">
+                        <i class="fas fa-download me-2"></i>Exportar ZIP
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Cards de Métricas Financeiras -->
+<div class="row g-4 mb-4">
+    <!-- MRR Atual -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                            <i class="fas fa-chart-line fa-2x text-success"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">R$ {{ "%.2f"|format(current_mrr) }}</h3>
+                        <small class="text-muted">MRR Atual</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receita do Mês -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                            <i class="fas fa-calendar-month fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">R$ {{ "%.2f"|format(monthly_revenue[11].revenue if monthly_revenue else 0) }}</h3>
+                        <small class="text-muted">Receita do Mês</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LTV Médio -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                            <i class="fas fa-coins fa-2x text-info"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">
+                            {% if ltv_data and ltv_data.unique_users > 0 %}
+                                R$ {{ "%.2f"|format(ltv_data.avg_payment * ltv_data.total_payments / ltv_data.unique_users) }}
+                            {% else %}
+                                R$ 0,00
+                            {% endif %}
+                        </h3>
+                        <small class="text-muted">LTV Médio</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Churn Rate -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-danger bg-opacity-10 p-3">
+                            <i class="fas fa-user-minus fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">
+                            {% if churn_data %}
+                                {{ "%.1f"|format(churn_data[5].churn_rate) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </h3>
+                        <small class="text-muted">Churn Rate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tendências -->
+{% if trends %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2 text-primary"></i>Tendências (Últimos 3 Meses)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    {% if trends.revenue %}
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="rounded-circle bg-{{ 'success' if trends.revenue.direction == 'up' else 'danger' if trends.revenue.direction == 'down' else 'warning' }} bg-opacity-10 p-3">
+                                    <i class="fas fa-{{ 'arrow-up' if trends.revenue.direction == 'up' else 'arrow-down' if trends.revenue.direction == 'down' else 'minus' }} fa-2x text-{{ 'success' if trends.revenue.direction == 'up' else 'danger' if trends.revenue.direction == 'down' else 'warning' }}"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Receita</h6>
+                                <div class="d-flex align-items-center">
+                                    <span class="fw-bold me-2">R$ {{ "%.2f"|format(trends.revenue.current) }}</span>
+                                    <small class="text-{{ 'success' if trends.revenue.change_percent > 0 else 'danger' if trends.revenue.change_percent < 0 else 'muted' }}">
+                                        {{ "%.1f"|format(trends.revenue.change_percent) }}%
+                                    </small>
+                                </div>
+                                <small class="text-muted">{{ trends.revenue.trend }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if trends.users %}
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="rounded-circle bg-{{ 'success' if trends.users.direction == 'up' else 'danger' if trends.users.direction == 'down' else 'warning' }} bg-opacity-10 p-3">
+                                    <i class="fas fa-{{ 'arrow-up' if trends.users.direction == 'up' else 'arrow-down' if trends.users.direction == 'down' else 'minus' }} fa-2x text-{{ 'success' if trends.users.direction == 'up' else 'danger' if trends.users.direction == 'down' else 'warning' }}"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Novos Usuários</h6>
+                                <div class="d-flex align-items-center">
+                                    <span class="fw-bold me-2">{{ trends.users.current }}</span>
+                                    <small class="text-{{ 'success' if trends.users.change_percent > 0 else 'danger' if trends.users.change_percent < 0 else 'muted' }}">
+                                        {{ "%.1f"|format(trends.users.change_percent) }}%
+                                    </small>
+                                </div>
+                                <small class="text-muted">{{ trends.users.trend }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if trends.petitions %}
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="rounded-circle bg-{{ 'success' if trends.petitions.direction == 'up' else 'danger' if trends.petitions.direction == 'down' else 'warning' }} bg-opacity-10 p-3">
+                                    <i class="fas fa-{{ 'arrow-up' if trends.petitions.direction == 'up' else 'arrow-down' if trends.petitions.direction == 'down' else 'minus' }} fa-2x text-{{ 'success' if trends.petitions.direction == 'up' else 'danger' if trends.petitions.direction == 'down' else 'warning' }}"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Petições Geradas</h6>
+                                <div class="d-flex align-items-center">
+                                    <span class="fw-bold me-2">{{ trends.petitions.current }}</span>
+                                    <small class="text-{{ 'success' if trends.petitions.change_percent > 0 else 'danger' if trends.petitions.change_percent < 0 else 'muted' }}">
+                                        {{ "%.1f"|format(trends.petitions.change_percent) }}%
+                                    </small>
+                                </div>
+                                <small class="text-muted">{{ trends.petitions.trend }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Receita Mensal -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2 text-primary"></i>Receita Mensal (Últimos 12 meses)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Receita por Plano e Churn -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-tags me-2 text-success"></i>Receita por Plano
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Plano</th>
+                                <th class="text-center">Receita Total</th>
+                                <th class="text-center">Assinaturas</th>
+                                <th class="text-center">Ticket Médio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plan in revenue_by_plan %}
+                            <tr>
+                                <td><strong>{{ plan.name }}</strong></td>
+                                <td class="text-center">R$ {{ "%.2f"|format(plan.total_revenue) }}</td>
+                                <td class="text-center">{{ plan.subscription_count }}</td>
+                                <td class="text-center">
+                                    {% if plan.subscription_count > 0 %}
+                                        R$ {{ "%.2f"|format(plan.total_revenue / plan.subscription_count) }}
+                                    {% else %}
+                                        R$ 0,00
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-minus me-2 text-danger"></i>Churn Rate (Últimos 6 meses)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="churnChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Métricas de Lifetime Value -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-analytics me-2 text-info"></i>Métricas de Valor do Cliente
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-primary">
+                                {% if ltv_data and ltv_data.total_payments > 0 %}
+                                    R$ {{ "%.2f"|format(ltv_data.avg_payment) }}
+                                {% else %}
+                                    R$ 0,00
+                                {% endif %}
+                            </h4>
+                            <small class="text-muted">Pagamento Médio</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-success">
+                                {% if ltv_data and ltv_data.unique_users > 0 %}
+                                    R$ {{ "%.2f"|format(ltv_data.avg_payment * ltv_data.total_payments / ltv_data.unique_users) }}
+                                {% else %}
+                                    R$ 0,00
+                                {% endif %}
+                            </h4>
+                            <small class="text-muted">LTV Estimado</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-info">{{ ltv_data.total_payments if ltv_data else 0 }}</h4>
+                            <small class="text-muted">Total de Pagamentos</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-warning">{{ ltv_data.unique_users if ltv_data else 0 }}</h4>
+                            <small class="text-muted">Clientes Únicos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar toasts automaticamente
+    const toasts = document.querySelectorAll('.toast');
+    toasts.forEach(function(toast) {
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+    });
+
+    // Gráfico de receita mensal usando ApexCharts
+    const revenueData = {{ monthly_revenue|tojson }};
+
+    const revenueOptions = {
+        series: [{
+            name: 'Receita Mensal',
+            data: revenueData.map(d => d.revenue)
+        }],
+        chart: {
+            type: 'area',
+            height: 350,
+            toolbar: {
+                show: false
+            }
+        },
+        colors: ['#0d6efd'],
+        dataLabels: {
+            enabled: false
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shade: 'light',
+                type: 'vertical',
+                opacityFrom: 0.4,
+                opacityTo: 0.1,
+            }
+        },
+        xaxis: {
+            categories: revenueData.map(d => d.month),
+            title: {
+                text: 'Mês'
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Receita (R$)'
+            },
+            labels: {
+                formatter: function(value) {
+                    return 'R$ ' + value.toLocaleString('pt-BR');
+                }
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function(value) {
+                    return 'R$ ' + value.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                }
+            }
+        }
+    };
+
+    const revenueChart = new ApexCharts(document.querySelector("#revenueChart"), revenueOptions);
+    revenueChart.render();
+
+    // Gráfico de churn rate usando ApexCharts
+    const churnData = {{ churn_data|tojson }};
+
+    const churnOptions = {
+        series: [{
+            name: 'Churn Rate',
+            data: churnData.map(d => d.churn_rate)
+        }],
+        chart: {
+            type: 'bar',
+            height: 350,
+            toolbar: {
+                show: false
+            }
+        },
+        colors: ['#dc3545'],
+        plotOptions: {
+            bar: {
+                borderRadius: 4,
+                columnWidth: '60%'
+            }
+        },
+        dataLabels: {
+            enabled: false
+        },
+        xaxis: {
+            categories: churnData.map(d => d.month),
+            title: {
+                text: 'Mês'
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Churn Rate (%)'
+            },
+            labels: {
+                formatter: function(value) {
+                    return value + '%';
+                }
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function(value) {
+                    return value + '%';
+                }
+            }
+        }
+    };
+
+    const churnChart = new ApexCharts(document.querySelector("#churnChart"), churnOptions);
+    churnChart.render();
+});
+</script>
+
+{% endblock %}

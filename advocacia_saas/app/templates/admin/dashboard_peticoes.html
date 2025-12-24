@@ -1,0 +1,427 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin_content %}
+<!-- Container de Toasts (posicionado fixo no topo direito) -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    {% if alerts %}
+        {% for alert in alerts %}
+        <div class="toast align-items-center text-white bg-{{ alert.type }} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="{{ alert.icon }} me-2"></i>
+                    <strong>{{ alert.title }}</strong>: {{ alert.message }}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<!-- Cabeçalho -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">
+            <i class="fas fa-file-alt me-2 text-primary"></i>Dashboard de Petições
+        </h2>
+        <p class="text-muted mb-0">Análise detalhada do uso de petições</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.users_list') }}" class="btn btn-outline-primary">
+            <i class="fas fa-users me-2"></i>Ver Todos os Usuários
+        </a>
+    </div>
+</div>
+
+<!-- Navegação por Dashboards -->
+<ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'overview' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard') }}">
+            <i class="fas fa-chart-line me-2"></i>Visão Geral
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'regional' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard_regional') }}">
+            <i class="fas fa-map-marker-alt me-2"></i>Regional
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'peticoes' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard_peticoes') }}">
+            <i class="fas fa-file-alt me-2"></i>Petições
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'financeiro' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard_financeiro') }}">
+            <i class="fas fa-dollar-sign me-2"></i>Financeiro
+        </a>
+    </li>
+</ul>
+
+<!-- Filtros e Export -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="period" class="form-label">Período</label>
+                <select name="period" id="period" class="form-select">
+                    <option value="7days" {% if period == '7days' %}selected{% endif %}>Últimos 7 dias</option>
+                    <option value="30days" {% if period == '30days' %}selected{% endif %}>Últimos 30 dias</option>
+                    <option value="90days" {% if period == '90days' %}selected{% endif %}>Últimos 90 dias</option>
+                    <option value="6months" {% if period == '6months' %}selected{% endif %}>Últimos 6 meses</option>
+                    <option value="1year" {% if period == '1year' %}selected{% endif %}>Último ano</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="plan" class="form-label">Plano</label>
+                <select name="plan" id="plan" class="form-select">
+                    {% for plan_option in plan_options %}
+                    <option value="{{ plan_option }}" {% if plan_filter == plan_option %}selected{% endif %}>
+                        {{ 'Todos os Planos' if plan_option == 'all' else plan_option }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Todos</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Ativos</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inativos</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                    <a href="{{ url_for('admin.export_dashboard_peticoes', period=period, plan=plan_filter, status=status_filter) }}"
+                       class="btn btn-outline-success">
+                        <i class="fas fa-download me-2"></i>Exportar CSV
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Cards de Métricas de Petições -->
+<div class="row g-4 mb-4">
+    <!-- Total de Petições -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                            <i class="fas fa-file-alt fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">{{ petitions_by_type|sum(attribute='count') if petitions_by_type else 0 }}</h3>
+                        <small class="text-muted">Total de Petições</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Valor Total -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                            <i class="fas fa-dollar-sign fa-2x text-success"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">R$ {{ "%.2f"|format(petitions_by_type|sum(attribute='total_value')) }}</h3>
+                        <small class="text-muted">Valor Total</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tipos de Petição -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                            <i class="fas fa-tags fa-2x text-info"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">{{ petitions_by_type|length }}</h3>
+                        <small class="text-muted">Tipos de Petição</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conversão Trial -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                            <i class="fas fa-exchange-alt fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">
+                            {% if trial_conversions.total_trials > 0 %}
+                                {{ "%.1f"|format(trial_conversions.converted / trial_conversions.total_trials * 100) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </h3>
+                        <small class="text-muted">Conversão Trial</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Petições por Tipo -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2 text-primary"></i>Petições por Tipo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tipo de Petição</th>
+                                <th class="text-center">Quantidade</th>
+                                <th class="text-center">Valor Total</th>
+                                <th class="text-center">Valor Médio</th>
+                                <th class="text-center">% do Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set total_petitions = petitions_by_type|sum(attribute='count') %}
+                            {% for petition_type in petitions_by_type %}
+                            <tr>
+                                <td><strong>{{ petition_type.petition_type or 'Não especificado' }}</strong></td>
+                                <td class="text-center">{{ petition_type.count }}</td>
+                                <td class="text-center">R$ {{ "%.2f"|format(petition_type.total_value) }}</td>
+                                <td class="text-center">R$ {{ "%.2f"|format(petition_type.avg_value) }}</td>
+                                <td class="text-center">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-primary" role="progressbar"
+                                             style="width: {{ "%.1f"|format(petition_type.count / total_petitions * 100) }}%">
+                                            {{ "%.1f"|format(petition_type.count / total_petitions * 100) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Usuários por Petições -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2 text-success"></i>Top 20 Usuários por Petições
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Estado</th>
+                                <th class="text-center">Petições</th>
+                                <th class="text-center">Valor Total</th>
+                                <th class="text-center">Última Petição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in top_petition_users %}
+                            <tr>
+                                <td>
+                                    <strong>{{ user.full_name or user.username }}</strong><br>
+                                    <small class="text-muted">{{ user.username }}</small>
+                                </td>
+                                <td>{{ user.uf or 'N/A' }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ user.petition_count }}</span>
+                                </td>
+                                <td class="text-center">R$ {{ "%.2f"|format(user.total_value) }}</td>
+                                <td class="text-center">
+                                    {% if user.last_petition %}
+                                        {{ user.last_petition.strftime('%d/%m/%Y') }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Petições por Hora do Dia -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2 text-info"></i>Petições por Hora do Dia
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Petições</th>
+                                <th>% do Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set total_hourly = petitions_by_hour|sum(attribute='count') %}
+                            {% for hour_data in petitions_by_hour %}
+                            <tr>
+                                <td>{{ "%02d"|format(hour_data.hour) }}:00</td>
+                                <td>{{ hour_data.count }}</td>
+                                <td>
+                                    {% if total_hourly > 0 %}
+                                        {{ "%.1f"|format(hour_data.count / total_hourly * 100) }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-day me-2 text-warning"></i>Petições dos Últimos 30 Dias
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="petitionsChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de petições diárias usando ApexCharts
+    const petitionsData = {{ petitions_daily|tojson }};
+
+    const options = {
+        series: [{
+            name: 'Petições',
+            data: petitionsData.map(d => d.count)
+        }, {
+            name: 'Valor (R$)',
+            data: petitionsData.map(d => d.value)
+        }],
+        chart: {
+            type: 'line',
+            height: 350,
+            toolbar: {
+                show: false
+            }
+        },
+        colors: ['#0d6efd', '#dc3545'],
+        dataLabels: {
+            enabled: false
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+        xaxis: {
+            categories: petitionsData.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            }),
+            title: {
+                text: 'Data'
+            }
+        },
+        yaxis: [{
+            title: {
+                text: 'Petições'
+            }
+        }, {
+            opposite: true,
+            title: {
+                text: 'Valor (R$)'
+            }
+        }],
+        tooltip: {
+            y: {
+                formatter: function(value, { seriesIndex }) {
+                    if (seriesIndex === 0) {
+                        return value + ' petições';
+                    } else {
+                        return 'R$ ' + value.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                    }
+                }
+            }
+        },
+        legend: {
+            position: 'top'
+        }
+    };
+
+    const chart = new ApexCharts(document.querySelector("#petitionsChart"), options);
+    chart.render();
+});
+</script>
+
+{% endblock %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar toasts automaticamente
+    const toasts = document.querySelectorAll('.toast');
+    toasts.forEach(function(toast) {
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+    });
+});
+</script>

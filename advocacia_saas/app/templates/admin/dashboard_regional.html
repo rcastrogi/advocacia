@@ -1,0 +1,370 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin_content %}
+<!-- Container de Toasts (posicionado fixo no topo direito) -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    {% if alerts %}
+        {% for alert in alerts %}
+        <div class="toast align-items-center text-white bg-{{ alert.type }} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="{{ alert.icon }} me-2"></i>
+                    <strong>{{ alert.title }}</strong>: {{ alert.message }}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<!-- Cabeçalho -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">
+            <i class="fas fa-map-marker-alt me-2 text-primary"></i>Dashboard Regional
+        </h2>
+        <p class="text-muted mb-0">Análise geográfica da plataforma</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.users_list') }}" class="btn btn-outline-primary">
+            <i class="fas fa-users me-2"></i>Ver Todos os Usuários
+        </a>
+    </div>
+</div>
+
+<!-- Navegação por Dashboards -->
+<ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'overview' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard') }}">
+            <i class="fas fa-chart-line me-2"></i>Visão Geral
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'regional' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard_regional') }}">
+            <i class="fas fa-map-marker-alt me-2"></i>Regional
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'peticoes' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard_peticoes') }}">
+            <i class="fas fa-file-alt me-2"></i>Petições
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active_dashboard == 'financeiro' %}active{% endif %}"
+           href="{{ url_for('admin.dashboard_financeiro') }}">
+            <i class="fas fa-dollar-sign me-2"></i>Financeiro
+        </a>
+    </li>
+</ul>
+
+<!-- Filtros e Export -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="period" class="form-label">Período</label>
+                <select name="period" id="period" class="form-select">
+                    <option value="7days" {% if period == '7days' %}selected{% endif %}>Últimos 7 dias</option>
+                    <option value="30days" {% if period == '30days' %}selected{% endif %}>Últimos 30 dias</option>
+                    <option value="90days" {% if period == '90days' %}selected{% endif %}>Últimos 90 dias</option>
+                    <option value="6months" {% if period == '6months' %}selected{% endif %}>Últimos 6 meses</option>
+                    <option value="1year" {% if period == '1year' %}selected{% endif %}>Último ano</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="plan" class="form-label">Plano</label>
+                <select name="plan" id="plan" class="form-select">
+                    {% for plan_option in plan_options %}
+                    <option value="{{ plan_option }}" {% if plan_filter == plan_option %}selected{% endif %}>
+                        {{ 'Todos os Planos' if plan_option == 'all' else plan_option }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Todos</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Ativos</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inativos</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                    <a href="{{ url_for('admin.export_dashboard_regional', period=period, plan=plan_filter, status=status_filter) }}"
+                       class="btn btn-outline-success">
+                        <i class="fas fa-download me-2"></i>Exportar CSV
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Cards de Métricas Regionais -->
+<div class="row g-4 mb-4">
+    <!-- Total de Estados -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                            <i class="fas fa-globe-americas fa-2x text-info"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">{{ users_by_uf|length }}</h3>
+                        <small class="text-muted">Estados Ativos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Estado -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                            <i class="fas fa-trophy fa-2x text-success"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">{{ users_by_uf[0].uf if users_by_uf else 'N/A' }}</h3>
+                        <small class="text-muted">Estado Líder</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usuários com Endereço -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                            <i class="fas fa-address-card fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">{{ users_by_uf|sum(attribute='user_count') if users_by_uf else 0 }}</h3>
+                        <small class="text-muted">Usuários Localizados</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cidades Únicas -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-secondary bg-opacity-10 p-3">
+                            <i class="fas fa-city fa-2x text-secondary"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">{{ users_by_city|length }}</h3>
+                        <small class="text-muted">Cidades Ativas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Distribuição por Estado -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2 text-primary"></i>Distribuição de Usuários por Estado
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">Ativos</th>
+                                <th class="text-center">Novos (Mês)</th>
+                                <th class="text-center">% do Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for uf_data in users_by_uf %}
+                            <tr>
+                                <td>
+                                    <strong>{{ uf_data.uf }}</strong>
+                                </td>
+                                <td class="text-center">{{ uf_data.user_count }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">{{ uf_data.active_count }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info">{{ uf_data.new_this_month }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% set total = users_by_uf|sum(attribute='user_count') %}
+                                    {{ "%.1f"|format(uf_data.user_count / total * 100) }}%
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Petições e Receita por Estado -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2 text-success"></i>Petições por Estado
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th class="text-center">Petições</th>
+                                <th class="text-center">Valor Total</th>
+                                <th class="text-center">Valor Médio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for petition_data in petitions_by_uf[:10] %}
+                            <tr>
+                                <td><strong>{{ petition_data.uf }}</strong></td>
+                                <td class="text-center">{{ petition_data.petition_count }}</td>
+                                <td class="text-center">R$ {{ "%.2f"|format(petition_data.total_value) }}</td>
+                                <td class="text-center">R$ {{ "%.2f"|format(petition_data.avg_value) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-dollar-sign me-2 text-warning"></i>Receita por Estado
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th class="text-center">Receita Total</th>
+                                <th class="text-center">Pagamentos</th>
+                                <th class="text-center">Ticket Médio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for revenue_data in revenue_by_uf[:10] %}
+                            <tr>
+                                <td><strong>{{ revenue_data.uf }}</strong></td>
+                                <td class="text-center">R$ {{ "%.2f"|format(revenue_data.total_revenue) }}</td>
+                                <td class="text-center">{{ revenue_data.payment_count }}</td>
+                                <td class="text-center">
+                                    {% if revenue_data.payment_count > 0 %}
+                                        R$ {{ "%.2f"|format(revenue_data.total_revenue / revenue_data.payment_count) }}
+                                    {% else %}
+                                        R$ 0,00
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Cidades -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-city me-2 text-info"></i>Top 20 Cidades
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Cidade</th>
+                                <th>Estado</th>
+                                <th class="text-center">Usuários</th>
+                                <th class="text-center">% do Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for city_data in users_by_city %}
+                            <tr>
+                                <td><strong>{{ city_data.city }}</strong></td>
+                                <td>{{ city_data.uf }}</td>
+                                <td class="text-center">{{ city_data.user_count }}</td>
+                                <td class="text-center">
+                                    {% set state_total = users_by_uf|selectattr('uf', 'equalto', city_data.uf)|list %}
+                                    {% if state_total %}
+                                        {{ "%.1f"|format(city_data.user_count / state_total[0].user_count * 100) }}%
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar toasts automaticamente
+    const toasts = document.querySelectorAll('.toast');
+    toasts.forEach(function(toast) {
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+    });
+});
+</script>
