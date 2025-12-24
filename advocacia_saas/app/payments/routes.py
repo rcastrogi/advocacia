@@ -239,7 +239,7 @@ def create_mercadopago_subscription():
             status="pending",
             gateway="mercadopago",
             gateway_subscription_id=preapproval["id"],
-            gateway_customer_id=None,  # MP não tem customer_id como Stripe
+            gateway_customer_id=None,  # MP não tem customer_id como outros gateways
         )
         db.session.add(subscription)
         db.session.commit()
@@ -443,34 +443,6 @@ def _handle_preapproval_webhook(preapproval_id):
         current_app.logger.info(
             f"ℹ️ Status de preapproval não tratado: {preapproval_data['status']} para {preapproval_id}"
         )
-
-    # Handle the event
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-
-        user_id = session["metadata"]["user_id"]
-        plan_type = session["metadata"]["plan_type"]
-        billing_period = session["metadata"]["billing_period"]
-
-        # Criar subscription
-        subscription = Subscription(
-            user_id=user_id,
-            plan_type=plan_type,
-            billing_period=billing_period,
-            amount=Decimal(str(session["amount_total"] / 100)),
-            status="active",
-            gateway="stripe",
-            gateway_subscription_id=session["subscription"],
-            gateway_customer_id=session["customer"],
-        )
-        db.session.add(subscription)
-
-        # Atualizar usuário
-        user = db.session.get(User, user_id)
-        user.billing_status = "active"
-        user.stripe_customer_id = session["customer"]
-
-        db.session.commit()
 
     return jsonify({"received": True}), 200
 

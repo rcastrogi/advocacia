@@ -76,7 +76,6 @@ class User(UserMixin, db.Model):
         db.String(20), default="active"
     )  # active, delinquent, trial, pending_payment
     quick_actions = db.Column(db.Text, default=json.dumps(DEFAULT_QUICK_ACTIONS))
-    stripe_customer_id = db.Column(db.String(120), unique=True, index=True)
     specialties = db.Column(db.Text)  # JSON array of specialties for lawyers
 
     # User preferences
@@ -912,15 +911,9 @@ class Payment(db.Model):
     webhook_received_at = db.Column(db.DateTime)
 
     # Gateway info - Generic
-    gateway = db.Column(db.String(20))  # 'stripe', 'mercadopago'
+    gateway = db.Column(db.String(20))  # 'mercadopago'
     gateway_payment_id = db.Column(db.String(200), unique=True, index=True)
     gateway_charge_id = db.Column(db.String(200))
-
-    # Stripe-specific fields
-    stripe_customer_id = db.Column(db.String(120), index=True)
-    stripe_payment_intent_id = db.Column(db.String(120), unique=True, index=True)
-    stripe_checkout_session_id = db.Column(db.String(120), unique=True, index=True)
-    stripe_subscription_id = db.Column(db.String(120), index=True)
 
     # PIX specific (Mercado Pago)
     pix_code = db.Column(db.Text)  # QR code data
@@ -1257,7 +1250,6 @@ class CreditPackage(db.Model):
     description = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
     is_featured = db.Column(db.Boolean, default=False)  # Destacado na UI
-    stripe_price_id = db.Column(db.String(100))  # ID do preço no Stripe
     sort_order = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
@@ -1376,7 +1368,6 @@ class CreditTransaction(db.Model):
     generation_id = db.Column(
         db.Integer, db.ForeignKey("ai_generations.id"), nullable=True
     )
-    payment_intent_id = db.Column(db.String(100))  # ID do pagamento Stripe
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -1583,7 +1574,7 @@ class Subscription(db.Model):
     refund_processed_at = db.Column(db.DateTime)
 
     # Gateway info
-    gateway = db.Column(db.String(20))  # 'stripe', 'mercadopago'
+    gateway = db.Column(db.String(20))  # 'mercadopago'
     gateway_subscription_id = db.Column(db.String(200), unique=True)
     gateway_customer_id = db.Column(db.String(200))
 

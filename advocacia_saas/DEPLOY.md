@@ -173,9 +173,9 @@ DATABASE_URL=postgresql://postgres.[projeto]:[senha]@aws-0-sa-east-1.pooler.supa
 SECRET_KEY=gere-uma-chave-segura-aqui
 FLASK_ENV=production
 
-# Stripe (Pagamentos)
-STRIPE_SECRET_KEY=sk_live_xxx
-STRIPE_PUBLIC_KEY=pk_live_xxx
+# Mercado Pago (Pagamentos)
+MERCADO_PAGO_ACCESS_TOKEN=APP_USR-xxx
+MERCADO_PAGO_PUBLIC_KEY=APP_USR-xxx
 
 # Admin inicial
 ADMIN_EMAIL=admin@seudominio.com

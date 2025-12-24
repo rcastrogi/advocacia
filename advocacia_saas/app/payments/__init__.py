@@ -1,5 +1,5 @@
 """
-Blueprint de pagamentos - Mercado Pago + Stripe
+Blueprint de pagamentos - Mercado Pago
 """
 
 from flask import Blueprint

@@ -143,7 +143,7 @@ def create_app(config_class=Config):
 
     app.register_blueprint(billing_bp, url_prefix="/billing")
 
-    # Removido: checkout blueprint (Stripe) - agora tudo é Mercado Pago
+    # Removido: checkout blueprint (Stripe) - sistema usa apenas Mercado Pago
 
     from app.ai import ai_bp
 

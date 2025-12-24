@@ -237,7 +237,7 @@ def api_credits_balance():
 @login_required
 def api_add_credits():
     """Adiciona créditos (para uso interno/admin ou após pagamento)"""
-    # Em produção, isso seria chamado pelo webhook do Stripe
+    # Em produção, isso seria chamado pelo webhook do Mercado Pago
     data = request.get_json()
 
     amount = data.get("amount", 0)
