@@ -137,7 +137,7 @@ def checkout_success():
         if session.payment_status == "paid":
             # Buscar pacote
             package_id = session.metadata.get("package_id")
-            package = CreditPackage.query.get(package_id)
+            package = db.session.get(CreditPackage, package_id)
 
             if package:
                 # Adicionar créditos ao usuário

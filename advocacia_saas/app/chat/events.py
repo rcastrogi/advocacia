@@ -35,7 +35,7 @@ def handle_join(data):
         return
 
     # Verificar permissão
-    chat_room = ChatRoom.query.get(room_id)
+    chat_room = db.session.get(ChatRoom, room_id)
     if not chat_room or current_user.id != chat_room.lawyer_id:
         return
 
@@ -91,7 +91,7 @@ def handle_send_message(data):
     db.session.commit()
 
     # Atualizar chat room
-    chat_room = ChatRoom.query.get(room_id)
+    chat_room = db.session.get(ChatRoom, room_id)
     if chat_room:
         chat_room.update_last_message(message)
 
@@ -151,7 +151,7 @@ def handle_mark_read(data):
     message_ids = data.get("message_ids", [])
 
     for msg_id in message_ids:
-        message = Message.query.get(msg_id)
+        message = db.session.get(Message, msg_id)
         if message and message.recipient_id == current_user.id:
             message.mark_as_read()
 

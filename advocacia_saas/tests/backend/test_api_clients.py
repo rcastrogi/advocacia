@@ -202,7 +202,7 @@ class TestAPIClientRoutes:
         assert data["email"] == "atualizado@example.com"
 
         # Verificar no banco
-        updated_client = Client.query.get(client_obj.id)
+        updated_client = db.session.get(Client, client_obj.id)
         assert updated_client.full_name == "Cliente Atualizado"
 
     def test_delete_client(self, client, db_session):
@@ -245,5 +245,5 @@ class TestAPIClientRoutes:
         assert response.status_code == 200
 
         # Verificar que foi deletado
-        deleted_client = Client.query.get(client_id)
+        deleted_client = db.session.get(Client, client_id)
         assert deleted_client is None

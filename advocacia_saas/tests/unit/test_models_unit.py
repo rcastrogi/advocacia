@@ -2,7 +2,7 @@
 Testes unitários para models do Petitio.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from app import db
@@ -51,7 +51,7 @@ class TestUserModel:
         assert not sample_user.is_password_expired()
 
         # Forçar expiração
-        sample_user.password_expires_at = datetime.utcnow() - timedelta(days=1)
+        sample_user.password_expires_at = datetime.now(timezone.utc) - timedelta(days=1)
         db_session.commit()
 
         assert sample_user.is_password_expired()

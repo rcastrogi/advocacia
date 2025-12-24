@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from flask import current_app
@@ -137,7 +137,7 @@ def ensure_default_petition_types() -> list[PetitionType]:
 
 
 def current_billing_cycle() -> str:
-    return datetime.utcnow().strftime("%Y-%m")
+    return datetime.now(timezone.utc).strftime("%Y-%m")
 
 
 def record_petition_usage(user, petition_type: PetitionType) -> PetitionUsage:

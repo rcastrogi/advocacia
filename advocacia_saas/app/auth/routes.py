@@ -343,3 +343,25 @@ def change_password():
         is_forced=is_forced,
         days_left=current_user.days_until_password_expires(),
     )
+
+
+@bp.route("/update_timezone", methods=["POST"])
+@login_required
+def update_timezone():
+    """Update user's timezone preference"""
+    timezone = request.form.get('timezone')
+
+    if timezone:
+        # Validate timezone
+        import pytz
+        try:
+            pytz.timezone(timezone)
+            current_user.timezone = timezone
+            db.session.commit()
+            flash("Fuso horário atualizado com sucesso!", "success")
+        except pytz.exceptions.UnknownTimeZoneError:
+            flash("Fuso horário inválido.", "error")
+    else:
+        flash("Fuso horário não fornecido.", "error")
+
+    return redirect(request.referrer or url_for('auth.profile'))

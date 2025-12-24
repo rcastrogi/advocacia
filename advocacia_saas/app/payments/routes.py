@@ -7,7 +7,7 @@ Preapprovals: Assinaturas recorrentes automáticas
 import hashlib
 import hmac
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import mercadopago
@@ -162,7 +162,7 @@ def create_pix_payment():
             pix_qr_code=payment_response["point_of_interaction"]["transaction_data"][
                 "qr_code_base64"
             ],
-            pix_expires_at=datetime.utcnow() + timedelta(hours=24),
+            pix_expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
         )
         db.session.add(payment)
         db.session.commit()
@@ -359,7 +359,7 @@ def _handle_payment_webhook(payment_id):
 
             # Para pay-per-use, ativar plano imediatamente
             if payment.payment_type == "one_time":
-                user = User.query.get(payment.user_id)
+                user = db.session.get(User, payment.user_id)
                 user.billing_status = "active"
                 db.session.commit()
 
@@ -384,13 +384,13 @@ def _handle_preapproval_webhook(preapproval_id):
     if preapproval_data["status"] == "authorized":
         # Assinatura aprovada - ativar
         subscription.status = "active"
-        subscription.started_at = datetime.utcnow()
+        subscription.started_at = datetime.now(timezone.utc)
 
         # Calcular próxima renovação
         if subscription.billing_period == "monthly":
-            subscription.renewal_date = datetime.utcnow() + timedelta(days=30)
+            subscription.renewal_date = datetime.now(timezone.utc) + timedelta(days=30)
         else:  # yearly
-            subscription.renewal_date = datetime.utcnow() + timedelta(days=365)
+            subscription.renewal_date = datetime.now(timezone.utc) + timedelta(days=365)
 
         # Ativar usuário
         user = subscription.user
@@ -466,7 +466,7 @@ def _handle_preapproval_webhook(preapproval_id):
         db.session.add(subscription)
 
         # Atualizar usuário
-        user = User.query.get(user_id)
+        user = db.session.get(User, user_id)
         user.billing_status = "active"
         user.stripe_customer_id = session["customer"]
 

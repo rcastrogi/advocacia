@@ -1106,7 +1106,23 @@
     
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
-    
+
+    <!-- Timezone Detection Script -->
+    <script>
+        (function() {
+            // Detect user's timezone
+            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            // Store in localStorage for persistence
+            localStorage.setItem('userTimezone', userTimezone);
+
+            // If user is logged in, we could send this to server via AJAX
+            // For now, we'll use it client-side and pass to templates when needed
+
+            console.log('Detected timezone:', userTimezone);
+        })();
+    </script>
+
     {% block scripts %}{% endblock %}
 </body>
 </html>

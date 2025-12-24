@@ -1,7 +1,7 @@
 import json
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from io import BytesIO
 from zipfile import ZipFile
@@ -1504,7 +1504,7 @@ def dynamic_form(slug):
     # Montar estrutura para o template
     sections = []
     for config in sections_config:
-        section = PetitionSection.query.get(config.section_id)
+        section = db.session.get(PetitionSection, config.section_id)
         if section and section.is_active:
             sections.append(
                 {
@@ -1778,7 +1778,7 @@ def get_sections(petition_type_id):
 
     sections = []
     for config in sections_config:
-        section = PetitionSection.query.get(config.section_id)
+        section = db.session.get(PetitionSection, config.section_id)
         if section and section.is_active:
             sections.append(
                 {
@@ -1953,10 +1953,10 @@ def api_save_petition():
     # Ações
     if action == "complete":
         petition.status = "completed"
-        petition.completed_at = datetime.utcnow()
+        petition.completed_at = datetime.now(timezone.utc)
     elif action == "cancel":
         petition.status = "cancelled"
-        petition.cancelled_at = datetime.utcnow()
+        petition.cancelled_at = datetime.now(timezone.utc)
     else:
         if petition.status != "completed":
             petition.status = "draft"
@@ -1968,7 +1968,7 @@ def api_save_petition():
         if not petition.title:  # Só gerar se não tiver título
             autor = form_data.get("autor_nome", "").strip()
             reu = form_data.get("reu_nome", "").strip()
-            petition_type = PetitionType.query.get(petition_type_id)
+            petition_type = db.session.get(PetitionType, petition_type_id)
 
             if autor and reu:
                 petition.title = f"{petition_type.name} - {autor} x {reu}"
@@ -2005,7 +2005,7 @@ def api_cancel_petition(petition_id):
         return jsonify({"success": False, "error": "Petição já está cancelada"}), 400
 
     petition.status = "cancelled"
-    petition.cancelled_at = datetime.utcnow()
+    petition.cancelled_at = datetime.now(timezone.utc)
 
     try:
         db.session.commit()

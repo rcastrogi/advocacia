@@ -264,7 +264,7 @@ def checkout_success():
             plan_id = session.get("pending_plan_id") or int(
                 checkout_session.metadata.get("plan_id")
             )
-            plan = BillingPlan.query.get(plan_id)
+            plan = db.session.get(BillingPlan, plan_id)
 
             if not plan:
                 flash("Plano não encontrado.", "error")
@@ -451,8 +451,8 @@ def _handle_checkout_completed(session):
         )
         return
 
-    user = User.query.get(user_id)
-    plan = BillingPlan.query.get(plan_id)
+    user = db.session.get(User, user_id)
+    plan = db.session.get(BillingPlan, plan_id)
 
     if not user or not plan:
         current_app.logger.error(f"User {user_id} or Plan {plan_id} not found")

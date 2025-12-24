@@ -173,7 +173,7 @@ class TestDeadlineModel:
         db_session.add(client)
         db_session.commit()  # Commit client first
 
-        future_date = datetime.utcnow() + timedelta(days=30)
+        future_date = datetime.now(datetime.UTC) + timedelta(days=30)
         deadline = Deadline(
             title="Prazo Importante",
             description="Descrição do prazo",
@@ -202,7 +202,7 @@ class TestDeadlineModel:
         db_session.add(user)
         db_session.commit()  # Commit user first
 
-        past_date = datetime.utcnow() - timedelta(days=1)
+        past_date = datetime.now(datetime.UTC) - timedelta(days=1)
         deadline = Deadline(
             title="Prazo Vencido",
             description="Este prazo já venceu",

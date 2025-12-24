@@ -6,7 +6,7 @@ Dashboard completo para gerenciar usuários e métricas da plataforma.
 import csv
 import json
 import zipfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from io import BytesIO, StringIO
 
@@ -56,7 +56,7 @@ def _require_admin():
 def _get_dashboard_alerts():
     """Gera alertas para métricas críticas dos dashboards"""
     alerts = []
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # === Alerta: Churn Rate Alto (último mês > 5%) ===
     last_month_start = now - timedelta(days=30)
@@ -419,7 +419,7 @@ def dashboard():
     _require_admin()
 
     # Período atual
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
 
@@ -715,7 +715,7 @@ def dashboard_regional():
     status_filter = request.args.get("status", "all", type=str)
 
     # Calcular datas baseado no período
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if period == "30days":
         start_date = now - timedelta(days=30)
     elif period == "90days":
@@ -839,7 +839,7 @@ def dashboard_regional():
     # === CRESCIMENTO REGIONAL (últimos 6 meses) ===
     regional_growth = []
     for months_back in range(5, -1, -1):
-        start_date_growth = datetime.utcnow() - timedelta(days=30 * months_back)
+        start_date_growth = datetime.now(timezone.utc) - timedelta(days=30 * months_back)
         end_date_growth = start_date_growth + timedelta(days=30)
 
         growth_data = (
@@ -912,7 +912,7 @@ def dashboard_peticoes():
     status_filter = request.args.get("status", "all", type=str)
 
     # Calcular datas baseado no período
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if period == "7days":
         start_date = now - timedelta(days=7)
         days_range = 7
@@ -1113,7 +1113,7 @@ def dashboard_financeiro():
     status_filter = request.args.get("status", "all", type=str)
 
     # Calcular período para análise
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if period == "6months":
         months_range = 6
     elif period == "12months":
@@ -1332,7 +1332,7 @@ def export_dashboard_regional():
     status_filter = request.args.get("status", "all", type=str)
 
     # Calcular período
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if period == "7days":
         days = 7
     elif period == "30days":
@@ -1420,7 +1420,7 @@ def export_dashboard_peticoes():
     status_filter = request.args.get("status", "all", type=str)
 
     # Calcular período
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if period == "7days":
         days = 7
     elif period == "30days":
@@ -1505,7 +1505,7 @@ def export_dashboard_financeiro():
     status_filter = request.args.get("status", "all", type=str)
 
     # Calcular período
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if period == "6months":
         months_range = 6
     elif period == "12months":
@@ -1711,7 +1711,7 @@ def _get_bulk_user_metrics(users):
         return []
 
     user_ids = [u.id for u in users]
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     # 1. Contagem de clientes (usa lawyer_id)
@@ -1844,7 +1844,7 @@ def _get_bulk_user_metrics(users):
         ai_stat = ai_stats.get(uid, (0, Decimal("0.00")))
 
         metrics = {
-            "days_on_platform": (now - user.created_at).days if user.created_at else 0,
+            "days_on_platform": (now - (user.created_at.replace(tzinfo=timezone.utc) if user.created_at and user.created_at.tzinfo is None else user.created_at)).days if user.created_at else 0,
             "days_paying": first_payments.get(uid, 0),
             "plan_name": current_plans.get(uid, "Sem plano"),
             "total_clients": clients_count.get(uid, 0),
@@ -1870,7 +1870,7 @@ def _get_bulk_user_metrics(users):
 
 def _get_user_metrics(user, detailed=False):
     """Calcula métricas de um usuário"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     # Dias na plataforma
@@ -2350,7 +2350,7 @@ def petition_section_delete(section_id):
 
 def _calculate_trends():
     """Calcula tendências básicas para métricas principais (últimos 3 meses)"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     trends = {}
 
     # === Tendência de Receita ===
@@ -2821,9 +2821,9 @@ def edit_roadmap_item(item_id):
 
         # Atualizar datas reais se status mudou
         if item.status == "in_progress" and not item.actual_start_date:
-            item.actual_start_date = datetime.utcnow().date()
+            item.actual_start_date = datetime.now(timezone.utc).date()
         elif item.status == "completed" and not item.actual_completion_date:
-            item.actual_completion_date = datetime.utcnow().date()
+            item.actual_completion_date = datetime.now(timezone.utc).date()
 
         # Detalhes
         item.business_value = request.form.get("business_value")
@@ -2936,7 +2936,7 @@ def roadmap_stats():
     # Itens atrasados
     overdue_items = RoadmapItem.query.filter(
         RoadmapItem.status.in_(["planned", "in_progress"]),
-        RoadmapItem.planned_completion_date < datetime.utcnow().date(),
+        RoadmapItem.planned_completion_date < datetime.now(timezone.utc).date(),
     ).count()
 
     # Progresso médio

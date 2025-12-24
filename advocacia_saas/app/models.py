@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from flask_login import UserMixin
@@ -42,7 +42,7 @@ def load_user(user_id):
     if user_id == 999999 and user_id in _demo_user_cache:
         return _demo_user_cache[user_id]
     # Caso contrário, buscar no banco de dados
-    return User.query.get(user_id)
+    return db.session.get(User, user_id)
 
 
 class User(UserMixin, db.Model):
@@ -78,6 +78,9 @@ class User(UserMixin, db.Model):
     quick_actions = db.Column(db.Text, default=json.dumps(DEFAULT_QUICK_ACTIONS))
     stripe_customer_id = db.Column(db.String(120), unique=True, index=True)
     specialties = db.Column(db.Text)  # JSON array of specialties for lawyers
+
+    # User preferences
+    timezone = db.Column(db.String(50), default="America/Sao_Paulo")  # User's preferred timezone
 
     # Trial management
     trial_start_date = db.Column(db.DateTime)
@@ -156,8 +159,8 @@ class User(UserMixin, db.Model):
 
         # Definir nova senha e datas
         self.password_hash = new_hash
-        self.password_changed_at = datetime.utcnow()
-        self.password_expires_at = datetime.utcnow() + timedelta(days=90)  # 3 meses
+        self.password_changed_at = datetime.now(timezone.utc)
+        self.password_expires_at = datetime.now(timezone.utc) + timedelta(days=90)  # 3 meses
         self.force_password_change = False
 
     def check_password(self, password):
@@ -167,13 +170,13 @@ class User(UserMixin, db.Model):
         """Verifica se a senha está expirada"""
         if not self.password_expires_at:
             return True  # Se não tem data de expiração, força mudança
-        return datetime.utcnow() > self.password_expires_at
+        return datetime.now(timezone.utc).replace(tzinfo=None) > self.password_expires_at
 
     def days_until_password_expires(self):
         """Retorna quantos dias faltam para a senha expirar"""
         if not self.password_expires_at:
             return 0
-        delta = self.password_expires_at - datetime.utcnow()
+        delta = self.password_expires_at - datetime.now(timezone.utc).replace(tzinfo=None)
         return max(0, delta.days)
 
     def should_show_password_warning(self):
@@ -196,7 +199,7 @@ class User(UserMixin, db.Model):
         from datetime import timedelta
 
         trial_end_date = self.trial_start_date + timedelta(days=self.trial_days)
-        return datetime.utcnow() > trial_end_date
+        return datetime.now(timezone.utc).replace(tzinfo=None) > trial_end_date
 
     @property
     def trial_days_remaining(self):
@@ -374,7 +377,7 @@ class Client(db.Model):
             return primary
 
         # Se não houver principal, retorna o advogado que cadastrou
-        return User.query.get(self.lawyer_id)
+        return db.session.get(User, self.lawyer_id)
 
     def get_lawyer_by_specialty(self, specialty):
         """Retorna o advogado responsável por determinada especialidade"""
@@ -1483,7 +1486,7 @@ class Notification(db.Model):
     def mark_as_read(self):
         """Marca a notificação como lida"""
         self.read = True
-        self.read_at = datetime.utcnow()
+        self.read_at = datetime.now(timezone.utc)
         db.session.commit()
 
     @staticmethod

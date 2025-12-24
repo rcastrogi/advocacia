@@ -4,7 +4,7 @@ Blueprint para funcionalidades de IA e sistema de créditos.
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import mercadopago
 from flask import (
@@ -115,7 +115,7 @@ def record_ai_generation(
         output_content=output_content,
         status=status,
         error_message=error_message,
-        completed_at=datetime.utcnow() if status == "completed" else None,
+        completed_at=datetime.now(timezone.utc) if status == "completed" else None,
     )
     generation.calculate_cost()
     db.session.add(generation)
@@ -689,7 +689,7 @@ def credits_success():
     if not package_id:
         return redirect(url_for("ai.credits_dashboard"))
 
-    package = CreditPackage.query.get(package_id)
+    package = db.session.get(CreditPackage, package_id)
 
     if payment_id:
         # Adicionar créditos
@@ -765,7 +765,7 @@ def mercadopago_webhook_credits():
                     ).first()
 
                     if not existing:
-                        package = CreditPackage.query.get(package_id)
+                        package = db.session.get(CreditPackage, package_id)
                         user_credits = UserCredits.get_or_create(user_id)
 
                         # Adicionar créditos

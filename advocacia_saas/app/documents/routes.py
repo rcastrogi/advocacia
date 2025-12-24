@@ -184,7 +184,7 @@ def view(doc_id):
     versions = []
     if document.parent_document_id:
         # Este é uma versão, buscar documento pai e suas versões
-        parent = Document.query.get(document.parent_document_id)
+        parent = db.session.get(Document, document.parent_document_id)
         if parent:
             versions = (
                 Document.query.filter_by(parent_document_id=parent.id)

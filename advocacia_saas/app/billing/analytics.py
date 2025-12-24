@@ -2,7 +2,7 @@
 Funções para análise e previsão de uso de petições
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from sqlalchemy import extract, func
@@ -13,7 +13,7 @@ from app.models import PetitionUsage
 def get_monthly_usage_history(user, months=6):
     """Retorna histórico de uso de petições nos últimos N meses."""
     history = []
-    current_date = datetime.utcnow()
+    current_date = datetime.now(timezone.utc)
 
     for i in range(months):
         month_date = current_date - timedelta(days=30 * i)
@@ -102,8 +102,8 @@ def predict_limit_date(user):
 
 def get_usage_insights(user):
     """Retorna insights sobre o uso de petições."""
-    current_cycle = datetime.utcnow().strftime("%Y-%m")
-    last_cycle = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m")
+    current_cycle = datetime.now(timezone.utc).strftime("%Y-%m")
+    last_cycle = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m")
 
     # Uso atual
     current_billable = PetitionUsage.query.filter_by(

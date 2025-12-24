@@ -226,7 +226,7 @@
                     {% if current_user.password_changed_at %}
                     <p class="text-muted small mb-0">
                         <i class="fas fa-clock me-1"></i>
-                        Última alteração: {{ current_user.password_changed_at.strftime('%d/%m/%Y às %H:%M') if current_user.password_changed_at else '-' }}
+                        Última alteração: {{ current_user.password_changed_at|local_datetime(current_user.timezone) }}
                     </p>
                     {% endif %}
                 </div>
@@ -247,10 +247,117 @@
                             <span class="badge bg-primary">Advogado</span>
                         {% endif %}
                     </p>
-                    <p><strong>Cadastrado em:</strong> {{ current_user.created_at.strftime('%d/%m/%Y') if current_user.created_at else '-' }}</p>
+                    <p><strong>Cadastrado em:</strong> {{ current_user.created_at|local_date(current_user.timezone) }}</p>
+                </div>
+            </div>
+
+            <!-- Configurações de Localização -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 style="color: white;"><i class="fas fa-globe"></i> Localização</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('auth.update_timezone') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="timezone" class="form-label">Fuso Horário</label>
+                            <select class="form-select" id="timezone" name="timezone" required>
+                                <option value="">Selecione seu fuso horário</option>
+                                <option value="America/Sao_Paulo" {% if current_user.timezone == 'America/Sao_Paulo' %}selected{% endif %}>
+                                    🇧🇷 São Paulo (GMT-3)
+                                </option>
+                                <option value="America/Rio_Branco" {% if current_user.timezone == 'America/Rio_Branco' %}selected{% endif %}>
+                                    🇧🇷 Rio Branco (GMT-5)
+                                </option>
+                                <option value="Europe/Lisbon" {% if current_user.timezone == 'Europe/Lisbon' %}selected{% endif %}>
+                                    🇵🇹 Lisboa (GMT+0)
+                                </option>
+                                <option value="Europe/London" {% if current_user.timezone == 'Europe/London' %}selected{% endif %}>
+                                    🇬🇧 Londres (GMT+0/+1)
+                                </option>
+                                <option value="Europe/Paris" {% if current_user.timezone == 'Europe/Paris' %}selected{% endif %}>
+                                    🇫🇷 Paris (GMT+1/+2)
+                                </option>
+                                <option value="Europe/Berlin" {% if current_user.timezone == 'Europe/Berlin' %}selected{% endif %}>
+                                    🇩🇪 Berlim (GMT+1/+2)
+                                </option>
+                                <option value="America/New_York" {% if current_user.timezone == 'America/New_York' %}selected{% endif %}>
+                                    🇺🇸 New York (GMT-5/-4)
+                                </option>
+                                <option value="America/Los_Angeles" {% if current_user.timezone == 'America/Los_Angeles' %}selected{% endif %}>
+                                    🇺🇸 Los Angeles (GMT-8/-7)
+                                </option>
+                                <option value="Asia/Tokyo" {% if current_user.timezone == 'Asia/Tokyo' %}selected{% endif %}>
+                                    🇯🇵 Tokyo (GMT+9)
+                                </option>
+                                <option value="Asia/Shanghai" {% if current_user.timezone == 'Asia/Shanghai' %}selected{% endif %}>
+                                    🇨🇳 Shanghai (GMT+8)
+                                </option>
+                                <option value="Australia/Sydney" {% if current_user.timezone == 'Australia/Sydney' %}selected{% endif %}>
+                                    🇦🇺 Sydney (GMT+10/+11)
+                                </option>
+                            </select>
+                            <div class="form-text">
+                                As datas e horários serão exibidos no fuso horário selecionado.
+                                <span id="current-timezone" class="text-muted"></span>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-save"></i> Salvar Configuração
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Detectar timezone automaticamente
+    const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const currentTimezoneSpan = document.getElementById('current-timezone');
+    
+    if (currentTimezoneSpan) {
+        currentTimezoneSpan.textContent = ` (Detectado: ${detectedTimezone})`;
+    }
+    
+    // Auto-selecionar timezone detectado se não estiver definido
+    const timezoneSelect = document.getElementById('timezone');
+    if (timezoneSelect && !timezoneSelect.value) {
+        // Verificar se o timezone detectado está nas opções
+        const options = timezoneSelect.options;
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].value === detectedTimezone) {
+                options[i].selected = true;
+                break;
+            }
+        }
+    }
+    
+    // Mostrar horário atual no timezone selecionado
+    function updateCurrentTime() {
+        const selectedTimezone = timezoneSelect.value;
+        if (selectedTimezone) {
+            const now = new Date();
+            const timeString = now.toLocaleString('pt-BR', { 
+                timeZone: selectedTimezone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            currentTimezoneSpan.textContent = ` (Horário atual: ${timeString})`;
+        }
+    }
+    
+    // Atualizar horário quando timezone mudar
+    timezoneSelect.addEventListener('change', updateCurrentTime);
+    
+    // Atualizar horário a cada minuto
+    setInterval(updateCurrentTime, 60000);
+    updateCurrentTime(); // Chamada inicial
+});
+</script>
+
 {% endblock %}
