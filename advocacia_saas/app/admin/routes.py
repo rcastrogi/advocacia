@@ -1211,7 +1211,9 @@ def dashboard_financeiro():
         # Usuários ativos no início do mês
         active_query = UserPlan.query.filter(
             UserPlan.started_at < start_date,
-            db.or_(UserPlan.renewal_date.is_(None), UserPlan.renewal_date >= start_date),
+            db.or_(
+                UserPlan.renewal_date.is_(None), UserPlan.renewal_date >= start_date
+            ),
             UserPlan.status.in_(["active", "canceled"]),
         )
 
@@ -1245,7 +1247,12 @@ def dashboard_financeiro():
         ltv_query = ltv_query.filter(Payment.paid_at >= start_date_filter)
 
     if plan_filter != "all":
-        ltv_query = ltv_query.join(User, Payment.user_id == User.id).join(UserPlan, User.id == UserPlan.user_id).join(BillingPlan, UserPlan.plan_id == BillingPlan.id).filter(BillingPlan.name == plan_filter)
+        ltv_query = (
+            ltv_query.join(User, Payment.user_id == User.id)
+            .join(UserPlan, User.id == UserPlan.user_id)
+            .join(BillingPlan, UserPlan.plan_id == BillingPlan.id)
+            .filter(BillingPlan.name == plan_filter)
+        )
 
     if status_filter != "all":
         ltv_query = ltv_query.join(User).filter(
@@ -1844,7 +1851,9 @@ def _get_bulk_user_metrics(users):
             "total_petitions": petitions_total.get(uid, 0),
             "petitions_month": petitions_month.get(uid, 0),
             "petitions_value_total": float(petitions_value.get(uid, Decimal("0.00"))),
-            "petitions_value_month": float(petitions_value_month.get(uid, Decimal("0.00"))),
+            "petitions_value_month": float(
+                petitions_value_month.get(uid, Decimal("0.00"))
+            ),
             "ai_credits_balance": credits[0] if isinstance(credits, tuple) else 0,
             "ai_credits_total_used": credits[1] if isinstance(credits, tuple) else 0,
             "ai_generations_total": ai_total.get(uid, 0),

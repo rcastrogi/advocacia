@@ -50,7 +50,11 @@ class TestAuthentication:
         # Tentar login
         response = client.post(
             "/auth/login",
-            data={"email": "maria@example.com", "password": "password123", "submit": "Entrar"},
+            data={
+                "email": "maria@example.com",
+                "password": "password123",
+                "submit": "Entrar",
+            },
             follow_redirects=True,
         )
 
@@ -63,7 +67,11 @@ class TestAuthentication:
         """Testa login com credenciais inválidas"""
         response = client.post(
             "/auth/login",
-            data={"email": "invalid@example.com", "password": "wrongpassword", "submit": "Entrar"},
+            data={
+                "email": "invalid@example.com",
+                "password": "wrongpassword",
+                "submit": "Entrar",
+            },
             follow_redirects=True,
         )
 
@@ -135,7 +143,11 @@ class TestAuthentication:
         # Login
         client.post(
             "/auth/login",
-            data={"email": "logout@example.com", "password": "password123", "submit": "Entrar"},
+            data={
+                "email": "logout@example.com",
+                "password": "password123",
+                "submit": "Entrar",
+            },
         )
 
         # Verificar login

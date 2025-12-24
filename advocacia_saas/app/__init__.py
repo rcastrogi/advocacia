@@ -78,11 +78,11 @@ def create_app(config_class=Config):
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
-    
+
     # Initialize rate limiter only if enabled
     if app.config.get("RATELIMIT_ENABLED", True):
         limiter.init_app(app)
-    
+
     socketio.init_app(app, cors_allowed_origins="*", async_mode="eventlet")
 
     # Initialize cache

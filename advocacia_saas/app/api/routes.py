@@ -10,11 +10,13 @@ from app.models import Cidade, Client, Estado, User
 def api_login_required(f):
     """Decorator for API routes that returns 401 instead of redirecting."""
     from functools import wraps
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
             return jsonify({"error": "Authentication required"}), 401
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -156,6 +158,7 @@ def create_client():
         )
 
         from app import db
+
         db.session.add(client)
         db.session.commit()
 
@@ -163,6 +166,7 @@ def create_client():
 
     except Exception as e:
         from app import db
+
         db.session.rollback()
         return jsonify({"error": f"Erro ao criar cliente: {str(e)}"}), 500
 
@@ -172,9 +176,7 @@ def create_client():
 def get_client(client_id):
     """Get a specific client by ID"""
     try:
-        client = Client.query.filter_by(
-            id=client_id, lawyer_id=current_user.id
-        ).first()
+        client = Client.query.filter_by(id=client_id, lawyer_id=current_user.id).first()
 
         if not client:
             return jsonify({"error": "Cliente não encontrado"}), 404
@@ -190,9 +192,7 @@ def get_client(client_id):
 def update_client(client_id):
     """Update a client"""
     try:
-        client = Client.query.filter_by(
-            id=client_id, lawyer_id=current_user.id
-        ).first()
+        client = Client.query.filter_by(id=client_id, lawyer_id=current_user.id).first()
 
         if not client:
             return jsonify({"error": "Cliente não encontrado"}), 404
@@ -204,10 +204,27 @@ def update_client(client_id):
 
         # Update fields
         updatable_fields = [
-            "full_name", "email", "cpf_cnpj", "mobile_phone", "landline_phone",
-            "rg", "civil_status", "birth_date", "profession", "nationality",
-            "birth_place", "mother_name", "father_name", "address_type",
-            "cep", "street", "number", "uf", "city", "neighborhood", "complement"
+            "full_name",
+            "email",
+            "cpf_cnpj",
+            "mobile_phone",
+            "landline_phone",
+            "rg",
+            "civil_status",
+            "birth_date",
+            "profession",
+            "nationality",
+            "birth_place",
+            "mother_name",
+            "father_name",
+            "address_type",
+            "cep",
+            "street",
+            "number",
+            "uf",
+            "city",
+            "neighborhood",
+            "complement",
         ]
 
         for field in updatable_fields:
@@ -215,12 +232,14 @@ def update_client(client_id):
                 setattr(client, field, data[field])
 
         from app import db
+
         db.session.commit()
 
         return jsonify(client.to_dict())
 
     except Exception as e:
         from app import db
+
         db.session.rollback()
         return jsonify({"error": f"Erro ao atualizar cliente: {str(e)}"}), 500
 
@@ -230,14 +249,13 @@ def update_client(client_id):
 def delete_client(client_id):
     """Delete a client"""
     try:
-        client = Client.query.filter_by(
-            id=client_id, lawyer_id=current_user.id
-        ).first()
+        client = Client.query.filter_by(id=client_id, lawyer_id=current_user.id).first()
 
         if not client:
             return jsonify({"error": "Cliente não encontrado"}), 404
 
         from app import db
+
         db.session.delete(client)
         db.session.commit()
 
@@ -245,5 +263,6 @@ def delete_client(client_id):
 
     except Exception as e:
         from app import db
+
         db.session.rollback()
         return jsonify({"error": f"Erro ao deletar cliente: {str(e)}"}), 500

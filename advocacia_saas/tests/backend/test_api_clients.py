@@ -30,14 +30,31 @@ class TestAPIClientRoutes:
         db_session.commit()  # Commit user first to get ID
 
         # Criar alguns clientes
-        client1 = Client(full_name="Cliente 1", email="cliente1@example.com", lawyer_id=user.id, cpf_cnpj="12345678901", mobile_phone="11999999999")
-        client2 = Client(full_name="Cliente 2", email="cliente2@example.com", lawyer_id=user.id, cpf_cnpj="12345678902", mobile_phone="11999999998")
+        client1 = Client(
+            full_name="Cliente 1",
+            email="cliente1@example.com",
+            lawyer_id=user.id,
+            cpf_cnpj="12345678901",
+            mobile_phone="11999999999",
+        )
+        client2 = Client(
+            full_name="Cliente 2",
+            email="cliente2@example.com",
+            lawyer_id=user.id,
+            cpf_cnpj="12345678902",
+            mobile_phone="11999999998",
+        )
         db_session.add_all([client1, client2])
         db_session.commit()
 
         # Fazer login
         client.post(
-            "/auth/login", data={"email": "api@example.com", "password": "password123", "submit": "Entrar"}
+            "/auth/login",
+            data={
+                "email": "api@example.com",
+                "password": "password123",
+                "submit": "Entrar",
+            },
         )
 
         # Acessar API
@@ -65,7 +82,11 @@ class TestAPIClientRoutes:
 
         client.post(
             "/auth/login",
-            data={"email": "create@example.com", "password": "password123", "submit": "Entrar"},
+            data={
+                "email": "create@example.com",
+                "password": "password123",
+                "submit": "Entrar",
+            },
         )
 
         # Criar cliente
@@ -104,14 +125,23 @@ class TestAPIClientRoutes:
         db_session.commit()
 
         client_obj = Client(
-            full_name="Cliente Específico", email="especifico@example.com", lawyer_id=user.id, cpf_cnpj="12345678901", mobile_phone="11999999999"
+            full_name="Cliente Específico",
+            email="especifico@example.com",
+            lawyer_id=user.id,
+            cpf_cnpj="12345678901",
+            mobile_phone="11999999999",
         )
         db_session.add(client_obj)
         db_session.commit()
 
         # Logar
         client.post(
-            "/auth/login", data={"email": "get@example.com", "password": "password123", "submit": "Entrar"}
+            "/auth/login",
+            data={
+                "email": "get@example.com",
+                "password": "password123",
+                "submit": "Entrar",
+            },
         )
 
         # Buscar cliente
@@ -136,7 +166,11 @@ class TestAPIClientRoutes:
         db_session.commit()
 
         client_obj = Client(
-            full_name="Cliente Original", email="original@example.com", lawyer_id=user.id, cpf_cnpj="12345678901", mobile_phone="11999999999"
+            full_name="Cliente Original",
+            email="original@example.com",
+            lawyer_id=user.id,
+            cpf_cnpj="12345678901",
+            mobile_phone="11999999999",
         )
         db_session.add(client_obj)
         db_session.commit()
@@ -144,7 +178,11 @@ class TestAPIClientRoutes:
         # Logar
         client.post(
             "/auth/login",
-            data={"email": "update@example.com", "password": "password123", "submit": "Entrar"},
+            data={
+                "email": "update@example.com",
+                "password": "password123",
+                "submit": "Entrar",
+            },
         )
 
         # Atualizar cliente
@@ -181,7 +219,11 @@ class TestAPIClientRoutes:
         db_session.commit()
 
         client_obj = Client(
-            full_name="Cliente Para Deletar", email="deletar@example.com", lawyer_id=user.id, cpf_cnpj="12345678901", mobile_phone="11999999999"
+            full_name="Cliente Para Deletar",
+            email="deletar@example.com",
+            lawyer_id=user.id,
+            cpf_cnpj="12345678901",
+            mobile_phone="11999999999",
         )
         db_session.add(client_obj)
         db_session.commit()
@@ -191,7 +233,11 @@ class TestAPIClientRoutes:
         # Logar
         client.post(
             "/auth/login",
-            data={"email": "delete@example.com", "password": "password123", "submit": "Entrar"},
+            data={
+                "email": "delete@example.com",
+                "password": "password123",
+                "submit": "Entrar",
+            },
         )
 
         # Deletar cliente
