@@ -22,11 +22,22 @@ def subscription_required(view):
             db.session.add(plan)
             db.session.commit()
 
-        if not plan or plan.status != "active" or current_user.is_delinquent:
-            flash(
-                "Sua assinatura está inativa ou em atraso. Regularize para continuar.",
-                "warning",
-            )
+        if (
+            not plan
+            or plan.status != "active"
+            or current_user.is_delinquent
+            or current_user.is_trial_expired
+        ):
+            if current_user.is_trial_expired:
+                flash(
+                    "Seu período de teste expirou. Assine um plano para continuar usando o sistema.",
+                    "warning",
+                )
+            else:
+                flash(
+                    "Sua assinatura está inativa ou em atraso. Regularize para continuar.",
+                    "warning",
+                )
             return redirect(url_for("billing.portal"))
         return view(*args, **kwargs)
 

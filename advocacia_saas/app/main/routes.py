@@ -218,6 +218,18 @@ def _build_plan_summary(user):
             "Pagamento pendente detectado. Regularize para continuar gerando petições."
         )
 
+    # Adicionar informações sobre trial se o usuário estiver em período de teste
+    if user.trial_active:
+        if user.is_trial_expired:
+            summary["warning"] = (
+                "Seu período de teste expirou. Assine um plano para continuar usando o sistema."
+            )
+        else:
+            summary["trial_info"] = {
+                "days_remaining": user.trial_days_remaining,
+                "message": f"Você está em período de teste com {user.trial_days_remaining} dias restantes.",
+            }
+
     if not has_plan:
         summary.update(
             {

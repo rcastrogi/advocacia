@@ -77,6 +77,12 @@ class User(UserMixin, db.Model):
     )  # active, delinquent, trial, pending_payment
     quick_actions = db.Column(db.Text, default=json.dumps(DEFAULT_QUICK_ACTIONS))
     stripe_customer_id = db.Column(db.String(120), unique=True, index=True)
+    specialties = db.Column(db.Text)  # JSON array of specialties for lawyers
+
+    # Trial management
+    trial_start_date = db.Column(db.DateTime)
+    trial_days = db.Column(db.Integer, default=0)
+    trial_active = db.Column(db.Boolean, default=False)
 
     # Password security fields
     password_changed_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -182,12 +188,65 @@ class User(UserMixin, db.Model):
     def is_delinquent(self):
         return self.billing_status == "delinquent"
 
+    @property
+    def is_trial_expired(self):
+        """Verifica se o trial expirou"""
+        if not self.trial_active or not self.trial_start_date or not self.trial_days:
+            return False
+        from datetime import timedelta
+
+        trial_end_date = self.trial_start_date + timedelta(days=self.trial_days)
+        return datetime.utcnow() > trial_end_date
+
+    @property
+    def trial_days_remaining(self):
+        """Retorna quantos dias restam no trial"""
+        if not self.trial_active or not self.trial_start_date or not self.trial_days:
+            return 0
+        from datetime import timedelta
+
+        trial_end_date = self.trial_start_date + timedelta(days=self.trial_days)
+        remaining = trial_end_date - datetime.utcnow()
+        return max(0, remaining.days)
+
+    def start_trial(self, days):
+        """Inicia um período de trial"""
+        self.trial_start_date = datetime.utcnow()
+        self.trial_days = days
+        self.trial_active = True
+        self.billing_status = "trial"
+
+    def end_trial(self):
+        """Encerra o período de trial"""
+        self.trial_active = False
+        self.billing_status = "inactive"  # Usuário fica inativo até assinar
+
     def get_active_plan(self):
         return self.plans.filter_by(is_current=True).first()
 
     def has_active_subscription(self):
         plan = self.get_active_plan()
         return plan is not None and plan.status == "active"
+
+    def get_specialties(self):
+        """Retorna lista de especialidades do advogado"""
+        if not self.specialties:
+            return []
+        try:
+            return json.loads(self.specialties)
+        except (TypeError, ValueError):
+            return []
+
+    def set_specialties(self, specialties_list):
+        """Define as especialidades do advogado"""
+        if isinstance(specialties_list, list):
+            self.specialties = json.dumps(specialties_list)
+        else:
+            self.specialties = json.dumps([])
+
+    def has_specialty(self, specialty):
+        """Verifica se o advogado tem uma especialidade específica"""
+        return specialty in self.get_specialties()
 
     def get_quick_actions(self):
         try:

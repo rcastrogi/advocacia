@@ -71,3 +71,6 @@ class Config:
 
     # Security settings
     FORCE_HTTPS = os.environ.get("FORCE_HTTPS", "False").lower() in ["true", "on", "1"]
+
+    # Trial settings
+    DEFAULT_TRIAL_DAYS = int(os.environ.get("DEFAULT_TRIAL_DAYS", 3))

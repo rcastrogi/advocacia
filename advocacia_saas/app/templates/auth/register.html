@@ -11,6 +11,11 @@
                      alt="Petitio" height="100" class="mb-3">
                 <h2 class="auth-title">Crie sua Conta</h2>
                 <p class="auth-subtitle">Comece a modernizar seu escritório hoje mesmo</p>
+                
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-gift me-2"></i>
+                    <strong>Teste gratuito!</strong> Ao se cadastrar, você ganha {{ config.DEFAULT_TRIAL_DAYS }} dias para experimentar todas as funcionalidades sem compromisso.
+                </div>
             </div>
             
             <div class="form-card">
@@ -117,6 +122,26 @@
                         </div>
                     </div>
                     
+                    <div class="mb-4 specialties-section" id="specialties-section" style="display: none;">
+                        {{ form.specialties.label(class="form-label") }}
+                        <div class="row">
+                            {% for value, label in form.specialties.choices %}
+                            <div class="col-md-6 col-lg-4 mb-2">
+                                <div class="form-check">
+                                    {{ form.specialties(class="form-check-input") }}
+                                    <label class="form-check-label">{{ label }}</label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Selecione suas áreas de atuação. Você pode escolher múltiplas opções.
+                            </small>
+                        </div>
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-4">
@@ -178,4 +203,28 @@
         </div>
     </div>
 </div>
+
+<script>
+// Mostrar/ocultar campo de especialidades baseado no tipo de usuário
+document.getElementById('user_type').addEventListener('change', function() {
+    const specialtiesSection = document.getElementById('specialties-section');
+    if (this.value === 'advogado') {
+        specialtiesSection.style.display = 'block';
+    } else {
+        specialtiesSection.style.display = 'none';
+        // Limpar seleções quando não for advogado
+        const checkboxes = specialtiesSection.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.checked = false);
+    }
+});
+
+// Verificar estado inicial
+document.addEventListener('DOMContentLoaded', function() {
+    const userTypeSelect = document.getElementById('user_type');
+    const specialtiesSection = document.getElementById('specialties-section');
+    if (userTypeSelect.value === 'advogado') {
+        specialtiesSection.style.display = 'block';
+    }
+});
+</script>
 {% endblock %}

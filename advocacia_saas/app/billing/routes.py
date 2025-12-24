@@ -177,7 +177,6 @@ def plans():
                 description=form.description.data,
                 plan_type=form.plan_type.data,
                 monthly_fee=form.monthly_fee.data or Decimal("0.00"),
-                usage_rate=form.usage_rate.data or Decimal("0.00"),
                 monthly_petition_limit=int(form.monthly_petition_limit.data)
                 if form.monthly_petition_limit.data
                 and form.monthly_petition_limit.data.isdigit()

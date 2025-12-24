@@ -148,13 +148,28 @@ def register():
             billing_status=billing_status,
         )
         user.set_password(form.password.data)
+
+        # Salvar especialidades se for advogado
+        if form.user_type.data == "advogado" and form.specialties.data:
+            user.set_specialties(form.specialties.data)
+
         db.session.add(user)
+        db.session.commit()
+
+        # Iniciar período de trial automaticamente para novos usuários
+        from flask import current_app
+
+        trial_days = current_app.config.get("DEFAULT_TRIAL_DAYS", 3)
+        user.start_trial(trial_days)
         db.session.commit()
 
         # Auto-login the new user
         login_user(user)
 
-        flash("Cadastro realizado com sucesso!", "success")
+        flash(
+            f"Cadastro realizado com sucesso! Você tem {trial_days} dias gratuitos para testar o sistema.",
+            "success",
+        )
 
         # If a plan was selected, redirect to checkout
         if plan_id:
@@ -197,6 +212,7 @@ def profile():
         current_user.email = form.email.data
         current_user.oab_number = form.oab_number.data
         current_user.phone = form.phone.data
+        current_user.set_specialties(form.specialties.data)
         current_user.set_quick_actions(form.quick_actions.data)
         db.session.commit()
         flash("Perfil atualizado com sucesso!", "success")
@@ -206,6 +222,7 @@ def profile():
         form.email.data = current_user.email
         form.oab_number.data = current_user.oab_number
         form.phone.data = current_user.phone
+        form.specialties.data = current_user.get_specialties()
         form.quick_actions.data = current_user.get_quick_actions()
     return render_template(
         "auth/profile.html", title="Perfil", form=form, is_demo=is_demo

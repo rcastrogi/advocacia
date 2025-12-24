@@ -88,7 +88,11 @@
                         {% if user.billing_status == 'delinquent' %}
                         <span class="badge bg-warning text-dark">Inadimplente</span>
                         {% elif user.billing_status == 'trial' %}
-                        <span class="badge bg-info">Trial</span>
+                            {% if user.is_trial_expired %}
+                            <span class="badge bg-danger">Trial Expirado</span>
+                            {% else %}
+                            <span class="badge bg-info">Trial ({{ user.trial_days_remaining }} dias)</span>
+                            {% endif %}
                         {% endif %}
                     </li>
                     <li>
@@ -181,6 +185,93 @@
                     <div class="card-body">
                         <h5 class="mb-0">R$ {{ "%.2f"|format(metrics.total_paid) }}</h5>
                         <small class="text-muted">Total Pago</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gerenciamento de Trial -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-clock text-warning me-2"></i>Gerenciamento de Trial
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body text-center">
+                                {% if user.trial_active %}
+                                    {% if user.is_trial_expired %}
+                                        <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                                        <h5 class="mb-0 text-danger">Expirado</h5>
+                                        <small class="text-muted">Trial encerrado</small>
+                                    {% else %}
+                                        <i class="fas fa-play-circle fa-2x text-success mb-2"></i>
+                                        <h5 class="mb-0 text-success">{{ user.trial_days_remaining }} dias</h5>
+                                        <small class="text-muted">Restantes</small>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fas fa-pause-circle fa-2x text-secondary mb-2"></i>
+                                    <h5 class="mb-0 text-secondary">Inativo</h5>
+                                    <small class="text-muted">Sem trial</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row g-2">
+                            {% if not user.trial_active %}
+                            <!-- Iniciar Trial -->
+                            <div class="col-md-6">
+                                <form action="{{ url_for('admin.manage_user_trial', user_id=user.id) }}" method="POST">
+                                    <input type="hidden" name="action" value="start">
+                                    <div class="input-group">
+                                        <input type="number" name="trial_days" class="form-control" placeholder="Dias" min="1" max="365" value="{{ config.DEFAULT_TRIAL_DAYS }}" required>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-play me-1"></i>Iniciar Trial
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            {% else %}
+                            <!-- Encerrar Trial -->
+                            <div class="col-md-6">
+                                <form action="{{ url_for('admin.manage_user_trial', user_id=user.id) }}" method="POST">
+                                    <input type="hidden" name="action" value="end">
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Deseja realmente encerrar o trial deste usuário?')">
+                                        <i class="fas fa-stop me-1"></i>Encerrar Trial
+                                    </button>
+                                </form>
+                            </div>
+                            <!-- Estender Trial -->
+                            <div class="col-md-6">
+                                <form action="{{ url_for('admin.manage_user_trial', user_id=user.id) }}" method="POST">
+                                    <input type="hidden" name="action" value="extend">
+                                    <div class="input-group">
+                                        <input type="number" name="additional_days" class="form-control" placeholder="Dias" min="1" max="365" value="7" required>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-plus me-1"></i>Estender
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if user.trial_active %}
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Trial iniciado em {{ user.trial_start_date.strftime('%d/%m/%Y %H:%M') }} 
+                                ({{ user.trial_days }} dias)
+                            </small>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

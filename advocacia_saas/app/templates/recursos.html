@@ -501,7 +501,7 @@
             <div class="card bg-gradient text-white border-0 shadow-lg" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color));">
                 <div class="card-body p-5 text-center">
                     <h2 class="display-5 mb-3" style="font-weight: 700;">Pronto para Transformar seu Escritório?</h2>
-                    <p class="lead mb-4">Experimente gratuitamente por 7 dias, sem compromisso</p>
+                    <p class="lead mb-4">Experimente gratuitamente por {{ config.DEFAULT_TRIAL_DAYS }} dias, sem compromisso</p>
                     <div class="d-flex gap-3 justify-content-center flex-wrap">
                         <a href="{{ url_for('auth.register') }}" class="btn btn-warning btn-lg px-5">
                             <i class="fas fa-rocket me-2"></i>Começar Agora

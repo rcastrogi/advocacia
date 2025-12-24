@@ -238,6 +238,28 @@
                     </div>
                 </div>
                 {% endif %}
+
+                <!-- Trial Information -->
+                {% if plan_summary.trial_info %}
+                <div class="alert alert-info mt-4 d-flex align-items-center">
+                    <i class="fas fa-clock me-3" style="font-size: 1.5rem;"></i>
+                    <div class="flex-grow-1">
+                        <strong>Período de Teste!</strong> {{ plan_summary.trial_info.message }}
+                        <a href="{{ url_for('payments.plans') }}" class="alert-link">Ver Planos</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Trial Expired Warning -->
+                {% if plan_summary.warning and 'teste expirou' in plan_summary.warning %}
+                <div class="alert alert-danger mt-4 d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle me-3" style="font-size: 1.5rem;"></i>
+                    <div class="flex-grow-1">
+                        <strong>Trial Expirado!</strong> {{ plan_summary.warning }}
+                        <a href="{{ url_for('payments.plans') }}" class="alert-link">Assinar Plano</a>
+                    </div>
+                </div>
+                {% endif %}
                 {% endif %}
             </div>
         </div>

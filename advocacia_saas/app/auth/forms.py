@@ -37,6 +37,22 @@ class RegistrationForm(FlaskForm):
     )
     oab_number = StringField("Número da OAB")
     phone = StringField("Telefone")
+    specialties = MultiCheckboxField(
+        "Áreas de atuação",
+        choices=[
+            ("civil", "Direito Civil"),
+            ("familia", "Direito de Família"),
+            ("trabalhista", "Direito do Trabalho"),
+            ("criminal", "Direito Criminal"),
+            ("previdenciario", "Direito Previdenciário"),
+            ("tributario", "Direito Tributário"),
+            ("consumidor", "Direito do Consumidor"),
+            ("administrativo", "Direito Administrativo"),
+            ("ambiental", "Direito Ambiental"),
+            ("empresarial", "Direito Empresarial"),
+        ],
+        coerce=str,
+    )
     password = PasswordField("Senha", validators=[DataRequired(), Length(min=8)])
     password2 = PasswordField(
         "Confirmar senha", validators=[DataRequired(), EqualTo("password")]
@@ -72,6 +88,22 @@ class ProfileForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])
     oab_number = StringField("Número da OAB")
     phone = StringField("Telefone")
+    specialties = MultiCheckboxField(
+        "Áreas de atuação",
+        choices=[
+            ("civil", "Direito Civil"),
+            ("familia", "Direito de Família"),
+            ("trabalhista", "Direito do Trabalho"),
+            ("criminal", "Direito Criminal"),
+            ("previdenciario", "Direito Previdenciário"),
+            ("tributario", "Direito Tributário"),
+            ("consumidor", "Direito do Consumidor"),
+            ("administrativo", "Direito Administrativo"),
+            ("ambiental", "Direito Ambiental"),
+            ("empresarial", "Direito Empresarial"),
+        ],
+        coerce=str,
+    )
     quick_actions = MultiCheckboxField(
         "Ações rápidas no dashboard",
         coerce=str,

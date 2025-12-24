@@ -7,7 +7,16 @@ import json
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from flask import abort, flash, jsonify, redirect, render_template, request, url_for
+from flask import (
+    abort,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import current_user, login_required
 from sqlalchemy import and_, func
 
@@ -217,6 +226,52 @@ def add_user_credits(user_id):
         f"{amount} créditos adicionados para {user.username}. Novo saldo: {new_balance}",
         "success",
     )
+
+    return redirect(url_for("admin.user_detail", user_id=user_id))
+
+
+@bp.route("/usuarios/<int:user_id>/manage-trial", methods=["POST"])
+@login_required
+def manage_user_trial(user_id):
+    """Gerencia o período de trial de um usuário"""
+    _require_admin()
+
+    user = User.query.get_or_404(user_id)
+    action = request.form.get("action")
+
+    if action == "start":
+        days = request.form.get(
+            "trial_days", current_app.config["DEFAULT_TRIAL_DAYS"], type=int
+        )
+        if days <= 0:
+            flash("A quantidade de dias deve ser maior que zero.", "danger")
+        else:
+            user.start_trial(days)
+            db.session.commit()
+            flash(
+                f"Período de teste de {days} dias iniciado para {user.username}.",
+                "success",
+            )
+
+    elif action == "end":
+        user.end_trial()
+        db.session.commit()
+        flash(f"Período de teste encerrado para {user.username}.", "success")
+
+    elif action == "extend":
+        additional_days = request.form.get("additional_days", 7, type=int)
+        if additional_days <= 0:
+            flash("A quantidade de dias deve ser maior que zero.", "danger")
+        else:
+            if user.trial_active and user.trial_days:
+                user.trial_days += additional_days
+                db.session.commit()
+                flash(
+                    f"Trial estendido em {additional_days} dias para {user.username}.",
+                    "success",
+                )
+            else:
+                flash("Usuário não está em período de teste ativo.", "warning")
 
     return redirect(url_for("admin.user_detail", user_id=user_id))
 
