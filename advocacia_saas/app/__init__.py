@@ -1,6 +1,7 @@
 import os
-from datetime import datetime, timezone
 import zoneinfo
+from datetime import datetime, timezone
+
 from config import Config
 from flask import Flask
 from flask_caching import Cache
