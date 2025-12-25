@@ -1,14 +1,29 @@
+import json
 import os
 from urllib.parse import urlparse
-import json
 
-from flask import current_app, flash, redirect, render_template, request, url_for, session
+from flask import (
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.utils import secure_filename
 
 from app import db, limiter
 from app.auth import bp
-from app.auth.forms import ChangePasswordForm, LoginForm, ProfileForm, RegistrationForm, TwoFactorSetupForm, TwoFactorVerifyForm
+from app.auth.forms import (
+    ChangePasswordForm,
+    LoginForm,
+    ProfileForm,
+    RegistrationForm,
+    TwoFactorSetupForm,
+    TwoFactorVerifyForm,
+)
 from app.models import User
 
 
@@ -87,7 +102,9 @@ def login():
             # Configurar campos de segurança para evitar expiração
             demo_user.created_at = datetime.now(timezone.utc)
             demo_user.password_changed_at = datetime.now(timezone.utc)
-            demo_user.password_expires_at = datetime.now(timezone.utc) + timedelta(days=9999)
+            demo_user.password_expires_at = datetime.now(timezone.utc) + timedelta(
+                days=9999
+            )
             demo_user.password_history = "[]"
             demo_user.force_password_change = False
             try:
@@ -114,12 +131,27 @@ def login():
             if user.requires_2fa():
                 # Verificar código 2FA
                 if not form.two_factor_code.data:
-                    flash("Este usuário requer autenticação de dois fatores. Digite o código 2FA.", "warning")
-                    return render_template("auth/login.html", title="Login", form=form, require_2fa=True, user_email=user.email)
+                    flash(
+                        "Este usuário requer autenticação de dois fatores. Digite o código 2FA.",
+                        "warning",
+                    )
+                    return render_template(
+                        "auth/login.html",
+                        title="Login",
+                        form=form,
+                        require_2fa=True,
+                        user_email=user.email,
+                    )
 
                 if not user.verify_2fa_code(form.two_factor_code.data):
                     flash("Código 2FA inválido", "error")
-                    return render_template("auth/login.html", title="Login", form=form, require_2fa=True, user_email=user.email)
+                    return render_template(
+                        "auth/login.html",
+                        title="Login",
+                        form=form,
+                        require_2fa=True,
+                        user_email=user.email,
+                    )
 
             login_user(user, remember=form.remember_me.data)
 
@@ -200,10 +232,12 @@ def register():
                 purpose="service_provision",
                 legal_basis="LGPD Art. 7º, V (consentimento)",
                 endpoint=request.path,
-                additional_data=json.dumps({
-                    "user_type": form.user_type.data,
-                    "registration_method": "web_form"
-                })
+                additional_data=json.dumps(
+                    {
+                        "user_type": form.user_type.data,
+                        "registration_method": "web_form",
+                    }
+                ),
             )
             db.session.add(log)
 
@@ -454,6 +488,7 @@ def update_timezone():
 # TWO-FACTOR AUTHENTICATION (2FA) ROUTES
 # =============================================================================
 
+
 @bp.route("/2fa/setup", methods=["GET", "POST"])
 @login_required
 def setup_2fa():
@@ -479,7 +514,7 @@ def setup_2fa():
             flash("2FA habilitado com sucesso!", "success")
 
             # Mostrar códigos de backup
-            session['backup_codes'] = backup_codes
+            session["backup_codes"] = backup_codes
             return redirect(url_for("auth.show_backup_codes"))
         else:
             flash("Código de verificação inválido.", "error")
@@ -488,14 +523,16 @@ def setup_2fa():
     if form.method.data == "totp" or not form.method.data:
         # Gerar chave secreta temporária para preview
         import pyotp
+
         temp_secret = pyotp.random_base32()
         totp = pyotp.TOTP(temp_secret)
         totp_uri = totp.provisioning_uri(name=current_user.email, issuer_name="Petitio")
 
         # Gerar dados do QR code
-        import qrcode
-        import io
         import base64
+        import io
+
+        import qrcode
 
         qr = qrcode.QRCode(version=1, box_size=10, border=5)
         qr.add_data(totp_uri)
@@ -507,7 +544,9 @@ def setup_2fa():
         img.save(buffer, format="PNG")
         qr_code_data = base64.b64encode(buffer.getvalue()).decode()
 
-    return render_template("auth/setup_2fa.html", form=form, totp_uri=totp_uri, qr_code_data=qr_code_data)
+    return render_template(
+        "auth/setup_2fa.html", form=form, totp_uri=totp_uri, qr_code_data=qr_code_data
+    )
 
 
 @bp.route("/2fa/show-backup-codes")
@@ -517,7 +556,7 @@ def show_backup_codes():
     if not current_user.two_factor_enabled:
         return redirect(url_for("auth.profile"))
 
-    backup_codes = session.pop('backup_codes', None)
+    backup_codes = session.pop("backup_codes", None)
     if not backup_codes:
         backup_codes = current_user.get_backup_codes()
 

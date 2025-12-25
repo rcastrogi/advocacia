@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timezone
 
-from flask import jsonify, request, render_template
+from flask import jsonify, render_template, request
 from flask_login import current_user, login_required
 
 from app import db
@@ -14,10 +14,10 @@ from app.models import (
     User,
 )
 
-
 # =============================================================================
 # PÁGINAS WEB
 # =============================================================================
+
 
 @lgpd_bp.route("/privacy")
 @login_required
@@ -29,6 +29,7 @@ def privacy():
 # =============================================================================
 # CONSENTIMENTO DE DADOS
 # =============================================================================
+
 
 @lgpd_bp.route("/consent", methods=["GET"])
 @login_required
@@ -67,12 +68,17 @@ def give_consent():
     db.session.commit()
 
     # Log do processamento
-    log_processing(current_user.id, "consent", "personal", ["consent"], "User consented to data processing")
+    log_processing(
+        current_user.id,
+        "consent",
+        "personal",
+        ["consent"],
+        "User consented to data processing",
+    )
 
-    return jsonify({
-        "message": "Consentimento registrado com sucesso",
-        "consent_id": consent.id
-    }), 201
+    return jsonify(
+        {"message": "Consentimento registrado com sucesso", "consent_id": consent.id}
+    ), 201
 
 
 @lgpd_bp.route("/consent/<int:consent_id>", methods=["DELETE"])
@@ -89,7 +95,13 @@ def withdraw_consent(consent_id):
     consent.withdraw_consent()
 
     # Log do processamento
-    log_processing(current_user.id, "withdraw_consent", "personal", ["consent"], "User withdrew data consent")
+    log_processing(
+        current_user.id,
+        "withdraw_consent",
+        "personal",
+        ["consent"],
+        "User withdrew data consent",
+    )
 
     return jsonify({"message": "Consentimento retirado com sucesso"})
 
@@ -97,6 +109,7 @@ def withdraw_consent(consent_id):
 # =============================================================================
 # DIREITO AO ESQUECIMENTO
 # =============================================================================
+
 
 @lgpd_bp.route("/deletion-request", methods=["POST"])
 @login_required
@@ -113,10 +126,12 @@ def request_data_deletion():
     ).first()
 
     if existing_request:
-        return jsonify({
-            "error": "Já existe uma solicitação de exclusão pendente",
-            "request_id": existing_request.id
-        }), 409
+        return jsonify(
+            {
+                "error": "Já existe uma solicitação de exclusão pendente",
+                "request_id": existing_request.id,
+            }
+        ), 409
 
     # Criar solicitação
     deletion_request = DeletionRequest(
@@ -129,13 +144,21 @@ def request_data_deletion():
     db.session.commit()
 
     # Log do processamento
-    log_processing(current_user.id, "deletion_request", "personal", ["request"], "User requested data deletion")
+    log_processing(
+        current_user.id,
+        "deletion_request",
+        "personal",
+        ["request"],
+        "User requested data deletion",
+    )
 
-    return jsonify({
-        "message": "Solicitação de exclusão registrada",
-        "request_id": deletion_request.id,
-        "status": "pending"
-    }), 201
+    return jsonify(
+        {
+            "message": "Solicitação de exclusão registrada",
+            "request_id": deletion_request.id,
+            "status": "pending",
+        }
+    ), 201
 
 
 @lgpd_bp.route("/deletion-request", methods=["GET"])
@@ -149,6 +172,7 @@ def get_deletion_requests():
 # =============================================================================
 # ANONIMIZAÇÃO
 # =============================================================================
+
 
 @lgpd_bp.route("/anonymization-request", methods=["POST"])
 @login_required
@@ -165,10 +189,12 @@ def request_anonymization():
     ).first()
 
     if existing_request:
-        return jsonify({
-            "error": "Já existe uma solicitação de anonimização pendente",
-            "request_id": existing_request.id
-        }), 409
+        return jsonify(
+            {
+                "error": "Já existe uma solicitação de anonimização pendente",
+                "request_id": existing_request.id,
+            }
+        ), 409
 
     # Criar solicitação
     anonymization_request = AnonymizationRequest(
@@ -182,13 +208,21 @@ def request_anonymization():
     db.session.commit()
 
     # Log do processamento
-    log_processing(current_user.id, "anonymization_request", "personal", ["request"], "User requested data anonymization")
+    log_processing(
+        current_user.id,
+        "anonymization_request",
+        "personal",
+        ["request"],
+        "User requested data anonymization",
+    )
 
-    return jsonify({
-        "message": "Solicitação de anonimização registrada",
-        "request_id": anonymization_request.id,
-        "status": "pending"
-    }), 201
+    return jsonify(
+        {
+            "message": "Solicitação de anonimização registrada",
+            "request_id": anonymization_request.id,
+            "status": "pending",
+        }
+    ), 201
 
 
 @lgpd_bp.route("/anonymization-request", methods=["GET"])
@@ -203,14 +237,17 @@ def get_user_anonymization_requests():
 # LOG DE PROCESSAMENTO
 # =============================================================================
 
+
 @lgpd_bp.route("/processing-log", methods=["GET"])
 @login_required
 def get_processing_log():
     """Obtém log de processamento de dados do usuário"""
-    logs = DataProcessingLog.query.filter_by(user_id=current_user.id)\
-        .order_by(DataProcessingLog.processed_at.desc())\
-        .limit(100)\
+    logs = (
+        DataProcessingLog.query.filter_by(user_id=current_user.id)
+        .order_by(DataProcessingLog.processed_at.desc())
+        .limit(100)
         .all()
+    )
 
     return jsonify([log.to_dict() for log in logs])
 
@@ -218,6 +255,7 @@ def get_processing_log():
 # =============================================================================
 # ADMIN ENDPOINTS (Para processar solicitações)
 # =============================================================================
+
 
 @lgpd_bp.route("/admin/deletion-requests", methods=["GET"])
 @login_required
@@ -262,17 +300,21 @@ def approve_deletion_request(request_id):
             purpose="right_to_erasure",
             legal_basis="LGPD Art. 18",
             endpoint=request.path,
-            additional_data=json.dumps({
-                "request_id": request_id,
-                "admin_notes": admin_notes,
-                "audit_data": audit_data,
-                "processed_by": current_user.email
-            })
+            additional_data=json.dumps(
+                {
+                    "request_id": request_id,
+                    "admin_notes": admin_notes,
+                    "audit_data": audit_data,
+                    "processed_by": current_user.email,
+                }
+            ),
         )
         db.session.add(log)
         db.session.commit()
 
-        return jsonify({"message": "Solicitação de exclusão aprovada e dados removidos"})
+        return jsonify(
+            {"message": "Solicitação de exclusão aprovada e dados removidos"}
+        )
 
     except Exception as e:
         db.session.rollback()
@@ -292,7 +334,9 @@ def reject_deletion_request(request_id):
 
     data = request.get_json() or {}
     admin_notes = data.get("admin_notes", "")
-    rejection_reason = data.get("rejection_reason", "Solicitação rejeitada pelo administrador")
+    rejection_reason = data.get(
+        "rejection_reason", "Solicitação rejeitada pelo administrador"
+    )
 
     try:
         request_obj.status = "rejected"
@@ -309,12 +353,14 @@ def reject_deletion_request(request_id):
             purpose="gdpr_compliance",
             legal_basis="LGPD Art. 18",
             endpoint=request.path,
-            additional_data=json.dumps({
-                "request_id": request_id,
-                "rejection_reason": rejection_reason,
-                "admin_notes": admin_notes,
-                "processed_by": current_user.email
-            })
+            additional_data=json.dumps(
+                {
+                    "request_id": request_id,
+                    "rejection_reason": rejection_reason,
+                    "admin_notes": admin_notes,
+                    "processed_by": current_user.email,
+                }
+            ),
         )
         db.session.add(log)
         db.session.commit()
@@ -338,7 +384,9 @@ def get_admin_anonymization_requests():
     for req in requests:
         data = req.to_dict()
         data["user_email"] = req.user.email if req.user else None
-        data["processed_by_email"] = req.processed_by.email if req.processed_by else None
+        data["processed_by_email"] = (
+            req.processed_by.email if req.processed_by else None
+        )
         result.append(data)
 
     return jsonify(result)
@@ -368,13 +416,15 @@ def get_audit_log():
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    date_filter = request.args.get('date')
+    date_filter = request.args.get("date")
     query = DataProcessingLog.query
 
     if date_filter:
         try:
             filter_date = datetime.fromisoformat(date_filter).date()
-            query = query.filter(db.func.date(DataProcessingLog.processed_at) == filter_date)
+            query = query.filter(
+                db.func.date(DataProcessingLog.processed_at) == filter_date
+            )
         except ValueError:
             return jsonify({"error": "Formato de data inválido"}), 400
 
@@ -398,12 +448,16 @@ def get_anonymization_request_details(request_id):
     request_obj = AnonymizationRequest.query.get_or_404(request_id)
     data = request_obj.to_dict()
     data["user_email"] = request_obj.user.email if request_obj.user else None
-    data["processed_by_email"] = request_obj.processed_by.email if request_obj.processed_by else None
+    data["processed_by_email"] = (
+        request_obj.processed_by.email if request_obj.processed_by else None
+    )
 
     return jsonify(data)
 
 
-@lgpd_bp.route("/admin/anonymization-request/<int:request_id>/approve", methods=["POST"])
+@lgpd_bp.route(
+    "/admin/anonymization-request/<int:request_id>/approve", methods=["POST"]
+)
 @login_required
 def approve_anonymization_request(request_id):
     """Aprova uma solicitação de anonimização (apenas admin)"""
@@ -435,16 +489,20 @@ def approve_anonymization_request(request_id):
             purpose="data_minimization",
             legal_basis="LGPD Art. 12",
             endpoint=request.path,
-            additional_data=json.dumps({
-                "request_id": request_id,
-                "admin_notes": admin_notes,
-                "processed_by": current_user.email
-            })
+            additional_data=json.dumps(
+                {
+                    "request_id": request_id,
+                    "admin_notes": admin_notes,
+                    "processed_by": current_user.email,
+                }
+            ),
         )
         db.session.add(log)
         db.session.commit()
 
-        return jsonify({"message": "Solicitação de anonimização aprovada e dados anonimizados"})
+        return jsonify(
+            {"message": "Solicitação de anonimização aprovada e dados anonimizados"}
+        )
 
     except Exception as e:
         db.session.rollback()
@@ -464,7 +522,9 @@ def reject_anonymization_request(request_id):
 
     data = request.get_json() or {}
     admin_notes = data.get("admin_notes", "")
-    rejection_reason = data.get("rejection_reason", "Solicitação rejeitada pelo administrador")
+    rejection_reason = data.get(
+        "rejection_reason", "Solicitação rejeitada pelo administrador"
+    )
 
     try:
         request_obj.status = "failed"
@@ -481,12 +541,14 @@ def reject_anonymization_request(request_id):
             purpose="gdpr_compliance",
             legal_basis="LGPD Art. 12",
             endpoint=request.path,
-            additional_data=json.dumps({
-                "request_id": request_id,
-                "rejection_reason": rejection_reason,
-                "admin_notes": admin_notes,
-                "processed_by": current_user.email
-            })
+            additional_data=json.dumps(
+                {
+                    "request_id": request_id,
+                    "rejection_reason": rejection_reason,
+                    "admin_notes": admin_notes,
+                    "processed_by": current_user.email,
+                }
+            ),
         )
         db.session.add(log)
         db.session.commit()
@@ -502,7 +564,10 @@ def reject_anonymization_request(request_id):
 # UTILITIES
 # =============================================================================
 
-def log_processing(user_id, action, data_category, data_fields, purpose, legal_basis="consent"):
+
+def log_processing(
+    user_id, action, data_category, data_fields, purpose, legal_basis="consent"
+):
     """Registra processamento de dados no log"""
     log_entry = DataProcessingLog(
         user_id=user_id,
@@ -524,6 +589,7 @@ def log_processing(user_id, action, data_category, data_fields, purpose, legal_b
 # MODEL METHODS EXTENSIONS
 # =============================================================================
 
+
 # Adicionar métodos to_dict aos modelos LGPD
 def data_consent_to_dict(self):
     return {
@@ -538,6 +604,7 @@ def data_consent_to_dict(self):
         "is_valid": self.is_valid(),
     }
 
+
 def deletion_request_to_dict(self):
     return {
         "id": self.id,
@@ -548,6 +615,7 @@ def deletion_request_to_dict(self):
         "processed_at": self.processed_at.isoformat() if self.processed_at else None,
         "rejection_reason": self.rejection_reason,
     }
+
 
 def anonymization_request_to_dict(self):
     return {
@@ -560,6 +628,7 @@ def anonymization_request_to_dict(self):
         "processed_at": self.processed_at.isoformat() if self.processed_at else None,
     }
 
+
 def data_processing_log_to_dict(self):
     return {
         "id": self.id,
@@ -571,6 +640,7 @@ def data_processing_log_to_dict(self):
         "endpoint": self.endpoint,
     }
 
+
 # Aplicar métodos aos modelos
 DataConsent.to_dict = data_consent_to_dict
 DeletionRequest.to_dict = deletion_request_to_dict
@@ -581,6 +651,7 @@ DataProcessingLog.to_dict = data_processing_log_to_dict
 # =============================================================================
 # ADMIN PAGES
 # =============================================================================
+
 
 @lgpd_bp.route("/admin")
 @login_required

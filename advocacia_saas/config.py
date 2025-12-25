@@ -62,11 +62,17 @@ class Config:
     # Redis Configuration
     REDIS_URL = os.environ.get("REDIS_URL")
     REDIS_CACHE_DB = int(os.environ.get("REDIS_CACHE_DB", "0"))  # DB para cache
-    REDIS_RATELIMIT_DB = int(os.environ.get("REDIS_RATELIMIT_DB", "1"))  # DB para rate limiting
-    REDIS_SESSION_DB = int(os.environ.get("REDIS_SESSION_DB", "2"))  # DB para sessões (futuro)
+    REDIS_RATELIMIT_DB = int(
+        os.environ.get("REDIS_RATELIMIT_DB", "1")
+    )  # DB para rate limiting
+    REDIS_SESSION_DB = int(
+        os.environ.get("REDIS_SESSION_DB", "2")
+    )  # DB para sessões (futuro)
 
     # Cache settings
-    CACHE_DEFAULT_TIMEOUT = int(os.environ.get("CACHE_DEFAULT_TIMEOUT", "300"))  # 5 minutos
+    CACHE_DEFAULT_TIMEOUT = int(
+        os.environ.get("CACHE_DEFAULT_TIMEOUT", "300")
+    )  # 5 minutos
     CACHE_KEY_PREFIX = os.environ.get("CACHE_KEY_PREFIX", "petitio")
 
     # OpenAI API

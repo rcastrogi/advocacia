@@ -24,7 +24,10 @@ class LoginForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])
     password = PasswordField("Senha", validators=[DataRequired()])
     remember_me = BooleanField("Lembrar de mim")
-    two_factor_code = StringField("Código 2FA", validators=[Length(min=6, max=6, message="Código deve ter 6 dígitos")])
+    two_factor_code = StringField(
+        "Código 2FA",
+        validators=[Length(min=6, max=6, message="Código deve ter 6 dígitos")],
+    )
     submit = SubmitField("Entrar")
 
 
@@ -32,11 +35,14 @@ class TwoFactorSetupForm(FlaskForm):
     method = SelectField(
         "Método de 2FA",
         choices=[("totp", "Aplicativo Autenticador (TOTP)"), ("sms", "SMS (futuro)")],
-        default="totp"
+        default="totp",
     )
     verification_code = StringField(
         "Código de Verificação",
-        validators=[DataRequired(), Length(min=6, max=6, message="Código deve ter 6 dígitos")]
+        validators=[
+            DataRequired(),
+            Length(min=6, max=6, message="Código deve ter 6 dígitos"),
+        ],
     )
     submit = SubmitField("Habilitar 2FA")
 
@@ -44,7 +50,10 @@ class TwoFactorSetupForm(FlaskForm):
 class TwoFactorVerifyForm(FlaskForm):
     code = StringField(
         "Código 2FA",
-        validators=[DataRequired(), Length(min=6, max=6, message="Código deve ter 6 dígitos")]
+        validators=[
+            DataRequired(),
+            Length(min=6, max=6, message="Código deve ter 6 dígitos"),
+        ],
     )
     submit = SubmitField("Verificar")
 
@@ -128,14 +137,18 @@ class RegistrationForm(FlaskForm):
     # LGPD Consent Fields
     consent_personal_data = BooleanField(
         "Concordo com o tratamento dos meus dados pessoais para prestação do serviço",
-        validators=[DataRequired(message="O consentimento para tratamento de dados pessoais é obrigatório.")]
+        validators=[
+            DataRequired(
+                message="O consentimento para tratamento de dados pessoais é obrigatório."
+            )
+        ],
     )
     consent_marketing = BooleanField(
         "Aceito receber comunicações de marketing e novidades por email (opcional)"
     )
     consent_terms = BooleanField(
         "Li e concordo com os Termos de Uso e Política de Privacidade",
-        validators=[DataRequired(message="A aceitação dos termos é obrigatória.")]
+        validators=[DataRequired(message="A aceitação dos termos é obrigatória.")],
     )
 
     submit = SubmitField("Cadastrar")

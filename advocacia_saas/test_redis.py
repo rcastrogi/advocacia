@@ -11,8 +11,9 @@ from datetime import datetime, timezone
 # Adicionar o diretório raiz ao path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app import create_app, cache, limiter
+from app import cache, create_app, limiter
 from flask import current_app
+
 
 def test_redis_connection():
     """Testa conexão básica com Redis"""
@@ -51,14 +52,18 @@ def test_redis_connection():
             print(f"❌ Erro no Redis: {str(e)}")
             return False
 
+
 def show_redis_info():
     """Mostra informações sobre a configuração do Redis"""
     print("\n📊 Configuração Redis:")
-    print(f"REDIS_URL: {'Configurado' if os.environ.get('REDIS_URL') else 'Não configurado'}")
+    print(
+        f"REDIS_URL: {'Configurado' if os.environ.get('REDIS_URL') else 'Não configurado'}"
+    )
     print(f"REDIS_CACHE_DB: {os.environ.get('REDIS_CACHE_DB', '0')}")
     print(f"REDIS_RATELIMIT_DB: {os.environ.get('REDIS_RATELIMIT_DB', '1')}")
     print(f"CACHE_DEFAULT_TIMEOUT: {os.environ.get('CACHE_DEFAULT_TIMEOUT', '300')}s")
     print(f"CACHE_KEY_PREFIX: {os.environ.get('CACHE_KEY_PREFIX', 'petitio')}")
+
 
 if __name__ == "__main__":
     print("🚀 Teste de Configuração Redis para Petitio\n")

@@ -89,7 +89,9 @@ class User(UserMixin, db.Model):
     trial_active = db.Column(db.Boolean, default=False)
 
     # Password security fields
-    password_changed_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    password_changed_at = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc)
+    )
     password_expires_at = db.Column(db.DateTime)
     password_history = db.Column(
         db.Text, default="[]"
@@ -299,13 +301,13 @@ class User(UserMixin, db.Model):
             "full_name": self.full_name,
             "email": self.email,
             "phone": self.phone,
-            "cpf_cnpj": getattr(self, 'cpf_cnpj', None),
+            "cpf_cnpj": getattr(self, "cpf_cnpj", None),
             "address": {
                 "street": self.street,
                 "city": self.city,
                 "state": self.state,
-                "zip_code": self.zip_code
-            }
+                "zip_code": self.zip_code,
+            },
         }
 
         # Anonimizar dados pessoais
@@ -334,7 +336,7 @@ class User(UserMixin, db.Model):
         return {
             "anon_id": anon_id,
             "original_data": original_data,
-            "anonymized_at": datetime.now(timezone.utc).isoformat()
+            "anonymized_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def delete_user_data(self):
@@ -347,7 +349,7 @@ class User(UserMixin, db.Model):
                 "email": self.email,
                 "full_name": self.full_name,
                 "deleted_at": datetime.now(timezone.utc).isoformat(),
-                "data_types_deleted": []
+                "data_types_deleted": [],
             }
 
             # 1. Excluir relacionamentos e dados associados
@@ -372,7 +374,13 @@ class User(UserMixin, db.Model):
             audit_data["data_types_deleted"].append("petition_templates")
 
             # Excluir consentimentos LGPD
-            from app.models import DataConsent, DataProcessingLog, DeletionRequest, AnonymizationRequest
+            from app.models import (
+                AnonymizationRequest,
+                DataConsent,
+                DataProcessingLog,
+                DeletionRequest,
+            )
+
             DataConsent.query.filter_by(user_id=self.id).delete()
             audit_data["data_types_deleted"].append("data_consents")
 
@@ -426,7 +434,7 @@ class User(UserMixin, db.Model):
                 data_category="all_user_data",
                 purpose="right_to_erasure",
                 legal_basis="LGPD Art. 18",
-                additional_data=json.dumps(audit_data)
+                additional_data=json.dumps(audit_data),
             )
             db.session.add(log)
             db.session.commit()
@@ -444,7 +452,7 @@ class User(UserMixin, db.Model):
         request = DeletionRequest(
             user_id=self.id,
             request_reason=reason,
-            deletion_scope=json.dumps(["account", "data", "documents"])
+            deletion_scope=json.dumps(["account", "data", "documents"]),
         )
 
         db.session.add(request)
@@ -455,9 +463,7 @@ class User(UserMixin, db.Model):
     def has_valid_consent(self, consent_type):
         """Verifica se usuário tem consentimento válido para determinado tipo"""
         consent = DataConsent.query.filter_by(
-            user_id=self.id,
-            consent_type=consent_type,
-            consented=True
+            user_id=self.id, consent_type=consent_type, consented=True
         ).first()
 
         return consent and consent.is_valid() if consent else False
@@ -472,9 +478,10 @@ class User(UserMixin, db.Model):
 
     def enable_2fa(self, method="totp"):
         """Habilita 2FA para o usuário"""
-        import pyotp
-        import secrets
         import json
+        import secrets
+
+        import pyotp
 
         self.two_factor_method = method
         self.two_factor_enabled = True
@@ -501,8 +508,9 @@ class User(UserMixin, db.Model):
 
     def verify_2fa_code(self, code):
         """Verifica código 2FA (TOTP ou backup)"""
-        import pyotp
         import json
+
+        import pyotp
 
         if not self.two_factor_enabled:
             return True  # Se 2FA não está habilitado, permite login
@@ -543,7 +551,10 @@ class User(UserMixin, db.Model):
 
     def requires_2fa(self):
         """Verifica se usuário deve usar 2FA (administradores e advogados)"""
-        return self.user_type in ["master", "admin", "advogado"] and self.two_factor_enabled
+        return (
+            self.user_type in ["master", "admin", "advogado"]
+            and self.two_factor_enabled
+        )
 
     def get_backup_codes(self):
         """Retorna códigos de backup (apenas para exibição uma vez)"""
@@ -566,7 +577,9 @@ class Client(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relação muitos-para-muitos com advogados
@@ -854,7 +867,9 @@ class PetitionTemplate(db.Model):
     )
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     petition_type = db.relationship("PetitionType", backref="templates")
@@ -1006,7 +1021,9 @@ class PetitionUsage(db.Model):
         db.Integer, db.ForeignKey("petition_types.id"), nullable=False
     )
     plan_id = db.Column(db.Integer, db.ForeignKey("billing_plans.id"))
-    generated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    generated_at = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
     billing_cycle = db.Column(db.String(7), index=True)  # YYYY-MM
     billable = db.Column(db.Boolean, default=False)
     amount = db.Column(db.Numeric(10, 2), default=Decimal("0.00"))
@@ -1064,7 +1081,9 @@ class Invoice(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships
@@ -1209,7 +1228,9 @@ class Payment(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships
@@ -1264,7 +1285,9 @@ class Testimonial(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Destaque na página inicial
@@ -1304,7 +1327,9 @@ class PetitionSection(db.Model):
 
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     def get_fields(self):
@@ -1403,7 +1428,9 @@ class SavedPetition(db.Model):
     notes = db.Column(db.Text)  # Anotações internas
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
     completed_at = db.Column(db.DateTime)  # Quando foi finalizada
     cancelled_at = db.Column(db.DateTime)  # Quando foi cancelada
@@ -1535,7 +1562,9 @@ class CreditPackage(db.Model):
     sort_order = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     @property
@@ -1569,7 +1598,9 @@ class UserCredits(db.Model):
     total_bonus = db.Column(db.Integer, default=0)  # Total de bônus recebido
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relacionamento
@@ -1843,7 +1874,9 @@ class Subscription(db.Model):
         db.String(20), default="active"
     )  # active, canceled, past_due, trialing
     trial_ends_at = db.Column(db.DateTime)
-    current_period_start = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    current_period_start = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc)
+    )
     current_period_end = db.Column(db.DateTime)
     cancel_at_period_end = db.Column(db.Boolean, default=False)
     canceled_at = db.Column(db.DateTime)
@@ -1863,7 +1896,9 @@ class Subscription(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships
@@ -1878,7 +1913,8 @@ class Subscription(db.Model):
     def is_active(self):
         """Verifica se a assinatura está ativa"""
         return self.status == "active" and (
-            not self.current_period_end or self.current_period_end > datetime.now(timezone.utc)
+            not self.current_period_end
+            or self.current_period_end > datetime.now(timezone.utc)
         )
 
     def cancel(self, immediate=False):
@@ -1950,7 +1986,9 @@ class Expense(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships
@@ -2015,7 +2053,9 @@ class Deadline(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships
@@ -2053,7 +2093,9 @@ class Deadline(db.Model):
 
     def is_overdue(self):
         """Verifica se o prazo está vencido"""
-        return self.status == "pending" and self.deadline_date < datetime.now(timezone.utc)
+        return self.status == "pending" and self.deadline_date < datetime.now(
+            timezone.utc
+        )
 
     def mark_completed(self, notes=None):
         """Marca prazo como cumprido"""
@@ -2105,9 +2147,13 @@ class Message(db.Model):
     is_deleted_by_recipient = db.Column(db.Boolean, default=False)
 
     # Timestamps
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships
@@ -2180,7 +2226,9 @@ class ChatRoom(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships
@@ -2285,9 +2333,13 @@ class Document(db.Model):
     notes = db.Column(db.Text)  # Notas internas
 
     # Timestamps
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
     last_accessed_at = db.Column(db.DateTime)
 
@@ -2486,7 +2538,9 @@ class RoadmapItem(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relacionamentos
@@ -2658,7 +2712,9 @@ class RoadmapFeedback(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relacionamentos
@@ -2784,6 +2840,7 @@ class RoadmapFeedback(db.Model):
 # LGPD COMPLIANCE MODELS
 # =============================================================================
 
+
 class DataConsent(db.Model):
     """Registro de consentimentos para tratamento de dados pessoais"""
 
@@ -2793,7 +2850,9 @@ class DataConsent(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     # Tipo de consentimento
-    consent_type = db.Column(db.String(50), nullable=False)  # 'marketing', 'analytics', 'processing'
+    consent_type = db.Column(
+        db.String(50), nullable=False
+    )  # 'marketing', 'analytics', 'processing'
     consent_purpose = db.Column(db.Text, nullable=False)  # Descrição do propósito
 
     # Status do consentimento
@@ -2840,8 +2899,12 @@ class DataProcessingLog(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     # Dados do processamento
-    action = db.Column(db.String(50), nullable=False)  # 'collect', 'process', 'share', 'delete'
-    data_category = db.Column(db.String(100), nullable=False)  # 'personal', 'financial', 'health'
+    action = db.Column(
+        db.String(50), nullable=False
+    )  # 'collect', 'process', 'share', 'delete'
+    data_category = db.Column(
+        db.String(100), nullable=False
+    )  # 'personal', 'financial', 'health'
     data_fields = db.Column(db.Text)  # JSON dos campos processados
     purpose = db.Column(db.Text, nullable=False)
 
@@ -2859,8 +2922,12 @@ class DataProcessingLog(db.Model):
     processed_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relacionamentos
-    user = db.relationship("User", backref=db.backref("data_processing_logs", lazy="dynamic"))
-    consent = db.relationship("DataConsent", backref=db.backref("processing_logs", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("data_processing_logs", lazy="dynamic")
+    )
+    consent = db.relationship(
+        "DataConsent", backref=db.backref("processing_logs", lazy="dynamic")
+    )
 
     def __repr__(self):
         return f"<DataProcessingLog user={self.user_id} action={self.action}>"
@@ -2875,25 +2942,39 @@ class AnonymizationRequest(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     # Status da solicitação
-    status = db.Column(db.String(20), default="pending")  # 'pending', 'processing', 'completed', 'failed'
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # 'pending', 'processing', 'completed', 'failed'
     request_reason = db.Column(db.Text, nullable=False)
 
     # Dados a anonimizar
     data_categories = db.Column(db.Text)  # JSON: ['personal', 'financial', 'documents']
-    anonymization_method = db.Column(db.String(50), default="pseudonymization")  # 'pseudonymization', 'deletion'
+    anonymization_method = db.Column(
+        db.String(50), default="pseudonymization"
+    )  # 'pseudonymization', 'deletion'
 
     # Processo
     requested_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     processed_at = db.Column(db.DateTime, nullable=True)
-    processed_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)  # Admin que processou
+    processed_by = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=True
+    )  # Admin que processou
 
     # Resultado
     anonymized_data = db.Column(db.Text)  # JSON com dados antes/depois
     notes = db.Column(db.Text)  # Notas do processamento
 
     # Relacionamentos
-    user = db.relationship("User", foreign_keys=[user_id], backref=db.backref("anonymization_requests", lazy="dynamic"))
-    processor = db.relationship("User", foreign_keys=[processed_by], backref=db.backref("processed_anonymizations", lazy="dynamic"))
+    user = db.relationship(
+        "User",
+        foreign_keys=[user_id],
+        backref=db.backref("anonymization_requests", lazy="dynamic"),
+    )
+    processor = db.relationship(
+        "User",
+        foreign_keys=[processed_by],
+        backref=db.backref("processed_anonymizations", lazy="dynamic"),
+    )
 
     def __repr__(self):
         return f"<AnonymizationRequest user={self.user_id} status={self.status}>"
@@ -2926,15 +3007,23 @@ class DeletionRequest(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     # Status da solicitação
-    status = db.Column(db.String(20), default="pending")  # 'pending', 'processing', 'completed', 'rejected'
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # 'pending', 'processing', 'completed', 'rejected'
     request_reason = db.Column(db.Text, nullable=False)
 
     # Escopo da exclusão
-    deletion_scope = db.Column(db.Text)  # JSON: ['account', 'data', 'documents', 'logs']
-    retention_reason = db.Column(db.Text, nullable=True)  # Motivo para manter alguns dados
+    deletion_scope = db.Column(
+        db.Text
+    )  # JSON: ['account', 'data', 'documents', 'logs']
+    retention_reason = db.Column(
+        db.Text, nullable=True
+    )  # Motivo para manter alguns dados
 
     # Processo legal
-    legal_basis = db.Column(db.Text, nullable=True)  # Base legal para rejeição/manutenção
+    legal_basis = db.Column(
+        db.Text, nullable=True
+    )  # Base legal para rejeição/manutenção
     appeal_deadline = db.Column(db.DateTime, nullable=True)  # Prazo para recurso
 
     # Processo
@@ -2948,8 +3037,16 @@ class DeletionRequest(db.Model):
     notes = db.Column(db.Text)
 
     # Relacionamentos
-    user = db.relationship("User", foreign_keys=[user_id], backref=db.backref("deletion_requests", lazy="dynamic"))
-    processor = db.relationship("User", foreign_keys=[processed_by], backref=db.backref("processed_deletions", lazy="dynamic"))
+    user = db.relationship(
+        "User",
+        foreign_keys=[user_id],
+        backref=db.backref("deletion_requests", lazy="dynamic"),
+    )
+    processor = db.relationship(
+        "User",
+        foreign_keys=[processed_by],
+        backref=db.backref("processed_deletions", lazy="dynamic"),
+    )
 
     def __repr__(self):
         return f"<DeletionRequest user={self.user_id} status={self.status}>"
