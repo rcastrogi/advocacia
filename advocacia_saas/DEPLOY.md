@@ -5,13 +5,52 @@ Este guia mostra como hospedar o projeto nas principais plataformas.
 ## Pré-requisitos
 
 1. Conta no GitHub com o repositório
-2. Variáveis de ambiente configuradas:
-   - `DATABASE_URL` - URL do Supabase PostgreSQL
-   - `SECRET_KEY` - Chave secreta Flask
-   - `STRIPE_SECRET_KEY` - Chave do Stripe
-   - `STRIPE_PUBLIC_KEY` - Chave pública do Stripe
-   - `ADMIN_EMAIL` - Email do admin
-   - `ADMIN_PASSWORD` - Senha do admin
+3. **Redis (Opcional mas Recomendado)** - Para cache e rate limiting
+   - `REDIS_URL` - URL da instância Redis
+
+---
+
+## 🔴 Redis Setup (Cache & Rate Limiting)
+
+**Benefícios:** Cache de queries, rate limiting distribuído, melhor performance
+
+### Render (Recomendado)
+1. No dashboard Render, vá para **Redis**
+2. Clique **"Create Redis"**
+3. Escolha plano:
+   - **Free**: 512MB (suficiente para testes)
+   - **Paid**: $6/mês (10GB, produção)
+4. Copie a **REDIS_URL** gerada
+5. Adicione nas variáveis de ambiente do seu web service
+
+### Railway
+1. No dashboard, clique **"+ Add"** → **"Database"**
+2. Selecione **Redis**
+3. Configure e copie a connection URL
+4. Adicione como `REDIS_URL` nas variáveis de ambiente
+
+### Variáveis de Ambiente Redis
+```bash
+# Obrigatório
+REDIS_URL=redis://username:password@host:port
+
+# Opcional (padrões funcionam)
+REDIS_CACHE_DB=0          # DB para cache
+REDIS_RATELIMIT_DB=1      # DB para rate limiting
+CACHE_DEFAULT_TIMEOUT=300 # Timeout em segundos
+CACHE_KEY_PREFIX=petitio  # Prefixo das chaves
+```
+
+### Teste da Configuração
+```bash
+# Execute o script de teste
+python test_redis.py
+```
+
+### Sem Redis
+- O sistema funciona normalmente usando cache em memória
+- Rate limiting será por instância (não distribuído)
+- Performance será menor em alta carga
 
 ---
 

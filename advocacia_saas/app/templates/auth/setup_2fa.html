@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Configurar 2FA - Petitio{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-shield-alt"></i> Configurar Autenticação de Dois Fatores (2FA)</h2>
+                    <p class="mb-0">Adicione uma camada extra de segurança à sua conta</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Por que usar 2FA?</strong> A autenticação de dois fatores adiciona uma camada extra de segurança,
+                        exigindo não apenas sua senha, mas também um código temporário gerado pelo seu dispositivo.
+                    </div>
+
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+
+                        <div class="mb-4">
+                            <label class="form-label">Método de Autenticação</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="method" id="totp" value="totp" checked>
+                                        <label class="form-check-label" for="totp">
+                                            <i class="fas fa-mobile-alt"></i> Aplicativo Autenticador (TOTP)
+                                        </label>
+                                        <small class="form-text text-muted">
+                                            Use apps como Google Authenticator, Authy ou Microsoft Authenticator
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="method" id="sms" value="sms" disabled>
+                                        <label class="form-check-label" for="sms">
+                                            <i class="fas fa-sms"></i> SMS
+                                        </label>
+                                        <small class="form-text text-muted">
+                                            <em>Em breve</em>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seção TOTP -->
+                        <div id="totp-section" class="mb-4">
+                            <h5><i class="fas fa-qrcode"></i> Configuração do Aplicativo Autenticador</h5>
+                            <p>Siga os passos abaixo para configurar seu aplicativo autenticador:</p>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ol>
+                                        <li>Baixe um aplicativo autenticador (Google Authenticator, Authy, etc.)</li>
+                                        <li>Escaneie o código QR ao lado ou digite a chave manualmente</li>
+                                        <li>Digite o código de 6 dígitos gerado pelo app no campo abaixo</li>
+                                    </ol>
+                                </div>
+                                <div class="col-md-6 text-center">
+                                    {% if qr_code_data %}
+                                    <div class="mb-3">
+                                        <img src="data:image/png;base64,{{ qr_code_data }}" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                                    </div>
+                                    <p class="small text-muted">Escaneie este código QR</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if totp_uri %}
+                            <div class="mb-3">
+                                <label class="form-label">Chave Manual (caso não consiga escanear o QR):</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ totp_uri.split('secret=')[1].split('&')[0] }}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this.previousElementSibling)">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form.verification_code.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-key"></i>
+                                </span>
+                                {{ form.verification_code(class="form-control" + (" is-invalid" if form.verification_code.errors else ""), placeholder="000000", maxlength="6") }}
+                                {% if form.verification_code.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.verification_code.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-text">
+                                Digite o código de 6 dígitos gerado pelo seu aplicativo autenticador
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Habilitar 2FA
+                            </button>
+                            <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(element) {
+    element.select();
+    document.execCommand('copy');
+    // Feedback visual
+    const button = element.nextElementSibling;
+    const originalIcon = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i>';
+    button.classList.remove('btn-outline-secondary');
+    button.classList.add('btn-success');
+    setTimeout(() => {
+        button.innerHTML = originalIcon;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+
+// Mostrar/ocultar seções baseado no método selecionado
+document.querySelectorAll('input[name="method"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const totpSection = document.getElementById('totp-section');
+        if (this.value === 'totp') {
+            totpSection.style.display = 'block';
+        } else {
+            totpSection.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

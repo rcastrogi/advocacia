@@ -448,7 +448,7 @@ def edit_testimonial(testimonial_id):
         testimonial.display_location = (
             form.display_location.data.strip() if form.display_location.data else None
         )
-        testimonial.updated_at = datetime.utcnow()
+        testimonial.updated_at = datetime.now(timezone.utc)
         db.session.commit()
         flash("Depoimento atualizado com sucesso!", "success")
         return redirect(url_for("main.testimonials"))
@@ -526,13 +526,13 @@ def moderate_testimonial(testimonial_id):
     if action == "approve":
         testimonial.status = "approved"
         testimonial.moderated_by = current_user.id
-        testimonial.moderated_at = datetime.utcnow()
+        testimonial.moderated_at = datetime.now(timezone.utc)
         testimonial.rejection_reason = None
         flash(f"Depoimento de {testimonial.display_name} aprovado!", "success")
     elif action == "reject":
         testimonial.status = "rejected"
         testimonial.moderated_by = current_user.id
-        testimonial.moderated_at = datetime.utcnow()
+        testimonial.moderated_at = datetime.now(timezone.utc)
         testimonial.rejection_reason = request.form.get("rejection_reason", "")
         flash(f"Depoimento de {testimonial.display_name} rejeitado.", "warning")
     elif action == "feature":
@@ -609,7 +609,7 @@ def mark_all_notifications_read():
 
     for notification in notifications:
         notification.read = True
-        notification.read_at = datetime.utcnow()
+        notification.read_at = datetime.now(timezone.utc)
 
     db.session.commit()
 
@@ -851,7 +851,7 @@ def roadmap_item_feedback(slug):
             existing_feedback.usage_frequency = usage_frequency
             existing_feedback.ease_of_use = ease_of_use
             existing_feedback.is_anonymous = is_anonymous
-            existing_feedback.updated_at = datetime.utcnow()
+            existing_feedback.updated_at = datetime.now(timezone.utc)
             db.session.commit()
             flash("Seu feedback foi atualizado com sucesso!", "success")
         else:

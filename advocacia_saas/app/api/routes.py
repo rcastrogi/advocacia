@@ -3,6 +3,7 @@ from config import Config
 from flask import jsonify, request
 from flask_login import current_user, login_required
 
+from app import limiter
 from app.api import bp
 from app.models import Cidade, Client, Estado, User
 
@@ -21,6 +22,7 @@ def api_login_required(f):
 
 
 @bp.route("/estados")
+@limiter.limit("100 per hour")  # Limite generoso para dados públicos
 def get_estados():
     """Get all Brazilian states"""
     try:
@@ -31,6 +33,7 @@ def get_estados():
 
 
 @bp.route("/estados/<sigla>/cidades")
+@limiter.limit("100 per hour")  # Limite generoso para dados públicos
 def get_cidades_by_estado(sigla):
     """Get cities by state"""
     try:
@@ -47,6 +50,7 @@ def get_cidades_by_estado(sigla):
 
 
 @bp.route("/cep/<cep>")
+@limiter.limit("50 per hour")  # CEP API tem limite externo, controlar uso
 def get_cep_info(cep):
     """Get address information from CEP using ViaCEP API"""
     try:
@@ -92,6 +96,7 @@ def get_cep_info(cep):
 
 @bp.route("/clients")
 @api_login_required
+@limiter.limit("200 per hour")  # Limite para operações autenticadas
 def get_clients():
     """Get all clients for the current user"""
     try:
@@ -103,6 +108,7 @@ def get_clients():
 
 @bp.route("/clients", methods=["POST"])
 @api_login_required
+@limiter.limit("50 per hour")  # Limite mais restritivo para criação
 def create_client():
     """Create a new client"""
     try:
@@ -173,6 +179,7 @@ def create_client():
 
 @bp.route("/clients/<int:client_id>")
 @api_login_required
+@limiter.limit("200 per hour")
 def get_client(client_id):
     """Get a specific client by ID"""
     try:
@@ -189,6 +196,7 @@ def get_client(client_id):
 
 @bp.route("/clients/<int:client_id>", methods=["PUT"])
 @api_login_required
+@limiter.limit("50 per hour")
 def update_client(client_id):
     """Update a client"""
     try:
@@ -246,6 +254,7 @@ def update_client(client_id):
 
 @bp.route("/clients/<int:client_id>", methods=["DELETE"])
 @api_login_required
+@limiter.limit("20 per hour")  # Limite muito restritivo para delete
 def delete_client(client_id):
     """Delete a client"""
     try:

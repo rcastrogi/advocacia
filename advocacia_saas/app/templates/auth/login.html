@@ -50,7 +50,29 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
+                    {% if require_2fa %}
+                    <div class="mb-4">
+                        {{ form.two_factor_code.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">
+                                <i class="fas fa-mobile-alt"></i>
+                            </span>
+                            {{ form.two_factor_code(class="form-control" + (" is-invalid" if form.two_factor_code.errors else ""), placeholder="000000", maxlength="6") }}
+                            {% if form.two_factor_code.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.two_factor_code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-text">
+                            Digite o código de 6 dígitos do seu aplicativo autenticador
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <div class="mb-4 form-check">
                         {{ form.remember_me(class="form-check-input") }}
                         {{ form.remember_me.label(class="form-check-label") }}

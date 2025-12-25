@@ -261,7 +261,57 @@
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- LGPD Consent Section -->
+                    <div class="consent-section mb-4 p-3 bg-light rounded">
+                        <h5 class="mb-3">
+                            <i class="fas fa-shield-alt text-primary me-2"></i>
+                            Consentimento para Tratamento de Dados (LGPD)
+                        </h5>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.consent_personal_data(class="form-check-input") }}
+                                {{ form.consent_personal_data.label(class="form-check-label") }}
+                                <small class="form-text text-muted">
+                                    Necessário para criar sua conta e utilizar os serviços da plataforma.
+                                </small>
+                                {% if form.consent_personal_data.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.consent_personal_data.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.consent_marketing(class="form-check-input") }}
+                                {{ form.consent_marketing.label(class="form-check-label") }}
+                                <small class="form-text text-muted">
+                                    Opcional. Você pode retirar este consentimento a qualquer momento.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.consent_terms(class="form-check-input") }}
+                                {{ form.consent_terms.label(class="form-check-label") }}
+                                <div class="form-text">
+                                    Ao marcar esta opção, você confirma que leu e concorda com nossos
+                                    <a href="{{ url_for('main.terms_of_service') }}" target="_blank">Termos de Uso</a> e
+                                    <a href="{{ url_for('main.privacy_policy') }}" target="_blank">Política de Privacidade</a>.
+                                </div>
+                                {% if form.consent_terms.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.consent_terms.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="d-grid mb-3">
                         {{ form.submit(class="btn btn-primary btn-lg") }}
                     </div>

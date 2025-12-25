@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Verificar 2FA - Petitio{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="col-md-6 col-lg-5">
+            <div class="text-center mb-4">
+                <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}"
+                     alt="Petitio" height="100" class="mb-3">
+                <h2 class="auth-title">Verificação de Segurança</h2>
+                <p class="auth-subtitle">Digite o código de autenticação de dois fatores</p>
+            </div>
+
+            <div class="form-card">
+                <div class="text-center mb-4">
+                    <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-mobile-alt fa-2x text-primary"></i>
+                    </div>
+                    <p class="mt-2 mb-0">
+                        <strong>{{ user_email }}</strong>
+                    </p>
+                    <p class="text-muted small">Verificação de dois fatores necessária</p>
+                </div>
+
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-4">
+                        {{ form.code.label(class="form-label") }}
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-white">
+                                <i class="fas fa-key"></i>
+                            </span>
+                            {{ form.code(class="form-control text-center" + (" is-invalid" if form.code.errors else ""), placeholder="000000", maxlength="6", style="font-size: 1.5rem; letter-spacing: 0.5rem;") }}
+                            {% if form.code.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-text text-center">
+                            Digite o código de 6 dígitos do seu aplicativo autenticador
+                        </div>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+
+                    <div class="text-center">
+                        <p class="auth-text-muted small mb-2">
+                            Não tem acesso ao seu dispositivo?
+                        </p>
+                        <a href="#" class="auth-link small" onclick="showBackupHelp()">
+                            <i class="fas fa-question-circle"></i> Usar código de backup
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{{ url_for('auth.login') }}" class="auth-link">
+                    <i class="fas fa-arrow-left"></i> Voltar ao login
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de ajuda para códigos de backup -->
+<div class="modal fade" id="backupHelpModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Usar Código de Backup</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Se você perdeu acesso ao seu aplicativo autenticador, pode usar um dos códigos de backup que salvou durante a configuração do 2FA.</p>
+
+                <div class="alert alert-warning">
+                    <strong>Importante:</strong> Cada código de backup pode ser usado apenas uma vez.
+                </div>
+
+                <p><strong>Para usar um código de backup:</strong></p>
+                <ol>
+                    <li>Digite o código de backup (8 caracteres) no campo de código 2FA</li>
+                    <li>Clique em "Verificar"</li>
+                    <li>O código será invalidado após o uso</li>
+                </ol>
+
+                <p class="text-muted small">
+                    Se você não tem mais códigos de backup, entre em contato com o suporte.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showBackupHelp() {
+    const modal = new bootstrap.Modal(document.getElementById('backupHelpModal'));
+    modal.show();
+}
+
+// Auto-focus no campo de código
+document.addEventListener('DOMContentLoaded', function() {
+    const codeInput = document.querySelector('input[name="code"]');
+    if (codeInput) {
+        codeInput.focus();
+    }
+});
+
+// Formatação automática do código (adicionar espaços)
+document.querySelector('input[name="code"]').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, ''); // Remove não-dígitos
+    if (value.length > 6) {
+        value = value.slice(0, 6); // Limita a 6 dígitos
+    }
+    e.target.value = value;
+});
+</script>
+{% endblock %}

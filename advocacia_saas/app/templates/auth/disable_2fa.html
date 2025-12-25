@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Desabilitar 2FA - Petitio{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="col-md-6 col-lg-5">
+            <div class="text-center mb-4">
+                <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}"
+                     alt="Petitio" height="100" class="mb-3">
+                <h2 class="auth-title">Desabilitar Autenticação 2FA</h2>
+                <p class="auth-subtitle">Confirme sua identidade para desabilitar a autenticação de dois fatores</p>
+            </div>
+
+            <div class="form-card">
+                <div class="alert alert-warning">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-exclamation-triangle text-warning me-2 mt-1"></i>
+                        <div>
+                            <strong>Atenção:</strong> Desabilitar a autenticação de dois fatores reduzirá a segurança da sua conta.
+                            Você não terá mais a proteção adicional contra acesso não autorizado.
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-4">
+                        {{ form.password.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Digite sua senha atual") }}
+                            {% if form.password.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.password.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-text">
+                            Digite sua senha atual para confirmar a desabilitação
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mb-3">
+                        {{ form.submit(class="btn btn-danger btn-lg") }}
+                        <a href="{{ url_for('main.profile') }}" class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="text-center mt-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title mb-2">
+                            <i class="fas fa-shield-alt text-success"></i> Por que manter o 2FA?
+                        </h6>
+                        <ul class="list-unstyled small text-start mb-0">
+                            <li class="mb-1"><i class="fas fa-check text-success me-2"></i> Proteção adicional contra hackers</li>
+                            <li class="mb-1"><i class="fas fa-check text-success me-2"></i> Segurança mesmo se sua senha for comprometida</li>
+                            <li class="mb-1"><i class="fas fa-check text-success me-2"></i> Conformidade com melhores práticas de segurança</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-focus no campo de senha
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.querySelector('input[name="password"]');
+    if (passwordInput) {
+        passwordInput.focus();
+    }
+});
+</script>
+{% endblock %}

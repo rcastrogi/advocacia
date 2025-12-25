@@ -18,7 +18,7 @@ from flask import (
 )
 from flask_login import current_user, login_required
 
-from app import db
+from app import db, limiter
 from app.models import (
     AIGeneration,
     CreditPackage,
@@ -270,6 +270,7 @@ def api_add_credits():
 
 @ai_bp.route("/api/generate/section", methods=["POST"])
 @login_required
+@limiter.limit("20 per hour")  # Limite para geração de seções
 def api_generate_section():
     """Gera uma seção de petição usando IA"""
     if not ai_service.is_configured():
@@ -386,6 +387,7 @@ def api_generate_section():
 
 @ai_bp.route("/api/generate/full-petition", methods=["POST"])
 @login_required
+@limiter.limit("10 per hour")  # Limite menor para petições completas (mais custosas)
 def api_generate_full_petition():
     """Gera uma petição completa usando IA"""
     if not ai_service.is_configured():
@@ -491,6 +493,7 @@ def api_generate_full_petition():
 
 @ai_bp.route("/api/generate/improve", methods=["POST"])
 @login_required
+@limiter.limit("15 per hour")  # Limite para melhoria de texto
 def api_improve_text():
     """Melhora um texto existente usando IA"""
     if not ai_service.is_configured():

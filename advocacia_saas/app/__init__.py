@@ -87,6 +87,14 @@ def create_app(config_class=Config):
 
     # Initialize rate limiter only if enabled
     if app.config.get("RATELIMIT_ENABLED", True):
+        # Use Redis for rate limiting if available, otherwise memory
+        storage_uri = "memory://"
+        if app.config.get("REDIS_URL"):
+            # Usar DB específico para rate limiting
+            redis_url = app.config.get("REDIS_URL")
+            ratelimit_db = app.config.get("REDIS_RATELIMIT_DB", 1)
+            storage_uri = f"{redis_url}/{ratelimit_db}"
+        limiter.storage_uri = storage_uri
         limiter.init_app(app)
 
     socketio.init_app(app, cors_allowed_origins="*")
@@ -97,8 +105,10 @@ def create_app(config_class=Config):
             app,
             config={
                 "CACHE_TYPE": "RedisCache",
-                "CACHE_REDIS_URL": app.config.get("REDIS_URL"),
-                "CACHE_DEFAULT_TIMEOUT": 300,
+                "CACHE_REDIS_URL": f"{app.config.get('REDIS_URL')}/{app.config.get('REDIS_CACHE_DB', 0)}",
+                "CACHE_DEFAULT_TIMEOUT": app.config.get("CACHE_DEFAULT_TIMEOUT", 300),
+                "CACHE_KEY_PREFIX": app.config.get("CACHE_KEY_PREFIX", "petitio"),
+                "CACHE_REDIS_DB": app.config.get("REDIS_CACHE_DB", 0),
             },
         )
     else:
@@ -106,7 +116,7 @@ def create_app(config_class=Config):
             app,
             config={
                 "CACHE_TYPE": "SimpleCache",
-                "CACHE_DEFAULT_TIMEOUT": 300,
+                "CACHE_DEFAULT_TIMEOUT": app.config.get("CACHE_DEFAULT_TIMEOUT", 300),
             },
         )
 
@@ -180,6 +190,10 @@ def create_app(config_class=Config):
     from app.procuracao import bp as procuracao_bp
 
     app.register_blueprint(procuracao_bp, url_prefix="/procuracao")
+
+    from app.lgpd import lgpd_bp
+
+    app.register_blueprint(lgpd_bp)
 
     # Register error handlers
     from app.error_handlers import init_logging, register_error_handlers

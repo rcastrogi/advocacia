@@ -1,13 +1,14 @@
 import os
 from urllib.parse import urlparse
+import json
 
-from flask import current_app, flash, redirect, render_template, request, url_for
+from flask import current_app, flash, redirect, render_template, request, url_for, session
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.utils import secure_filename
 
 from app import db, limiter
 from app.auth import bp
-from app.auth.forms import ChangePasswordForm, LoginForm, ProfileForm, RegistrationForm
+from app.auth.forms import ChangePasswordForm, LoginForm, ProfileForm, RegistrationForm, TwoFactorSetupForm, TwoFactorVerifyForm
 from app.models import User
 
 
@@ -84,9 +85,9 @@ def login():
                 is_active=True,
             )
             # Configurar campos de segurança para evitar expiração
-            demo_user.created_at = datetime.utcnow()
-            demo_user.password_changed_at = datetime.utcnow()
-            demo_user.password_expires_at = datetime.utcnow() + timedelta(days=9999)
+            demo_user.created_at = datetime.now(timezone.utc)
+            demo_user.password_changed_at = datetime.now(timezone.utc)
+            demo_user.password_expires_at = datetime.now(timezone.utc) + timedelta(days=9999)
             demo_user.password_history = "[]"
             demo_user.force_password_change = False
             try:
@@ -109,6 +110,17 @@ def login():
         # Fluxo normal: consultar banco de dados para outros usuários
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
+            # Verificar se usuário requer 2FA
+            if user.requires_2fa():
+                # Verificar código 2FA
+                if not form.two_factor_code.data:
+                    flash("Este usuário requer autenticação de dois fatores. Digite o código 2FA.", "warning")
+                    return render_template("auth/login.html", title="Login", form=form, require_2fa=True, user_email=user.email)
+
+                if not user.verify_2fa_code(form.two_factor_code.data):
+                    flash("Código 2FA inválido", "error")
+                    return render_template("auth/login.html", title="Login", form=form, require_2fa=True, user_email=user.email)
+
             login_user(user, remember=form.remember_me.data)
 
             # Verificar se senha expirou imediatamente após login
@@ -162,6 +174,76 @@ def register():
             user.set_specialties(form.specialties.data)
 
         db.session.add(user)
+        db.session.commit()
+
+        # Processar consentimentos LGPD
+        from app.models import DataConsent, DataProcessingLog
+
+        # Consentimento para dados pessoais (obrigatório)
+        if form.consent_personal_data.data:
+            personal_consent = DataConsent(
+                user_id=user.id,
+                consent_type="personal_data",
+                consent_purpose="Prestação de serviços da plataforma Petitio, incluindo criação de petições, gestão de clientes e funcionalidades do sistema.",
+                consent_version="1.0",
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get("User-Agent"),
+                consent_method="registration_form",
+            )
+            db.session.add(personal_consent)
+
+            # Log de processamento
+            log = DataProcessingLog(
+                user_id=user.id,
+                action="user_registration",
+                data_category="personal_data",
+                purpose="service_provision",
+                legal_basis="LGPD Art. 7º, V (consentimento)",
+                endpoint=request.path,
+                additional_data=json.dumps({
+                    "user_type": form.user_type.data,
+                    "registration_method": "web_form"
+                })
+            )
+            db.session.add(log)
+
+        # Consentimento para marketing (opcional)
+        if form.consent_marketing.data:
+            marketing_consent = DataConsent(
+                user_id=user.id,
+                consent_type="marketing",
+                consent_purpose="Envio de comunicações de marketing, newsletters e informações sobre novos recursos e atualizações da plataforma.",
+                consent_version="1.0",
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get("User-Agent"),
+                consent_method="registration_form",
+            )
+            db.session.add(marketing_consent)
+
+            # Log de processamento
+            log = DataProcessingLog(
+                user_id=user.id,
+                action="marketing_consent_given",
+                data_category="contact_data",
+                purpose="marketing_communications",
+                legal_basis="LGPD Art. 7º, V (consentimento)",
+                endpoint=request.path,
+            )
+            db.session.add(log)
+
+        # Consentimento para termos (obrigatório)
+        if form.consent_terms.data:
+            terms_consent = DataConsent(
+                user_id=user.id,
+                consent_type="terms_acceptance",
+                consent_purpose="Aceitação dos Termos de Uso e Política de Privacidade da plataforma Petitio.",
+                consent_version="1.0",
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get("User-Agent"),
+                consent_method="registration_form",
+            )
+            db.session.add(terms_consent)
+
         db.session.commit()
 
         # Iniciar período de trial automaticamente para novos usuários
@@ -366,3 +448,118 @@ def update_timezone():
         flash("Fuso horário não fornecido.", "error")
 
     return redirect(request.referrer or url_for("auth.profile"))
+
+
+# =============================================================================
+# TWO-FACTOR AUTHENTICATION (2FA) ROUTES
+# =============================================================================
+
+@bp.route("/2fa/setup", methods=["GET", "POST"])
+@login_required
+def setup_2fa():
+    """Configurar 2FA para o usuário"""
+    # Verificar se usuário pode usar 2FA (apenas admin e advogados)
+    if not current_user.requires_2fa() and not current_user.is_admin():
+        flash("2FA não está disponível para seu tipo de usuário.", "error")
+        return redirect(url_for("auth.profile"))
+
+    if current_user.two_factor_enabled:
+        flash("2FA já está habilitado para sua conta.", "info")
+        return redirect(url_for("auth.profile"))
+
+    form = TwoFactorSetupForm()
+    totp_uri = None
+    qr_code_data = None
+
+    if form.validate_on_submit():
+        # Verificar código de verificação
+        if current_user.verify_2fa_code(form.verification_code.data):
+            # Habilitar 2FA
+            backup_codes = current_user.enable_2fa(form.method.data)
+            flash("2FA habilitado com sucesso!", "success")
+
+            # Mostrar códigos de backup
+            session['backup_codes'] = backup_codes
+            return redirect(url_for("auth.show_backup_codes"))
+        else:
+            flash("Código de verificação inválido.", "error")
+
+    # Preparar dados para TOTP
+    if form.method.data == "totp" or not form.method.data:
+        # Gerar chave secreta temporária para preview
+        import pyotp
+        temp_secret = pyotp.random_base32()
+        totp = pyotp.TOTP(temp_secret)
+        totp_uri = totp.provisioning_uri(name=current_user.email, issuer_name="Petitio")
+
+        # Gerar dados do QR code
+        import qrcode
+        import io
+        import base64
+
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(totp_uri)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        # Converter para base64
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        qr_code_data = base64.b64encode(buffer.getvalue()).decode()
+
+    return render_template("auth/setup_2fa.html", form=form, totp_uri=totp_uri, qr_code_data=qr_code_data)
+
+
+@bp.route("/2fa/show-backup-codes")
+@login_required
+def show_backup_codes():
+    """Mostrar códigos de backup após configurar 2FA"""
+    if not current_user.two_factor_enabled:
+        return redirect(url_for("auth.profile"))
+
+    backup_codes = session.pop('backup_codes', None)
+    if not backup_codes:
+        backup_codes = current_user.get_backup_codes()
+
+    return render_template("auth/backup_codes.html", backup_codes=backup_codes)
+
+
+@bp.route("/2fa/disable", methods=["POST"])
+@login_required
+def disable_2fa():
+    """Desabilitar 2FA"""
+    if not current_user.two_factor_enabled:
+        flash("2FA não está habilitado.", "error")
+        return redirect(url_for("auth.profile"))
+
+    current_user.disable_2fa()
+    flash("2FA desabilitado com sucesso.", "success")
+    return redirect(url_for("auth.profile"))
+
+
+@bp.route("/2fa/verify", methods=["GET", "POST"])
+def verify_2fa():
+    """Página para verificar 2FA durante login"""
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
+    user_email = request.args.get("email")
+    if not user_email:
+        return redirect(url_for("auth.login"))
+
+    user = User.query.filter_by(email=user_email).first()
+    if not user or not user.requires_2fa():
+        return redirect(url_for("auth.login"))
+
+    form = TwoFactorVerifyForm()
+    if form.validate_on_submit():
+        if user.verify_2fa_code(form.code.data):
+            login_user(user)
+            next_page = request.args.get("next")
+            if not next_page or urlparse(next_page).netloc != "":
+                next_page = url_for("main.dashboard")
+            return redirect(next_page)
+        else:
+            flash("Código 2FA inválido.", "error")
+
+    return render_template("auth/verify_2fa.html", form=form, user_email=user_email)

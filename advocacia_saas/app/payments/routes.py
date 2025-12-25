@@ -23,7 +23,7 @@ from flask import (
 )
 from flask_login import current_user, login_required
 
-from app import db
+from app import db, limiter
 from app.models import BillingPlan, Payment, Subscription, User
 from app.payments import bp
 
@@ -105,6 +105,7 @@ def subscribe(plan_slug, billing_period):
 
 @bp.route("/create-pix-payment", methods=["POST"])
 @login_required
+@limiter.limit("10 per hour")  # Limite restritivo para operações financeiras
 def create_pix_payment():
     """Criar pagamento PIX via Mercado Pago (apenas para pay-per-use)"""
     try:
@@ -184,6 +185,7 @@ def create_pix_payment():
 
 @bp.route("/create-mercadopago-subscription", methods=["POST"])
 @login_required
+@limiter.limit("5 per hour")  # Limite muito restritivo para assinaturas
 def create_mercadopago_subscription():
     """Criar assinatura recorrente (preapproval) no Mercado Pago"""
     try:
@@ -474,6 +476,7 @@ def my_subscription():
 
 @bp.route("/cancel-subscription", methods=["POST"])
 @login_required
+@limiter.limit("3 per hour")  # Limite muito restritivo para cancelamentos
 def cancel_subscription():
     """Cancelar assinatura"""
     subscription = Subscription.query.filter_by(

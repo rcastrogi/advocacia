@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Códigos de Backup 2FA - Petitio{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-key"></i> Códigos de Backup - 2FA</h2>
+                    <p class="mb-0">Salve estes códigos em um local seguro</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Importante!</strong> Estes códigos de backup podem ser usados para acessar sua conta
+                        caso perca acesso ao seu aplicativo autenticador. Guarde-os em um local seguro e não os compartilhe com ninguém.
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Cada código pode ser usado apenas uma vez. Recomendamos imprimir ou salvar estes códigos.
+                    </div>
+
+                    {% if backup_codes %}
+                    <div class="mb-4">
+                        <h5>Seus Códigos de Backup:</h5>
+                        <div class="row">
+                            {% for code in backup_codes %}
+                            <div class="col-md-6 mb-2">
+                                <div class="input-group">
+                                    <input type="text" class="form-control font-monospace" value="{{ code }}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyCode(this)">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <button class="btn btn-primary" onclick="downloadCodes()">
+                            <i class="fas fa-download"></i> Baixar Códigos
+                        </button>
+                        <button class="btn btn-secondary" onclick="printCodes()">
+                            <i class="fas fa-print"></i> Imprimir Códigos
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Nenhum código de backup disponível.
+                    </div>
+                    {% endif %}
+
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <strong>2FA configurado com sucesso!</strong><br>
+                        Da próxima vez que fizer login, você será solicitado a digitar um código do seu aplicativo autenticador.
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('auth.profile') }}" class="btn btn-primary">
+                            <i class="fas fa-user"></i> Ir para Perfil
+                        </a>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-tachometer-alt"></i> Ir para Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyCode(button) {
+    const input = button.previousElementSibling;
+    input.select();
+    document.execCommand('copy');
+
+    // Feedback visual
+    const originalIcon = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i>';
+    button.classList.remove('btn-outline-secondary');
+    button.classList.add('btn-success');
+
+    setTimeout(() => {
+        button.innerHTML = originalIcon;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+
+function downloadCodes() {
+    const codes = {{ backup_codes|tojson }};
+    const content = `Códigos de Backup 2FA - Petitio
+Gerado em: ${new Date().toLocaleString('pt-BR')}
+
+Seus códigos de backup:
+${codes.map((code, index) => `${index + 1}. ${code}`).join('\n')}
+
+IMPORTANTE:
+- Guarde estes códigos em um local seguro
+- Cada código pode ser usado apenas uma vez
+- Não compartilhe estes códigos com ninguém
+- Use-os apenas se perder acesso ao seu aplicativo autenticador`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'backup-codes-2fa.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function printCodes() {
+    const codes = {{ backup_codes|tojson }};
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Códigos de Backup 2FA - Petitio</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .codes { font-family: monospace; font-size: 18px; line-height: 2; }
+                .warning { color: red; font-weight: bold; margin: 20px 0; }
+                .code-item { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>Códigos de Backup 2FA</h1>
+                <p>Petitio - Sistema de Gestão para Advogados</p>
+                <p>Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+
+            <div class="warning">
+                ⚠️ IMPORTANTE: Guarde estes códigos em um local seguro.<br>
+                Cada código pode ser usado apenas uma vez.<br>
+                Não compartilhe estes códigos com ninguém.
+            </div>
+
+            <div class="codes">
+                <h3>Seus Códigos de Backup:</h3>
+                ${codes.map((code, index) => `<div class="code-item">${index + 1}. ${code}</div>`).join('')}
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+</script>
+{% endblock %}

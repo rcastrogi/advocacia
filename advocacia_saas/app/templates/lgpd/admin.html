@@ -1,0 +1,400 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin - Solicitações LGPD{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-shield-alt"></i> Solicitações LGPD</h2>
+                    <p class="mb-0">Gerencie solicitações de exclusão e anonimização de dados</p>
+                </div>
+                <div class="card-body">
+                    <!-- Abas -->
+                    <ul class="nav nav-tabs" id="lgpdTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="deletion-tab" data-bs-toggle="tab" data-bs-target="#deletion" type="button" role="tab">
+                                <i class="fas fa-trash-alt"></i> Exclusão de Dados
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="anonymization-tab" data-bs-toggle="tab" data-bs-target="#anonymization" type="button" role="tab">
+                                <i class="fas fa-mask"></i> Anonimização
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="consent-tab" data-bs-toggle="tab" data-bs-target="#consent" type="button" role="tab">
+                                <i class="fas fa-check-circle"></i> Consentimentos
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button" role="tab">
+                                <i class="fas fa-history"></i> Log de Auditoria
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content mt-3" id="lgpdTabsContent">
+                        <!-- Solicitações de Exclusão -->
+                        <div class="tab-pane fade show active" id="deletion" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4>Solicitações de Exclusão</h4>
+                                <button class="btn btn-sm btn-outline-primary" onclick="refreshDeletionRequests()">
+                                    <i class="fas fa-sync"></i> Atualizar
+                                </button>
+                            </div>
+                            <div id="deletion-requests-table">
+                                <!-- Tabela será carregada aqui -->
+                            </div>
+                        </div>
+
+                        <!-- Solicitações de Anonimização -->
+                        <div class="tab-pane fade" id="anonymization" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4>Solicitações de Anonimização</h4>
+                                <button class="btn btn-sm btn-outline-primary" onclick="refreshAnonymizationRequests()">
+                                    <i class="fas fa-sync"></i> Atualizar
+                                </button>
+                            </div>
+                            <div id="anonymization-requests-table">
+                                <!-- Tabela será carregada aqui -->
+                            </div>
+                        </div>
+
+                        <!-- Consentimentos -->
+                        <div class="tab-pane fade" id="consent" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4>Consentimentos de Usuários</h4>
+                                <button class="btn btn-sm btn-outline-primary" onclick="refreshConsents()">
+                                    <i class="fas fa-sync"></i> Atualizar
+                                </button>
+                            </div>
+                            <div id="consents-table">
+                                <!-- Tabela será carregada aqui -->
+                            </div>
+                        </div>
+
+                        <!-- Log de Auditoria -->
+                        <div class="tab-pane fade" id="audit" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4>Log de Processamento de Dados</h4>
+                                <div>
+                                    <input type="date" id="audit-date-filter" class="form-control form-control-sm d-inline-block w-auto me-2">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="refreshAuditLog()">
+                                        <i class="fas fa-sync"></i> Atualizar
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="audit-log-table">
+                                <!-- Tabela será carregada aqui -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes da Solicitação -->
+<div class="modal fade" id="requestDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes da Solicitação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="request-details">
+                <!-- Detalhes serão carregados aqui -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-success" id="approve-btn" style="display: none;">Aprovar</button>
+                <button type="button" class="btn btn-danger" id="reject-btn" style="display: none;">Rejeitar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Carregar dados ao carregar página
+document.addEventListener('DOMContentLoaded', function() {
+    refreshDeletionRequests();
+    refreshAnonymizationRequests();
+    refreshConsents();
+    refreshAuditLog();
+});
+
+// Funções para atualizar tabelas
+function refreshDeletionRequests() {
+    fetch('/admin/lgpd/deletion-requests')
+        .then(response => response.json())
+        .then(data => {
+            renderDeletionTable(data);
+        })
+        .catch(error => console.error('Erro ao carregar solicitações de exclusão:', error));
+}
+
+function refreshAnonymizationRequests() {
+    fetch('/admin/lgpd/anonymization-requests')
+        .then(response => response.json())
+        .then(data => {
+            renderAnonymizationTable(data);
+        })
+        .catch(error => console.error('Erro ao carregar solicitações de anonimização:', error));
+}
+
+function refreshConsents() {
+    fetch('/admin/lgpd/consents')
+        .then(response => response.json())
+        .then(data => {
+            renderConsentsTable(data);
+        })
+        .catch(error => console.error('Erro ao carregar consentimentos:', error));
+}
+
+function refreshAuditLog() {
+    const dateFilter = document.getElementById('audit-date-filter').value;
+    const url = dateFilter ? `/admin/lgpd/audit-log?date=${dateFilter}` : '/admin/lgpd/audit-log';
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            renderAuditTable(data);
+        })
+        .catch(error => console.error('Erro ao carregar log de auditoria:', error));
+}
+
+// Renderizar tabelas
+function renderDeletionTable(requests) {
+    const container = document.getElementById('deletion-requests-table');
+
+    if (requests.length === 0) {
+        container.innerHTML = '<p class="text-muted">Nenhuma solicitação de exclusão pendente.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-striped">';
+    html += '<thead><tr><th>ID</th><th>Usuário</th><th>Motivo</th><th>Data</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+
+    requests.forEach(req => {
+        const statusBadge = req.status === 'pending' ? 'warning' :
+                           req.status === 'completed' ? 'success' :
+                           req.status === 'rejected' ? 'danger' : 'secondary';
+
+        html += `<tr>
+            <td>${req.id}</td>
+            <td>${req.user_email || 'N/A'}</td>
+            <td>${req.reason}</td>
+            <td>${new Date(req.requested_at).toLocaleString('pt-BR')}</td>
+            <td><span class="badge bg-${statusBadge}">${req.status}</span></td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewRequestDetails('deletion', ${req.id})">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function renderAnonymizationTable(requests) {
+    const container = document.getElementById('anonymization-requests-table');
+
+    if (requests.length === 0) {
+        container.innerHTML = '<p class="text-muted">Nenhuma solicitação de anonimização pendente.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-striped">';
+    html += '<thead><tr><th>ID</th><th>Usuário</th><th>Motivo</th><th>Data</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+
+    requests.forEach(req => {
+        const statusBadge = req.status === 'pending' ? 'warning' :
+                           req.status === 'completed' ? 'success' :
+                           req.status === 'failed' ? 'danger' : 'secondary';
+
+        html += `<tr>
+            <td>${req.id}</td>
+            <td>${req.user_email || 'N/A'}</td>
+            <td>${req.reason}</td>
+            <td>${new Date(req.requested_at).toLocaleString('pt-BR')}</td>
+            <td><span class="badge bg-${statusBadge}">${req.status}</span></td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewRequestDetails('anonymization', ${req.id})">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function renderConsentsTable(consents) {
+    const container = document.getElementById('consents-table');
+
+    if (consents.length === 0) {
+        container.innerHTML = '<p class="text-muted">Nenhum consentimento registrado.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-striped">';
+    html += '<thead><tr><th>ID</th><th>Usuário</th><th>Tipo</th><th>Finalidade</th><th>Status</th><th>Data</th></tr></thead><tbody>';
+
+    consents.forEach(consent => {
+        const statusBadge = consent.consented ? 'success' : 'secondary';
+        const statusText = consent.consented ? 'Ativo' : 'Retirado';
+
+        html += `<tr>
+            <td>${consent.id}</td>
+            <td>${consent.user_email || 'N/A'}</td>
+            <td>${consent.consent_type}</td>
+            <td>${consent.consent_purpose}</td>
+            <td><span class="badge bg-${statusBadge}">${statusText}</span></td>
+            <td>${new Date(consent.consented_at).toLocaleString('pt-BR')}</td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function renderAuditTable(logs) {
+    const container = document.getElementById('audit-log-table');
+
+    if (logs.length === 0) {
+        container.innerHTML = '<p class="text-muted">Nenhum registro de auditoria encontrado.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-striped table-sm">';
+    html += '<thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Categoria</th><th>Finalidade</th><th>Base Legal</th></tr></thead><tbody>';
+
+    logs.forEach(log => {
+        html += `<tr>
+            <td>${new Date(log.processed_at).toLocaleString('pt-BR')}</td>
+            <td>${log.user_email || 'Sistema'}</td>
+            <td>${log.action}</td>
+            <td>${log.data_category}</td>
+            <td>${log.purpose}</td>
+            <td>${log.legal_basis}</td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+// Ver detalhes da solicitação
+function viewRequestDetails(type, requestId) {
+    const url = type === 'deletion' ?
+        `/admin/lgpd/deletion-request/${requestId}` :
+        `/admin/lgpd/anonymization-request/${requestId}`;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            renderRequestDetails(type, data);
+            $('#requestDetailsModal').modal('show');
+        })
+        .catch(error => console.error('Erro ao carregar detalhes:', error));
+}
+
+function renderRequestDetails(type, data) {
+    const container = document.getElementById('request-details');
+    const approveBtn = document.getElementById('approve-btn');
+    const rejectBtn = document.getElementById('reject-btn');
+
+    let html = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Informações da Solicitação</h6>
+                <p><strong>ID:</strong> ${data.id}</p>
+                <p><strong>Usuário:</strong> ${data.user_email || 'N/A'}</p>
+                <p><strong>Data:</strong> ${new Date(data.requested_at).toLocaleString('pt-BR')}</p>
+                <p><strong>Status:</strong> <span class="badge bg-${data.status === 'pending' ? 'warning' : data.status === 'completed' ? 'success' : 'danger'}">${data.status}</span></p>
+            </div>
+            <div class="col-md-6">
+                <h6>Motivo da Solicitação</h6>
+                <p>${data.reason}</p>
+            </div>
+        </div>
+    `;
+
+    if (data.processed_at) {
+        html += `
+            <hr>
+            <div class="row">
+                <div class="col-12">
+                    <h6>Processamento</h6>
+                    <p><strong>Processado em:</strong> ${new Date(data.processed_at).toLocaleString('pt-BR')}</p>
+                    <p><strong>Processado por:</strong> ${data.processed_by_email || 'Sistema'}</p>
+                    ${data.admin_notes ? `<p><strong>Observações:</strong> ${data.admin_notes}</p>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+
+    // Mostrar botões de ação apenas para solicitações pendentes
+    if (data.status === 'pending') {
+        approveBtn.style.display = 'inline-block';
+        rejectBtn.style.display = 'inline-block';
+
+        // Limpar event listeners anteriores
+        approveBtn.onclick = null;
+        rejectBtn.onclick = null;
+
+        approveBtn.onclick = () => processRequest(type, data.id, 'approve');
+        rejectBtn.onclick = () => processRequest(type, data.id, 'reject');
+    } else {
+        approveBtn.style.display = 'none';
+        rejectBtn.style.display = 'none';
+    }
+}
+
+// Processar solicitação
+function processRequest(type, requestId, action) {
+    const adminNotes = prompt('Observações do administrador (opcional):');
+
+    const url = type === 'deletion' ?
+        `/admin/lgpd/deletion-request/${requestId}/${action}` :
+        `/admin/lgpd/anonymization-request/${requestId}/${action}`;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ admin_notes: adminNotes })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            alert('Erro: ' + result.error);
+        } else {
+            alert(`Solicitação ${action === 'approve' ? 'aprovada' : 'rejeitada'} com sucesso!`);
+            $('#requestDetailsModal').modal('hide');
+
+            // Atualizar tabelas
+            if (type === 'deletion') {
+                refreshDeletionRequests();
+            } else {
+                refreshAnonymizationRequests();
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao processar solicitação');
+    });
+}
+</script>
+{% endblock %}
