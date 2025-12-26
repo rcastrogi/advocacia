@@ -2020,19 +2020,27 @@ def petition_sections_list():
 
     try:
         sections = PetitionSection.query.order_by(PetitionSection.order).all()
-        current_app.logger.info(f"📊 [SECTIONS] Encontradas {len(sections)} seções no banco")
+        current_app.logger.info(
+            f"📊 [SECTIONS] Encontradas {len(sections)} seções no banco"
+        )
 
         for section in sections[:3]:  # Log das primeiras 3 seções
-            current_app.logger.info(f"📋 [SECTIONS] Seção: {section.name} (ID: {section.id}, Ativo: {section.is_active})")
+            current_app.logger.info(
+                f"📋 [SECTIONS] Seção: {section.name} (ID: {section.id}, Ativo: {section.is_active})"
+            )
 
-        current_app.logger.info("🎨 [SECTIONS] Renderizando template petition_sections_list.html")
+        current_app.logger.info(
+            "🎨 [SECTIONS] Renderizando template petition_sections_list.html"
+        )
         return render_template(
             "admin/petition_sections_list.html",
             title="Seções de Petição",
             sections=sections,
         )
     except Exception as e:
-        current_app.logger.error(f"❌ [SECTIONS] Erro em petition_sections_list: {str(e)}")
+        current_app.logger.error(
+            f"❌ [SECTIONS] Erro em petition_sections_list: {str(e)}"
+        )
         current_app.logger.error(f"❌ [SECTIONS] Traceback: {traceback.format_exc()}")
         raise
 
@@ -2049,7 +2057,9 @@ def petition_section_new():
         current_app.logger.info("📝 [SECTIONS] Processando POST para nova seção")
 
         name = request.form.get("name")
-        slug = request.form.get("slug")  # Slug será gerado automaticamente, mas mantemos para compatibilidade
+        slug = request.form.get(
+            "slug"
+        )  # Slug será gerado automaticamente, mas mantemos para compatibilidade
         description = request.form.get("description")
         icon = request.form.get("icon", "fa-file-alt")
         color = request.form.get("color", "primary")
@@ -2063,12 +2073,18 @@ def petition_section_new():
         # Parse do JSON string para objeto Python
         try:
             fields_schema = json.loads(fields_schema_raw) if fields_schema_raw else []
-            current_app.logger.info(f"📋 [SECTIONS] Fields Schema parsed successfully: {len(fields_schema)} campos")
+            current_app.logger.info(
+                f"📋 [SECTIONS] Fields Schema parsed successfully: {len(fields_schema)} campos"
+            )
         except json.JSONDecodeError as e:
-            current_app.logger.warning(f"⚠️ [SECTIONS] Erro ao fazer parse do fields_schema JSON: {e}. Usando array vazio.")
+            current_app.logger.warning(
+                f"⚠️ [SECTIONS] Erro ao fazer parse do fields_schema JSON: {e}. Usando array vazio."
+            )
             fields_schema = []
 
-        current_app.logger.info(f"📋 [SECTIONS] Dados recebidos - Nome: {name}, Slug gerado: {slug}, Ícone: {icon}")
+        current_app.logger.info(
+            f"📋 [SECTIONS] Dados recebidos - Nome: {name}, Slug gerado: {slug}, Ícone: {icon}"
+        )
 
         try:
             # Criar seção
@@ -2085,18 +2101,24 @@ def petition_section_new():
 
             db.session.add(section)
             db.session.commit()
-            current_app.logger.info(f"✅ [SECTIONS] Seção criada com sucesso - ID: {section.id}")
+            current_app.logger.info(
+                f"✅ [SECTIONS] Seção criada com sucesso - ID: {section.id}"
+            )
 
             flash("Seção criada com sucesso!", "success")
             return redirect(url_for("admin.petition_sections_list"))
         except Exception as e:
             current_app.logger.error(f"❌ [SECTIONS] Erro ao criar seção: {str(e)}")
-            current_app.logger.error(f"❌ [SECTIONS] Traceback: {traceback.format_exc()}")
+            current_app.logger.error(
+                f"❌ [SECTIONS] Traceback: {traceback.format_exc()}"
+            )
             db.session.rollback()
             flash("Erro ao criar seção.", "danger")
             return redirect(url_for("admin.petition_section_new"))
 
-    current_app.logger.info("🎨 [SECTIONS] Renderizando template petition_section_form.html para nova seção")
+    current_app.logger.info(
+        "🎨 [SECTIONS] Renderizando template petition_section_form.html para nova seção"
+    )
     return render_template(
         "admin/petition_section_form.html",
         title="Nova Seção",
@@ -2108,19 +2130,27 @@ def petition_section_new():
 @login_required
 def petition_section_edit(section_id):
     """Edita uma seção de petição"""
-    current_app.logger.info(f"🔍 [SECTIONS] Iniciando petition_section_edit - ID: {section_id}")
+    current_app.logger.info(
+        f"🔍 [SECTIONS] Iniciando petition_section_edit - ID: {section_id}"
+    )
     _require_admin()
     current_app.logger.info("✅ [SECTIONS] Usuário admin autenticado")
 
     try:
         section = PetitionSection.query.get_or_404(section_id)
-        current_app.logger.info(f"📋 [SECTIONS] Seção encontrada: {section.name} (ID: {section.id})")
+        current_app.logger.info(
+            f"📋 [SECTIONS] Seção encontrada: {section.name} (ID: {section.id})"
+        )
     except Exception as e:
-        current_app.logger.error(f"❌ [SECTIONS] Seção não encontrada - ID: {section_id}, Erro: {str(e)}")
+        current_app.logger.error(
+            f"❌ [SECTIONS] Seção não encontrada - ID: {section_id}, Erro: {str(e)}"
+        )
         raise
 
     if request.method == "POST":
-        current_app.logger.info(f"📝 [SECTIONS] Processando POST para editar seção {section_id}")
+        current_app.logger.info(
+            f"📝 [SECTIONS] Processando POST para editar seção {section_id}"
+        )
 
         try:
             name = request.form.get("name")
@@ -2144,25 +2174,41 @@ def petition_section_edit(section_id):
             # Processar fields_schema
             fields_schema_raw = request.form.get("fields_schema", "[]")
             try:
-                section.fields_schema = json.loads(fields_schema_raw) if fields_schema_raw else []
-                current_app.logger.info(f"📋 [SECTIONS] Fields Schema atualizado: {len(section.fields_schema)} campos")
+                section.fields_schema = (
+                    json.loads(fields_schema_raw) if fields_schema_raw else []
+                )
+                current_app.logger.info(
+                    f"📋 [SECTIONS] Fields Schema atualizado: {len(section.fields_schema)} campos"
+                )
             except json.JSONDecodeError as e:
-                current_app.logger.warning(f"⚠️ [SECTIONS] Erro ao fazer parse do fields_schema JSON: {e}. Mantendo valor anterior.")
+                current_app.logger.warning(
+                    f"⚠️ [SECTIONS] Erro ao fazer parse do fields_schema JSON: {e}. Mantendo valor anterior."
+                )
                 # Não alterar o fields_schema se houver erro de parse
 
             db.session.commit()
-            current_app.logger.info(f"✅ [SECTIONS] Seção atualizada com sucesso - ID: {section_id}")
+            current_app.logger.info(
+                f"✅ [SECTIONS] Seção atualizada com sucesso - ID: {section_id}"
+            )
 
             flash("Seção atualizada com sucesso!", "success")
             return redirect(url_for("admin.petition_sections_list"))
         except Exception as e:
-            current_app.logger.error(f"❌ [SECTIONS] Erro ao atualizar seção {section_id}: {str(e)}")
-            current_app.logger.error(f"❌ [SECTIONS] Traceback: {traceback.format_exc()}")
+            current_app.logger.error(
+                f"❌ [SECTIONS] Erro ao atualizar seção {section_id}: {str(e)}"
+            )
+            current_app.logger.error(
+                f"❌ [SECTIONS] Traceback: {traceback.format_exc()}"
+            )
             db.session.rollback()
             flash("Erro ao atualizar seção.", "danger")
-            return redirect(url_for("admin.petition_section_edit", section_id=section_id))
+            return redirect(
+                url_for("admin.petition_section_edit", section_id=section_id)
+            )
 
-    current_app.logger.info(f"🎨 [SECTIONS] Renderizando template para editar seção {section_id}")
+    current_app.logger.info(
+        f"🎨 [SECTIONS] Renderizando template para editar seção {section_id}"
+    )
     return render_template(
         "admin/petition_section_form.html",
         title="Editar Seção",
@@ -2174,24 +2220,34 @@ def petition_section_edit(section_id):
 @login_required
 def petition_section_delete(section_id):
     """Exclui uma seção de petição"""
-    current_app.logger.info(f"🔍 [SECTIONS] Iniciando petition_section_delete - ID: {section_id}")
+    current_app.logger.info(
+        f"🔍 [SECTIONS] Iniciando petition_section_delete - ID: {section_id}"
+    )
     _require_admin()
     current_app.logger.info("✅ [SECTIONS] Usuário admin autenticado")
 
     try:
         section = PetitionSection.query.get_or_404(section_id)
-        current_app.logger.info(f"📋 [SECTIONS] Seção encontrada para exclusão: {section.name} (ID: {section.id})")
+        current_app.logger.info(
+            f"📋 [SECTIONS] Seção encontrada para exclusão: {section.name} (ID: {section.id})"
+        )
     except Exception as e:
-        current_app.logger.error(f"❌ [SECTIONS] Seção não encontrada para exclusão - ID: {section_id}, Erro: {str(e)}")
+        current_app.logger.error(
+            f"❌ [SECTIONS] Seção não encontrada para exclusão - ID: {section_id}, Erro: {str(e)}"
+        )
         raise
 
     try:
         # Verificar se a seção está sendo usada
         usage_count = section.type_sections.count()
-        current_app.logger.info(f"🔍 [SECTIONS] Verificando uso da seção - Usada em {usage_count} tipos de petição")
+        current_app.logger.info(
+            f"🔍 [SECTIONS] Verificando uso da seção - Usada em {usage_count} tipos de petição"
+        )
 
         if usage_count > 0:
-            current_app.logger.warning(f"⚠️ [SECTIONS] Tentativa de excluir seção em uso - ID: {section_id}, Usos: {usage_count}")
+            current_app.logger.warning(
+                f"⚠️ [SECTIONS] Tentativa de excluir seção em uso - ID: {section_id}, Usos: {usage_count}"
+            )
             flash(
                 "Não é possível excluir uma seção que está sendo usada em tipos de petição.",
                 "danger",
@@ -2200,12 +2256,16 @@ def petition_section_delete(section_id):
 
         db.session.delete(section)
         db.session.commit()
-        current_app.logger.info(f"✅ [SECTIONS] Seção excluída com sucesso - ID: {section_id}")
+        current_app.logger.info(
+            f"✅ [SECTIONS] Seção excluída com sucesso - ID: {section_id}"
+        )
 
         flash("Seção excluída com sucesso!", "success")
         return redirect(url_for("admin.petition_sections_list"))
     except Exception as e:
-        current_app.logger.error(f"❌ [SECTIONS] Erro ao excluir seção {section_id}: {str(e)}")
+        current_app.logger.error(
+            f"❌ [SECTIONS] Erro ao excluir seção {section_id}: {str(e)}"
+        )
         current_app.logger.error(f"❌ [SECTIONS] Traceback: {traceback.format_exc()}")
         db.session.rollback()
         flash("Erro ao excluir seção.", "danger")
@@ -2234,7 +2294,11 @@ def petition_type_sections(type_id):
             ).first()
 
             if type_section:
-                type_section.order = int(section_orders[i]) if i < len(section_orders) else type_section.order
+                type_section.order = (
+                    int(section_orders[i])
+                    if i < len(section_orders)
+                    else type_section.order
+                )
                 type_section.is_required = str(section_id) in section_required
                 type_section.is_expanded = str(section_id) in section_expanded
 
@@ -2252,8 +2316,7 @@ def petition_type_sections(type_id):
     # Buscar seções já configuradas para este tipo
     configured_sections = []
     type_sections = (
-        PetitionTypeSection.query
-        .filter_by(petition_type_id=type_id)
+        PetitionTypeSection.query.filter_by(petition_type_id=type_id)
         .order_by(PetitionTypeSection.order)
         .all()
     )
@@ -2356,7 +2419,9 @@ def petition_type_new():
 
     if request.method == "POST":
         name = request.form.get("name")
-        slug = request.form.get("slug")  # Slug será gerado automaticamente, mas mantemos para compatibilidade
+        slug = request.form.get(
+            "slug"
+        )  # Slug será gerado automaticamente, mas mantemos para compatibilidade
         description = request.form.get("description")
         category = request.form.get("category", "civel")
         icon = request.form.get("icon", "fa-file-alt")

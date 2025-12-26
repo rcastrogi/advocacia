@@ -33,7 +33,9 @@ def slugify(value: str) -> str:
     return value.strip("-")
 
 
-def generate_unique_slug(base_name: str, model_class: Type, existing_slug: str = None) -> str:
+def generate_unique_slug(
+    base_name: str, model_class: Type, existing_slug: str = None
+) -> str:
     """
     Gera um slug único baseado no nome fornecido.
 
@@ -68,7 +70,9 @@ def generate_unique_slug(base_name: str, model_class: Type, existing_slug: str =
         counter = 1
         while True:
             candidate_slug = f"{base_slug}-{counter}"
-            query = db.session.query(model_class).filter(model_class.slug == candidate_slug)
+            query = db.session.query(model_class).filter(
+                model_class.slug == candidate_slug
+            )
 
             if existing_slug:
                 query = query.filter(model_class.slug != existing_slug)

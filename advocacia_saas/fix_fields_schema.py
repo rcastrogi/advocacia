@@ -5,14 +5,15 @@ das tabelas petition_sections.
 """
 
 import json
-import sys
 import os
+import sys
 
 # Adicionar o diretório raiz ao path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app
 from app.models import PetitionSection
+
 
 def fix_corrupted_fields_schema():
     """Verifica e corrige dados corrompidos no campo fields_schema"""
@@ -32,11 +33,15 @@ def fix_corrupted_fields_schema():
                     if isinstance(section.fields_schema, str):
                         try:
                             parsed = json.loads(section.fields_schema)
-                            print(f"✅ [SECTION {section.id}] Convertendo string JSON para objeto: {section.name}")
+                            print(
+                                f"✅ [SECTION {section.id}] Convertendo string JSON para objeto: {section.name}"
+                            )
                             section.fields_schema = parsed
                             fixed_count += 1
                         except json.JSONDecodeError:
-                            print(f"❌ [SECTION {section.id}] JSON string inválido, resetando: {section.name}")
+                            print(
+                                f"❌ [SECTION {section.id}] JSON string inválido, resetando: {section.name}"
+                            )
                             section.fields_schema = []
                             fixed_count += 1
                     # Se for lista/dict, verificar se é válido
@@ -44,18 +49,24 @@ def fix_corrupted_fields_schema():
                         # Já está no formato correto
                         continue
                     else:
-                        print(f"⚠️ [SECTION {section.id}] Tipo inesperado, resetando: {section.name} ({type(section.fields_schema)})")
+                        print(
+                            f"⚠️ [SECTION {section.id}] Tipo inesperado, resetando: {section.name} ({type(section.fields_schema)})"
+                        )
                         section.fields_schema = []
                         fixed_count += 1
                 else:
                     # Se for None, definir como lista vazia
                     if section.fields_schema is None:
-                        print(f"ℹ️ [SECTION {section.id}] fields_schema é None, definindo como []: {section.name}")
+                        print(
+                            f"ℹ️ [SECTION {section.id}] fields_schema é None, definindo como []: {section.name}"
+                        )
                         section.fields_schema = []
                         fixed_count += 1
 
             except Exception as e:
-                print(f"❌ [SECTION {section.id}] Erro inesperado: {section.name} - {str(e)}")
+                print(
+                    f"❌ [SECTION {section.id}] Erro inesperado: {section.name} - {str(e)}"
+                )
                 section.fields_schema = []
                 fixed_count += 1
 
@@ -63,6 +74,7 @@ def fix_corrupted_fields_schema():
             print(f"💾 Salvando {fixed_count} correções...")
             try:
                 from app import db
+
                 db.session.commit()
                 print("✅ Correções salvas com sucesso!")
             except Exception as e:
@@ -70,6 +82,7 @@ def fix_corrupted_fields_schema():
                 db.session.rollback()
         else:
             print("✅ Nenhum dado corrompido encontrado!")
+
 
 if __name__ == "__main__":
     fix_corrupted_fields_schema()

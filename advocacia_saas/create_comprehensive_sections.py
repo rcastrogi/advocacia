@@ -6,6 +6,7 @@ Este script cria templates abrangentes de seções para diferentes tipos de peti
 from app import create_app, db
 from app.models import PetitionSection
 
+
 def create_comprehensive_petition_sections():
     """Cria seções pré-definidas abrangentes para petições"""
 
@@ -13,7 +14,6 @@ def create_comprehensive_petition_sections():
         # ==========================================
         # PARTES DO PROCESSO
         # ==========================================
-
         {
             "name": "Autor/Peticionário",
             "slug": "autor-peticionario",
@@ -30,8 +30,8 @@ def create_comprehensive_petition_sections():
                     "size": "col-md-3",
                     "options": [
                         {"value": "fisica", "label": "Pessoa Física"},
-                        {"value": "juridica", "label": "Pessoa Jurídica"}
-                    ]
+                        {"value": "juridica", "label": "Pessoa Jurídica"},
+                    ],
                 },
                 {
                     "name": "nome_completo",
@@ -39,7 +39,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Nome completo ou razão social"
+                    "placeholder": "Nome completo ou razão social",
                 },
                 {
                     "name": "nacionalidade",
@@ -47,7 +47,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Brasileira, Portuguesa, etc."
+                    "placeholder": "Brasileira, Portuguesa, etc.",
                 },
                 {
                     "name": "estado_civil",
@@ -61,8 +61,8 @@ def create_comprehensive_petition_sections():
                         {"value": "divorciado", "label": "Divorciado(a)"},
                         {"value": "viuvo", "label": "Viúvo(a)"},
                         {"value": "uniao_estavel", "label": "União Estável"},
-                        {"value": "separado", "label": "Separado(a)"}
-                    ]
+                        {"value": "separado", "label": "Separado(a)"},
+                    ],
                 },
                 {
                     "name": "profissao",
@@ -70,14 +70,14 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Profissão ou atividade"
+                    "placeholder": "Profissão ou atividade",
                 },
                 {
                     "name": "data_nascimento",
                     "label": "Data de Nascimento",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-3"
+                    "size": "col-md-3",
                 },
                 {
                     "name": "documento_tipo",
@@ -90,8 +90,8 @@ def create_comprehensive_petition_sections():
                         {"value": "cnpj", "label": "CNPJ"},
                         {"value": "rg", "label": "RG"},
                         {"value": "passaporte", "label": "Passaporte"},
-                        {"value": "rne", "label": "RNE"}
-                    ]
+                        {"value": "rne", "label": "RNE"},
+                    ],
                 },
                 {
                     "name": "documento_numero",
@@ -99,7 +99,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-3",
-                    "placeholder": "Número do documento"
+                    "placeholder": "Número do documento",
                 },
                 {
                     "name": "orgao_emissor",
@@ -107,7 +107,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "SSP/SP, etc."
+                    "placeholder": "SSP/SP, etc.",
                 },
                 {
                     "name": "cep",
@@ -115,7 +115,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-2",
-                    "placeholder": "00000-000"
+                    "placeholder": "00000-000",
                 },
                 {
                     "name": "endereco",
@@ -123,7 +123,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Rua, número"
+                    "placeholder": "Rua, número",
                 },
                 {
                     "name": "complemento",
@@ -131,7 +131,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Apartamento, sala, etc."
+                    "placeholder": "Apartamento, sala, etc.",
                 },
                 {
                     "name": "bairro",
@@ -139,7 +139,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Nome do bairro"
+                    "placeholder": "Nome do bairro",
                 },
                 {
                     "name": "estado",
@@ -174,8 +174,8 @@ def create_comprehensive_petition_sections():
                         {"value": "SC", "label": "Santa Catarina"},
                         {"value": "SP", "label": "São Paulo"},
                         {"value": "SE", "label": "Sergipe"},
-                        {"value": "TO", "label": "Tocantins"}
-                    ]
+                        {"value": "TO", "label": "Tocantins"},
+                    ],
                 },
                 {
                     "name": "cidade",
@@ -183,7 +183,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Nome da cidade"
+                    "placeholder": "Nome da cidade",
                 },
                 {
                     "name": "telefone_fixo",
@@ -191,7 +191,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "(00) 0000-0000"
+                    "placeholder": "(00) 0000-0000",
                 },
                 {
                     "name": "telefone_celular",
@@ -199,7 +199,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "(00) 00000-0000"
+                    "placeholder": "(00) 00000-0000",
                 },
                 {
                     "name": "email",
@@ -207,7 +207,7 @@ def create_comprehensive_petition_sections():
                     "type": "email",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "email@exemplo.com"
+                    "placeholder": "email@exemplo.com",
                 },
                 {
                     "name": "representante_legal",
@@ -215,11 +215,10 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "Nome do responsável legal (se menor ou incapaz)"
-                }
-            ]
+                    "placeholder": "Nome do responsável legal (se menor ou incapaz)",
+                },
+            ],
         },
-
         {
             "name": "Réu/Acusado",
             "slug": "reu-acusado",
@@ -236,8 +235,8 @@ def create_comprehensive_petition_sections():
                     "size": "col-md-3",
                     "options": [
                         {"value": "fisica", "label": "Pessoa Física"},
-                        {"value": "juridica", "label": "Pessoa Jurídica"}
-                    ]
+                        {"value": "juridica", "label": "Pessoa Jurídica"},
+                    ],
                 },
                 {
                     "name": "nome_completo",
@@ -245,7 +244,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Nome completo ou razão social"
+                    "placeholder": "Nome completo ou razão social",
                 },
                 {
                     "name": "qualificacao",
@@ -253,7 +252,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Brasileiro, casado, etc."
+                    "placeholder": "Brasileiro, casado, etc.",
                 },
                 {
                     "name": "documento_tipo",
@@ -265,8 +264,8 @@ def create_comprehensive_petition_sections():
                         {"value": "cpf", "label": "CPF"},
                         {"value": "cnpj", "label": "CNPJ"},
                         {"value": "rg", "label": "RG"},
-                        {"value": "passaporte", "label": "Passaporte"}
-                    ]
+                        {"value": "passaporte", "label": "Passaporte"},
+                    ],
                 },
                 {
                     "name": "documento_numero",
@@ -274,7 +273,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-3",
-                    "placeholder": "Número do documento"
+                    "placeholder": "Número do documento",
                 },
                 {
                     "name": "cep",
@@ -282,7 +281,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-2",
-                    "placeholder": "00000-000"
+                    "placeholder": "00000-000",
                 },
                 {
                     "name": "endereco",
@@ -290,7 +289,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Rua, número"
+                    "placeholder": "Rua, número",
                 },
                 {
                     "name": "complemento",
@@ -298,7 +297,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Apartamento, sala, etc."
+                    "placeholder": "Apartamento, sala, etc.",
                 },
                 {
                     "name": "estado",
@@ -333,8 +332,8 @@ def create_comprehensive_petition_sections():
                         {"value": "SC", "label": "Santa Catarina"},
                         {"value": "SP", "label": "São Paulo"},
                         {"value": "SE", "label": "Sergipe"},
-                        {"value": "TO", "label": "Tocantins"}
-                    ]
+                        {"value": "TO", "label": "Tocantins"},
+                    ],
                 },
                 {
                     "name": "cidade",
@@ -342,7 +341,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Nome da cidade"
+                    "placeholder": "Nome da cidade",
                 },
                 {
                     "name": "telefone",
@@ -350,7 +349,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "(00) 00000-0000"
+                    "placeholder": "(00) 00000-0000",
                 },
                 {
                     "name": "email",
@@ -358,11 +357,10 @@ def create_comprehensive_petition_sections():
                     "type": "email",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "email@exemplo.com"
-                }
-            ]
+                    "placeholder": "email@exemplo.com",
+                },
+            ],
         },
-
         {
             "name": "Testemunha",
             "slug": "testemunha",
@@ -377,7 +375,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Nome completo da testemunha"
+                    "placeholder": "Nome completo da testemunha",
                 },
                 {
                     "name": "documento_tipo",
@@ -388,8 +386,8 @@ def create_comprehensive_petition_sections():
                     "options": [
                         {"value": "cpf", "label": "CPF"},
                         {"value": "rg", "label": "RG"},
-                        {"value": "passaporte", "label": "Passaporte"}
-                    ]
+                        {"value": "passaporte", "label": "Passaporte"},
+                    ],
                 },
                 {
                     "name": "documento_numero",
@@ -397,7 +395,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-3",
-                    "placeholder": "Número do documento"
+                    "placeholder": "Número do documento",
                 },
                 {
                     "name": "cep",
@@ -405,7 +403,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-2",
-                    "placeholder": "00000-000"
+                    "placeholder": "00000-000",
                 },
                 {
                     "name": "endereco",
@@ -413,7 +411,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Rua, número"
+                    "placeholder": "Rua, número",
                 },
                 {
                     "name": "complemento",
@@ -421,7 +419,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Apartamento, sala, etc."
+                    "placeholder": "Apartamento, sala, etc.",
                 },
                 {
                     "name": "estado",
@@ -456,8 +454,8 @@ def create_comprehensive_petition_sections():
                         {"value": "SC", "label": "Santa Catarina"},
                         {"value": "SP", "label": "São Paulo"},
                         {"value": "SE", "label": "Sergipe"},
-                        {"value": "TO", "label": "Tocantins"}
-                    ]
+                        {"value": "TO", "label": "Tocantins"},
+                    ],
                 },
                 {
                     "name": "cidade",
@@ -465,7 +463,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Nome da cidade"
+                    "placeholder": "Nome da cidade",
                 },
                 {
                     "name": "telefone",
@@ -473,7 +471,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "(00) 00000-0000"
+                    "placeholder": "(00) 00000-0000",
                 },
                 {
                     "name": "email",
@@ -481,7 +479,7 @@ def create_comprehensive_petition_sections():
                     "type": "email",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "email@exemplo.com"
+                    "placeholder": "email@exemplo.com",
                 },
                 {
                     "name": "relacao_com_partes",
@@ -489,11 +487,10 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "Como conhece as partes do processo"
-                }
-            ]
+                    "placeholder": "Como conhece as partes do processo",
+                },
+            ],
         },
-
         {
             "name": "Terceiro Interessado",
             "slug": "terceiro-interessado",
@@ -508,7 +505,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Nome do terceiro interessado"
+                    "placeholder": "Nome do terceiro interessado",
                 },
                 {
                     "name": "interesse_processo",
@@ -523,8 +520,8 @@ def create_comprehensive_petition_sections():
                         {"value": "proprietario", "label": "Proprietário"},
                         {"value": "locador", "label": "Locador"},
                         {"value": "locatario", "label": "Locatário"},
-                        {"value": "outro", "label": "Outro"}
-                    ]
+                        {"value": "outro", "label": "Outro"},
+                    ],
                 },
                 {
                     "name": "documento_tipo",
@@ -534,8 +531,8 @@ def create_comprehensive_petition_sections():
                     "size": "col-md-3",
                     "options": [
                         {"value": "cpf", "label": "CPF"},
-                        {"value": "cnpj", "label": "CNPJ"}
-                    ]
+                        {"value": "cnpj", "label": "CNPJ"},
+                    ],
                 },
                 {
                     "name": "documento_numero",
@@ -543,7 +540,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-3",
-                    "placeholder": "Número do documento"
+                    "placeholder": "Número do documento",
                 },
                 {
                     "name": "endereco",
@@ -551,7 +548,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "Endereço completo"
+                    "placeholder": "Endereço completo",
                 },
                 {
                     "name": "telefone",
@@ -559,7 +556,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "(00) 00000-0000"
+                    "placeholder": "(00) 00000-0000",
                 },
                 {
                     "name": "email",
@@ -567,11 +564,10 @@ def create_comprehensive_petition_sections():
                     "type": "email",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "email@exemplo.com"
-                }
-            ]
+                    "placeholder": "email@exemplo.com",
+                },
+            ],
         },
-
         {
             "name": "Representante Legal",
             "slug": "representante-legal",
@@ -586,7 +582,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Nome do representante legal"
+                    "placeholder": "Nome do representante legal",
                 },
                 {
                     "name": "relacao_representado",
@@ -600,9 +596,12 @@ def create_comprehensive_petition_sections():
                         {"value": "tutor", "label": "Tutor"},
                         {"value": "curador", "label": "Curador"},
                         {"value": "socio", "label": "Sócio"},
-                        {"value": "representante_legal", "label": "Representante Legal"},
-                        {"value": "procurador", "label": "Procurador"}
-                    ]
+                        {
+                            "value": "representante_legal",
+                            "label": "Representante Legal",
+                        },
+                        {"value": "procurador", "label": "Procurador"},
+                    ],
                 },
                 {
                     "name": "documento_tipo",
@@ -612,8 +611,8 @@ def create_comprehensive_petition_sections():
                     "size": "col-md-3",
                     "options": [
                         {"value": "cpf", "label": "CPF"},
-                        {"value": "rg", "label": "RG"}
-                    ]
+                        {"value": "rg", "label": "RG"},
+                    ],
                 },
                 {
                     "name": "documento_numero",
@@ -621,7 +620,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-3",
-                    "placeholder": "Número do documento"
+                    "placeholder": "Número do documento",
                 },
                 {
                     "name": "endereco",
@@ -629,7 +628,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "Endereço completo"
+                    "placeholder": "Endereço completo",
                 },
                 {
                     "name": "telefone",
@@ -637,7 +636,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "(00) 00000-0000"
+                    "placeholder": "(00) 00000-0000",
                 },
                 {
                     "name": "email",
@@ -645,15 +644,13 @@ def create_comprehensive_petition_sections():
                     "type": "email",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "email@exemplo.com"
-                }
-            ]
+                    "placeholder": "email@exemplo.com",
+                },
+            ],
         },
-
         # ==========================================
         # DADOS DO PROCESSO
         # ==========================================
-
         {
             "name": "Dados do Processo",
             "slug": "dados-processo",
@@ -668,7 +665,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "0000000-00.0000.0.00.0000"
+                    "placeholder": "0000000-00.0000.0.00.0000",
                 },
                 {
                     "name": "vara",
@@ -676,7 +673,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "1ª Vara Cível, Juizado Especial, etc."
+                    "placeholder": "1ª Vara Cível, Juizado Especial, etc.",
                 },
                 {
                     "name": "comarca",
@@ -684,7 +681,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "São Paulo, Campinas, etc."
+                    "placeholder": "São Paulo, Campinas, etc.",
                 },
                 {
                     "name": "juizo",
@@ -700,8 +697,8 @@ def create_comprehensive_petition_sections():
                         {"value": "fazenda", "label": "Fazenda Pública"},
                         {"value": "federal", "label": "Federal"},
                         {"value": "eleitoral", "label": "Eleitoral"},
-                        {"value": "militar", "label": "Militar"}
-                    ]
+                        {"value": "militar", "label": "Militar"},
+                    ],
                 },
                 {
                     "name": "valor_causa",
@@ -710,14 +707,14 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-3",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "data_distribuicao",
                     "label": "Data de Distribuição",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-3"
+                    "size": "col-md-3",
                 },
                 {
                     "name": "juiz_relator",
@@ -725,7 +722,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "Nome do juiz responsável"
+                    "placeholder": "Nome do juiz responsável",
                 },
                 {
                     "name": "rito_processual",
@@ -739,16 +736,14 @@ def create_comprehensive_petition_sections():
                         {"value": "especial", "label": "Especial"},
                         {"value": "execucao", "label": "Execução"},
                         {"value": "cautelar", "label": "Cautelar"},
-                        {"value": "monitorio", "label": "Monitório"}
-                    ]
-                }
-            ]
+                        {"value": "monitorio", "label": "Monitório"},
+                    ],
+                },
+            ],
         },
-
         # ==========================================
         # CONTEÚDO DA PETIÇÃO
         # ==========================================
-
         {
             "name": "Fatos",
             "slug": "fatos",
@@ -764,14 +759,14 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-12",
                     "placeholder": "Descreva detalhadamente os fatos que motivaram a propositura desta ação...",
-                    "rows": 8
+                    "rows": 8,
                 },
                 {
                     "name": "data_ocorrencia",
                     "label": "Data da Ocorrência",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-3"
+                    "size": "col-md-3",
                 },
                 {
                     "name": "local_ocorrencia",
@@ -779,11 +774,10 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "Onde ocorreu o fato"
-                }
-            ]
+                    "placeholder": "Onde ocorreu o fato",
+                },
+            ],
         },
-
         {
             "name": "Fundamentação Jurídica",
             "slug": "fundamentacao-juridica",
@@ -799,7 +793,7 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-12",
                     "placeholder": "Cite os dispositivos legais aplicáveis ao caso...",
-                    "rows": 8
+                    "rows": 8,
                 },
                 {
                     "name": "legislacao_aplicavel",
@@ -808,7 +802,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-12",
                     "placeholder": "Art. 186 do Código Civil, Art. 927 do Código Civil, etc.",
-                    "rows": 4
+                    "rows": 4,
                 },
                 {
                     "name": "jurisprudencia",
@@ -817,11 +811,10 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-12",
                     "placeholder": "Cite precedentes jurisprudenciais relevantes...",
-                    "rows": 4
-                }
-            ]
+                    "rows": 4,
+                },
+            ],
         },
-
         {
             "name": "Pedidos",
             "slug": "pedidos",
@@ -837,7 +830,7 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-12",
                     "placeholder": "Formule os pedidos que estão sendo requeridos...",
-                    "rows": 8
+                    "rows": 8,
                 },
                 {
                     "name": "pedido_liminar",
@@ -846,7 +839,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-12",
                     "placeholder": "Caso haja pedido de liminar ou tutela de urgência...",
-                    "rows": 4
+                    "rows": 4,
                 },
                 {
                     "name": "pedido_antecipacao",
@@ -855,11 +848,10 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-12",
                     "placeholder": "Caso haja pedido de antecipação de tutela...",
-                    "rows": 4
-                }
-            ]
+                    "rows": 4,
+                },
+            ],
         },
-
         {
             "name": "Valor da Causa",
             "slug": "valor-causa",
@@ -875,7 +867,7 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-3",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "juros_moratorios",
@@ -884,7 +876,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-3",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "correcao_monetaria",
@@ -893,7 +885,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-3",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "honorarios",
@@ -902,7 +894,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-3",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "valor_total",
@@ -911,7 +903,7 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-4",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "justificativa_valor",
@@ -920,15 +912,13 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-8",
                     "placeholder": "Explique como foi calculado o valor da causa...",
-                    "rows": 3
-                }
-            ]
+                    "rows": 3,
+                },
+            ],
         },
-
         # ==========================================
         # INFORMAÇÕES ESPECÍFICAS POR ÁREA
         # ==========================================
-
         {
             "name": "Dados Contratuais",
             "slug": "dados-contratuais",
@@ -952,8 +942,8 @@ def create_comprehensive_petition_sections():
                         {"value": "representacao", "label": "Representação"},
                         {"value": "distribuicao", "label": "Distribuição"},
                         {"value": "franquia", "label": "Franquia"},
-                        {"value": "outro", "label": "Outro"}
-                    ]
+                        {"value": "outro", "label": "Outro"},
+                    ],
                 },
                 {
                     "name": "numero_contrato",
@@ -961,14 +951,14 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Número ou código do contrato"
+                    "placeholder": "Número ou código do contrato",
                 },
                 {
                     "name": "data_contrato",
                     "label": "Data do Contrato",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-4"
+                    "size": "col-md-4",
                 },
                 {
                     "name": "valor_contrato",
@@ -977,7 +967,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-3",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "prazo_contrato",
@@ -985,7 +975,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Duração do contrato"
+                    "placeholder": "Duração do contrato",
                 },
                 {
                     "name": "objeto_contrato",
@@ -994,7 +984,7 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-12",
                     "placeholder": "Descreva o objeto principal do contrato...",
-                    "rows": 4
+                    "rows": 4,
                 },
                 {
                     "name": "clausulas_importantes",
@@ -1003,11 +993,10 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-12",
                     "placeholder": "Cite cláusulas relevantes para o caso...",
-                    "rows": 4
-                }
-            ]
+                    "rows": 4,
+                },
+            ],
         },
-
         {
             "name": "Dados Trabalhistas",
             "slug": "dados-trabalhistas",
@@ -1022,21 +1011,21 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-4",
-                    "placeholder": "Cargo ocupado pelo trabalhador"
+                    "placeholder": "Cargo ocupado pelo trabalhador",
                 },
                 {
                     "name": "data_admissao",
                     "label": "Data de Admissão",
                     "type": "date",
                     "required": True,
-                    "size": "col-md-4"
+                    "size": "col-md-4",
                 },
                 {
                     "name": "data_demissao",
                     "label": "Data de Demissão",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-4"
+                    "size": "col-md-4",
                 },
                 {
                     "name": "salario_base",
@@ -1045,7 +1034,7 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-3",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "horas_trabalho",
@@ -1053,7 +1042,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Ex: 8 horas/dia, 44 horas/semana"
+                    "placeholder": "Ex: 8 horas/dia, 44 horas/semana",
                 },
                 {
                     "name": "tipo_vinculo",
@@ -1067,8 +1056,8 @@ def create_comprehensive_petition_sections():
                         {"value": "terceirizado", "label": "Terceirizado"},
                         {"value": "temporario", "label": "Temporário"},
                         {"value": "autonomo", "label": "Autônomo"},
-                        {"value": "estagiario", "label": "Estagiário"}
-                    ]
+                        {"value": "estagiario", "label": "Estagiário"},
+                    ],
                 },
                 {
                     "name": "motivo_rescisao",
@@ -1078,12 +1067,21 @@ def create_comprehensive_petition_sections():
                     "size": "col-md-3",
                     "options": [
                         {"value": "pedido_demissao", "label": "Pedido de Demissão"},
-                        {"value": "dispensa_sem_justa_causa", "label": "Dispensa sem Justa Causa"},
-                        {"value": "dispensa_com_justa_causa", "label": "Dispensa com Justa Causa"},
-                        {"value": "rescisao_consensual", "label": "Rescisão Consensual"},
+                        {
+                            "value": "dispensa_sem_justa_causa",
+                            "label": "Dispensa sem Justa Causa",
+                        },
+                        {
+                            "value": "dispensa_com_justa_causa",
+                            "label": "Dispensa com Justa Causa",
+                        },
+                        {
+                            "value": "rescisao_consensual",
+                            "label": "Rescisão Consensual",
+                        },
                         {"value": "termino_contrato", "label": "Término do Contrato"},
-                        {"value": "aposentadoria", "label": "Aposentadoria"}
-                    ]
+                        {"value": "aposentadoria", "label": "Aposentadoria"},
+                    ],
                 },
                 {
                     "name": "beneficios",
@@ -1092,7 +1090,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-6",
                     "placeholder": "Vale transporte, refeição, plano de saúde, etc.",
-                    "rows": 3
+                    "rows": 3,
                 },
                 {
                     "name": "verbas_rescisorias",
@@ -1101,11 +1099,10 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-6",
                     "placeholder": "Aviso prévio, 13º salário, férias, FGTS, etc.",
-                    "rows": 3
-                }
-            ]
+                    "rows": 3,
+                },
+            ],
         },
-
         {
             "name": "Dados Familiares",
             "slug": "dados-familiares",
@@ -1125,21 +1122,27 @@ def create_comprehensive_petition_sections():
                         {"value": "separacao", "label": "Separação"},
                         {"value": "guarda", "label": "Guarda de Filhos"},
                         {"value": "visitas", "label": "Regulamentação de Visitas"},
-                        {"value": "paternidade", "label": "Investigação de Paternidade"},
+                        {
+                            "value": "paternidade",
+                            "label": "Investigação de Paternidade",
+                        },
                         {"value": "alimentos", "label": "Alimentos"},
                         {"value": "partilha", "label": "Partilha de Bens"},
-                        {"value": "uniao_estavel", "label": "Reconhecimento de União Estável"},
+                        {
+                            "value": "uniao_estavel",
+                            "label": "Reconhecimento de União Estável",
+                        },
                         {"value": "curatela", "label": "Curatela"},
                         {"value": "tutela", "label": "Tutela"},
-                        {"value": "outro", "label": "Outro"}
-                    ]
+                        {"value": "outro", "label": "Outro"},
+                    ],
                 },
                 {
                     "name": "data_casamento",
                     "label": "Data do Casamento",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-4"
+                    "size": "col-md-4",
                 },
                 {
                     "name": "regime_casamento",
@@ -1148,11 +1151,23 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-4",
                     "options": [
-                        {"value": "comunhao_parcial", "label": "Comunhão Parcial de Bens"},
-                        {"value": "comunhao_universal", "label": "Comunhão Universal de Bens"},
-                        {"value": "separacao_total", "label": "Separação Total de Bens"},
-                        {"value": "participacao_final", "label": "Participação Final nos Aquestos"}
-                    ]
+                        {
+                            "value": "comunhao_parcial",
+                            "label": "Comunhão Parcial de Bens",
+                        },
+                        {
+                            "value": "comunhao_universal",
+                            "label": "Comunhão Universal de Bens",
+                        },
+                        {
+                            "value": "separacao_total",
+                            "label": "Separação Total de Bens",
+                        },
+                        {
+                            "value": "participacao_final",
+                            "label": "Participação Final nos Aquestos",
+                        },
+                    ],
                 },
                 {
                     "name": "numero_filhos",
@@ -1160,7 +1175,7 @@ def create_comprehensive_petition_sections():
                     "type": "number",
                     "required": False,
                     "size": "col-md-3",
-                    "min": "0"
+                    "min": "0",
                 },
                 {
                     "name": "idade_filhos",
@@ -1168,7 +1183,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "Ex: João (12 anos), Maria (8 anos)"
+                    "placeholder": "Ex: João (12 anos), Maria (8 anos)",
                 },
                 {
                     "name": "guarda_atual",
@@ -1180,8 +1195,8 @@ def create_comprehensive_petition_sections():
                         {"value": "materna", "label": "Materna"},
                         {"value": "paterna", "label": "Paterna"},
                         {"value": "compartilhada", "label": "Compartilhada"},
-                        {"value": "alternada", "label": "Alternada"}
-                    ]
+                        {"value": "alternada", "label": "Alternada"},
+                    ],
                 },
                 {
                     "name": "pensão_alimentos",
@@ -1190,7 +1205,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-4",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "situacao_familiar",
@@ -1199,11 +1214,10 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-12",
                     "placeholder": "Descreva a situação familiar atual...",
-                    "rows": 4
-                }
-            ]
+                    "rows": 4,
+                },
+            ],
         },
-
         {
             "name": "Dados Criminais",
             "slug": "dados-criminais",
@@ -1225,8 +1239,8 @@ def create_comprehensive_petition_sections():
                         {"value": "ambiental", "label": "Ambiental"},
                         {"value": "tributario", "label": "Tributário"},
                         {"value": "eleitoral", "label": "Eleitoral"},
-                        {"value": "outro", "label": "Outro"}
-                    ]
+                        {"value": "outro", "label": "Outro"},
+                    ],
                 },
                 {
                     "name": "artigo_penal",
@@ -1234,14 +1248,14 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-4",
-                    "placeholder": "Ex: Art. 121 do CP (Homicídio)"
+                    "placeholder": "Ex: Art. 121 do CP (Homicídio)",
                 },
                 {
                     "name": "data_ocorrencia",
                     "label": "Data da Ocorrência",
                     "type": "date",
                     "required": True,
-                    "size": "col-md-4"
+                    "size": "col-md-4",
                 },
                 {
                     "name": "local_ocorrencia",
@@ -1249,7 +1263,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Onde ocorreu o crime"
+                    "placeholder": "Onde ocorreu o crime",
                 },
                 {
                     "name": "meios_empregados",
@@ -1257,7 +1271,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "Como o crime foi praticado"
+                    "placeholder": "Como o crime foi praticado",
                 },
                 {
                     "name": "circunstancias",
@@ -1266,7 +1280,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-12",
                     "placeholder": "Descreva as circunstâncias do crime...",
-                    "rows": 4
+                    "rows": 4,
                 },
                 {
                     "name": "testemunhas",
@@ -1275,7 +1289,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-6",
                     "placeholder": "Liste as testemunhas do caso...",
-                    "rows": 3
+                    "rows": 3,
                 },
                 {
                     "name": "provas",
@@ -1284,11 +1298,10 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-6",
                     "placeholder": "Liste as provas do caso...",
-                    "rows": 3
-                }
-            ]
+                    "rows": 3,
+                },
+            ],
         },
-
         {
             "name": "Dados Previdenciários",
             "slug": "dados-previdenciarios",
@@ -1304,15 +1317,27 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-4",
                     "options": [
-                        {"value": "aposentadoria_idade", "label": "Aposentadoria por Idade"},
-                        {"value": "aposentadoria_tempo", "label": "Aposentadoria por Tempo de Contribuição"},
-                        {"value": "aposentadoria_invalidez", "label": "Aposentadoria por Invalidez"},
+                        {
+                            "value": "aposentadoria_idade",
+                            "label": "Aposentadoria por Idade",
+                        },
+                        {
+                            "value": "aposentadoria_tempo",
+                            "label": "Aposentadoria por Tempo de Contribuição",
+                        },
+                        {
+                            "value": "aposentadoria_invalidez",
+                            "label": "Aposentadoria por Invalidez",
+                        },
                         {"value": "auxilio_doenca", "label": "Auxílio-Doença"},
                         {"value": "auxilio_acidente", "label": "Auxílio-Acidente"},
                         {"value": "pensao_morte", "label": "Pensão por Morte"},
-                        {"value": "salario_maternidade", "label": "Salário-Maternidade"},
-                        {"value": "outro", "label": "Outro"}
-                    ]
+                        {
+                            "value": "salario_maternidade",
+                            "label": "Salário-Maternidade",
+                        },
+                        {"value": "outro", "label": "Outro"},
+                    ],
                 },
                 {
                     "name": "numero_beneficio",
@@ -1320,21 +1345,21 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Número do benefício existente"
+                    "placeholder": "Número do benefício existente",
                 },
                 {
                     "name": "data_concessao",
                     "label": "Data de Concessão",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-4"
+                    "size": "col-md-4",
                 },
                 {
                     "name": "data_inicio_contribuicao",
                     "label": "Data de Início da Contribuição",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-4"
+                    "size": "col-md-4",
                 },
                 {
                     "name": "tempo_contribuicao",
@@ -1342,7 +1367,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Ex: 25 anos, 3 meses"
+                    "placeholder": "Ex: 25 anos, 3 meses",
                 },
                 {
                     "name": "carencia",
@@ -1353,8 +1378,8 @@ def create_comprehensive_petition_sections():
                     "options": [
                         {"value": "sim", "label": "Sim"},
                         {"value": "nao", "label": "Não"},
-                        {"value": "dispensada", "label": "Dispensada"}
-                    ]
+                        {"value": "dispensada", "label": "Dispensada"},
+                    ],
                 },
                 {
                     "name": "ultimo_salario",
@@ -1363,7 +1388,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-4",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "motivo_cessacao",
@@ -1372,11 +1397,10 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-12",
                     "placeholder": "Explique o motivo da cessação ou indeferimento...",
-                    "rows": 4
-                }
-            ]
+                    "rows": 4,
+                },
+            ],
         },
-
         {
             "name": "Dados Tributários",
             "slug": "dados-tributarios",
@@ -1401,8 +1425,8 @@ def create_comprehensive_petition_sections():
                         {"value": "csll", "label": "CSLL"},
                         {"value": "iptu", "label": "IPTU"},
                         {"value": "itr", "label": "ITR"},
-                        {"value": "outro", "label": "Outro"}
-                    ]
+                        {"value": "outro", "label": "Outro"},
+                    ],
                 },
                 {
                     "name": "periodo_tributo",
@@ -1410,7 +1434,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Ex: Janeiro/2024, 2023"
+                    "placeholder": "Ex: Janeiro/2024, 2023",
                 },
                 {
                     "name": "valor_tributo",
@@ -1419,7 +1443,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-4",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "numero_auto_infracao",
@@ -1427,14 +1451,14 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Número do auto de infração"
+                    "placeholder": "Número do auto de infração",
                 },
                 {
                     "name": "data_auto_infracao",
                     "label": "Data do Auto de Infração",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-4"
+                    "size": "col-md-4",
                 },
                 {
                     "name": "motivo_discussao",
@@ -1443,7 +1467,7 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-12",
                     "placeholder": "Descreva o motivo da discussão tributária...",
-                    "rows": 4
+                    "rows": 4,
                 },
                 {
                     "name": "legislacao_tributaria",
@@ -1452,11 +1476,10 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-12",
                     "placeholder": "Cite a legislação tributária aplicável...",
-                    "rows": 3
-                }
-            ]
+                    "rows": 3,
+                },
+            ],
         },
-
         {
             "name": "Dados Ambientais",
             "slug": "dados-ambientais",
@@ -1479,8 +1502,8 @@ def create_comprehensive_petition_sections():
                         {"value": "queimadas", "label": "Queimadas"},
                         {"value": "erosao", "label": "Erosão"},
                         {"value": "degradacao", "label": "Degradação de Solo"},
-                        {"value": "outro", "label": "Outro"}
-                    ]
+                        {"value": "outro", "label": "Outro"},
+                    ],
                 },
                 {
                     "name": "local_dano",
@@ -1488,14 +1511,14 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-8",
-                    "placeholder": "Descreva o local onde ocorreu o dano"
+                    "placeholder": "Descreva o local onde ocorreu o dano",
                 },
                 {
                     "name": "data_ocorrencia",
                     "label": "Data da Ocorrência",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-4"
+                    "size": "col-md-4",
                 },
                 {
                     "name": "area_afetada",
@@ -1503,7 +1526,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Ex: 500 hectares, 2 km²"
+                    "placeholder": "Ex: 500 hectares, 2 km²",
                 },
                 {
                     "name": "especies_afetadas",
@@ -1512,7 +1535,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-8",
                     "placeholder": "Liste as espécies afetadas...",
-                    "rows": 3
+                    "rows": 3,
                 },
                 {
                     "name": "licencas_ambientais",
@@ -1521,7 +1544,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-6",
                     "placeholder": "Liste as licenças ambientais relacionadas...",
-                    "rows": 3
+                    "rows": 3,
                 },
                 {
                     "name": "multas_aplicadas",
@@ -1530,7 +1553,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-3",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "medidas_reparacao",
@@ -1539,11 +1562,10 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-12",
                     "placeholder": "Descreva as medidas de reparação ambiental propostas...",
-                    "rows": 4
-                }
-            ]
+                    "rows": 4,
+                },
+            ],
         },
-
         {
             "name": "Dados Consumeristas",
             "slug": "dados-consumeristas",
@@ -1564,8 +1586,8 @@ def create_comprehensive_petition_sections():
                         {"value": "publicidade", "label": "Publicidade Enganosa"},
                         {"value": "pratica_abusiva", "label": "Prática Abusiva"},
                         {"value": "cobrança_indevida", "label": "Cobrança Indevida"},
-                        {"value": "outro", "label": "Outro"}
-                    ]
+                        {"value": "outro", "label": "Outro"},
+                    ],
                 },
                 {
                     "name": "produto_servico",
@@ -1573,14 +1595,14 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-8",
-                    "placeholder": "Descreva o produto ou serviço envolvido"
+                    "placeholder": "Descreva o produto ou serviço envolvido",
                 },
                 {
                     "name": "data_compra",
                     "label": "Data da Compra/Contratação",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-3"
+                    "size": "col-md-3",
                 },
                 {
                     "name": "valor_pago",
@@ -1589,7 +1611,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-3",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "numero_nota_fiscal",
@@ -1597,7 +1619,7 @@ def create_comprehensive_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Número da nota fiscal"
+                    "placeholder": "Número da nota fiscal",
                 },
                 {
                     "name": "tentativas_solucao",
@@ -1606,7 +1628,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-8",
                     "placeholder": "Descreva as tentativas de solução amigável...",
-                    "rows": 3
+                    "rows": 3,
                 },
                 {
                     "name": "defeito_problema",
@@ -1615,7 +1637,7 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-12",
                     "placeholder": "Descreva detalhadamente o defeito ou problema...",
-                    "rows": 4
+                    "rows": 4,
                 },
                 {
                     "name": "pedidos_consumidor",
@@ -1624,15 +1646,13 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-12",
                     "placeholder": "O que o consumidor está pleiteando...",
-                    "rows": 3
-                }
-            ]
+                    "rows": 3,
+                },
+            ],
         },
-
         # ==========================================
         # DOCUMENTOS E ANEXOS
         # ==========================================
-
         {
             "name": "Documentos Apresentados",
             "slug": "documentos-apresentados",
@@ -1648,7 +1668,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-6",
                     "placeholder": "Procuração, RG, CPF, comprovante de endereço, etc.",
-                    "rows": 4
+                    "rows": 4,
                 },
                 {
                     "name": "documentos_comprobatórios",
@@ -1657,7 +1677,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-6",
                     "placeholder": "Contratos, recibos, laudos, etc.",
-                    "rows": 4
+                    "rows": 4,
                 },
                 {
                     "name": "certidoes",
@@ -1666,7 +1686,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-6",
                     "placeholder": "Certidão negativa de débitos, certidão de casamento, etc.",
-                    "rows": 4
+                    "rows": 4,
                 },
                 {
                     "name": "outros_documentos",
@@ -1675,15 +1695,13 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-6",
                     "placeholder": "Quaisquer outros documentos relevantes...",
-                    "rows": 4
-                }
-            ]
+                    "rows": 4,
+                },
+            ],
         },
-
         # ==========================================
         # INFORMAÇÕES ADICIONAIS
         # ==========================================
-
         {
             "name": "Pedido de Urgência",
             "slug": "pedido-urgencia",
@@ -1702,8 +1720,8 @@ def create_comprehensive_petition_sections():
                         {"value": "liminar", "label": "Liminar"},
                         {"value": "tutela_antecipada", "label": "Tutela Antecipada"},
                         {"value": "tutela_cautelar", "label": "Tutela Cautelar"},
-                        {"value": "tutela_provisoria", "label": "Tutela Provisória"}
-                    ]
+                        {"value": "tutela_provisoria", "label": "Tutela Provisória"},
+                    ],
                 },
                 {
                     "name": "fundamento_urgencia",
@@ -1714,9 +1732,12 @@ def create_comprehensive_petition_sections():
                     "options": [
                         {"value": "periculum_in_mora", "label": "Periculum in Mora"},
                         {"value": "fumus_bon_juris", "label": "Fumus Bon Juris"},
-                        {"value": "risco_irreparavel", "label": "Risco de Dano Irreparável"},
-                        {"value": "outro", "label": "Outro"}
-                    ]
+                        {
+                            "value": "risco_irreparavel",
+                            "label": "Risco de Dano Irreparável",
+                        },
+                        {"value": "outro", "label": "Outro"},
+                    ],
                 },
                 {
                     "name": "justificativa_urgencia",
@@ -1725,7 +1746,7 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-12",
                     "placeholder": "Explique detalhadamente por que há urgência na concessão da medida...",
-                    "rows": 6
+                    "rows": 6,
                 },
                 {
                     "name": "medidas_requeridas",
@@ -1734,11 +1755,10 @@ def create_comprehensive_petition_sections():
                     "required": True,
                     "size": "col-md-12",
                     "placeholder": "Descreva as medidas que estão sendo requeridas...",
-                    "rows": 4
-                }
-            ]
+                    "rows": 4,
+                },
+            ],
         },
-
         {
             "name": "Honorários Advocatícios",
             "slug": "honorarios-advocaticios",
@@ -1756,8 +1776,8 @@ def create_comprehensive_petition_sections():
                     "options": [
                         {"value": "contrato", "label": "Contratual"},
                         {"value": "sucumbencia", "label": "Sucumbência"},
-                        {"value": "ambos", "label": "Ambos"}
-                    ]
+                        {"value": "ambos", "label": "Ambos"},
+                    ],
                 },
                 {
                     "name": "valor_honorario_contrato",
@@ -1766,7 +1786,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-4",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "percentual_sucumbencia",
@@ -1776,7 +1796,7 @@ def create_comprehensive_petition_sections():
                     "size": "col-md-4",
                     "placeholder": "0.00",
                     "step": "0.01",
-                    "max": "100"
+                    "max": "100",
                 },
                 {
                     "name": "base_calculo",
@@ -1788,8 +1808,8 @@ def create_comprehensive_petition_sections():
                         {"value": "valor_causa", "label": "Valor da Causa"},
                         {"value": "valor_condenacao", "label": "Valor da Condenação"},
                         {"value": "valor_pedido", "label": "Valor do Pedido"},
-                        {"value": "outro", "label": "Outro"}
-                    ]
+                        {"value": "outro", "label": "Outro"},
+                    ],
                 },
                 {
                     "name": "justificativa_honorario",
@@ -1798,11 +1818,10 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-8",
                     "placeholder": "Justifique o valor dos honorários...",
-                    "rows": 3
-                }
-            ]
+                    "rows": 3,
+                },
+            ],
         },
-
         {
             "name": "Custas Processuais",
             "slug": "custas-processuais",
@@ -1818,7 +1837,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-4",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "valor_taxa_judiciaria",
@@ -1827,7 +1846,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-4",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "valor_total_despesas",
@@ -1836,7 +1855,7 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-4",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "responsavel_pagamento",
@@ -1848,8 +1867,8 @@ def create_comprehensive_petition_sections():
                         {"value": "autor", "label": "Autor"},
                         {"value": "reu", "label": "Réu"},
                         {"value": "sucumbente", "label": "Sucumbente"},
-                        {"value": "ambos", "label": "Ambos"}
-                    ]
+                        {"value": "ambos", "label": "Ambos"},
+                    ],
                 },
                 {
                     "name": "isenção_custas",
@@ -1860,8 +1879,8 @@ def create_comprehensive_petition_sections():
                     "options": [
                         {"value": "sim", "label": "Sim"},
                         {"value": "nao", "label": "Não"},
-                        {"value": "parcial", "label": "Parcial"}
-                    ]
+                        {"value": "parcial", "label": "Parcial"},
+                    ],
                 },
                 {
                     "name": "justificativa_isencao",
@@ -1870,17 +1889,19 @@ def create_comprehensive_petition_sections():
                     "required": False,
                     "size": "col-md-8",
                     "placeholder": "Justifique o pedido de isenção...",
-                    "rows": 3
-                }
-            ]
-        }
+                    "rows": 3,
+                },
+            ],
+        },
     ]
 
     app = create_app()
     with app.app_context():
         for section_data in sections_data:
             # Verificar se já existe
-            existing = PetitionSection.query.filter_by(slug=section_data["slug"]).first()
+            existing = PetitionSection.query.filter_by(
+                slug=section_data["slug"]
+            ).first()
             if existing:
                 print(f"Seção '{section_data['name']}' já existe, pulando...")
                 continue
@@ -1894,7 +1915,7 @@ def create_comprehensive_petition_sections():
                 color=section_data["color"],
                 order=section_data["order"],
                 fields_schema=section_data["fields_schema"],
-                is_active=True
+                is_active=True,
             )
 
             db.session.add(section)
@@ -1902,6 +1923,7 @@ def create_comprehensive_petition_sections():
 
         db.session.commit()
         print("Todas as seções foram criadas/atualizadas!")
+
 
 if __name__ == "__main__":
     create_comprehensive_petition_sections()

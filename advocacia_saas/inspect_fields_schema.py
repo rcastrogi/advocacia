@@ -4,14 +4,15 @@ Script para inspecionar o conteúdo do campo fields_schema de todas as seções
 """
 
 import json
-import sys
 import os
+import sys
 
 # Adicionar o diretório raiz ao path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app
 from app.models import PetitionSection
+
 
 def inspect_fields_schema():
     """Inspeciona o conteúdo do campo fields_schema de todas as seções"""
@@ -37,13 +38,16 @@ def inspect_fields_schema():
                         print(f"   ❌ JSON INVÁLIDO: {e}")
                         print(f"   📄 Conteúdo: {section.fields_schema[:200]}...")
                 elif isinstance(section.fields_schema, (list, dict)):
-                    print(f"   ✅ Formato correto: {len(section.fields_schema) if isinstance(section.fields_schema, list) else 'dict'} itens")
+                    print(
+                        f"   ✅ Formato correto: {len(section.fields_schema) if isinstance(section.fields_schema, list) else 'dict'} itens"
+                    )
                 else:
                     print(f"   ❌ Tipo inesperado: {type(section.fields_schema)}")
             else:
                 print("   ℹ️  Valor vazio/None")
 
             print()
+
 
 if __name__ == "__main__":
     inspect_fields_schema()

@@ -7,6 +7,7 @@ com campos específicos para cada tipo de seção.
 from app import create_app, db
 from app.models import PetitionSection
 
+
 def create_petition_sections():
     """Cria seções pré-definidas para petições"""
 
@@ -25,7 +26,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Nome completo do autor"
+                    "placeholder": "Nome completo do autor",
                 },
                 {
                     "name": "documento_tipo",
@@ -37,8 +38,8 @@ def create_petition_sections():
                         {"value": "cpf", "label": "CPF"},
                         {"value": "cnpj", "label": "CNPJ"},
                         {"value": "rg", "label": "RG"},
-                        {"value": "passaporte", "label": "Passaporte"}
-                    ]
+                        {"value": "passaporte", "label": "Passaporte"},
+                    ],
                 },
                 {
                     "name": "documento_numero",
@@ -46,7 +47,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-3",
-                    "placeholder": "Número do documento"
+                    "placeholder": "Número do documento",
                 },
                 {
                     "name": "cep",
@@ -54,7 +55,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-2",
-                    "placeholder": "00000-000"
+                    "placeholder": "00000-000",
                 },
                 {
                     "name": "endereco",
@@ -62,7 +63,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Rua, número"
+                    "placeholder": "Rua, número",
                 },
                 {
                     "name": "complemento",
@@ -70,7 +71,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Apartamento, sala, etc."
+                    "placeholder": "Apartamento, sala, etc.",
                 },
                 {
                     "name": "estado",
@@ -105,8 +106,8 @@ def create_petition_sections():
                         {"value": "SC", "label": "Santa Catarina"},
                         {"value": "SP", "label": "São Paulo"},
                         {"value": "SE", "label": "Sergipe"},
-                        {"value": "TO", "label": "Tocantins"}
-                    ]
+                        {"value": "TO", "label": "Tocantins"},
+                    ],
                 },
                 {
                     "name": "cidade",
@@ -114,7 +115,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Nome da cidade"
+                    "placeholder": "Nome da cidade",
                 },
                 {
                     "name": "telefone",
@@ -122,7 +123,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "(00) 00000-0000"
+                    "placeholder": "(00) 00000-0000",
                 },
                 {
                     "name": "email",
@@ -130,9 +131,9 @@ def create_petition_sections():
                     "type": "email",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "email@exemplo.com"
-                }
-            ]
+                    "placeholder": "email@exemplo.com",
+                },
+            ],
         },
         {
             "name": "Réu",
@@ -148,7 +149,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Nome completo ou razão social"
+                    "placeholder": "Nome completo ou razão social",
                 },
                 {
                     "name": "documento_tipo",
@@ -160,8 +161,8 @@ def create_petition_sections():
                         {"value": "cpf", "label": "CPF"},
                         {"value": "cnpj", "label": "CNPJ"},
                         {"value": "rg", "label": "RG"},
-                        {"value": "passaporte", "label": "Passaporte"}
-                    ]
+                        {"value": "passaporte", "label": "Passaporte"},
+                    ],
                 },
                 {
                     "name": "documento_numero",
@@ -169,7 +170,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-3",
-                    "placeholder": "Número do documento"
+                    "placeholder": "Número do documento",
                 },
                 {
                     "name": "cep",
@@ -177,7 +178,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-2",
-                    "placeholder": "00000-000"
+                    "placeholder": "00000-000",
                 },
                 {
                     "name": "endereco",
@@ -185,7 +186,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Rua, número"
+                    "placeholder": "Rua, número",
                 },
                 {
                     "name": "complemento",
@@ -193,7 +194,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Apartamento, sala, etc."
+                    "placeholder": "Apartamento, sala, etc.",
                 },
                 {
                     "name": "estado",
@@ -228,8 +229,8 @@ def create_petition_sections():
                         {"value": "SC", "label": "Santa Catarina"},
                         {"value": "SP", "label": "São Paulo"},
                         {"value": "SE", "label": "Sergipe"},
-                        {"value": "TO", "label": "Tocantins"}
-                    ]
+                        {"value": "TO", "label": "Tocantins"},
+                    ],
                 },
                 {
                     "name": "cidade",
@@ -237,7 +238,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Nome da cidade"
+                    "placeholder": "Nome da cidade",
                 },
                 {
                     "name": "telefone",
@@ -245,7 +246,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "(00) 00000-0000"
+                    "placeholder": "(00) 00000-0000",
                 },
                 {
                     "name": "email",
@@ -253,9 +254,9 @@ def create_petition_sections():
                     "type": "email",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "email@exemplo.com"
-                }
-            ]
+                    "placeholder": "email@exemplo.com",
+                },
+            ],
         },
         {
             "name": "Testemunha",
@@ -271,7 +272,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-6",
-                    "placeholder": "Nome completo da testemunha"
+                    "placeholder": "Nome completo da testemunha",
                 },
                 {
                     "name": "documento_tipo",
@@ -282,8 +283,8 @@ def create_petition_sections():
                     "options": [
                         {"value": "cpf", "label": "CPF"},
                         {"value": "rg", "label": "RG"},
-                        {"value": "passaporte", "label": "Passaporte"}
-                    ]
+                        {"value": "passaporte", "label": "Passaporte"},
+                    ],
                 },
                 {
                     "name": "documento_numero",
@@ -291,7 +292,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": True,
                     "size": "col-md-3",
-                    "placeholder": "Número do documento"
+                    "placeholder": "Número do documento",
                 },
                 {
                     "name": "cep",
@@ -299,7 +300,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-2",
-                    "placeholder": "00000-000"
+                    "placeholder": "00000-000",
                 },
                 {
                     "name": "endereco",
@@ -307,7 +308,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "Rua, número"
+                    "placeholder": "Rua, número",
                 },
                 {
                     "name": "complemento",
@@ -315,7 +316,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Apartamento, sala, etc."
+                    "placeholder": "Apartamento, sala, etc.",
                 },
                 {
                     "name": "estado",
@@ -350,8 +351,8 @@ def create_petition_sections():
                         {"value": "SC", "label": "Santa Catarina"},
                         {"value": "SP", "label": "São Paulo"},
                         {"value": "SE", "label": "Sergipe"},
-                        {"value": "TO", "label": "Tocantins"}
-                    ]
+                        {"value": "TO", "label": "Tocantins"},
+                    ],
                 },
                 {
                     "name": "cidade",
@@ -359,7 +360,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "Nome da cidade"
+                    "placeholder": "Nome da cidade",
                 },
                 {
                     "name": "telefone",
@@ -367,7 +368,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "(00) 00000-0000"
+                    "placeholder": "(00) 00000-0000",
                 },
                 {
                     "name": "email",
@@ -375,9 +376,9 @@ def create_petition_sections():
                     "type": "email",
                     "required": False,
                     "size": "col-md-3",
-                    "placeholder": "email@exemplo.com"
-                }
-            ]
+                    "placeholder": "email@exemplo.com",
+                },
+            ],
         },
         {
             "name": "Dados do Processo",
@@ -393,7 +394,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "0000000-00.0000.0.00.0000"
+                    "placeholder": "0000000-00.0000.0.00.0000",
                 },
                 {
                     "name": "vara",
@@ -401,7 +402,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "1ª Vara Cível, Juizado Especial, etc."
+                    "placeholder": "1ª Vara Cível, Juizado Especial, etc.",
                 },
                 {
                     "name": "comarca",
@@ -409,7 +410,7 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-4",
-                    "placeholder": "São Paulo, Campinas, etc."
+                    "placeholder": "São Paulo, Campinas, etc.",
                 },
                 {
                     "name": "valor_causa",
@@ -418,14 +419,14 @@ def create_petition_sections():
                     "required": False,
                     "size": "col-md-3",
                     "placeholder": "0.00",
-                    "step": "0.01"
+                    "step": "0.01",
                 },
                 {
                     "name": "data_distribuicao",
                     "label": "Data de Distribuição",
                     "type": "date",
                     "required": False,
-                    "size": "col-md-3"
+                    "size": "col-md-3",
                 },
                 {
                     "name": "juiz_relator",
@@ -433,9 +434,9 @@ def create_petition_sections():
                     "type": "text",
                     "required": False,
                     "size": "col-md-6",
-                    "placeholder": "Nome do juiz responsável"
-                }
-            ]
+                    "placeholder": "Nome do juiz responsável",
+                },
+            ],
         },
         {
             "name": "Fatos",
@@ -452,9 +453,9 @@ def create_petition_sections():
                     "required": True,
                     "size": "col-md-12",
                     "placeholder": "Descreva detalhadamente os fatos que motivaram a propositura desta ação...",
-                    "rows": 6
+                    "rows": 6,
                 }
-            ]
+            ],
         },
         {
             "name": "Fundamentação Jurídica",
@@ -471,9 +472,9 @@ def create_petition_sections():
                     "required": True,
                     "size": "col-md-12",
                     "placeholder": "Cite os dispositivos legais aplicáveis ao caso...",
-                    "rows": 6
+                    "rows": 6,
                 }
-            ]
+            ],
         },
         {
             "name": "Pedidos",
@@ -490,17 +491,19 @@ def create_petition_sections():
                     "required": True,
                     "size": "col-md-12",
                     "placeholder": "Formule os pedidos que estão sendo requeridos...",
-                    "rows": 6
+                    "rows": 6,
                 }
-            ]
-        }
+            ],
+        },
     ]
 
     app = create_app()
     with app.app_context():
         for section_data in sections_data:
             # Verificar se já existe
-            existing = PetitionSection.query.filter_by(slug=section_data["slug"]).first()
+            existing = PetitionSection.query.filter_by(
+                slug=section_data["slug"]
+            ).first()
             if existing:
                 print(f"Seção '{section_data['name']}' já existe, pulando...")
                 continue
@@ -514,7 +517,7 @@ def create_petition_sections():
                 color=section_data["color"],
                 order=section_data["order"],
                 fields_schema=section_data["fields_schema"],
-                is_active=True
+                is_active=True,
             )
 
             db.session.add(section)
@@ -522,6 +525,7 @@ def create_petition_sections():
 
         db.session.commit()
         print("Todas as seções foram criadas/atualizadas!")
+
 
 if __name__ == "__main__":
     create_petition_sections()
