@@ -8,6 +8,7 @@ from flask_caching import Cache
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import LoginManager
+from flask_mail import Mail
 from flask_migrate import Migrate
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
@@ -15,6 +16,7 @@ from flask_talisman import Talisman
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+mail = Mail()
 migrate = Migrate()
 socketio = SocketIO()
 limiter = Limiter(
@@ -83,6 +85,7 @@ def create_app(config_class=Config):
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
+    mail.init_app(app)
     migrate.init_app(app, db)
 
     # Initialize rate limiter only if enabled

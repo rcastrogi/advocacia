@@ -5,6 +5,7 @@ Testes para rotas da API
 import json
 
 import pytest
+from app import db
 from app.models import Client, User
 
 

@@ -470,7 +470,7 @@ def my_subscription():
         "payments/my_subscription.html",
         subscription=subscription,
         payments=payments,
-        plans=PLANS,
+        plans=BillingPlan.query.filter_by(active=True).all(),
     )
 
 

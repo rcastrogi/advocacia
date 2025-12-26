@@ -93,7 +93,7 @@ def login():
             and form.password.data == "admin123"
             and not real_admin_exists
         ):
-            from datetime import datetime, timedelta
+            from datetime import datetime, timedelta, timezone
 
             # Criar usuário demo em memória (não persiste no banco)
             from app.models import _demo_user_cache

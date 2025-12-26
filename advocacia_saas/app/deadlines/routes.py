@@ -10,15 +10,7 @@ from flask_login import current_user, login_required
 from app import db
 from app.deadlines import bp
 from app.models import Client, Deadline
-
-# Email temporariamente desabilitado
-try:
-    from app.utils.email import send_email
-except ImportError:
-
-    def send_email(*args, **kwargs):
-        """Placeholder quando utils.email não existe"""
-        pass
+from app.utils.email import send_email
 
 
 @bp.route("/")

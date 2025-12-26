@@ -42,24 +42,6 @@ with app.app_context():
 
     # Plano 3: Mensal Premium
     plan3 = BillingPlan(
-        slug="escritorio",
-        name="Escritório",
-        plan_type="monthly",
-        description="Solução completa para escritórios estabelecidos com múltiplos usuários.\n\nRecursos incluídos:\n• Petições ilimitadas\n• Clientes ilimitados\n• Templates premium\n• Suporte dedicado\n• 10 usuários\n• 100GB armazenamento\n• Acesso à API",
-        monthly_fee=Decimal("199.00"),
-        usage_rate=Decimal("0.00"),
-        active=True,
-    )
-        features={
-            "petitions": "unlimited",
-            "clients": "unlimited",
-            "templates": "advanced",
-            "support": "priority",
-        },
-    )
-
-    # Plano 3: Mensal Premium
-    plan3 = BillingPlan(
         name="Escritório",
         plan_type="monthly",
         description="Solução completa para escritórios estabelecidos com múltiplos usuários.",

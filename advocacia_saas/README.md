@@ -11,6 +11,7 @@ Sistema completo de gestão para escritórios de advocacia desenvolvido em Pytho
 - **API CEP**: Integração com ViaCEP para preenchimento automático de endereços
 - **Upload de Logo**: Logo personalizado para cada usuário
 - **Interface Responsiva**: Design moderno com Bootstrap 5
+- **Notificações por Email**: Alertas automáticos de prazos próximos (SendGrid)
 
 ## Requisitos
 

@@ -229,6 +229,60 @@ print(secrets.token_hex(32))
 
 ---
 
+## 📧 Configuração de Email - SendGrid
+
+### 1. Criar Conta no SendGrid
+
+1. Acesse [sendgrid.com](https://sendgrid.com) e crie conta gratuita
+2. Verifique seu email
+3. Vá para **Settings** → **API Keys** → **Create API Key**
+4. Dê um nome (ex: "Petitio Production") e selecione **Full Access**
+5. **COPIE E SALVE** a API Key gerada (não poderá ver novamente!)
+
+### 2. Configurar Domínio (Importante!)
+
+1. Vá para **Settings** → **Sender Authentication**
+2. Clique em **Authenticate Your Domain**
+3. Adicione seu domínio (ex: `seudominio.com`)
+4. Siga as instruções para configurar os registros DNS
+5. Aguarde verificação (pode levar até 48h)
+
+### 3. Variáveis de Ambiente para SendGrid
+
+```env
+# SendGrid SMTP Configuration
+MAIL_SERVER=smtp.sendgrid.net
+MAIL_PORT=587
+MAIL_USE_TLS=true
+MAIL_USERNAME=apikey
+MAIL_PASSWORD=SG.SEU_SENDGRID_API_KEY_AQUI
+MAIL_DEFAULT_SENDER=noreply@seudominio.com
+```
+
+### 4. Teste Local
+
+Antes de fazer deploy, teste localmente:
+
+```bash
+# 1. Instale as dependências
+pip install Flask-Mail
+
+# 2. Configure .env com as variáveis acima
+
+# 3. Teste o envio
+python -c "
+from app.utils.email import send_email
+send_email('seu-email@teste.com', 'Teste', 'emails/deadline_alert.html', deadline={'title': 'Teste', 'user': {'name': 'Teste'}, 'due_date': '2025-01-01', 'days_until': 5})
+print('Email enviado!')
+"
+```
+
+### 5. Limites do Plano Gratuito
+- **100 emails/dia**
+- Para produção, considere upgrade para plano pago ($19.95/mês = 40.000 emails)
+
+---
+
 ## 🌐 Configurar Domínio Personalizado
 
 1. Compre um domínio (Registro.br, GoDaddy, Cloudflare)
