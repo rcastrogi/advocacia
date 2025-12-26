@@ -341,6 +341,9 @@ class User(UserMixin, db.Model):
 
     def delete_user_data(self):
         """Exclui permanentemente os dados do usuário (LGPD - Direito ao Esquecimento)"""
+        if self.is_master:
+            raise ValueError("Usuários master não podem ser excluídos ou anonimizados")
+
         try:
             # Dados antes da exclusão (para auditoria)
             audit_data = {
@@ -471,6 +474,21 @@ class User(UserMixin, db.Model):
     def is_admin(self):
         """Verifica se é administrador"""
         return self.user_type in ["master", "admin"]
+
+    @property
+    def is_master(self):
+        """Verifica se é usuário master (super admin)"""
+        return self.user_type == "master"
+
+    def deactivate(self):
+        """Desativa o usuário (com proteção para master)"""
+        if self.is_master:
+            raise ValueError("Usuários master não podem ser desativados")
+        self.is_active = False
+
+    def activate(self):
+        """Ativa o usuário"""
+        self.is_active = True
 
     # =============================================================================
     # TWO-FACTOR AUTHENTICATION (2FA) METHODS

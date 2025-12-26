@@ -1,8 +1,7 @@
-{% extends "base.html" %}
+{% extends "admin/base_admin.html" %}
 
-{% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-1"><i class="fas fa-tags"></i> Planos de cobrança</h1>
             <p class="text-muted mb-0">Configure planos por uso ou mensais e controle quais estão ativos.</p>
@@ -147,7 +146,6 @@
             </div>
         </div>
     </div>
-</div>
 
 <script>
 // Controle de habilitação do campo de limite

@@ -1,104 +1,119 @@
 {% extends "admin/base_admin.html" %}
 
-{% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">Seções de Petição</h1>
-                <div>
-                    <a href="{{ url_for('admin.petitions_admin') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Voltar
-                    </a>
-                    <a href="{{ url_for('admin.petition_section_new') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Nova Seção
-                    </a>
-                </div>
-            </div>
-        </div>
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="fas fa-puzzle-piece me-2 text-primary"></i>Seções de Petição
+        </h1>
+        <p class="text-muted mb-0">Gerencie as seções disponíveis para criação de petições dinâmicas</p>
     </div>
+    <div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        <a href="{{ url_for('admin.petition_section_new') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nova Seção
+        </a>
+    </div>
+</div>
 
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="petitionSectionsTable">
-                            <thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th>Slug</th>
-                                    <th>Ícone</th>
-                                    <th>Campos</th>
-                                    <th>Ativo</th>
-                                    <th>Usado em</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for section in sections %}
-                                <tr>
-                                    <td>
-                                        <i class="fas {{ section.icon }} text-{{ section.color }} mr-2"></i>
-                                        {{ section.name }}
-                                        {% if section.description %}
-                                        <br><small class="text-muted">{{ section.description }}</small>
-                                        {% endif %}
-                                    </td>
-                                    <td><code>{{ section.slug }}</code></td>
-                                    <td>
-                                        <i class="fas {{ section.icon }} text-{{ section.color }}"></i>
-                                        <code class="ml-1">{{ section.icon }}</code>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-info">{{ (section.get_fields() or [])|length }} campos</span>
-                                    </td>
-                                    <td>
-                                        {% if section.is_active %}
-                                            <span class="badge badge-success">Ativo</span>
-                                        {% else %}
-                                            <span class="badge badge-danger">Inativo</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {{ section.type_sections.count() }} tipos
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ url_for('admin.petition_section_edit', section_id=section.id) }}"
-                                               class="btn btn-sm btn-outline-secondary">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <form method="post"
-                                                  action="{{ url_for('admin.petition_section_delete', section_id=section.id) }}"
-                                                  class="d-inline"
-                                                  onsubmit="return confirm('Tem certeza que deseja excluir esta seção?')">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+<div class="card shadow">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="petitionSectionsTable">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Slug</th>
+                        <th>Ícone</th>
+                        <th>Campos</th>
+                        <th>Ativo</th>
+                        <th>Usado em</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for section in sections %}
+                    <tr>
+                        <td>
+                            <i class="fas {{ section.icon }} text-{{ section.color }} mr-2"></i>
+                            {{ section.name }}
+                            {% if section.description %}
+                            <br><small class="text-muted">{{ section.description }}</small>
+                            {% endif %}
+                        </td>
+                        <td><code>{{ section.slug }}</code></td>
+                        <td>
+                            <i class="fas {{ section.icon }} text-{{ section.color }}"></i>
+                            <code class="ml-1">{{ section.icon }}</code>
+                        </td>
+                        <td>
+                            <span class="badge badge-info">{{ (section.get_fields() or [])|length }} campos</span>
+                        </td>
+                        <td>
+                            {% if section.is_active %}
+                            <span class="badge badge-success">Ativo</span>
+                            {% else %}
+                            <span class="badge badge-danger">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ section.type_sections.count() }} tipos
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('admin.petition_section_edit', section_id=section.id) }}"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="post"
+                                      action="{{ url_for('admin.petition_section_delete', section_id=section.id) }}"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Tem certeza que deseja excluir esta seção?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
+console.log('🔍 [SECTIONS] Iniciando carregamento do JavaScript da página de seções');
+
 $(document).ready(function() {
-    $('#petitionSectionsTable').DataTable({
-        "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
-        },
-        "order": [[0, "asc"]],
-        "pageLength": 25
-    });
+    console.log('✅ [SECTIONS] Document ready - inicializando DataTable');
+
+    try {
+        $('#petitionSectionsTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+            },
+            "order": [[0, "asc"]],
+            "pageLength": 25
+        });
+        console.log('✅ [SECTIONS] DataTable inicializado com sucesso');
+    } catch (error) {
+        console.error('❌ [SECTIONS] Erro ao inicializar DataTable:', error);
+    }
 });
+
+// Verificar se a tabela existe
+if ($('#petitionSectionsTable').length === 0) {
+    console.error('❌ [SECTIONS] Tabela petitionSectionsTable não encontrada no DOM');
+} else {
+    console.log('✅ [SECTIONS] Tabela petitionSectionsTable encontrada no DOM');
+    const rowCount = $('#petitionSectionsTable tbody tr').length;
+    console.log(`📊 [SECTIONS] Tabela contém ${rowCount} linhas de dados`);
+}
+
+console.log('🎯 [SECTIONS] JavaScript da página de seções carregado completamente');
 </script>
 {% endblock %}

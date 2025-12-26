@@ -454,34 +454,12 @@ const PetitioAI = {
     },
 
     showToast(message, type = 'info') {
-        // Cria container de toasts se não existir
-        let container = document.querySelector('.toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-            document.body.appendChild(container);
+        // DELEGADO PARA SISTEMA UNIFICADO DE NOTIFICAÇÕES
+        if (window.showNotification) {
+            window.showNotification(message, type);
+        } else {
+            console.log('Notification system not ready:', message, type);
         }
-
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-bg-${type} border-0`;
-        toast.setAttribute('role', 'alert');
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="bi ${type === 'success' ? 'bi-check-circle' : type === 'danger' ? 'bi-x-circle' : 'bi-info-circle'} me-2"></i>
-                    ${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        `;
-
-        container.appendChild(toast);
-        const bsToast = new bootstrap.Toast(toast, { delay: 4000 });
-        bsToast.show();
-
-        toast.addEventListener('hidden.bs.toast', () => {
-            toast.remove();
-        });
     }
 };
 

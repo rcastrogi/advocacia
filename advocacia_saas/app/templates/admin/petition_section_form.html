@@ -1,11 +1,8 @@
 {% extends "admin/base_admin.html" %}
 
-{% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">{{ title }}</h1>
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ title }}</h1>
                 <a href="{{ url_for('admin.petition_sections_list') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </a>
@@ -34,8 +31,8 @@
                                     <label for="slug">Slug *</label>
                                     <input type="text" class="form-control" id="slug" name="slug"
                                            value="{{ section.slug if section else '' }}" required
-                                           pattern="[a-z0-9-]+" title="Apenas letras minúsculas, números e hífens">
-                                    <small class="form-text text-muted">Usado internamente. Ex: qualificacao-partes</small>
+                                           pattern="[a-z0-9-]+" title="Apenas letras minúsculas, números e hífens" readonly>
+                                    <small class="form-text text-muted">Gerado automaticamente a partir do nome</small>
                                 </div>
                             </div>
                         </div>
@@ -80,31 +77,27 @@
                         </div>
                         {% endif %}
 
-                        <div class="form-group">
-                            <label for="fields_schema">Schema dos Campos (JSON) *</label>
-                            <textarea class="form-control" id="fields_schema" name="fields_schema" rows="15" required
-                                      placeholder='[
-  {
-    "name": "autor_nome",
-    "label": "Nome do Autor",
-    "type": "text",
-    "required": true,
-    "size": "col-md-6",
-    "placeholder": "Nome completo do autor"
-  },
-  {
-    "name": "autor_qualificacao",
-    "label": "Qualificação do Autor",
-    "type": "textarea",
-    "required": true,
-    "size": "col-md-6",
-    "placeholder": "CPF, RG, endereço, etc."
-  }
-]'>{{ section.fields_schema|tojson(indent=2) if section else '' }}</textarea>
-                            <small class="form-text text-muted">
-                                Defina os campos desta seção em formato JSON. Cada campo deve ter: name, label, type, required, size, placeholder.
-                                Tipos suportados: text, textarea, select, date, number.
-                            </small>
+                        <!-- Campos da Seção (Interface Visual) -->
+                        <div class="card mt-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Campos da Seção</h6>
+                                <button type="button" class="btn btn-sm btn-success" id="addFieldBtn">
+                                    <i class="fas fa-plus"></i> Adicionar Campo
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="fieldsContainer">
+                                    <!-- Campos serão adicionados dinamicamente aqui -->
+                                </div>
+
+                                <!-- Campo oculto para armazenar o JSON -->
+                                <input type="hidden" id="fields_schema" name="fields_schema" value="">
+                                
+                                <!-- Script para inicializar dados JSON de forma segura -->
+                                <script>
+                                window.sectionFieldsData = {{ (section.fields_schema if section and section.fields_schema else [])|tojson|safe }};
+                                </script>
+                            </div>
                         </div>
 
                         <div class="form-group mt-4">
@@ -132,94 +125,459 @@
                     <div id="fieldsPreview">
                         <div class="text-center text-muted">
                             <i class="fas fa-eye fa-2x mb-2"></i>
-                            <p>Preview será mostrado aqui quando você editar o JSON dos campos.</p>
+                            <p>Preview será mostrado aqui quando você adicionar campos.</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
 <script>
-// Auto-gerar slug a partir do nome
-$('#name').on('input', function() {
-    const name = $(this).val();
-    const slug = name.toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
-        .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
-        .trim()
-        .replace(/\s+/g, '-') // Substitui espaços por hífens
-        .replace(/-+/g, '-'); // Remove hífens duplicados
+// Função para verificar se jQuery está disponível
+function waitForJQuery(callback, maxAttempts = 50) {
+    let attempts = 0;
 
-    $('#slug').val(slug);
-});
-
-// Preview dos campos
-function updatePreview() {
-    const jsonText = $('#fields_schema').val();
-    const previewDiv = $('#fieldsPreview');
-
-    if (!jsonText.trim()) {
-        previewDiv.html('<div class="text-center text-muted"><i class="fas fa-eye fa-2x mb-2"></i><p>Preview será mostrado aqui quando você editar o JSON dos campos.</p></div>');
-        return;
+    function checkJQuery() {
+        attempts++;
+        if (typeof jQuery !== 'undefined' && typeof $ !== 'undefined') {
+            console.log('✅ [SECTION_FORM] jQuery carregado após', attempts, 'tentativas');
+            callback();
+        } else if (attempts < maxAttempts) {
+            setTimeout(checkJQuery, 100);
+        } else {
+            console.error('❌ [SECTION_FORM] jQuery não pôde ser carregado após', maxAttempts, 'tentativas');
+        }
     }
 
-    try {
-        const fields = JSON.parse(jsonText);
-        let html = '<div class="row">';
+    checkJQuery();
+}
 
-        fields.forEach(field => {
-            const size = field.size || 'col-md-6';
-            const required = field.required ? '<span class="badge badge-danger ml-1">Obrigatório</span>' : '';
-            const placeholder = field.placeholder || '';
+// Inicializar quando jQuery estiver disponível
+waitForJQuery(function() {
+    console.log('🔍 [SECTION_FORM] jQuery disponível, inicializando formulário de seção');
 
-            html += `
-                <div class="${size} mb-3">
-                    <label class="form-label">${field.label || field.name}${required}</label>
-                    ${getFieldHtml(field)}
-                    ${placeholder ? `<small class="form-text text-muted">${placeholder}</small>` : ''}
+    // Preview dos campos
+    function updatePreview() {
+        const jsonText = $('#fields_schema').val();
+        const previewDiv = $('#fieldsPreview');
+
+        if (!jsonText || jsonText === '[]') {
+            previewDiv.html('<div class="text-center text-muted"><i class="fas fa-eye fa-2x mb-2"></i><p>Preview será mostrado aqui quando você adicionar campos.</p></div>');
+            return;
+        }
+
+        try {
+            const fields = JSON.parse(jsonText);
+            if (fields.length === 0) {
+                previewDiv.html('<div class="text-center text-muted"><i class="fas fa-eye fa-2x mb-2"></i><p>Preview será mostrado aqui quando você adicionar campos.</p></div>');
+                return;
+            }
+
+            let html = '<div class="row">';
+
+            fields.forEach(field => {
+                const size = field.size || 'col-md-6';
+                const required = field.required ? '<span class="badge badge-danger ml-1">Obrigatório</span>' : '';
+                const placeholder = field.placeholder || '';
+
+                html += `
+                    <div class="${size} mb-3">
+                        <label class="form-label">${field.label || field.name}${required}</label>
+                        ${getFieldHtml(field)}
+                        ${placeholder ? `<small class="form-text text-muted">${placeholder}</small>` : ''}
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            previewDiv.html(html);
+        } catch (e) {
+            previewDiv.html('<div class="alert alert-danger">Erro nos campos: ' + e.message + '</div>');
+        }
+    }
+
+    function getFieldHtml(field) {
+        const name = field.name || '';
+        const type = field.type || 'text';
+        const options = field.options || [];
+
+        switch (type) {
+            case 'textarea':
+                return `<textarea class="form-control" name="${name}" rows="3" readonly></textarea>`;
+            case 'select':
+                let selectHtml = `<select class="form-control" name="${name}" disabled>`;
+                selectHtml += '<option value="">Selecione...</option>';
+                options.forEach(option => {
+                    selectHtml += `<option value="${option.value || option}">${option.label || option}</option>`;
+                });
+                selectHtml += '</select>';
+                return selectHtml;
+            case 'email':
+                return `<input type="email" class="form-control" name="${name}" readonly>`;
+            case 'number':
+                return `<input type="number" class="form-control" name="${name}" readonly>`;
+            case 'date':
+                return `<input type="date" class="form-control" name="${name}" readonly>`;
+            case 'tel':
+                return `<input type="tel" class="form-control" name="${name}" readonly>`;
+            default:
+                return `<input type="text" class="form-control" name="${name}" readonly>`;
+        }
+    }
+
+    // Gerenciamento de Campos
+    let fieldCounter = 0;
+
+    function createFieldHtml(fieldData = null, index = null) {
+        const fieldId = index !== null ? index : fieldCounter++;
+        const field = fieldData || {
+            name: '',
+            label: '',
+            type: 'text',
+            required: false,
+            size: 'col-md-6',
+            placeholder: '',
+            options: []
+        };
+
+        // Garantir que todos os campos obrigatórios tenham valores válidos
+        const safeField = {
+            name: (field.name || '').toString(),
+            label: (field.label || '').toString(),
+            type: ['text', 'textarea', 'select', 'email', 'number', 'date', 'tel'].includes(field.type) ? field.type : 'text',
+            required: Boolean(field.required),
+            size: ['col-md-3', 'col-md-4', 'col-md-6', 'col-md-8', 'col-md-12'].includes(field.size) ? field.size : 'col-md-6',
+            placeholder: (field.placeholder || '').toString(),
+            options: Array.isArray(field.options) ? field.options : []
+        };
+
+        return `
+            <div class="field-item card mb-3" data-field-id="${fieldId}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0">Campo ${fieldId + 1}</h6>
+                    <button type="button" class="btn btn-sm btn-danger remove-field-btn">
+                        <i class="fas fa-trash"></i> Remover
+                    </button>
                 </div>
-            `;
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Nome Interno *</label>
+                                <input type="text" class="form-control field-name" value="${safeField.name}" placeholder="ex: autor_nome" required>
+                                <small class="form-text text-muted">Usado no código, sem espaços ou acentos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Rótulo *</label>
+                                <input type="text" class="form-control field-label" value="${safeField.label}" placeholder="ex: Nome do Autor" required>
+                                <small class="form-text text-muted">Texto que aparece para o usuário</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Tipo *</label>
+                                <select class="form-control field-type" required>
+                                    <option value="text" ${safeField.type === 'text' ? 'selected' : ''}>Texto</option>
+                                    <option value="textarea" ${safeField.type === 'textarea' ? 'selected' : ''}>Área de Texto</option>
+                                    <option value="select" ${safeField.type === 'select' ? 'selected' : ''}>Lista de Opções</option>
+                                    <option value="email" ${safeField.type === 'email' ? 'selected' : ''}>Email</option>
+                                    <option value="number" ${safeField.type === 'number' ? 'selected' : ''}>Número</option>
+                                    <option value="date" ${safeField.type === 'date' ? 'selected' : ''}>Data</option>
+                                    <option value="tel" ${safeField.type === 'tel' ? 'selected' : ''}>Telefone</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Largura</label>
+                                <select class="form-control field-size">
+                                    <option value="col-md-3" ${safeField.size === 'col-md-3' ? 'selected' : ''}>Pequena (25%)</option>
+                                    <option value="col-md-4" ${safeField.size === 'col-md-4' ? 'selected' : ''}>Média (33%)</option>
+                                    <option value="col-md-6" ${safeField.size === 'col-md-6' ? 'selected' : ''}>Normal (50%)</option>
+                                    <option value="col-md-8" ${safeField.size === 'col-md-8' ? 'selected' : ''}>Grande (67%)</option>
+                                    <option value="col-md-12" ${safeField.size === 'col-md-12' ? 'selected' : ''}>Completa (100%)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Validação</label>
+                                <div class="form-check">
+                                    <input class="form-check-input field-required" type="checkbox" ${safeField.required ? 'checked' : ''}>
+                                    <label class="form-check-label">Obrigatório</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Texto de Exemplo</label>
+                        <input type="text" class="form-control field-placeholder" value="${safeField.placeholder}" placeholder="ex: Digite o nome completo">
+                    </div>
+
+                    <!-- Opções para campos select -->
+                    <div class="options-container" style="display: ${safeField.type === 'select' ? 'block' : 'none'};">
+                        <label>Opções da Lista</label>
+                        <div class="options-list mb-2">
+                            ${safeField.options.map((option, optIndex) => `
+                                <div class="input-group mb-1 option-item">
+                                    <input type="text" class="form-control option-value" value="${option.value || option}" placeholder="Valor">
+                                    <input type="text" class="form-control option-label" value="${option.label || option}" placeholder="Rótulo">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-danger remove-option-btn" type="button">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary add-option-btn">
+                            <i class="fas fa-plus"></i> Adicionar Opção
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function loadExistingFields() {
+        // Usar dados da variável global em vez do campo hidden
+        const fields = window.sectionFieldsData || [];
+        
+        if (!Array.isArray(fields) || fields.length === 0) {
+            console.log('ℹ️ [SECTION_FORM] Nenhum campo existente para carregar');
+            $('#fields_schema').val('[]');
+            return;
+        }
+
+        try {
+            const container = $('#fieldsContainer');
+
+            fields.forEach((field, index) => {
+                const fieldHtml = createFieldHtml(field, index);
+                container.append(fieldHtml);
+            });
+
+            fieldCounter = Math.max(fieldCounter, fields.length);
+            updatePreview();
+            console.log('✅ [SECTION_FORM] Carregados', fields.length, 'campos existentes');
+        } catch (e) {
+            console.error('❌ [SECTION_FORM] Erro ao carregar campos existentes:', e);
+            $('#fields_schema').val('[]');
+        }
+    }
+
+    function updateFieldsSchema() {
+        const fields = [];
+        $('.field-item').each(function() {
+            const $field = $(this);
+            const name = $field.find('.field-name').val();
+            const label = $field.find('.field-label').val();
+            const type = $field.find('.field-type').val();
+
+            // Validar campos obrigatórios
+            if (!name || !label || !type) {
+                console.warn('⚠️ [SECTION_FORM] Campo com dados incompletos ignorado:', { name, label, type });
+                return; // Pula este campo
+            }
+
+            const field = {
+                name: name,
+                label: label,
+                type: type,
+                required: $field.find('.field-required').is(':checked'),
+                size: $field.find('.field-size').val() || 'col-md-6',
+                placeholder: $field.find('.field-placeholder').val() || ''
+            };
+
+            // Adicionar opções se for select
+            if (type === 'select') {
+                field.options = [];
+                $field.find('.option-item').each(function() {
+                    const value = $(this).find('.option-value').val();
+                    const label = $(this).find('.option-label').val();
+                    if (value || label) {
+                        field.options.push({ value: value, label: label });
+                    }
+                });
+            }
+
+            fields.push(field);
         });
 
-        html += '</div>';
-        previewDiv.html(html);
-    } catch (e) {
-        previewDiv.html('<div class="alert alert-danger">Erro no JSON: ' + e.message + '</div>');
+        try {
+            const jsonString = JSON.stringify(fields, null, 2);
+            $('#fields_schema').val(jsonString);
+            updatePreview();
+        } catch (e) {
+            console.error('❌ [SECTION_FORM] Erro ao serializar campos para JSON:', e);
+            // Em caso de erro, salvar array vazio
+            $('#fields_schema').val('[]');
+        }
     }
-}
 
-function getFieldHtml(field) {
-    const name = field.name || '';
-    const type = field.type || 'text';
-    const options = field.options || [];
+    // Auto-gerar slug a partir do nome
+    $('#name').on('input', function() {
+        const name = $(this).val();
+        const slug = name.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
+            .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
+            .trim()
+            .replace(/\s+/g, '-') // Substitui espaços por hífens
+            .replace(/-+/g, '-'); // Remove hífens duplicados
 
-    switch (type) {
-        case 'textarea':
-            return `<textarea class="form-control" name="${name}" rows="3"></textarea>`;
-        case 'select':
-            let selectHtml = `<select class="form-control" name="${name}">`;
-            selectHtml += '<option value="">Selecione...</option>';
-            options.forEach(option => {
-                selectHtml += `<option value="${option.value || option}">${option.label || option}</option>`;
-            });
-            selectHtml += '</select>';
-            return selectHtml;
-        case 'date':
-            return `<input type="date" class="form-control" name="${name}">`;
-        case 'number':
-            return `<input type="number" class="form-control" name="${name}">`;
-        default:
-            return `<input type="text" class="form-control" name="${name}">`;
+        $('#slug').val(slug);
+    });
+
+    // Carregar campos existentes
+    loadExistingFields();
+
+    // Adicionar novo campo
+    $('#addFieldBtn').on('click', function() {
+        const fieldHtml = createFieldHtml();
+        $('#fieldsContainer').append(fieldHtml);
+        updateFieldsSchema();
+    });
+
+    // Remover campo
+    $(document).on('click', '.remove-field-btn', function() {
+        $(this).closest('.field-item').remove();
+        updateFieldsSchema();
+    });
+
+    // Mostrar/ocultar opções quando tipo mudar
+    $(document).on('change', '.field-type', function() {
+        const $field = $(this).closest('.field-item');
+        const type = $(this).val();
+        const $optionsContainer = $field.find('.options-container');
+
+        if (type === 'select') {
+            $optionsContainer.show();
+        } else {
+            $optionsContainer.hide();
+        }
+        updateFieldsSchema();
+    });
+
+    // Adicionar opção
+    $(document).on('click', '.add-option-btn', function() {
+        const $optionsList = $(this).siblings('.options-list');
+        const optionHtml = `
+            <div class="input-group mb-1 option-item">
+                <input type="text" class="form-control option-value" placeholder="Valor">
+                <input type="text" class="form-control option-label" placeholder="Rótulo">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-danger remove-option-btn" type="button">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        $optionsList.append(optionHtml);
+        updateFieldsSchema();
+    });
+
+    // Remover opção
+    $(document).on('click', '.remove-option-btn', function() {
+        $(this).closest('.option-item').remove();
+        updateFieldsSchema();
+    });
+
+    // Atualizar schema quando campos mudarem
+    $(document).on('input change', '.field-name, .field-label, .field-type, .field-size, .field-required, .field-placeholder, .option-value, .option-label', function() {
+        updateFieldsSchema();
+    });
+
+    // Auto-gerar slug a partir do nome
+    $('#name').on('input', function() {
+        const name = $(this).val();
+        const slug = name.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
+            .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
+            .trim()
+            .replace(/\s+/g, '-') // Substitui espaços por hífens
+            .replace(/-+/g, '-'); // Remove hífens duplicados
+
+        $('#slug').val(slug);
+    });
+
+    // Carregar campos existentes
+    loadExistingFields();
+
+    // Adicionar novo campo
+    $('#addFieldBtn').on('click', function() {
+        const fieldHtml = createFieldHtml();
+        $('#fieldsContainer').append(fieldHtml);
+        updateFieldsSchema();
+    });
+
+    // Remover campo
+    $(document).on('click', '.remove-field-btn', function() {
+        $(this).closest('.field-item').remove();
+        updateFieldsSchema();
+    });
+
+    // Mostrar/ocultar opções quando tipo mudar
+    $(document).on('change', '.field-type', function() {
+        const $field = $(this).closest('.field-item');
+        const type = $(this).val();
+        const $optionsContainer = $field.find('.options-container');
+
+        if (type === 'select') {
+            $optionsContainer.show();
+        } else {
+            $optionsContainer.hide();
+        }
+        updateFieldsSchema();
+    });
+
+    // Adicionar opção
+    $(document).on('click', '.add-option-btn', function() {
+        const $optionsList = $(this).siblings('.options-list');
+        const optionHtml = `
+            <div class="input-group mb-1 option-item">
+                <input type="text" class="form-control option-value" placeholder="Valor">
+                <input type="text" class="form-control option-label" placeholder="Rótulo">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-danger remove-option-btn" type="button">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        $optionsList.append(optionHtml);
+        updateFieldsSchema();
+    });
+
+    // Remover opção
+    $(document).on('click', '.remove-option-btn', function() {
+        $(this).closest('.option-item').remove();
+        updateFieldsSchema();
+    });
+
+    // Função para gerar slug automaticamente
+    function generateSlug(text) {
+        return text
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
     }
-}
 
-$('#fields_schema').on('input', updatePreview);
+    // Gerar slug automaticamente quando o nome muda
+    $('#name').on('input', function() {
+        const name = $(this).val();
+        const slug = generateSlug(name);
+        $('#slug').val(slug);
+    });
 
-// Inicializar preview
-$(document).ready(function() {
-    updatePreview();
+    console.log('🎯 [SECTION_FORM] Formulário de seção carregado completamente');
 });
 </script>
 {% endblock %}

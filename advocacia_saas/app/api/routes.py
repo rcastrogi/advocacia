@@ -275,3 +275,31 @@ def delete_client(client_id):
 
         db.session.rollback()
         return jsonify({"error": f"Erro ao deletar cliente: {str(e)}"}), 500
+
+
+@bp.route("/flash-messages")
+def get_flash_messages():
+    """Get flash messages for the current session"""
+    from flask import get_flashed_messages
+
+    try:
+        messages = get_flashed_messages(with_categories=True)
+        formatted_messages = []
+
+        for category, message in messages:
+            formatted_messages.append(
+                {
+                    "type": "error"
+                    if category in ["error", "danger"]
+                    else "warning"
+                    if category == "warning"
+                    else "info"
+                    if category == "info"
+                    else "success",
+                    "message": message,
+                }
+            )
+
+        return jsonify(formatted_messages)
+    except Exception as e:
+        return jsonify({"error": f"Erro ao buscar mensagens: {str(e)}"}), 500

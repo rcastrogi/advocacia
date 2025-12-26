@@ -5,6 +5,7 @@ Dashboard completo para gerenciar usuários e métricas da plataforma.
 
 import csv
 import json
+import traceback
 import zipfile
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -45,6 +46,7 @@ from app.models import (
     UserCredits,
     UserPlan,
 )
+from app.utils import generate_unique_slug
 
 
 def _require_admin():
@@ -1985,8 +1987,12 @@ def petitions_admin():
     total_petition_types = PetitionType.query.count()
     active_petition_types = PetitionType.query.filter_by(is_active=True).count()
     dynamic_petition_types = PetitionType.query.filter_by(use_dynamic_form=True).count()
-    total_sections = PetitionSection.query.count()
-    active_sections = PetitionSection.query.filter_by(is_active=True).count()
+    total_sections = PetitionSection.query.filter_by(is_active=True).count()
+
+    # Tipos de petição recentes (últimos 10)
+    recent_petition_types = (
+        PetitionType.query.order_by(PetitionType.created_at.desc()).limit(10).all()
+    )
 
     return render_template(
         "admin/petitions_dashboard.html",
@@ -1995,8 +2001,336 @@ def petitions_admin():
         active_petition_types=active_petition_types,
         dynamic_petition_types=dynamic_petition_types,
         total_sections=total_sections,
-        active_sections=active_sections,
+        recent_petition_types=recent_petition_types,
     )
+
+
+# =============================================================================
+# ROTAS PARA SEÇÕES DE PETIÇÃO
+# =============================================================================
+
+
+@bp.route("/petitions/sections")
+@login_required
+def petition_sections_list():
+    """Lista todas as seções de petição"""
+    current_app.logger.info("🔍 [SECTIONS] Iniciando petition_sections_list")
+    _require_admin()
+    current_app.logger.info("✅ [SECTIONS] Usuário admin autenticado")
+
+    try:
+        sections = PetitionSection.query.order_by(PetitionSection.order).all()
+        current_app.logger.info(f"📊 [SECTIONS] Encontradas {len(sections)} seções no banco")
+
+        for section in sections[:3]:  # Log das primeiras 3 seções
+            current_app.logger.info(f"📋 [SECTIONS] Seção: {section.name} (ID: {section.id}, Ativo: {section.is_active})")
+
+        current_app.logger.info("🎨 [SECTIONS] Renderizando template petition_sections_list.html")
+        return render_template(
+            "admin/petition_sections_list.html",
+            title="Seções de Petição",
+            sections=sections,
+        )
+    except Exception as e:
+        current_app.logger.error(f"❌ [SECTIONS] Erro em petition_sections_list: {str(e)}")
+        current_app.logger.error(f"❌ [SECTIONS] Traceback: {traceback.format_exc()}")
+        raise
+
+
+@bp.route("/petitions/sections/new", methods=["GET", "POST"])
+@login_required
+def petition_section_new():
+    """Cria uma nova seção de petição"""
+    current_app.logger.info("🔍 [SECTIONS] Iniciando petition_section_new")
+    _require_admin()
+    current_app.logger.info("✅ [SECTIONS] Usuário admin autenticado")
+
+    if request.method == "POST":
+        current_app.logger.info("📝 [SECTIONS] Processando POST para nova seção")
+
+        name = request.form.get("name")
+        slug = request.form.get("slug")  # Slug será gerado automaticamente, mas mantemos para compatibilidade
+        description = request.form.get("description")
+        icon = request.form.get("icon", "fa-file-alt")
+        color = request.form.get("color", "primary")
+        order = int(request.form.get("order", 0))
+        is_active = "is_active" in request.form
+        fields_schema_raw = request.form.get("fields_schema", "[]")
+
+        # Gerar slug único baseado no nome
+        slug = generate_unique_slug(name, PetitionSection)
+
+        # Parse do JSON string para objeto Python
+        try:
+            fields_schema = json.loads(fields_schema_raw) if fields_schema_raw else []
+            current_app.logger.info(f"📋 [SECTIONS] Fields Schema parsed successfully: {len(fields_schema)} campos")
+        except json.JSONDecodeError as e:
+            current_app.logger.warning(f"⚠️ [SECTIONS] Erro ao fazer parse do fields_schema JSON: {e}. Usando array vazio.")
+            fields_schema = []
+
+        current_app.logger.info(f"📋 [SECTIONS] Dados recebidos - Nome: {name}, Slug gerado: {slug}, Ícone: {icon}")
+
+        try:
+            # Criar seção
+            section = PetitionSection(
+                name=name,
+                slug=slug,
+                description=description,
+                icon=icon,
+                color=color,
+                order=order,
+                is_active=is_active,
+                fields_schema=fields_schema,
+            )
+
+            db.session.add(section)
+            db.session.commit()
+            current_app.logger.info(f"✅ [SECTIONS] Seção criada com sucesso - ID: {section.id}")
+
+            flash("Seção criada com sucesso!", "success")
+            return redirect(url_for("admin.petition_sections_list"))
+        except Exception as e:
+            current_app.logger.error(f"❌ [SECTIONS] Erro ao criar seção: {str(e)}")
+            current_app.logger.error(f"❌ [SECTIONS] Traceback: {traceback.format_exc()}")
+            db.session.rollback()
+            flash("Erro ao criar seção.", "danger")
+            return redirect(url_for("admin.petition_section_new"))
+
+    current_app.logger.info("🎨 [SECTIONS] Renderizando template petition_section_form.html para nova seção")
+    return render_template(
+        "admin/petition_section_form.html",
+        title="Nova Seção",
+        section=None,
+    )
+
+
+@bp.route("/petitions/sections/<int:section_id>/edit", methods=["GET", "POST"])
+@login_required
+def petition_section_edit(section_id):
+    """Edita uma seção de petição"""
+    current_app.logger.info(f"🔍 [SECTIONS] Iniciando petition_section_edit - ID: {section_id}")
+    _require_admin()
+    current_app.logger.info("✅ [SECTIONS] Usuário admin autenticado")
+
+    try:
+        section = PetitionSection.query.get_or_404(section_id)
+        current_app.logger.info(f"📋 [SECTIONS] Seção encontrada: {section.name} (ID: {section.id})")
+    except Exception as e:
+        current_app.logger.error(f"❌ [SECTIONS] Seção não encontrada - ID: {section_id}, Erro: {str(e)}")
+        raise
+
+    if request.method == "POST":
+        current_app.logger.info(f"📝 [SECTIONS] Processando POST para editar seção {section_id}")
+
+        try:
+            name = request.form.get("name")
+            description = request.form.get("description")
+            icon = request.form.get("icon", "fa-file-alt")
+            color = request.form.get("color", "primary")
+            order = int(request.form.get("order", 0))
+            is_active = "is_active" in request.form
+
+            # Gerar slug único baseado no nome, considerando o slug atual
+            new_slug = generate_unique_slug(name, PetitionSection, section.slug)
+
+            section.name = name
+            section.slug = new_slug
+            section.description = description
+            section.icon = icon
+            section.color = color
+            section.order = order
+            section.is_active = is_active
+
+            # Processar fields_schema
+            fields_schema_raw = request.form.get("fields_schema", "[]")
+            try:
+                section.fields_schema = json.loads(fields_schema_raw) if fields_schema_raw else []
+                current_app.logger.info(f"📋 [SECTIONS] Fields Schema atualizado: {len(section.fields_schema)} campos")
+            except json.JSONDecodeError as e:
+                current_app.logger.warning(f"⚠️ [SECTIONS] Erro ao fazer parse do fields_schema JSON: {e}. Mantendo valor anterior.")
+                # Não alterar o fields_schema se houver erro de parse
+
+            db.session.commit()
+            current_app.logger.info(f"✅ [SECTIONS] Seção atualizada com sucesso - ID: {section_id}")
+
+            flash("Seção atualizada com sucesso!", "success")
+            return redirect(url_for("admin.petition_sections_list"))
+        except Exception as e:
+            current_app.logger.error(f"❌ [SECTIONS] Erro ao atualizar seção {section_id}: {str(e)}")
+            current_app.logger.error(f"❌ [SECTIONS] Traceback: {traceback.format_exc()}")
+            db.session.rollback()
+            flash("Erro ao atualizar seção.", "danger")
+            return redirect(url_for("admin.petition_section_edit", section_id=section_id))
+
+    current_app.logger.info(f"🎨 [SECTIONS] Renderizando template para editar seção {section_id}")
+    return render_template(
+        "admin/petition_section_form.html",
+        title="Editar Seção",
+        section=section,
+    )
+
+
+@bp.route("/petitions/sections/<int:section_id>/delete", methods=["POST"])
+@login_required
+def petition_section_delete(section_id):
+    """Exclui uma seção de petição"""
+    current_app.logger.info(f"🔍 [SECTIONS] Iniciando petition_section_delete - ID: {section_id}")
+    _require_admin()
+    current_app.logger.info("✅ [SECTIONS] Usuário admin autenticado")
+
+    try:
+        section = PetitionSection.query.get_or_404(section_id)
+        current_app.logger.info(f"📋 [SECTIONS] Seção encontrada para exclusão: {section.name} (ID: {section.id})")
+    except Exception as e:
+        current_app.logger.error(f"❌ [SECTIONS] Seção não encontrada para exclusão - ID: {section_id}, Erro: {str(e)}")
+        raise
+
+    try:
+        # Verificar se a seção está sendo usada
+        usage_count = section.type_sections.count()
+        current_app.logger.info(f"🔍 [SECTIONS] Verificando uso da seção - Usada em {usage_count} tipos de petição")
+
+        if usage_count > 0:
+            current_app.logger.warning(f"⚠️ [SECTIONS] Tentativa de excluir seção em uso - ID: {section_id}, Usos: {usage_count}")
+            flash(
+                "Não é possível excluir uma seção que está sendo usada em tipos de petição.",
+                "danger",
+            )
+            return redirect(url_for("admin.petition_sections_list"))
+
+        db.session.delete(section)
+        db.session.commit()
+        current_app.logger.info(f"✅ [SECTIONS] Seção excluída com sucesso - ID: {section_id}")
+
+        flash("Seção excluída com sucesso!", "success")
+        return redirect(url_for("admin.petition_sections_list"))
+    except Exception as e:
+        current_app.logger.error(f"❌ [SECTIONS] Erro ao excluir seção {section_id}: {str(e)}")
+        current_app.logger.error(f"❌ [SECTIONS] Traceback: {traceback.format_exc()}")
+        db.session.rollback()
+        flash("Erro ao excluir seção.", "danger")
+        return redirect(url_for("admin.petition_sections_list"))
+
+
+@bp.route("/petitions/types/<int:type_id>/sections", methods=["GET", "POST"])
+@login_required
+def petition_type_sections(type_id):
+    """Gerencia as seções de um tipo de petição"""
+    _require_admin()
+
+    petition_type = PetitionType.query.get_or_404(type_id)
+
+    if request.method == "POST":
+        # Salvar configurações das seções
+        section_ids = request.form.getlist("section_id[]")
+        section_orders = request.form.getlist("section_order[]")
+        section_required = request.form.getlist("section_required[]")
+        section_expanded = request.form.getlist("section_expanded[]")
+
+        # Atualizar configurações para cada seção
+        for i, section_id in enumerate(section_ids):
+            type_section = PetitionTypeSection.query.filter_by(
+                petition_type_id=type_id, section_id=int(section_id)
+            ).first()
+
+            if type_section:
+                type_section.order = int(section_orders[i]) if i < len(section_orders) else type_section.order
+                type_section.is_required = str(section_id) in section_required
+                type_section.is_expanded = str(section_id) in section_expanded
+
+        db.session.commit()
+        flash("Configurações das seções salvas com sucesso!", "success")
+        return redirect(url_for("admin.petition_type_sections", type_id=type_id))
+
+    # GET: mostrar página
+    all_sections = (
+        PetitionSection.query.filter_by(is_active=True)
+        .order_by(PetitionSection.order)
+        .all()
+    )
+
+    # Buscar seções já configuradas para este tipo
+    configured_sections = []
+    type_sections = (
+        PetitionTypeSection.query
+        .filter_by(petition_type_id=type_id)
+        .order_by(PetitionTypeSection.order)
+        .all()
+    )
+
+    for type_section in type_sections:
+        configured_sections.append((type_section, type_section.section))
+
+    # Seções disponíveis (não configuradas ainda)
+    configured_ids = [ts.section_id for ts in type_sections]
+    available_sections = [s for s in all_sections if s.id not in configured_ids]
+
+    return render_template(
+        "admin/petition_type_sections.html",
+        title=f"Seções - {petition_type.name}",
+        petition_type=petition_type,
+        configured_sections=configured_sections,
+        available_sections=available_sections,
+    )
+
+
+@bp.route("/petitions/types/<int:type_id>/sections/add", methods=["POST"])
+@login_required
+def petition_type_section_add(type_id):
+    """Adiciona uma seção a um tipo de petição"""
+    _require_admin()
+
+    petition_type = PetitionType.query.get_or_404(type_id)
+    section_id = request.form.get("section_id", type=int)
+
+    if section_id:
+        section = PetitionSection.query.get_or_404(section_id)
+
+        # Verificar se já existe
+        existing = PetitionTypeSection.query.filter_by(
+            petition_type_id=type_id, section_id=section_id
+        ).first()
+
+        if not existing:
+            # Pegar a maior ordem atual
+            max_order = (
+                db.session.query(db.func.max(PetitionTypeSection.order))
+                .filter_by(petition_type_id=type_id)
+                .scalar()
+                or 0
+            )
+
+            type_section = PetitionTypeSection(
+                petition_type_id=type_id,
+                section_id=section_id,
+                order=max_order + 1,
+            )
+
+            db.session.add(type_section)
+            db.session.commit()
+
+            flash(f"Seção '{section.name}' adicionada com sucesso!", "success")
+
+    return redirect(url_for("admin.petition_type_sections", type_id=type_id))
+
+
+@bp.route(
+    "/petitions/types/<int:type_id>/sections/<int:section_id>/remove", methods=["POST"]
+)
+@login_required
+def petition_type_section_remove(type_id, section_id):
+    """Remove uma seção de um tipo de petição"""
+    _require_admin()
+
+    type_section = PetitionTypeSection.query.filter_by(
+        petition_type_id=type_id, section_id=section_id
+    ).first_or_404()
+
+    db.session.delete(type_section)
+    db.session.commit()
+
+    flash("Seção removida com sucesso!", "success")
+    return redirect(url_for("admin.petition_type_sections", type_id=type_id))
 
 
 @bp.route("/petitions/types")
@@ -2022,7 +2356,7 @@ def petition_type_new():
 
     if request.method == "POST":
         name = request.form.get("name")
-        slug = request.form.get("slug")
+        slug = request.form.get("slug")  # Slug será gerado automaticamente, mas mantemos para compatibilidade
         description = request.form.get("description")
         category = request.form.get("category", "civel")
         icon = request.form.get("icon", "fa-file-alt")
@@ -2031,10 +2365,8 @@ def petition_type_new():
         base_price = request.form.get("base_price", "0.00")
         use_dynamic_form = request.form.get("use_dynamic_form") == "on"
 
-        # Validar slug único
-        if PetitionType.query.filter_by(slug=slug).first():
-            flash("Slug já existe. Escolha outro.", "danger")
-            return redirect(request.url)
+        # Gerar slug único baseado no nome
+        slug = generate_unique_slug(name, PetitionType)
 
         petition_type = PetitionType(
             name=name,
@@ -2068,16 +2400,29 @@ def petition_type_edit(type_id):
     petition_type = PetitionType.query.get_or_404(type_id)
 
     if request.method == "POST":
-        petition_type.name = request.form.get("name")
-        petition_type.slug = request.form.get("slug")
-        petition_type.description = request.form.get("description")
-        petition_type.category = request.form.get("category", "civel")
-        petition_type.icon = request.form.get("icon", "fa-file-alt")
-        petition_type.color = request.form.get("color", "primary")
-        petition_type.is_billable = request.form.get("is_billable") == "on"
-        petition_type.base_price = Decimal(request.form.get("base_price", "0.00"))
-        petition_type.use_dynamic_form = request.form.get("use_dynamic_form") == "on"
-        petition_type.is_active = request.form.get("is_active") == "on"
+        name = request.form.get("name")
+        description = request.form.get("description")
+        category = request.form.get("category", "civel")
+        icon = request.form.get("icon", "fa-file-alt")
+        color = request.form.get("color", "primary")
+        is_billable = request.form.get("is_billable") == "on"
+        base_price = Decimal(request.form.get("base_price", "0.00"))
+        use_dynamic_form = request.form.get("use_dynamic_form") == "on"
+        is_active = request.form.get("is_active") == "on"
+
+        # Gerar slug único baseado no nome, considerando o slug atual
+        new_slug = generate_unique_slug(name, PetitionType, petition_type.slug)
+
+        petition_type.name = name
+        petition_type.slug = new_slug
+        petition_type.description = description
+        petition_type.category = category
+        petition_type.icon = icon
+        petition_type.color = color
+        petition_type.is_billable = is_billable
+        petition_type.base_price = base_price
+        petition_type.use_dynamic_form = use_dynamic_form
+        petition_type.is_active = is_active
 
         # Validar slug único (exceto para o próprio)
         existing = PetitionType.query.filter_by(slug=petition_type.slug).first()
@@ -2118,245 +2463,6 @@ def petition_type_delete(type_id):
 
     flash(f"Tipo de petição '{petition_type.name}' excluído!", "success")
     return redirect(url_for("admin.petition_types_list"))
-
-
-@bp.route("/petitions/types/<int:type_id>/sections", methods=["GET", "POST"])
-@login_required
-def petition_type_sections(type_id):
-    """Gerenciar seções de um tipo de petição"""
-    _require_admin()
-
-    petition_type = PetitionType.query.get_or_404(type_id)
-
-    if request.method == "POST":
-        # Atualizar ordem das seções
-        section_orders = request.form.getlist("section_order[]")
-        section_required = request.form.getlist("section_required[]")
-        section_expanded = request.form.getlist("section_expanded[]")
-
-        for i, section_id in enumerate(request.form.getlist("section_id[]")):
-            config = PetitionTypeSection.query.filter_by(
-                petition_type_id=type_id, section_id=int(section_id)
-            ).first()
-
-            if config:
-                config.order = int(section_orders[i]) if i < len(section_orders) else 0
-                config.is_required = str(section_id) in section_required
-                config.is_expanded = str(section_id) in section_expanded
-
-        db.session.commit()
-        flash("Configuração das seções atualizada!", "success")
-        return redirect(request.url)
-
-    # Buscar seções disponíveis
-    available_sections = (
-        PetitionSection.query.filter_by(is_active=True)
-        .order_by(PetitionSection.name)
-        .all()
-    )
-
-    # Buscar seções já configuradas para este tipo
-    configured_sections = (
-        db.session.query(PetitionTypeSection, PetitionSection)
-        .join(PetitionSection)
-        .filter(PetitionTypeSection.petition_type_id == type_id)
-        .order_by(PetitionTypeSection.order)
-        .all()
-    )
-
-    return render_template(
-        "admin/petition_type_sections.html",
-        title=f"Seções: {petition_type.name}",
-        petition_type=petition_type,
-        available_sections=available_sections,
-        configured_sections=configured_sections,
-    )
-
-
-@bp.route("/petitions/types/<int:type_id>/sections/add", methods=["POST"])
-@login_required
-def petition_type_section_add(type_id):
-    """Adicionar seção a um tipo de petição"""
-    _require_admin()
-
-    petition_type = PetitionType.query.get_or_404(type_id)
-    section_id = request.form.get("section_id", type=int)
-
-    if not section_id:
-        flash("Seção não especificada.", "danger")
-        return redirect(url_for("admin.petition_type_sections", type_id=type_id))
-
-    # Verificar se já não está configurada
-    existing = PetitionTypeSection.query.filter_by(
-        petition_type_id=type_id, section_id=section_id
-    ).first()
-
-    if existing:
-        flash("Esta seção já está configurada para este tipo.", "warning")
-        return redirect(url_for("admin.petition_type_sections", type_id=type_id))
-
-    # Calcular próxima ordem
-    max_order = (
-        db.session.query(func.max(PetitionTypeSection.order))
-        .filter_by(petition_type_id=type_id)
-        .scalar()
-    ) or 0
-
-    config = PetitionTypeSection(
-        petition_type_id=type_id,
-        section_id=section_id,
-        order=max_order + 1,
-        is_required=False,
-        is_expanded=True,
-    )
-
-    db.session.add(config)
-    db.session.commit()
-
-    flash("Seção adicionada com sucesso!", "success")
-    return redirect(url_for("admin.petition_type_sections", type_id=type_id))
-
-
-@bp.route(
-    "/petitions/types/<int:type_id>/sections/<int:section_id>/remove", methods=["POST"]
-)
-@login_required
-def petition_type_section_remove(type_id, section_id):
-    """Remover seção de um tipo de petição"""
-    _require_admin()
-
-    config = PetitionTypeSection.query.filter_by(
-        petition_type_id=type_id, section_id=section_id
-    ).first_or_404()
-
-    db.session.delete(config)
-    db.session.commit()
-
-    flash("Seção removida!", "success")
-    return redirect(url_for("admin.petition_type_sections", type_id=type_id))
-
-
-@bp.route("/petitions/sections")
-@login_required
-def petition_sections_list():
-    """Lista todas as seções de petição"""
-    _require_admin()
-
-    sections = PetitionSection.query.order_by(PetitionSection.name).all()
-
-    return render_template(
-        "admin/petition_sections_list.html",
-        title="Seções de Petição",
-        sections=sections,
-    )
-
-
-@bp.route("/petitions/sections/new", methods=["GET", "POST"])
-@login_required
-def petition_section_new():
-    """Criar nova seção de petição"""
-    _require_admin()
-
-    if request.method == "POST":
-        name = request.form.get("name")
-        slug = request.form.get("slug")
-        description = request.form.get("description")
-        icon = request.form.get("icon", "fa-file-alt")
-        color = request.form.get("color", "primary")
-        fields_schema = request.form.get("fields_schema")
-
-        # Validar slug único
-        if PetitionSection.query.filter_by(slug=slug).first():
-            flash("Slug já existe. Escolha outro.", "danger")
-            return redirect(request.url)
-
-        try:
-            fields_data = json.loads(fields_schema) if fields_schema else []
-        except json.JSONDecodeError:
-            flash("Schema de campos inválido. Deve ser JSON válido.", "danger")
-            return redirect(request.url)
-
-        section = PetitionSection(
-            name=name,
-            slug=slug,
-            description=description,
-            icon=icon,
-            color=color,
-            fields_schema=fields_data,
-        )
-
-        db.session.add(section)
-        db.session.commit()
-
-        flash(f"Seção '{name}' criada com sucesso!", "success")
-        return redirect(url_for("admin.petition_sections_list"))
-
-    return render_template("admin/petition_section_form.html", title="Nova Seção")
-
-
-@bp.route("/petitions/sections/<int:section_id>/edit", methods=["GET", "POST"])
-@login_required
-def petition_section_edit(section_id):
-    """Editar seção de petição"""
-    _require_admin()
-
-    section = PetitionSection.query.get_or_404(section_id)
-
-    if request.method == "POST":
-        section.name = request.form.get("name")
-        section.slug = request.form.get("slug")
-        section.description = request.form.get("description")
-        section.icon = request.form.get("icon", "fa-file-alt")
-        section.color = request.form.get("color", "primary")
-        section.is_active = request.form.get("is_active") == "on"
-        fields_schema = request.form.get("fields_schema")
-
-        # Validar slug único (exceto para o próprio)
-        existing = PetitionSection.query.filter_by(slug=section.slug).first()
-        if existing and existing.id != section.id:
-            flash("Slug já existe. Escolha outro.", "danger")
-            return redirect(request.url)
-
-        try:
-            fields_data = json.loads(fields_schema) if fields_schema else []
-            section.fields_schema = fields_data
-        except json.JSONDecodeError:
-            flash("Schema de campos inválido. Deve ser JSON válido.", "danger")
-            return redirect(request.url)
-
-        db.session.commit()
-        flash(f"Seção '{section.name}' atualizada!", "success")
-        return redirect(url_for("admin.petition_sections_list"))
-
-    return render_template(
-        "admin/petition_section_form.html",
-        title=f"Editar: {section.name}",
-        section=section,
-    )
-
-
-@bp.route("/petitions/sections/<int:section_id>/delete", methods=["POST"])
-@login_required
-def petition_section_delete(section_id):
-    """Excluir seção de petição"""
-    _require_admin()
-
-    section = PetitionSection.query.get_or_404(section_id)
-
-    # Verificar se está sendo usada em algum tipo de petição
-    usage_count = PetitionTypeSection.query.filter_by(section_id=section_id).count()
-    if usage_count > 0:
-        flash(
-            f"Não é possível excluir. Esta seção está sendo usada em {usage_count} tipos de petição.",
-            "danger",
-        )
-        return redirect(url_for("admin.petition_sections_list"))
-
-    db.session.delete(section)
-    db.session.commit()
-
-    flash(f"Seção '{section.name}' excluída!", "success")
-    return redirect(url_for("admin.petition_sections_list"))
 
 
 def _calculate_trends():

@@ -210,11 +210,11 @@
                     <div class="mb-4 specialties-section" id="specialties-section" style="display: none;">
                         {{ form.specialties.label(class="form-label") }}
                         <div class="row">
-                            {% for value, label in form.specialties.choices %}
+                            {% for subfield in form.specialties %}
                             <div class="col-md-6 col-lg-4 mb-2">
                                 <div class="form-check">
-                                    {{ form.specialties(class="form-check-input") }}
-                                    <label class="form-check-label">{{ label }}</label>
+                                    {{ subfield(class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
                                 </div>
                             </div>
                             {% endfor %}
@@ -225,6 +225,11 @@
                                 Selecione suas áreas de atuação. Você pode escolher múltiplas opções.
                             </small>
                         </div>
+                        {% if form.specialties.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.specialties.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                     
                     <div class="row">
@@ -327,14 +332,6 @@
                 </form>
             </div>
             
-            <div class="text-center mt-4">
-                <p class="auth-text-muted small">
-                    <i class="fas fa-shield-alt me-2"></i>
-                    Ao se cadastrar, você concorda com nossos 
-                    <a href="{{ url_for('main.terms_of_service') }}" target="_blank">Termos de Uso</a> e 
-                    <a href="{{ url_for('main.privacy_policy') }}" target="_blank">Política de Privacidade</a>
-                </p>
-            </div>
         </div>
     </div>
 </div>
@@ -343,11 +340,11 @@
 // Mostrar/ocultar campo de especialidades baseado no tipo de usuário
 document.getElementById('user_type').addEventListener('change', function() {
     const specialtiesSection = document.getElementById('specialties-section');
-    if (this.value === 'advogado') {
+    if (this.value === 'advogado' || this.value === 'escritorio') {
         specialtiesSection.style.display = 'block';
     } else {
         specialtiesSection.style.display = 'none';
-        // Limpar seleções quando não for advogado
+        // Limpar seleções quando não for advogado ou escritório
         const checkboxes = specialtiesSection.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(cb => cb.checked = false);
     }
@@ -357,7 +354,7 @@ document.getElementById('user_type').addEventListener('change', function() {
 document.addEventListener('DOMContentLoaded', function() {
     const userTypeSelect = document.getElementById('user_type');
     const specialtiesSection = document.getElementById('specialties-section');
-    if (userTypeSelect.value === 'advogado') {
+    if (userTypeSelect.value === 'advogado' || userTypeSelect.value === 'escritorio') {
         specialtiesSection.style.display = 'block';
     }
 });

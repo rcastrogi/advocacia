@@ -1,0 +1,1907 @@
+"""
+Script para criar seções pré-definidas completas para petições dinâmicas.
+Este script cria templates abrangentes de seções para diferentes tipos de petições judiciais.
+"""
+
+from app import create_app, db
+from app.models import PetitionSection
+
+def create_comprehensive_petition_sections():
+    """Cria seções pré-definidas abrangentes para petições"""
+
+    sections_data = [
+        # ==========================================
+        # PARTES DO PROCESSO
+        # ==========================================
+
+        {
+            "name": "Autor/Peticionário",
+            "slug": "autor-peticionario",
+            "description": "Dados da pessoa física ou jurídica que propõe a ação",
+            "icon": "fa-user",
+            "color": "primary",
+            "order": 1,
+            "fields_schema": [
+                {
+                    "name": "tipo_pessoa",
+                    "label": "Tipo de Pessoa",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "fisica", "label": "Pessoa Física"},
+                        {"value": "juridica", "label": "Pessoa Jurídica"}
+                    ]
+                },
+                {
+                    "name": "nome_completo",
+                    "label": "Nome Completo/Razão Social",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-6",
+                    "placeholder": "Nome completo ou razão social"
+                },
+                {
+                    "name": "nacionalidade",
+                    "label": "Nacionalidade",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Brasileira, Portuguesa, etc."
+                },
+                {
+                    "name": "estado_civil",
+                    "label": "Estado Civil",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "solteiro", "label": "Solteiro(a)"},
+                        {"value": "casado", "label": "Casado(a)"},
+                        {"value": "divorciado", "label": "Divorciado(a)"},
+                        {"value": "viuvo", "label": "Viúvo(a)"},
+                        {"value": "uniao_estavel", "label": "União Estável"},
+                        {"value": "separado", "label": "Separado(a)"}
+                    ]
+                },
+                {
+                    "name": "profissao",
+                    "label": "Profissão",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Profissão ou atividade"
+                },
+                {
+                    "name": "data_nascimento",
+                    "label": "Data de Nascimento",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-3"
+                },
+                {
+                    "name": "documento_tipo",
+                    "label": "Tipo de Documento",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "cpf", "label": "CPF"},
+                        {"value": "cnpj", "label": "CNPJ"},
+                        {"value": "rg", "label": "RG"},
+                        {"value": "passaporte", "label": "Passaporte"},
+                        {"value": "rne", "label": "RNE"}
+                    ]
+                },
+                {
+                    "name": "documento_numero",
+                    "label": "Número do Documento",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-3",
+                    "placeholder": "Número do documento"
+                },
+                {
+                    "name": "orgao_emissor",
+                    "label": "Órgão Emissor",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "SSP/SP, etc."
+                },
+                {
+                    "name": "cep",
+                    "label": "CEP",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-2",
+                    "placeholder": "00000-000"
+                },
+                {
+                    "name": "endereco",
+                    "label": "Endereço",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Rua, número"
+                },
+                {
+                    "name": "complemento",
+                    "label": "Complemento",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Apartamento, sala, etc."
+                },
+                {
+                    "name": "bairro",
+                    "label": "Bairro",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Nome do bairro"
+                },
+                {
+                    "name": "estado",
+                    "label": "Estado",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-2",
+                    "options": [
+                        {"value": "AC", "label": "Acre"},
+                        {"value": "AL", "label": "Alagoas"},
+                        {"value": "AP", "label": "Amapá"},
+                        {"value": "AM", "label": "Amazonas"},
+                        {"value": "BA", "label": "Bahia"},
+                        {"value": "CE", "label": "Ceará"},
+                        {"value": "DF", "label": "Distrito Federal"},
+                        {"value": "ES", "label": "Espírito Santo"},
+                        {"value": "GO", "label": "Goiás"},
+                        {"value": "MA", "label": "Maranhão"},
+                        {"value": "MT", "label": "Mato Grosso"},
+                        {"value": "MS", "label": "Mato Grosso do Sul"},
+                        {"value": "MG", "label": "Minas Gerais"},
+                        {"value": "PA", "label": "Pará"},
+                        {"value": "PB", "label": "Paraíba"},
+                        {"value": "PR", "label": "Paraná"},
+                        {"value": "PE", "label": "Pernambuco"},
+                        {"value": "PI", "label": "Piauí"},
+                        {"value": "RJ", "label": "Rio de Janeiro"},
+                        {"value": "RN", "label": "Rio Grande do Norte"},
+                        {"value": "RS", "label": "Rio Grande do Sul"},
+                        {"value": "RO", "label": "Rondônia"},
+                        {"value": "RR", "label": "Roraima"},
+                        {"value": "SC", "label": "Santa Catarina"},
+                        {"value": "SP", "label": "São Paulo"},
+                        {"value": "SE", "label": "Sergipe"},
+                        {"value": "TO", "label": "Tocantins"}
+                    ]
+                },
+                {
+                    "name": "cidade",
+                    "label": "Cidade",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Nome da cidade"
+                },
+                {
+                    "name": "telefone_fixo",
+                    "label": "Telefone Fixo",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "(00) 0000-0000"
+                },
+                {
+                    "name": "telefone_celular",
+                    "label": "Telefone Celular",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "(00) 00000-0000"
+                },
+                {
+                    "name": "email",
+                    "label": "E-mail",
+                    "type": "email",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "email@exemplo.com"
+                },
+                {
+                    "name": "representante_legal",
+                    "label": "Representante Legal",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Nome do responsável legal (se menor ou incapaz)"
+                }
+            ]
+        },
+
+        {
+            "name": "Réu/Acusado",
+            "slug": "reu-acusado",
+            "description": "Dados da pessoa física ou jurídica contra quem se propõe a ação",
+            "icon": "fa-gavel",
+            "color": "danger",
+            "order": 2,
+            "fields_schema": [
+                {
+                    "name": "tipo_pessoa",
+                    "label": "Tipo de Pessoa",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "fisica", "label": "Pessoa Física"},
+                        {"value": "juridica", "label": "Pessoa Jurídica"}
+                    ]
+                },
+                {
+                    "name": "nome_completo",
+                    "label": "Nome Completo/Razão Social",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-6",
+                    "placeholder": "Nome completo ou razão social"
+                },
+                {
+                    "name": "qualificacao",
+                    "label": "Qualificação",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Brasileiro, casado, etc."
+                },
+                {
+                    "name": "documento_tipo",
+                    "label": "Tipo de Documento",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "cpf", "label": "CPF"},
+                        {"value": "cnpj", "label": "CNPJ"},
+                        {"value": "rg", "label": "RG"},
+                        {"value": "passaporte", "label": "Passaporte"}
+                    ]
+                },
+                {
+                    "name": "documento_numero",
+                    "label": "Número do Documento",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-3",
+                    "placeholder": "Número do documento"
+                },
+                {
+                    "name": "cep",
+                    "label": "CEP",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-2",
+                    "placeholder": "00000-000"
+                },
+                {
+                    "name": "endereco",
+                    "label": "Endereço",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Rua, número"
+                },
+                {
+                    "name": "complemento",
+                    "label": "Complemento",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Apartamento, sala, etc."
+                },
+                {
+                    "name": "estado",
+                    "label": "Estado",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-2",
+                    "options": [
+                        {"value": "AC", "label": "Acre"},
+                        {"value": "AL", "label": "Alagoas"},
+                        {"value": "AP", "label": "Amapá"},
+                        {"value": "AM", "label": "Amazonas"},
+                        {"value": "BA", "label": "Bahia"},
+                        {"value": "CE", "label": "Ceará"},
+                        {"value": "DF", "label": "Distrito Federal"},
+                        {"value": "ES", "label": "Espírito Santo"},
+                        {"value": "GO", "label": "Goiás"},
+                        {"value": "MA", "label": "Maranhão"},
+                        {"value": "MT", "label": "Mato Grosso"},
+                        {"value": "MS", "label": "Mato Grosso do Sul"},
+                        {"value": "MG", "label": "Minas Gerais"},
+                        {"value": "PA", "label": "Pará"},
+                        {"value": "PB", "label": "Paraíba"},
+                        {"value": "PR", "label": "Paraná"},
+                        {"value": "PE", "label": "Pernambuco"},
+                        {"value": "PI", "label": "Piauí"},
+                        {"value": "RJ", "label": "Rio de Janeiro"},
+                        {"value": "RN", "label": "Rio Grande do Norte"},
+                        {"value": "RS", "label": "Rio Grande do Sul"},
+                        {"value": "RO", "label": "Rondônia"},
+                        {"value": "RR", "label": "Roraima"},
+                        {"value": "SC", "label": "Santa Catarina"},
+                        {"value": "SP", "label": "São Paulo"},
+                        {"value": "SE", "label": "Sergipe"},
+                        {"value": "TO", "label": "Tocantins"}
+                    ]
+                },
+                {
+                    "name": "cidade",
+                    "label": "Cidade",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Nome da cidade"
+                },
+                {
+                    "name": "telefone",
+                    "label": "Telefone",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "(00) 00000-0000"
+                },
+                {
+                    "name": "email",
+                    "label": "E-mail",
+                    "type": "email",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "email@exemplo.com"
+                }
+            ]
+        },
+
+        {
+            "name": "Testemunha",
+            "slug": "testemunha",
+            "description": "Dados das testemunhas do processo",
+            "icon": "fa-users",
+            "color": "info",
+            "order": 3,
+            "fields_schema": [
+                {
+                    "name": "nome_completo",
+                    "label": "Nome Completo",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-6",
+                    "placeholder": "Nome completo da testemunha"
+                },
+                {
+                    "name": "documento_tipo",
+                    "label": "Tipo de Documento",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "cpf", "label": "CPF"},
+                        {"value": "rg", "label": "RG"},
+                        {"value": "passaporte", "label": "Passaporte"}
+                    ]
+                },
+                {
+                    "name": "documento_numero",
+                    "label": "Número do Documento",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-3",
+                    "placeholder": "Número do documento"
+                },
+                {
+                    "name": "cep",
+                    "label": "CEP",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-2",
+                    "placeholder": "00000-000"
+                },
+                {
+                    "name": "endereco",
+                    "label": "Endereço",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Rua, número"
+                },
+                {
+                    "name": "complemento",
+                    "label": "Complemento",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Apartamento, sala, etc."
+                },
+                {
+                    "name": "estado",
+                    "label": "Estado",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-2",
+                    "options": [
+                        {"value": "AC", "label": "Acre"},
+                        {"value": "AL", "label": "Alagoas"},
+                        {"value": "AP", "label": "Amapá"},
+                        {"value": "AM", "label": "Amazonas"},
+                        {"value": "BA", "label": "Bahia"},
+                        {"value": "CE", "label": "Ceará"},
+                        {"value": "DF", "label": "Distrito Federal"},
+                        {"value": "ES", "label": "Espírito Santo"},
+                        {"value": "GO", "label": "Goiás"},
+                        {"value": "MA", "label": "Maranhão"},
+                        {"value": "MT", "label": "Mato Grosso"},
+                        {"value": "MS", "label": "Mato Grosso do Sul"},
+                        {"value": "MG", "label": "Minas Gerais"},
+                        {"value": "PA", "label": "Pará"},
+                        {"value": "PB", "label": "Paraíba"},
+                        {"value": "PR", "label": "Paraná"},
+                        {"value": "PE", "label": "Pernambuco"},
+                        {"value": "PI", "label": "Piauí"},
+                        {"value": "RJ", "label": "Rio de Janeiro"},
+                        {"value": "RN", "label": "Rio Grande do Norte"},
+                        {"value": "RS", "label": "Rio Grande do Sul"},
+                        {"value": "RO", "label": "Rondônia"},
+                        {"value": "RR", "label": "Roraima"},
+                        {"value": "SC", "label": "Santa Catarina"},
+                        {"value": "SP", "label": "São Paulo"},
+                        {"value": "SE", "label": "Sergipe"},
+                        {"value": "TO", "label": "Tocantins"}
+                    ]
+                },
+                {
+                    "name": "cidade",
+                    "label": "Cidade",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Nome da cidade"
+                },
+                {
+                    "name": "telefone",
+                    "label": "Telefone",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "(00) 00000-0000"
+                },
+                {
+                    "name": "email",
+                    "label": "E-mail",
+                    "type": "email",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "email@exemplo.com"
+                },
+                {
+                    "name": "relacao_com_partes",
+                    "label": "Relação com as Partes",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Como conhece as partes do processo"
+                }
+            ]
+        },
+
+        {
+            "name": "Terceiro Interessado",
+            "slug": "terceiro-interessado",
+            "description": "Dados de terceiros que podem ter interesse no processo",
+            "icon": "fa-user-friends",
+            "color": "secondary",
+            "order": 4,
+            "fields_schema": [
+                {
+                    "name": "nome_completo",
+                    "label": "Nome Completo/Razão Social",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-6",
+                    "placeholder": "Nome do terceiro interessado"
+                },
+                {
+                    "name": "interesse_processo",
+                    "label": "Interesse no Processo",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "fiador", "label": "Fiador"},
+                        {"value": "avalista", "label": "Avalista"},
+                        {"value": "solidario", "label": "Devedor Solidário"},
+                        {"value": "proprietario", "label": "Proprietário"},
+                        {"value": "locador", "label": "Locador"},
+                        {"value": "locatario", "label": "Locatário"},
+                        {"value": "outro", "label": "Outro"}
+                    ]
+                },
+                {
+                    "name": "documento_tipo",
+                    "label": "Tipo de Documento",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "cpf", "label": "CPF"},
+                        {"value": "cnpj", "label": "CNPJ"}
+                    ]
+                },
+                {
+                    "name": "documento_numero",
+                    "label": "Número do Documento",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-3",
+                    "placeholder": "Número do documento"
+                },
+                {
+                    "name": "endereco",
+                    "label": "Endereço",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Endereço completo"
+                },
+                {
+                    "name": "telefone",
+                    "label": "Telefone",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "(00) 00000-0000"
+                },
+                {
+                    "name": "email",
+                    "label": "E-mail",
+                    "type": "email",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "email@exemplo.com"
+                }
+            ]
+        },
+
+        {
+            "name": "Representante Legal",
+            "slug": "representante-legal",
+            "description": "Dados do responsável legal por menores, incapazes ou empresas",
+            "icon": "fa-user-tie",
+            "color": "warning",
+            "order": 5,
+            "fields_schema": [
+                {
+                    "name": "nome_completo",
+                    "label": "Nome Completo",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-6",
+                    "placeholder": "Nome do representante legal"
+                },
+                {
+                    "name": "relacao_representado",
+                    "label": "Relação com o Representado",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "pai", "label": "Pai"},
+                        {"value": "mae", "label": "Mãe"},
+                        {"value": "tutor", "label": "Tutor"},
+                        {"value": "curador", "label": "Curador"},
+                        {"value": "socio", "label": "Sócio"},
+                        {"value": "representante_legal", "label": "Representante Legal"},
+                        {"value": "procurador", "label": "Procurador"}
+                    ]
+                },
+                {
+                    "name": "documento_tipo",
+                    "label": "Tipo de Documento",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "cpf", "label": "CPF"},
+                        {"value": "rg", "label": "RG"}
+                    ]
+                },
+                {
+                    "name": "documento_numero",
+                    "label": "Número do Documento",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-3",
+                    "placeholder": "Número do documento"
+                },
+                {
+                    "name": "endereco",
+                    "label": "Endereço",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Endereço completo"
+                },
+                {
+                    "name": "telefone",
+                    "label": "Telefone",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "(00) 00000-0000"
+                },
+                {
+                    "name": "email",
+                    "label": "E-mail",
+                    "type": "email",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "email@exemplo.com"
+                }
+            ]
+        },
+
+        # ==========================================
+        # DADOS DO PROCESSO
+        # ==========================================
+
+        {
+            "name": "Dados do Processo",
+            "slug": "dados-processo",
+            "description": "Informações básicas sobre o processo judicial",
+            "icon": "fa-balance-scale",
+            "color": "dark",
+            "order": 6,
+            "fields_schema": [
+                {
+                    "name": "numero_processo",
+                    "label": "Número do Processo",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "0000000-00.0000.0.00.0000"
+                },
+                {
+                    "name": "vara",
+                    "label": "Vara/Órgão Julgador",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "1ª Vara Cível, Juizado Especial, etc."
+                },
+                {
+                    "name": "comarca",
+                    "label": "Comarca/Foro",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "São Paulo, Campinas, etc."
+                },
+                {
+                    "name": "juizo",
+                    "label": "Juízo",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "civil", "label": "Cível"},
+                        {"value": "criminal", "label": "Criminal"},
+                        {"value": "trabalhista", "label": "Trabalhista"},
+                        {"value": "familia", "label": "Família"},
+                        {"value": "fazenda", "label": "Fazenda Pública"},
+                        {"value": "federal", "label": "Federal"},
+                        {"value": "eleitoral", "label": "Eleitoral"},
+                        {"value": "militar", "label": "Militar"}
+                    ]
+                },
+                {
+                    "name": "valor_causa",
+                    "label": "Valor da Causa (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "data_distribuicao",
+                    "label": "Data de Distribuição",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-3"
+                },
+                {
+                    "name": "juiz_relator",
+                    "label": "Juiz/Relator",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Nome do juiz responsável"
+                },
+                {
+                    "name": "rito_processual",
+                    "label": "Rito Processual",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "ordinario", "label": "Ordinário"},
+                        {"value": "sumario", "label": "Sumário"},
+                        {"value": "especial", "label": "Especial"},
+                        {"value": "execucao", "label": "Execução"},
+                        {"value": "cautelar", "label": "Cautelar"},
+                        {"value": "monitorio", "label": "Monitório"}
+                    ]
+                }
+            ]
+        },
+
+        # ==========================================
+        # CONTEÚDO DA PETIÇÃO
+        # ==========================================
+
+        {
+            "name": "Fatos",
+            "slug": "fatos",
+            "description": "Descrição dos fatos que motivaram a ação",
+            "icon": "fa-file-text",
+            "color": "secondary",
+            "order": 7,
+            "fields_schema": [
+                {
+                    "name": "descricao_fatos",
+                    "label": "Descrição dos Fatos",
+                    "type": "textarea",
+                    "required": True,
+                    "size": "col-md-12",
+                    "placeholder": "Descreva detalhadamente os fatos que motivaram a propositura desta ação...",
+                    "rows": 8
+                },
+                {
+                    "name": "data_ocorrencia",
+                    "label": "Data da Ocorrência",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-3"
+                },
+                {
+                    "name": "local_ocorrencia",
+                    "label": "Local da Ocorrência",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Onde ocorreu o fato"
+                }
+            ]
+        },
+
+        {
+            "name": "Fundamentação Jurídica",
+            "slug": "fundamentacao-juridica",
+            "description": "Base legal e fundamentos jurídicos da ação",
+            "icon": "fa-book",
+            "color": "success",
+            "order": 8,
+            "fields_schema": [
+                {
+                    "name": "fundamentos_juridicos",
+                    "label": "Fundamentos Jurídicos",
+                    "type": "textarea",
+                    "required": True,
+                    "size": "col-md-12",
+                    "placeholder": "Cite os dispositivos legais aplicáveis ao caso...",
+                    "rows": 8
+                },
+                {
+                    "name": "legislacao_aplicavel",
+                    "label": "Legislação Aplicável",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-12",
+                    "placeholder": "Art. 186 do Código Civil, Art. 927 do Código Civil, etc.",
+                    "rows": 4
+                },
+                {
+                    "name": "jurisprudencia",
+                    "label": "Jurisprudência",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-12",
+                    "placeholder": "Cite precedentes jurisprudenciais relevantes...",
+                    "rows": 4
+                }
+            ]
+        },
+
+        {
+            "name": "Pedidos",
+            "slug": "pedidos",
+            "description": "Pedidos formulados na petição inicial",
+            "icon": "fa-list",
+            "color": "primary",
+            "order": 9,
+            "fields_schema": [
+                {
+                    "name": "pedidos_formulados",
+                    "label": "Pedidos Formulados",
+                    "type": "textarea",
+                    "required": True,
+                    "size": "col-md-12",
+                    "placeholder": "Formule os pedidos que estão sendo requeridos...",
+                    "rows": 8
+                },
+                {
+                    "name": "pedido_liminar",
+                    "label": "Pedido de Liminar/Tutela",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-12",
+                    "placeholder": "Caso haja pedido de liminar ou tutela de urgência...",
+                    "rows": 4
+                },
+                {
+                    "name": "pedido_antecipacao",
+                    "label": "Pedido de Antecipação de Tutela",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-12",
+                    "placeholder": "Caso haja pedido de antecipação de tutela...",
+                    "rows": 4
+                }
+            ]
+        },
+
+        {
+            "name": "Valor da Causa",
+            "slug": "valor-causa",
+            "description": "Especificação do valor atribuído à causa",
+            "icon": "fa-dollar-sign",
+            "color": "warning",
+            "order": 10,
+            "fields_schema": [
+                {
+                    "name": "valor_principal",
+                    "label": "Valor Principal (R$)",
+                    "type": "number",
+                    "required": True,
+                    "size": "col-md-3",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "juros_moratorios",
+                    "label": "Juros Moratórios (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "correcao_monetaria",
+                    "label": "Correção Monetária (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "honorarios",
+                    "label": "Honorários Advocatícios (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "valor_total",
+                    "label": "Valor Total da Causa (R$)",
+                    "type": "number",
+                    "required": True,
+                    "size": "col-md-4",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "justificativa_valor",
+                    "label": "Justificativa do Valor",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-8",
+                    "placeholder": "Explique como foi calculado o valor da causa...",
+                    "rows": 3
+                }
+            ]
+        },
+
+        # ==========================================
+        # INFORMAÇÕES ESPECÍFICAS POR ÁREA
+        # ==========================================
+
+        {
+            "name": "Dados Contratuais",
+            "slug": "dados-contratuais",
+            "description": "Informações sobre contratos envolvidos no processo",
+            "icon": "fa-file-contract",
+            "color": "info",
+            "order": 11,
+            "fields_schema": [
+                {
+                    "name": "tipo_contrato",
+                    "label": "Tipo de Contrato",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "compra_venda", "label": "Compra e Venda"},
+                        {"value": "prestacao_servico", "label": "Prestação de Serviço"},
+                        {"value": "locacao", "label": "Locação"},
+                        {"value": "emprestimo", "label": "Empréstimo"},
+                        {"value": "seguro", "label": "Seguro"},
+                        {"value": "representacao", "label": "Representação"},
+                        {"value": "distribuicao", "label": "Distribuição"},
+                        {"value": "franquia", "label": "Franquia"},
+                        {"value": "outro", "label": "Outro"}
+                    ]
+                },
+                {
+                    "name": "numero_contrato",
+                    "label": "Número do Contrato",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Número ou código do contrato"
+                },
+                {
+                    "name": "data_contrato",
+                    "label": "Data do Contrato",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-4"
+                },
+                {
+                    "name": "valor_contrato",
+                    "label": "Valor do Contrato (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "prazo_contrato",
+                    "label": "Prazo do Contrato",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Duração do contrato"
+                },
+                {
+                    "name": "objeto_contrato",
+                    "label": "Objeto do Contrato",
+                    "type": "textarea",
+                    "required": True,
+                    "size": "col-md-12",
+                    "placeholder": "Descreva o objeto principal do contrato...",
+                    "rows": 4
+                },
+                {
+                    "name": "clausulas_importantes",
+                    "label": "Cláusulas Importantes",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-12",
+                    "placeholder": "Cite cláusulas relevantes para o caso...",
+                    "rows": 4
+                }
+            ]
+        },
+
+        {
+            "name": "Dados Trabalhistas",
+            "slug": "dados-trabalhistas",
+            "description": "Informações específicas para processos trabalhistas",
+            "icon": "fa-briefcase",
+            "color": "success",
+            "order": 12,
+            "fields_schema": [
+                {
+                    "name": "cargo_funcao",
+                    "label": "Cargo/Função",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-4",
+                    "placeholder": "Cargo ocupado pelo trabalhador"
+                },
+                {
+                    "name": "data_admissao",
+                    "label": "Data de Admissão",
+                    "type": "date",
+                    "required": True,
+                    "size": "col-md-4"
+                },
+                {
+                    "name": "data_demissao",
+                    "label": "Data de Demissão",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-4"
+                },
+                {
+                    "name": "salario_base",
+                    "label": "Salário Base (R$)",
+                    "type": "number",
+                    "required": True,
+                    "size": "col-md-3",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "horas_trabalho",
+                    "label": "Carga Horária",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Ex: 8 horas/dia, 44 horas/semana"
+                },
+                {
+                    "name": "tipo_vinculo",
+                    "label": "Tipo de Vínculo",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "clt", "label": "CLT"},
+                        {"value": "estatutario", "label": "Estatutário"},
+                        {"value": "terceirizado", "label": "Terceirizado"},
+                        {"value": "temporario", "label": "Temporário"},
+                        {"value": "autonomo", "label": "Autônomo"},
+                        {"value": "estagiario", "label": "Estagiário"}
+                    ]
+                },
+                {
+                    "name": "motivo_rescisao",
+                    "label": "Motivo da Rescisão",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "pedido_demissao", "label": "Pedido de Demissão"},
+                        {"value": "dispensa_sem_justa_causa", "label": "Dispensa sem Justa Causa"},
+                        {"value": "dispensa_com_justa_causa", "label": "Dispensa com Justa Causa"},
+                        {"value": "rescisao_consensual", "label": "Rescisão Consensual"},
+                        {"value": "termino_contrato", "label": "Término do Contrato"},
+                        {"value": "aposentadoria", "label": "Aposentadoria"}
+                    ]
+                },
+                {
+                    "name": "beneficios",
+                    "label": "Benefícios Recebidos",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Vale transporte, refeição, plano de saúde, etc.",
+                    "rows": 3
+                },
+                {
+                    "name": "verbas_rescisorias",
+                    "label": "Verbas Rescisorias Reclamadas",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Aviso prévio, 13º salário, férias, FGTS, etc.",
+                    "rows": 3
+                }
+            ]
+        },
+
+        {
+            "name": "Dados Familiares",
+            "slug": "dados-familiares",
+            "description": "Informações específicas para processos de família",
+            "icon": "fa-heart",
+            "color": "danger",
+            "order": 13,
+            "fields_schema": [
+                {
+                    "name": "tipo_acao_familiar",
+                    "label": "Tipo de Ação Familiar",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "divorcio", "label": "Divórcio"},
+                        {"value": "separacao", "label": "Separação"},
+                        {"value": "guarda", "label": "Guarda de Filhos"},
+                        {"value": "visitas", "label": "Regulamentação de Visitas"},
+                        {"value": "paternidade", "label": "Investigação de Paternidade"},
+                        {"value": "alimentos", "label": "Alimentos"},
+                        {"value": "partilha", "label": "Partilha de Bens"},
+                        {"value": "uniao_estavel", "label": "Reconhecimento de União Estável"},
+                        {"value": "curatela", "label": "Curatela"},
+                        {"value": "tutela", "label": "Tutela"},
+                        {"value": "outro", "label": "Outro"}
+                    ]
+                },
+                {
+                    "name": "data_casamento",
+                    "label": "Data do Casamento",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-4"
+                },
+                {
+                    "name": "regime_casamento",
+                    "label": "Regime de Casamento",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "comunhao_parcial", "label": "Comunhão Parcial de Bens"},
+                        {"value": "comunhao_universal", "label": "Comunhão Universal de Bens"},
+                        {"value": "separacao_total", "label": "Separação Total de Bens"},
+                        {"value": "participacao_final", "label": "Participação Final nos Aquestos"}
+                    ]
+                },
+                {
+                    "name": "numero_filhos",
+                    "label": "Número de Filhos",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-3",
+                    "min": "0"
+                },
+                {
+                    "name": "idade_filhos",
+                    "label": "Idade dos Filhos",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Ex: João (12 anos), Maria (8 anos)"
+                },
+                {
+                    "name": "guarda_atual",
+                    "label": "Guarda Atual",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "materna", "label": "Materna"},
+                        {"value": "paterna", "label": "Paterna"},
+                        {"value": "compartilhada", "label": "Compartilhada"},
+                        {"value": "alternada", "label": "Alternada"}
+                    ]
+                },
+                {
+                    "name": "pensão_alimentos",
+                    "label": "Valor da Pensão de Alimentos (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "situacao_familiar",
+                    "label": "Situação Familiar Atual",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-12",
+                    "placeholder": "Descreva a situação familiar atual...",
+                    "rows": 4
+                }
+            ]
+        },
+
+        {
+            "name": "Dados Criminais",
+            "slug": "dados-criminais",
+            "description": "Informações específicas para processos criminais",
+            "icon": "fa-balance-scale",
+            "color": "dark",
+            "order": 14,
+            "fields_schema": [
+                {
+                    "name": "tipo_crime",
+                    "label": "Tipo de Crime",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "contra_pessoa", "label": "Contra a Pessoa"},
+                        {"value": "contra_patrimonio", "label": "Contra o Patrimônio"},
+                        {"value": "transito", "label": "Trânsito"},
+                        {"value": "ambiental", "label": "Ambiental"},
+                        {"value": "tributario", "label": "Tributário"},
+                        {"value": "eleitoral", "label": "Eleitoral"},
+                        {"value": "outro", "label": "Outro"}
+                    ]
+                },
+                {
+                    "name": "artigo_penal",
+                    "label": "Artigo Penal",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-4",
+                    "placeholder": "Ex: Art. 121 do CP (Homicídio)"
+                },
+                {
+                    "name": "data_ocorrencia",
+                    "label": "Data da Ocorrência",
+                    "type": "date",
+                    "required": True,
+                    "size": "col-md-4"
+                },
+                {
+                    "name": "local_ocorrencia",
+                    "label": "Local da Ocorrência",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-6",
+                    "placeholder": "Onde ocorreu o crime"
+                },
+                {
+                    "name": "meios_empregados",
+                    "label": "Meios Empregoados",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Como o crime foi praticado"
+                },
+                {
+                    "name": "circunstancias",
+                    "label": "Circunstâncias do Crime",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-12",
+                    "placeholder": "Descreva as circunstâncias do crime...",
+                    "rows": 4
+                },
+                {
+                    "name": "testemunhas",
+                    "label": "Testemunhas",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Liste as testemunhas do caso...",
+                    "rows": 3
+                },
+                {
+                    "name": "provas",
+                    "label": "Provas Disponíveis",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Liste as provas do caso...",
+                    "rows": 3
+                }
+            ]
+        },
+
+        {
+            "name": "Dados Previdenciários",
+            "slug": "dados-previdenciarios",
+            "description": "Informações específicas para processos previdenciários",
+            "icon": "fa-id-card",
+            "color": "info",
+            "order": 15,
+            "fields_schema": [
+                {
+                    "name": "beneficio_pretendido",
+                    "label": "Benefício Pretendido",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "aposentadoria_idade", "label": "Aposentadoria por Idade"},
+                        {"value": "aposentadoria_tempo", "label": "Aposentadoria por Tempo de Contribuição"},
+                        {"value": "aposentadoria_invalidez", "label": "Aposentadoria por Invalidez"},
+                        {"value": "auxilio_doenca", "label": "Auxílio-Doença"},
+                        {"value": "auxilio_acidente", "label": "Auxílio-Acidente"},
+                        {"value": "pensao_morte", "label": "Pensão por Morte"},
+                        {"value": "salario_maternidade", "label": "Salário-Maternidade"},
+                        {"value": "outro", "label": "Outro"}
+                    ]
+                },
+                {
+                    "name": "numero_beneficio",
+                    "label": "Número do Benefício (NB)",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Número do benefício existente"
+                },
+                {
+                    "name": "data_concessao",
+                    "label": "Data de Concessão",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-4"
+                },
+                {
+                    "name": "data_inicio_contribuicao",
+                    "label": "Data de Início da Contribuição",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-4"
+                },
+                {
+                    "name": "tempo_contribuicao",
+                    "label": "Tempo de Contribuição",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Ex: 25 anos, 3 meses"
+                },
+                {
+                    "name": "carencia",
+                    "label": "Carência Cumprida",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "sim", "label": "Sim"},
+                        {"value": "nao", "label": "Não"},
+                        {"value": "dispensada", "label": "Dispensada"}
+                    ]
+                },
+                {
+                    "name": "ultimo_salario",
+                    "label": "Último Salário de Contribuição (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "motivo_cessacao",
+                    "label": "Motivo da Cessação",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-12",
+                    "placeholder": "Explique o motivo da cessação ou indeferimento...",
+                    "rows": 4
+                }
+            ]
+        },
+
+        {
+            "name": "Dados Tributários",
+            "slug": "dados-tributarios",
+            "description": "Informações específicas para processos tributários",
+            "icon": "fa-calculator",
+            "color": "warning",
+            "order": 16,
+            "fields_schema": [
+                {
+                    "name": "tipo_tributo",
+                    "label": "Tipo de Tributo",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "icms", "label": "ICMS"},
+                        {"value": "iss", "label": "ISS"},
+                        {"value": "ipi", "label": "IPI"},
+                        {"value": "cofins", "label": "COFINS"},
+                        {"value": "pis", "label": "PIS"},
+                        {"value": "irpj", "label": "IRPJ"},
+                        {"value": "csll", "label": "CSLL"},
+                        {"value": "iptu", "label": "IPTU"},
+                        {"value": "itr", "label": "ITR"},
+                        {"value": "outro", "label": "Outro"}
+                    ]
+                },
+                {
+                    "name": "periodo_tributo",
+                    "label": "Período do Tributo",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Ex: Janeiro/2024, 2023"
+                },
+                {
+                    "name": "valor_tributo",
+                    "label": "Valor do Tributo (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "numero_auto_infracao",
+                    "label": "Número do Auto de Infração",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Número do auto de infração"
+                },
+                {
+                    "name": "data_auto_infracao",
+                    "label": "Data do Auto de Infração",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-4"
+                },
+                {
+                    "name": "motivo_discussao",
+                    "label": "Motivo da Discussão",
+                    "type": "textarea",
+                    "required": True,
+                    "size": "col-md-12",
+                    "placeholder": "Descreva o motivo da discussão tributária...",
+                    "rows": 4
+                },
+                {
+                    "name": "legislacao_tributaria",
+                    "label": "Legislação Tributária Aplicável",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-12",
+                    "placeholder": "Cite a legislação tributária aplicável...",
+                    "rows": 3
+                }
+            ]
+        },
+
+        {
+            "name": "Dados Ambientais",
+            "slug": "dados-ambientais",
+            "description": "Informações específicas para processos ambientais",
+            "icon": "fa-leaf",
+            "color": "success",
+            "order": 17,
+            "fields_schema": [
+                {
+                    "name": "tipo_dano_ambiental",
+                    "label": "Tipo de Dano Ambiental",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "poluicao_ar", "label": "Poluição do Ar"},
+                        {"value": "poluicao_agua", "label": "Poluição da Água"},
+                        {"value": "poluicao_solo", "label": "Poluição do Solo"},
+                        {"value": "desmatamento", "label": "Desmatamento"},
+                        {"value": "queimadas", "label": "Queimadas"},
+                        {"value": "erosao", "label": "Erosão"},
+                        {"value": "degradacao", "label": "Degradação de Solo"},
+                        {"value": "outro", "label": "Outro"}
+                    ]
+                },
+                {
+                    "name": "local_dano",
+                    "label": "Local do Dano Ambiental",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-8",
+                    "placeholder": "Descreva o local onde ocorreu o dano"
+                },
+                {
+                    "name": "data_ocorrencia",
+                    "label": "Data da Ocorrência",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-4"
+                },
+                {
+                    "name": "area_afetada",
+                    "label": "Área Afetada",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Ex: 500 hectares, 2 km²"
+                },
+                {
+                    "name": "especies_afetadas",
+                    "label": "Espécies Afetadas",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-8",
+                    "placeholder": "Liste as espécies afetadas...",
+                    "rows": 3
+                },
+                {
+                    "name": "licencas_ambientais",
+                    "label": "Licenças Ambientais",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Liste as licenças ambientais relacionadas...",
+                    "rows": 3
+                },
+                {
+                    "name": "multas_aplicadas",
+                    "label": "Multas Aplicadas (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "medidas_reparacao",
+                    "label": "Medidas de Reparação",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-12",
+                    "placeholder": "Descreva as medidas de reparação ambiental propostas...",
+                    "rows": 4
+                }
+            ]
+        },
+
+        {
+            "name": "Dados Consumeristas",
+            "slug": "dados-consumeristas",
+            "description": "Informações específicas para processos consumeristas",
+            "icon": "fa-shopping-cart",
+            "color": "primary",
+            "order": 18,
+            "fields_schema": [
+                {
+                    "name": "tipo_relacao_consumidor",
+                    "label": "Tipo de Relação de Consumo",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "produto", "label": "Produto Defeituoso"},
+                        {"value": "servico", "label": "Serviço Defeituoso"},
+                        {"value": "publicidade", "label": "Publicidade Enganosa"},
+                        {"value": "pratica_abusiva", "label": "Prática Abusiva"},
+                        {"value": "cobrança_indevida", "label": "Cobrança Indevida"},
+                        {"value": "outro", "label": "Outro"}
+                    ]
+                },
+                {
+                    "name": "produto_servico",
+                    "label": "Produto/Serviço",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-8",
+                    "placeholder": "Descreva o produto ou serviço envolvido"
+                },
+                {
+                    "name": "data_compra",
+                    "label": "Data da Compra/Contratação",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-3"
+                },
+                {
+                    "name": "valor_pago",
+                    "label": "Valor Pago (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "numero_nota_fiscal",
+                    "label": "Número da Nota Fiscal",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Número da nota fiscal"
+                },
+                {
+                    "name": "tentativas_solucao",
+                    "label": "Tentativas de Solução",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-8",
+                    "placeholder": "Descreva as tentativas de solução amigável...",
+                    "rows": 3
+                },
+                {
+                    "name": "defeito_problema",
+                    "label": "Defeito/Problema Apresentado",
+                    "type": "textarea",
+                    "required": True,
+                    "size": "col-md-12",
+                    "placeholder": "Descreva detalhadamente o defeito ou problema...",
+                    "rows": 4
+                },
+                {
+                    "name": "pedidos_consumidor",
+                    "label": "Pedidos do Consumidor",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-12",
+                    "placeholder": "O que o consumidor está pleiteando...",
+                    "rows": 3
+                }
+            ]
+        },
+
+        # ==========================================
+        # DOCUMENTOS E ANEXOS
+        # ==========================================
+
+        {
+            "name": "Documentos Apresentados",
+            "slug": "documentos-apresentados",
+            "description": "Lista de documentos que acompanham a petição",
+            "icon": "fa-paperclip",
+            "color": "secondary",
+            "order": 19,
+            "fields_schema": [
+                {
+                    "name": "documentos_obrigatorios",
+                    "label": "Documentos Obrigatórios",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Procuração, RG, CPF, comprovante de endereço, etc.",
+                    "rows": 4
+                },
+                {
+                    "name": "documentos_comprobatórios",
+                    "label": "Documentos Comprobatórios",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Contratos, recibos, laudos, etc.",
+                    "rows": 4
+                },
+                {
+                    "name": "certidoes",
+                    "label": "Certidões Necessárias",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Certidão negativa de débitos, certidão de casamento, etc.",
+                    "rows": 4
+                },
+                {
+                    "name": "outros_documentos",
+                    "label": "Outros Documentos",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Quaisquer outros documentos relevantes...",
+                    "rows": 4
+                }
+            ]
+        },
+
+        # ==========================================
+        # INFORMAÇÕES ADICIONAIS
+        # ==========================================
+
+        {
+            "name": "Pedido de Urgência",
+            "slug": "pedido-urgencia",
+            "description": "Informações sobre pedido de liminar ou tutela de urgência",
+            "icon": "fa-clock",
+            "color": "danger",
+            "order": 20,
+            "fields_schema": [
+                {
+                    "name": "tipo_urgencia",
+                    "label": "Tipo de Urgência",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "liminar", "label": "Liminar"},
+                        {"value": "tutela_antecipada", "label": "Tutela Antecipada"},
+                        {"value": "tutela_cautelar", "label": "Tutela Cautelar"},
+                        {"value": "tutela_provisoria", "label": "Tutela Provisória"}
+                    ]
+                },
+                {
+                    "name": "fundamento_urgencia",
+                    "label": "Fundamento da Urgência",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "periculum_in_mora", "label": "Periculum in Mora"},
+                        {"value": "fumus_bon_juris", "label": "Fumus Bon Juris"},
+                        {"value": "risco_irreparavel", "label": "Risco de Dano Irreparável"},
+                        {"value": "outro", "label": "Outro"}
+                    ]
+                },
+                {
+                    "name": "justificativa_urgencia",
+                    "label": "Justificativa da Urgência",
+                    "type": "textarea",
+                    "required": True,
+                    "size": "col-md-12",
+                    "placeholder": "Explique detalhadamente por que há urgência na concessão da medida...",
+                    "rows": 6
+                },
+                {
+                    "name": "medidas_requeridas",
+                    "label": "Medidas Requeridas",
+                    "type": "textarea",
+                    "required": True,
+                    "size": "col-md-12",
+                    "placeholder": "Descreva as medidas que estão sendo requeridas...",
+                    "rows": 4
+                }
+            ]
+        },
+
+        {
+            "name": "Honorários Advocatícios",
+            "slug": "honorarios-advocaticios",
+            "description": "Informações sobre honorários advocatícios",
+            "icon": "fa-gavel",
+            "color": "warning",
+            "order": 21,
+            "fields_schema": [
+                {
+                    "name": "tipo_honorario",
+                    "label": "Tipo de Honorário",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "contrato", "label": "Contratual"},
+                        {"value": "sucumbencia", "label": "Sucumbência"},
+                        {"value": "ambos", "label": "Ambos"}
+                    ]
+                },
+                {
+                    "name": "valor_honorario_contrato",
+                    "label": "Valor Honorário Contratual (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "percentual_sucumbencia",
+                    "label": "Percentual Sucumbência (%)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "0.00",
+                    "step": "0.01",
+                    "max": "100"
+                },
+                {
+                    "name": "base_calculo",
+                    "label": "Base de Cálculo",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "valor_causa", "label": "Valor da Causa"},
+                        {"value": "valor_condenacao", "label": "Valor da Condenação"},
+                        {"value": "valor_pedido", "label": "Valor do Pedido"},
+                        {"value": "outro", "label": "Outro"}
+                    ]
+                },
+                {
+                    "name": "justificativa_honorario",
+                    "label": "Justificativa dos Honorários",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-8",
+                    "placeholder": "Justifique o valor dos honorários...",
+                    "rows": 3
+                }
+            ]
+        },
+
+        {
+            "name": "Custas Processuais",
+            "slug": "custas-processuais",
+            "description": "Informações sobre custas e despesas processuais",
+            "icon": "fa-money-bill",
+            "color": "info",
+            "order": 22,
+            "fields_schema": [
+                {
+                    "name": "valor_custas",
+                    "label": "Valor das Custas (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "valor_taxa_judiciaria",
+                    "label": "Valor Taxa Judiciária (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "valor_total_despesas",
+                    "label": "Valor Total Despesas (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "responsavel_pagamento",
+                    "label": "Responsável pelo Pagamento",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "autor", "label": "Autor"},
+                        {"value": "reu", "label": "Réu"},
+                        {"value": "sucumbente", "label": "Sucumbente"},
+                        {"value": "ambos", "label": "Ambos"}
+                    ]
+                },
+                {
+                    "name": "isenção_custas",
+                    "label": "Isenção de Custas",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-4",
+                    "options": [
+                        {"value": "sim", "label": "Sim"},
+                        {"value": "nao", "label": "Não"},
+                        {"value": "parcial", "label": "Parcial"}
+                    ]
+                },
+                {
+                    "name": "justificativa_isencao",
+                    "label": "Justificativa da Isenção",
+                    "type": "textarea",
+                    "required": False,
+                    "size": "col-md-8",
+                    "placeholder": "Justifique o pedido de isenção...",
+                    "rows": 3
+                }
+            ]
+        }
+    ]
+
+    app = create_app()
+    with app.app_context():
+        for section_data in sections_data:
+            # Verificar se já existe
+            existing = PetitionSection.query.filter_by(slug=section_data["slug"]).first()
+            if existing:
+                print(f"Seção '{section_data['name']}' já existe, pulando...")
+                continue
+
+            # Criar nova seção
+            section = PetitionSection(
+                name=section_data["name"],
+                slug=section_data["slug"],
+                description=section_data["description"],
+                icon=section_data["icon"],
+                color=section_data["color"],
+                order=section_data["order"],
+                fields_schema=section_data["fields_schema"],
+                is_active=True
+            )
+
+            db.session.add(section)
+            print(f"Seção '{section_data['name']}' criada com sucesso!")
+
+        db.session.commit()
+        print("Todas as seções foram criadas/atualizadas!")
+
+if __name__ == "__main__":
+    create_comprehensive_petition_sections()

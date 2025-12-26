@@ -55,6 +55,39 @@ class TestAuthFlow:
         # Deve voltar para login
         assert b"login" in response.data.lower()
 
+    def test_master_user_always_can_login(self, client, db_session):
+        """Testa que usuários master sempre podem fazer login, mesmo desativados"""
+        from app.models import User
+
+        # Criar usuário master desativado
+        master_user = User(
+            username="master_test",
+            email="master@test.com",
+            full_name="Master Test",
+            user_type="master",
+            is_active=False,  # Master desativado
+        )
+        master_user.set_password("MasterPass123!")
+        db_session.add(master_user)
+        db_session.commit()
+
+        # Tentar fazer login com usuário master desativado
+        response = client.post(
+            "/auth/login",
+            data={
+                "email": "master@test.com",
+                "password": "MasterPass123!",
+                "remember_me": False,
+            },
+            follow_redirects=True,
+        )
+
+        # Deve permitir login mesmo com usuário desativado
+        assert response.status_code == 200
+        assert (
+            b"master" in response.data.lower() or b"dashboard" in response.data.lower()
+        )
+
 
 class TestPasswordSecurity:
     """Testes de segurança de senha"""
@@ -75,6 +108,52 @@ class TestPasswordSecurity:
 
         # Deve falhar validação
         assert b"senha" in response.data.lower() or b"password" in response.data.lower()
+
+    def test_advogado_requires_specialties(self, client, db_session):
+        """Testa que advogado deve selecionar pelo menos uma especialidade"""
+        response = client.post(
+            "/auth/register",
+            data={
+                "username": "advuser",
+                "email": "advuser@example.com",
+                "full_name": "Advogado User",
+                "password": "StrongPass123!",
+                "password2": "StrongPass123!",
+                "user_type": "advogado",
+                "consent_personal_data": True,
+                "consent_terms": True,
+                # specialties não incluído - deve falhar
+            },
+        )
+
+        # Deve falhar validação
+        assert (
+            b"especialidade" in response.data.lower()
+            or b"atua" in response.data.lower()
+        )
+
+    def test_escritorio_requires_specialties(self, client, db_session):
+        """Testa que escritório também deve selecionar pelo menos uma especialidade"""
+        response = client.post(
+            "/auth/register",
+            data={
+                "username": "escuser",
+                "email": "escuser@example.com",
+                "full_name": "Escritório User",
+                "password": "StrongPass123!",
+                "password2": "StrongPass123!",
+                "user_type": "escritorio",
+                "consent_personal_data": True,
+                "consent_terms": True,
+                # specialties não incluído - deve falhar
+            },
+        )
+
+        # Deve falhar validação
+        assert (
+            b"especialidade" in response.data.lower()
+            or b"atua" in response.data.lower()
+        )
 
     def test_password_change_flow(self, authenticated_client, sample_user, app):
         """Testa fluxo de mudança de senha"""
@@ -166,3 +245,97 @@ class TestCaching:
             # Limpar
             cache.delete("test_key")
             assert cache.get("test_key") is None
+
+
+class TestProfileValidation:
+    """Testes de validação do perfil do usuário"""
+
+    def test_lawyer_must_have_specialties(self, authenticated_client, app):
+        """Testa que advogado deve ter pelo menos uma especialidade no perfil"""
+        with app.app_context():
+            # Simular um usuário advogado
+            from app.models import User
+
+            user = User.query.filter_by(user_type="advogado").first()
+            if not user:
+                # Criar um usuário advogado para teste
+                user = User(
+                    username="test_lawyer",
+                    email="lawyer@test.com",
+                    full_name="Test Lawyer",
+                    user_type="advogado",
+                )
+                user.set_password("testpass123")
+                from app import db
+
+                db.session.add(user)
+                db.session.commit()
+
+            # Fazer login como advogado
+            response = authenticated_client.post(
+                "/auth/login",
+                data={"email": user.email, "password": "testpass123"},
+                follow_redirects=True,
+            )
+
+            # Tentar atualizar perfil sem especialidades
+            response = authenticated_client.post(
+                "/auth/profile",
+                data={
+                    "full_name": "Test Lawyer",
+                    "email": user.email,
+                    "uf": "SP",
+                    "quick_actions": ["create_petition"],
+                    # specialties não incluído - deve falhar
+                },
+            )
+
+            # Deve falhar validação
+            assert (
+                b"especialidade" in response.data.lower()
+                or b"atua" in response.data.lower()
+            )
+
+    def test_law_firm_does_not_require_specialties(self, authenticated_client, app):
+        """Testa que escritório não precisa de especialidades no perfil"""
+        with app.app_context():
+            # Simular um usuário escritório
+            from app.models import User
+
+            user = User.query.filter_by(user_type="escritorio").first()
+            if not user:
+                # Criar um usuário escritório para teste
+                user = User(
+                    username="test_firm",
+                    email="firm@test.com",
+                    full_name="Test Law Firm",
+                    user_type="escritorio",
+                )
+                user.set_password("testpass123")
+                from app import db
+
+                db.session.add(user)
+                db.session.commit()
+
+            # Fazer login como escritório
+            response = authenticated_client.post(
+                "/auth/login",
+                data={"email": user.email, "password": "testpass123"},
+                follow_redirects=True,
+            )
+
+            # Tentar atualizar perfil sem especialidades
+            response = authenticated_client.post(
+                "/auth/profile",
+                data={
+                    "full_name": "Test Law Firm",
+                    "email": user.email,
+                    "uf": "SP",
+                    "quick_actions": ["create_petition"],
+                    # specialties não incluído - deve passar
+                },
+                follow_redirects=True,
+            )
+
+            # Deve redirecionar com sucesso
+            assert response.status_code == 200

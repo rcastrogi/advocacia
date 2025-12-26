@@ -7,9 +7,9 @@ $(document).ready(function() {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Auto-dismiss alerts after 5 seconds
+    // Auto-dismiss alerts after 5 seconds (but not error alerts)
     setTimeout(function() {
-        $('.alert-dismissible').fadeOut('slow');
+        $('.alert-dismissible').not('.alert-danger').fadeOut('slow');
     }, 5000);
 
     // Add fade-in animation to cards
@@ -84,11 +84,12 @@ function searchCEP(cep) {
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    if (window.showErrorToast) {
-                        window.showErrorToast(data.error);
-                    } else {
+                    // TOAST DESABILITADO PARA EVITAR DUPLICAÇÃO
+                    // if (window.showErrorToast) {
+                    //     window.showErrorToast(data.error);
+                    // } else {
                         showAlert('error', data.error);
-                    }
+                    // }
                 } else {
                     console.log('✅ CEP encontrado! Preenchendo e bloqueando campos...');
                     
@@ -123,20 +124,22 @@ function searchCEP(cep) {
                     // Now lock the fields that came from CEP
                     lockCEPFields(streetField, neighborhoodField, ufField, cityField);
 
-                    if (window.showSuccessToast) {
-                        window.showSuccessToast('Endereço preenchido automaticamente!');
-                    } else {
+                    // TOAST DESABILITADO PARA EVITAR DUPLICAÇÃO
+                    // if (window.showSuccessToast) {
+                    //     window.showSuccessToast('Endereço preenchido automaticamente!');
+                    // } else {
                         showAlert('success', 'Endereço preenchido automaticamente!');
-                    }
+                    // }
                 }
             })
             .catch(error => {
                 console.error('❌ Erro ao buscar CEP:', error);
-                if (window.showErrorToast) {
-                    window.showErrorToast('Erro ao buscar CEP. Verifique sua conexão.');
-                } else {
+                // TOAST DESABILITADO PARA EVITAR DUPLICAÇÃO
+                // if (window.showErrorToast) {
+                //     window.showErrorToast('Erro ao buscar CEP. Verifique sua conexão.');
+                // } else {
                     showAlert('error', 'Erro ao buscar CEP');
-                }
+                // }
             })
             .finally(() => {
                 // Hide loading
@@ -279,26 +282,14 @@ $(document).ready(function() {
     });
 });
 
-// Show alert function
+// Show alert function - DELEGADA PARA SISTEMA UNIFICADO
 function showAlert(type, message) {
-    const alertClass = type === 'error' ? 'alert-danger' : `alert-${type}`;
-    const alertHtml = `
-        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    
-    // Remove existing alerts
-    $('.alert').remove();
-    
-    // Add new alert
-    $('.container').first().prepend(alertHtml);
-    
-    // Auto-dismiss after 3 seconds
-    setTimeout(() => {
-        $('.alert').fadeOut('slow');
-    }, 3000);
+    if (window.showNotification) {
+        window.showNotification(message, type);
+    } else {
+        // Fallback se o sistema unificado não estiver carregado
+        console.log('Notification system not ready, falling back to console:', type, message);
+    }
 }
 
 // Form validation helpers

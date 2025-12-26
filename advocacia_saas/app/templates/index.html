@@ -31,6 +31,9 @@
                     <a class="nav-link" href="{{ url_for('main.recursos') }}">Recursos</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="#roadmap">Roadmap</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="#acessibilidade">Acessibilidade</a>
                 </li>
                 <li class="nav-item">
@@ -361,6 +364,121 @@
                     width: 34px;
                     height: 34px;
                     font-size: 12px;
+                }
+            }
+
+            /* Roadmap Preview Styles */
+            .roadmap-progress-card {
+                background: white;
+                border-radius: 15px;
+                padding: 2rem;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                border: 1px solid rgba(0,0,0,0.05);
+            }
+
+            .roadmap-item-card {
+                background: white;
+                border-radius: 15px;
+                padding: 1.5rem;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+                border: 1px solid rgba(0,0,0,0.05);
+                transition: all 0.3s ease;
+                height: 100%;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .roadmap-item-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            }
+
+            .roadmap-item-card.completed {
+                border-left: 4px solid #28a745;
+            }
+
+            .roadmap-item-card.in-progress {
+                border-left: 4px solid #ffc107;
+            }
+
+            .roadmap-item-card.planned {
+                border-left: 4px solid #17a2b8;
+            }
+
+            .roadmap-item-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
+
+            .roadmap-item-status {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.85rem;
+                font-weight: 600;
+            }
+
+            .roadmap-item-card.completed .roadmap-item-status {
+                color: #28a745;
+            }
+
+            .roadmap-item-card.in-progress .roadmap-item-status {
+                color: #ffc107;
+            }
+
+            .roadmap-item-card.planned .roadmap-item-status {
+                color: #17a2b8;
+            }
+
+            .roadmap-item-category {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.8rem;
+                color: #6c757d;
+                background: rgba(0,0,0,0.05);
+                padding: 0.25rem 0.75rem;
+                border-radius: 20px;
+            }
+
+            .roadmap-item-title {
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 0.75rem;
+                color: #212529;
+            }
+
+            .roadmap-item-description {
+                color: #6c757d;
+                font-size: 0.9rem;
+                line-height: 1.5;
+                margin-bottom: 1rem;
+            }
+
+            .roadmap-item-date {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.85rem;
+                color: #6c757d;
+                font-weight: 500;
+            }
+
+            @media (max-width: 768px) {
+                .roadmap-progress-card {
+                    padding: 1.5rem;
+                }
+
+                .roadmap-item-card {
+                    padding: 1.25rem;
+                }
+
+                .roadmap-item-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 0.75rem;
                 }
             }
         </style>
@@ -1267,6 +1385,131 @@
             </a>
         </div>
         {% endif %}
+    </div>
+</section>
+
+<!-- Roadmap Preview Section -->
+<section class="section roadmap-preview-section scroll-animate" id="roadmap" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="section-title">Nosso Roadmap de Desenvolvimento</h2>
+                <p class="section-subtitle">
+                    Veja as próximas funcionalidades que estamos desenvolvendo para tornar o Petitio ainda melhor.
+                </p>
+            </div>
+        </div>
+
+        <!-- Roadmap Progress Overview -->
+        <div class="row mb-5">
+            <div class="col-lg-8 mx-auto">
+                <div class="roadmap-progress-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0">Progresso Geral do Desenvolvimento</h4>
+                        <span class="badge bg-primary fs-6">23 Funcionalidades</span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 13%;" aria-valuenow="13" aria-valuemin="0" aria-valuemax="100">
+                            13% Completo
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2 text-muted">
+                        <small><i class="fas fa-check-circle text-success me-1"></i> 3 Concluídas</small>
+                        <small><i class="fas fa-clock text-warning me-1"></i> 8 Em Desenvolvimento</small>
+                        <small><i class="fas fa-calendar text-info me-1"></i> 12 Planejadas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Roadmap Items -->
+        <div class="row g-4">
+            <!-- Completed Item -->
+            <div class="col-md-6 col-lg-4">
+                <div class="roadmap-item-card completed">
+                    <div class="roadmap-item-header">
+                        <div class="roadmap-item-status">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Concluído</span>
+                        </div>
+                        <div class="roadmap-item-category">
+                            <i class="fas fa-shield-alt"></i>
+                            Segurança
+                        </div>
+                    </div>
+                    <h5 class="roadmap-item-title">Autenticação de Dois Fatores</h5>
+                    <p class="roadmap-item-description">
+                        Sistema completo de 2FA para proteger suas contas e dados sensíveis.
+                    </p>
+                    <div class="roadmap-item-date">
+                        <i class="fas fa-calendar-check"></i>
+                        Implementado em 2025
+                    </div>
+                </div>
+            </div>
+
+            <!-- In Progress Item -->
+            <div class="col-md-6 col-lg-4">
+                <div class="roadmap-item-card in-progress">
+                    <div class="roadmap-item-header">
+                        <div class="roadmap-item-status">
+                            <i class="fas fa-clock"></i>
+                            <span>Em Desenvolvimento</span>
+                        </div>
+                        <div class="roadmap-item-category">
+                            <i class="fas fa-robot"></i>
+                            IA e Automação
+                        </div>
+                    </div>
+                    <h5 class="roadmap-item-title">Assistente IA para Revisão</h5>
+                    <p class="roadmap-item-description">
+                        IA especializada em revisar e otimizar petições jurídicas automaticamente.
+                    </p>
+                    <div class="roadmap-item-date">
+                        <i class="fas fa-calendar"></i>
+                        Q1 2026
+                    </div>
+                </div>
+            </div>
+
+            <!-- Planned Item -->
+            <div class="col-md-6 col-lg-4">
+                <div class="roadmap-item-card planned">
+                    <div class="roadmap-item-header">
+                        <div class="roadmap-item-status">
+                            <i class="fas fa-calendar"></i>
+                            <span>Planejado</span>
+                        </div>
+                        <div class="roadmap-item-category">
+                            <i class="fas fa-mobile-alt"></i>
+                            Mobile
+                        </div>
+                    </div>
+                    <h5 class="roadmap-item-title">Aplicativo Mobile Nativo</h5>
+                    <p class="roadmap-item-description">
+                        Acesso completo ao sistema através de aplicativos iOS e Android.
+                    </p>
+                    <div class="roadmap-item-date">
+                        <i class="fas fa-calendar"></i>
+                        Q2 2026
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Full Roadmap Button -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <a href="{{ url_for('main.roadmap') }}" class="btn btn-lg btn-primary btn-hover-effect">
+                    <i class="fas fa-road me-2"></i>
+                    Ver Roadmap Completo
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+                <p class="text-muted mt-3 mb-0">
+                    <small>Acompanhe todas as 23 funcionalidades em desenvolvimento</small>
+                </p>
+            </div>
+        </div>
     </div>
 </section>
 

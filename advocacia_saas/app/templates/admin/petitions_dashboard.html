@@ -1,137 +1,224 @@
 {% extends "admin/base_admin.html" %}
 
-{% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">Administração de Petições</h1>
-                <div>
-                    <a href="{{ url_for('admin.petition_types_list') }}" class="btn btn-primary">
-                        <i class="fas fa-list"></i> Tipos de Petição
-                    </a>
-                    <a href="{{ url_for('admin.petition_sections_list') }}" class="btn btn-secondary">
-                        <i class="fas fa-puzzle-piece"></i> Seções
-                    </a>
-                </div>
-            </div>
-        </div>
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Administração de Petições</h1>
+    <div>
+        <a href="{{ url_for('admin.petition_types_list') }}" class="btn btn-primary">
+            <i class="fas fa-list"></i> Tipos de Petição
+        </a>
+        <a href="{{ url_for('admin.petition_sections_list') }}" class="btn btn-secondary">
+            <i class="fas fa-puzzle-piece"></i> Seções
+        </a>
     </div>
+</div>
 
-    <!-- Estatísticas -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total de Tipos
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ total_petition_types }}
-                            </div>
+<!-- Estatísticas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total de Tipos
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ total_petition_types }}
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Tipos Ativos
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ active_petition_types }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Formulários Dinâmicos
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ dynamic_petition_types }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-magic fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Total de Seções
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ total_sections }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-puzzle-piece fa-2x text-gray-300"></i>
-                        </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-alt fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Ações Rápidas -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Ações Rápidas</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('admin.petition_type_new') }}" class="btn btn-success btn-block">
-                                <i class="fas fa-plus"></i> Novo Tipo de Petição
-                            </a>
+    <div class="col-md-3">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Tipos Ativos
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('admin.petition_section_new') }}" class="btn btn-info btn-block">
-                                <i class="fas fa-plus"></i> Nova Seção
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('main.peticionador') }}" class="btn btn-primary btn-block" target="_blank">
-                                <i class="fas fa-external-link-alt"></i> Ver Peticionador
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <button class="btn btn-secondary btn-block" onclick="location.reload()">
-                                <i class="fas fa-sync"></i> Atualizar
-                            </button>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ active_petition_types }}
                         </div>
                     </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Formulários Dinâmicos
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ dynamic_petition_types }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-magic fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Tipos Inativos
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ total_petition_types - active_petition_types }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-pause-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Seções Disponíveis
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ total_sections }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-puzzle-piece fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Ações Rápidas</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('admin.petition_type_new') }}" class="btn btn-success btn-block">
+                            <i class="fas fa-plus"></i> Novo Tipo de Petição
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('main.peticionador') }}" class="btn btn-primary btn-block" target="_blank">
+                            <i class="fas fa-external-link-alt"></i> Ver Peticionador
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <button class="btn btn-secondary btn-block" onclick="location.reload()">
+                            <i class="fas fa-sync"></i> Atualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Tipos de Petição -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Tipos de Petição</h6>
+                <a href="{{ url_for('admin.petition_types_list') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-list"></i> Ver Todos
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_petition_types %}
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="petitionTypesTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nome</th>
+                                <th>Slug</th>
+                                <th>Status</th>
+                                <th>Seções</th>
+                                <th>Criado em</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for petition_type in recent_petition_types %}
+                            <tr>
+                                <td>
+                                    <strong>{{ petition_type.name }}</strong>
+                                    {% if petition_type.description %}
+                                    <br><small class="text-muted">{{ petition_type.description[:50] }}{% if petition_type.description|length > 50 %}...{% endif %}</small>
+                                    {% endif %}
+                                </td>
+                                <td><code>{{ petition_type.slug }}</code></td>
+                                <td>
+                                    {% if petition_type.is_active %}
+                                    <span class="badge badge-success">Ativo</span>
+                                    {% else %}
+                                    <span class="badge badge-secondary">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge badge-info">{{ petition_type.type_sections.count() }} seções</span>
+                                </td>
+                                <td>{{ petition_type.created_at.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <a href="{{ url_for('admin.petition_type_edit', type_id=petition_type.id) }}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('admin.petition_type_sections', type_id=petition_type.id) }}" class="btn btn-sm btn-outline-info" title="Gerenciar Seções">
+                                        <i class="fas fa-puzzle-piece"></i>
+                                    </a>
+                                    <form method="post" action="{{ url_for('admin.petition_type_delete', type_id=petition_type.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este tipo de petição?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-alt fa-3x text-gray-300 mb-3"></i>
+                    <h5 class="text-gray-500">Nenhum tipo de petição encontrado</h5>
+                    <p class="text-gray-400 mb-3">Comece criando seu primeiro tipo de petição.</p>
+                    <a href="{{ url_for('admin.petition_type_new') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Criar Primeiro Tipo
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

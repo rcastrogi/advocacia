@@ -83,6 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ESC para fechar modais
     document.addEventListener('keydown', function(e) {
+        if (!e.key || typeof e.key !== 'string' || e.key.length === 0) return;
         if (e.key === 'Escape') {
             const modals = document.querySelectorAll('.modal.show');
             modals.forEach(modal => {
@@ -108,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             modal.addEventListener('keydown', function(e) {
+                if (!e.key || typeof e.key !== 'string' || e.key.length === 0) return;
                 if (e.key === 'Tab') {
                     if (e.shiftKey && document.activeElement === firstElement) {
                         e.preventDefault();
@@ -128,6 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let isUsingKeyboard = false;
     
     document.addEventListener('keydown', function(e) {
+        if (!e.key || typeof e.key !== 'string' || e.key.length === 0) return;
         if (e.key === 'Tab') {
             isUsingKeyboard = true;
             document.body.classList.add('keyboard-navigation');
@@ -176,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
         field.setAttribute('aria-invalid', 'true');
         
         const errorMsg = field.nextElementSibling;
-        if (errorMsg && errorMsg.classList.contains('invalid-feedback')) {
+        if (errorMsg && errorMsg.classList.contains('invalid-feedback') && field.id) {
             const errorId = 'error-' + field.id;
             errorMsg.id = errorId;
             field.setAttribute('aria-describedby', errorId);
@@ -200,6 +203,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     document.addEventListener('keydown', function(e) {
+        if (!e.key || typeof e.key !== 'string' || e.key.length === 0) return; // Prevent error if key is undefined, not a string, or empty
+        
         const key = (e.altKey ? 'Alt+' : '') + e.key.toUpperCase();
         
         if (shortcuts[key]) {
@@ -263,5 +268,5 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     
-    console.log('✅ Recursos de acessibilidade carregados');
+    console.log('Recursos de acessibilidade carregados');
 });

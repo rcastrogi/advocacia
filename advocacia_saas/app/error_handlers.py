@@ -162,8 +162,19 @@ def register_error_handlers(app):
 
 def init_logging(app):
     """Configura sistema de logs"""
+    # Configurar handler de console (sempre ativo)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+    )
+    console_handler.setLevel(logging.INFO)
+    app.logger.addHandler(console_handler)
+    app.logger.setLevel(logging.INFO)
+
     if not app.debug:
-        # Configurar handler de arquivo
+        # Configurar handler de arquivo (apenas produção)
         import os
         from logging.handlers import RotatingFileHandler
 
@@ -184,5 +195,5 @@ def init_logging(app):
 
         file_handler.setLevel(logging.INFO)
         app.logger.addHandler(file_handler)
-        app.logger.setLevel(logging.INFO)
-        app.logger.info("Petitio startup")
+
+    app.logger.info("Petitio startup - Logging inicializado")

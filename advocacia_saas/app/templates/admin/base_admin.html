@@ -32,8 +32,8 @@
                        class="list-group-item list-group-item-action">
                         <i class="fas fa-file-alt me-2"></i>Tipos de Petição
                     </a>
-                    <a href="{{ url_for('admin.petitions_admin') }}" 
-                       class="list-group-item list-group-item-action {{ 'active' if 'petitions' in request.endpoint and 'billing' not in request.endpoint else '' }}">
+                    <a href="{{ url_for('admin.petition_sections_list') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'petition_sections' in request.endpoint else '' }}">
                         <i class="fas fa-puzzle-piece me-2"></i>Seções de Petição
                     </a>
                     <a href="{{ url_for('admin.roadmap') }}" 

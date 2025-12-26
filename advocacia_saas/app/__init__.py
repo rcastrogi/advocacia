@@ -250,4 +250,24 @@ def create_app(config_class=Config):
         local_dt = dt.astimezone(target_tz)
         return local_dt.strftime(format_string)
 
+    # Register markdown filter
+    try:
+        import markdown
+
+        @app.template_filter("markdown")
+        def markdown_filter(text):
+            """Convert markdown text to HTML"""
+            if not text:
+                return ""
+            return markdown.markdown(text, extensions=["extra", "codehilite"])
+    except ImportError:
+
+        @app.template_filter("markdown")
+        def markdown_filter(text):
+            """Fallback markdown filter if markdown library is not available"""
+            if not text:
+                return ""
+            # Simple fallback - just return text with basic formatting
+            return text.replace("\n", "<br>")
+
     return app

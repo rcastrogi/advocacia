@@ -371,7 +371,7 @@ p, li, td, th {
     word-spacing: 0.05em;
 }
 
-/* 7. LINKS DESCRITIVOS */
+/* REMOVIDO: Texto "abre em nova aba" que causava hover estranho
 a[target="_blank"]::after {
     content: " (abre em nova aba)";
     font-size: 0.8em;
@@ -383,6 +383,7 @@ a[target="_blank"]:focus::after,
 a[target="_blank"]:hover::after {
     position: static;
 }
+*/
 
 /* 8. TABELAS ACESSÍVEIS */
 table caption {

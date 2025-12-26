@@ -1462,6 +1462,11 @@ Pedidos:
 # =============================================================================
 
 
+# =============================================================================
+# ROTAS PARA FORMULÁRIO DINÂMICO
+# =============================================================================
+
+
 @bp.route("/dynamic/<slug>")
 @login_required
 @subscription_required
@@ -1649,153 +1654,48 @@ def generate_default_template(petition_type, form_data):
             html.append(f"<p>{form_data.get('cabecalho_vara')}</p>")
         html.append("</div>")
 
-    # Autor
+    # Título da petição
+    html.append(f"<h1>{petition_type.name}</h1>")
+
+    # Partes
     if form_data.get("autor_nome"):
-        html.append(
-            f'<p style="text-indent: 0;"><strong>{form_data.get("autor_nome", "").upper()}</strong>, '
-        )
-        qualificacao = []
-        if form_data.get("autor_nacionalidade"):
-            qualificacao.append(form_data.get("autor_nacionalidade"))
-        if form_data.get("autor_estado_civil"):
-            qualificacao.append(str(form_data.get("autor_estado_civil")).lower())
-        if form_data.get("autor_profissao"):
-            qualificacao.append(form_data.get("autor_profissao"))
-        if form_data.get("autor_cpf"):
-            qualificacao.append(f"CPF nº {form_data.get('autor_cpf')}")
-        if form_data.get("autor_rg"):
-            qualificacao.append(f"RG nº {form_data.get('autor_rg')}")
-        if qualificacao:
-            html.append(", ".join(qualificacao) + ", ")
+        html.append("<h2>Autor</h2>")
+        html.append(f"<p>{form_data.get('autor_nome', '')}</p>")
+        if form_data.get("autor_qualificacao"):
+            html.append(f"<p>{form_data.get('autor_qualificacao', '')}</p>")
 
-        if form_data.get("autor_endereco"):
-            endereco = [form_data.get("autor_endereco")]
-            if form_data.get("autor_numero"):
-                endereco.append(f"nº {form_data.get('autor_numero')}")
-            if form_data.get("autor_bairro"):
-                endereco.append(form_data.get("autor_bairro"))
-            if form_data.get("autor_cidade"):
-                endereco.append(
-                    f"{form_data.get('autor_cidade')}/{form_data.get('autor_estado', '')}"
-                )
-            if form_data.get("autor_cep"):
-                endereco.append(f"CEP {form_data.get('autor_cep')}")
-            html.append(f"residente e domiciliado(a) em {', '.join(endereco)}, ")
-        html.append("</p>")
-
-    # Título da ação
-    html.append(
-        f'<p style="text-indent: 0;">vem, respeitosamente, perante Vossa Excelência, propor a presente</p>'
-    )
-    html.append(f"<h1>{petition_type.name.upper()}</h1>")
-
-    # Réu
     if form_data.get("reu_nome"):
-        html.append(
-            f'<p style="text-indent: 0;">em face de <strong>{form_data.get("reu_nome", "").upper()}</strong>, '
-        )
-        qualificacao_reu = []
-        if form_data.get("reu_cpf"):
-            qualificacao_reu.append(f"CPF nº {form_data.get('reu_cpf')}")
-        if form_data.get("reu_endereco"):
-            endereco_reu = [form_data.get("reu_endereco")]
-            if form_data.get("reu_cidade"):
-                endereco_reu.append(
-                    f"{form_data.get('reu_cidade')}/{form_data.get('reu_estado', '')}"
-                )
-            qualificacao_reu.append(f"residente em {', '.join(endereco_reu)}")
-        html.append(
-            ", ".join(qualificacao_reu)
-            + ", pelos fatos e fundamentos a seguir expostos:</p>"
-        )
+        html.append("<h2>Réu</h2>")
+        html.append(f"<p>{form_data.get('reu_nome', '')}</p>")
+        if form_data.get("reu_qualificacao"):
+            html.append(f"<p>{form_data.get('reu_qualificacao', '')}</p>")
 
     # Fatos
     if form_data.get("fatos"):
-        html.append("<h2>I - DOS FATOS</h2>")
-        html.append(form_data.get("fatos"))
+        html.append("<h2>Dos Fatos</h2>")
+        html.append(f"<p>{form_data.get('fatos', '')}</p>")
 
-    # Direito
-    if form_data.get("direito") or form_data.get("fundamentacao"):
-        html.append("<h2>II - DO DIREITO</h2>")
-        html.append(form_data.get("direito") or form_data.get("fundamentacao", ""))
+    # Fundamentos
+    if form_data.get("fundamentos"):
+        html.append("<h2>Dos Fundamentos</h2>")
+        html.append(f"<p>{form_data.get('fundamentos', '')}</p>")
 
     # Pedidos
     if form_data.get("pedidos"):
-        html.append("<h2>III - DOS PEDIDOS</h2>")
-        html.append('<p style="text-indent: 0;">Ante o exposto, requer:</p>')
-        html.append(form_data.get("pedidos"))
+        html.append("<h2>Dos Pedidos</h2>")
+        html.append(f"<p>{form_data.get('pedidos', '')}</p>")
 
     # Valor da causa
     if form_data.get("valor_causa"):
-        html.append("<h2>IV - DO VALOR DA CAUSA</h2>")
-        html.append(
-            f'<p style="text-indent: 0;">Dá-se à causa o valor de <strong>R$ {form_data.get("valor_causa")}</strong>.</p>'
-        )
-
-    # Provas
-    if form_data.get("provas"):
-        html.append("<h2>V - DAS PROVAS</h2>")
-        html.append(form_data.get("provas"))
-
-    # Justiça Gratuita
-    if form_data.get("justica_gratuita_requer"):
-        html.append("<h2>DA JUSTIÇA GRATUITA</h2>")
-        html.append(
-            "<p>Requer a concessão dos benefícios da justiça gratuita, nos termos do art. 98 e seguintes do Código de Processo Civil, por não possuir condições de arcar com as custas processuais e honorários advocatícios sem prejuízo do próprio sustento.</p>"
-        )
-
-    # Fechamento
-    html.append(
-        '<p style="text-indent: 0; margin-top: 24pt;">Nestes termos,<br>Pede deferimento.</p>'
-    )
+        html.append("<h2>Do Valor da Causa</h2>")
+        html.append(f"<p>R$ {form_data.get('valor_causa', '0,00')}</p>")
 
     # Assinatura
-    cidade = form_data.get("assinatura_cidade", form_data.get("autor_cidade", ""))
-    data_assinatura = form_data.get(
-        "assinatura_data", datetime.now().strftime("%d/%m/%Y")
-    )
-    html.append(
-        f'<p style="text-indent: 0;" class="signature">{cidade}, {data_assinatura}</p>'
-    )
     html.append(
         '<p style="text-indent: 0; margin-top: 48pt;" class="signature">_________________________________<br>Advogado(a) - OAB/XX nº 00000</p>'
     )
 
     return "\n".join(html)
-
-
-@bp.route("/api/sections/<int:petition_type_id>")
-@login_required
-def get_sections(petition_type_id):
-    """API para obter seções de um tipo de petição."""
-
-    sections_config = (
-        db.session.query(PetitionTypeSection)
-        .filter_by(petition_type_id=petition_type_id)
-        .order_by(PetitionTypeSection.order)
-        .all()
-    )
-
-    sections = []
-    for config in sections_config:
-        section = db.session.get(PetitionSection, config.section_id)
-        if section and section.is_active:
-            sections.append(
-                {
-                    "id": section.id,
-                    "name": section.name,
-                    "slug": section.slug,
-                    "description": section.description,
-                    "icon": section.icon,
-                    "color": section.color,
-                    "fields_schema": section.fields_schema or [],
-                    "is_required": config.is_required,
-                    "is_expanded": config.is_expanded,
-                    "field_overrides": config.field_overrides or {},
-                }
-            )
-
-    return jsonify(sections)
 
 
 # ============================================================================

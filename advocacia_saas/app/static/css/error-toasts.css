@@ -2,9 +2,41 @@
  * Estilos para toasts de erro e sucesso
  */
 
+/*
+ * Estilos para toasts de erro e sucesso - Sistema legado
+ * Agora os flash messages são convertidos para o sistema Alpine.js
+ */
+
+/* Manter apenas para compatibilidade com código legado */
 .toast-container-errors {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
     z-index: 9999 !important;
+    max-width: 400px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
 }
+
+/* Remover regras conflitantes que podem sobrescrever position: fixed */
+/*
+.toast-container {
+    position: fixed !important;
+}
+
+.toast-container.position-fixed {
+    position: fixed !important;
+}
+
+.toast-container.bottom-0 {
+    bottom: 20px !important;
+}
+
+.toast-container.end-0 {
+    right: 20px !important;
+}
+*/
 
 .error-toast .toast-header {
     background: linear-gradient(135deg, #dc3545, #c82333) !important;
@@ -15,6 +47,7 @@
 }
 
 .toast {
+    position: static !important;
     min-width: 300px;
     max-width: 400px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);

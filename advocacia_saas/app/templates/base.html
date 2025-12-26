@@ -86,8 +86,8 @@
     <link href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1, 10000) | random }}" rel="stylesheet">
     <!-- Accessibility CSS -->
     <link href="{{ url_for('static', filename='css/accessibility.css') }}?v={{ range(1, 10000) | random }}" rel="stylesheet">
-    <!-- Error Toasts CSS -->
-    <link href="{{ url_for('static', filename='css/error-toasts.css') }}?v={{ range(1, 10000) | random }}" rel="stylesheet">
+    <!-- Sistema Unificado de Notificações -->
+    <script src="{{ url_for('static', filename='js/notification-system.js') }}"></script>
     
     <!-- HTMX + Alpine.js Styles -->
     <style>
@@ -112,56 +112,8 @@
             transition: opacity 0.2s ease-in;
         }
         
-        /* Toast notifications */
-        .toast-container {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-width: 400px;
-        }
-        .toast-notification {
-            padding: 16px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideIn 0.3s ease-out;
-            cursor: pointer;
-        }
-        .toast-notification.success {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }
-        .toast-notification.error {
-            background: linear-gradient(135deg, #dc3545, #e74c3c);
-            color: white;
-        }
-        .toast-notification.warning {
-            background: linear-gradient(135deg, #ffc107, #fd7e14);
-            color: #000;
-        }
-        .toast-notification.info {
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            color: white;
-        }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-        .toast-notification.hiding {
-            animation: slideOut 0.3s ease-in forwards;
-        }
-        
-        /* Page Loader - Loading Spinner Global */
+        /* Alpine cloak - hide elements until Alpine loads */
+        [x-cloak] { display: none !important; }
         .page-loader {
             position: fixed;
             top: 0;
@@ -616,42 +568,11 @@
     </nav>
     {% endif %}
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="container mt-3">
-        {% for category, message in messages %}
-        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
-
     <!-- Main Content -->
     <main id="main-content" role="main" tabindex="-1">
         {% block content %}{% endblock %}
     </main>
-    
-    <!-- Toast Notifications Container -->
-    <div class="toast-container" id="toastContainer" x-ref="toastContainer" role="region" aria-label="Notificações" aria-live="polite">
-        <template x-for="toast in toasts" :key="toast.id">
-            <div :class="'toast-notification ' + toast.type + (toast.hiding ? ' hiding' : '')"
-                 role="alert"
-                 @click="removeToast(toast.id)"
-                 @keydown.enter="removeToast(toast.id)"
-                 @keydown.space="removeToast(toast.id)"
-                 tabindex="0"
-                 :aria-label="toast.message"
-                 x-transition>
-                <i :class="toast.icon" aria-hidden="true"></i>
-                <span x-text="toast.message"></span>
-            </div>
-        </template>
-    </div>
-    
+
     <!-- Auto-save Indicator -->
     <div x-show="autosaveStatus" 
          x-cloak

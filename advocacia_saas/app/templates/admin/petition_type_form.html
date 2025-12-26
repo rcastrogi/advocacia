@@ -1,11 +1,8 @@
 {% extends "admin/base_admin.html" %}
 
-{% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">{{ title }}</h1>
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ title }}</h1>
                 <a href="{{ url_for('admin.petition_types_list') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </a>
@@ -34,8 +31,8 @@
                                     <label for="slug">Slug *</label>
                                     <input type="text" class="form-control" id="slug" name="slug"
                                            value="{{ petition_type.slug if petition_type else '' }}" required
-                                           pattern="[a-z0-9-]+" title="Apenas letras minúsculas, números e hífens">
-                                    <small class="form-text text-muted">Usado na URL. Ex: acao-de-alimentos</small>
+                                           pattern="[a-z0-9-]+" title="Apenas letras minúsculas, números e hífens" readonly>
+                                    <small class="form-text text-muted">Gerado automaticamente a partir do nome</small>
                                 </div>
                             </div>
                         </div>
@@ -132,21 +129,21 @@
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
 <script>
-// Auto-gerar slug a partir do nome
+// Função para gerar slug automaticamente
+function generateSlug(text) {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+// Gerar slug automaticamente quando o nome muda
 $('#name').on('input', function() {
     const name = $(this).val();
-    const slug = name.toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
-        .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
-        .trim()
-        .replace(/\s+/g, '-') // Substitui espaços por hífens
-        .replace(/-+/g, '-'); // Remove hífens duplicados
-
+    const slug = generateSlug(name);
     $('#slug').val(slug);
 });
 </script>

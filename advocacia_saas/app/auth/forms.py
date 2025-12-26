@@ -8,7 +8,14 @@ from wtforms import (
     SubmitField,
     widgets,
 )
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from wtforms.validators import (
+    DataRequired,
+    Email,
+    EqualTo,
+    Length,
+    Optional,
+    ValidationError,
+)
 
 from app.models import User
 from app.quick_actions import build_quick_action_choices
@@ -26,7 +33,10 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField("Lembrar de mim")
     two_factor_code = StringField(
         "Código 2FA",
-        validators=[Length(min=6, max=6, message="Código deve ter 6 dígitos")],
+        validators=[
+            Optional(),
+            Length(min=6, max=6, message="Código deve ter 6 dígitos"),
+        ],
     )
     submit = SubmitField("Entrar")
 
@@ -153,6 +163,12 @@ class RegistrationForm(FlaskForm):
 
     submit = SubmitField("Cadastrar")
 
+    def validate_specialties(self, specialties):
+        """Valida que pelo menos uma especialidade seja selecionada para advogados e escritórios"""
+        if self.user_type.data in ["advogado", "escritorio"]:
+            if not specialties.data or len(specialties.data) == 0:
+                raise ValidationError("Selecione pelo menos uma área de atuação.")
+
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
         if user is not None:
@@ -240,9 +256,10 @@ class ProfileForm(FlaskForm):
     )
     submit = SubmitField("Atualizar perfil")
 
-    def __init__(self, original_email, *args, **kwargs):
+    def __init__(self, original_email, user_type=None, *args, **kwargs):
         super(ProfileForm, self).__init__(*args, **kwargs)
         self.original_email = original_email
+        self.user_type = user_type
         self.quick_actions.choices = build_quick_action_choices()
 
     def validate_email(self, email):
@@ -250,6 +267,12 @@ class ProfileForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user is not None:
                 raise ValidationError("Email já cadastrado. Use outro email.")
+
+    def validate_specialties(self, specialties):
+        """Valida que pelo menos uma especialidade seja selecionada para advogados"""
+        if self.user_type == "advogado":
+            if not specialties.data or len(specialties.data) == 0:
+                raise ValidationError("Selecione pelo menos uma área de atuação.")
 
 
 class ChangePasswordForm(FlaskForm):

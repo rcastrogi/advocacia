@@ -1,104 +1,99 @@
 {% extends "admin/base_admin.html" %}
 
-{% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">Tipos de Petição</h1>
-                <div>
-                    <a href="{{ url_for('admin.petitions_admin') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Voltar
-                    </a>
-                    <a href="{{ url_for('admin.petition_type_new') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Novo Tipo
-                    </a>
-                </div>
-            </div>
-        </div>
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="fas fa-file-alt me-2 text-primary"></i>Tipos de Petição
+        </h1>
+        <p class="text-muted mb-0">Configure os tipos de petições disponíveis na plataforma</p>
     </div>
+    <div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        <a href="{{ url_for('admin.petition_type_new') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Novo Tipo
+        </a>
+    </div>
+</div>
 
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="petitionTypesTable">
-                            <thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th>Slug</th>
-                                    <th>Categoria</th>
-                                    <th>Dinâmico</th>
-                                    <th>Ativo</th>
-                                    <th>Cobrável</th>
-                                    <th>Seções</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for petition_type in petition_types %}
-                                <tr>
-                                    <td>
-                                        <i class="fas {{ petition_type.icon }} text-{{ petition_type.color }}"></i>
-                                        {{ petition_type.name }}
-                                    </td>
-                                    <td><code>{{ petition_type.slug }}</code></td>
-                                    <td>
-                                        <span class="badge badge-secondary">{{ petition_type.category.title() }}</span>
-                                    </td>
-                                    <td>
-                                        {% if petition_type.use_dynamic_form %}
-                                            <span class="badge badge-success">Sim</span>
-                                        {% else %}
-                                            <span class="badge badge-secondary">Não</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if petition_type.is_active %}
-                                            <span class="badge badge-success">Ativo</span>
-                                        {% else %}
-                                            <span class="badge badge-danger">Inativo</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if petition_type.is_billable %}
-                                            <span class="badge badge-warning">
-                                                R$ {{ "%.2f"|format(petition_type.base_price) }}
-                                            </span>
-                                        {% else %}
-                                            <span class="badge badge-info">Grátis</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <a href="{{ url_for('admin.petition_type_sections', type_id=petition_type.id) }}"
-                                           class="btn btn-sm btn-outline-primary">
-                                            {{ petition_type.type_sections.count() }} seções
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ url_for('admin.petition_type_edit', type_id=petition_type.id) }}"
-                                               class="btn btn-sm btn-outline-secondary">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <form method="post"
-                                                  action="{{ url_for('admin.petition_type_delete', type_id=petition_type.id) }}"
-                                                  class="d-inline"
-                                                  onsubmit="return confirm('Tem certeza que deseja excluir este tipo de petição?')">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+<div class="card shadow">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="petitionTypesTable">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Slug</th>
+                        <th>Categoria</th>
+                        <th>Dinâmico</th>
+                        <th>Ativo</th>
+                        <th>Cobrável</th>
+                        <th>Seções</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for petition_type in petition_types %}
+                    <tr>
+                        <td>
+                            <i class="fas {{ petition_type.icon }} text-{{ petition_type.color }}"></i>
+                            {{ petition_type.name }}
+                        </td>
+                        <td><code>{{ petition_type.slug }}</code></td>
+                        <td>
+                            <span class="badge badge-secondary">{{ petition_type.category.title() }}</span>
+                        </td>
+                        <td>
+                            {% if petition_type.use_dynamic_form %}
+                            <span class="badge badge-success">Sim</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Não</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if petition_type.is_active %}
+                            <span class="badge badge-success">Ativo</span>
+                            {% else %}
+                            <span class="badge badge-danger">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if petition_type.is_billable %}
+                            <span class="badge badge-warning">
+                                R$ {{ "%.2f"|format(petition_type.base_price) }}
+                            </span>
+                            {% else %}
+                            <span class="badge badge-info">Grátis</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.petition_type_sections', type_id=petition_type.id) }}"
+                               class="btn btn-sm btn-outline-primary">
+                                {{ petition_type.type_sections.count() }} seções
+                            </a>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('admin.petition_type_edit', type_id=petition_type.id) }}"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="post"
+                                      action="{{ url_for('admin.petition_type_delete', type_id=petition_type.id) }}"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Tem certeza que deseja excluir este tipo de petição?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

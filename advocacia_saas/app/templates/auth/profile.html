@@ -134,6 +134,11 @@
                                 {% endfor %}
                             </div>
                             <small class="text-muted">Selecione suas áreas de atuação profissional.</small>
+                            {% if form.specialties.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.specialties.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                         {% endif %}
 

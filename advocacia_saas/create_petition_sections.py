@@ -1,0 +1,527 @@
+"""
+Script para criar seções pré-definidas para petições dinâmicas.
+Este script cria templates de seções como "Réu", "Testemunha", etc.
+com campos específicos para cada tipo de seção.
+"""
+
+from app import create_app, db
+from app.models import PetitionSection
+
+def create_petition_sections():
+    """Cria seções pré-definidas para petições"""
+
+    sections_data = [
+        {
+            "name": "Autor",
+            "slug": "autor",
+            "description": "Dados da pessoa que está propondo a ação",
+            "icon": "fa-user",
+            "color": "primary",
+            "order": 1,
+            "fields_schema": [
+                {
+                    "name": "nome",
+                    "label": "Nome Completo",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-6",
+                    "placeholder": "Nome completo do autor"
+                },
+                {
+                    "name": "documento_tipo",
+                    "label": "Tipo de Documento",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "cpf", "label": "CPF"},
+                        {"value": "cnpj", "label": "CNPJ"},
+                        {"value": "rg", "label": "RG"},
+                        {"value": "passaporte", "label": "Passaporte"}
+                    ]
+                },
+                {
+                    "name": "documento_numero",
+                    "label": "Número do Documento",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-3",
+                    "placeholder": "Número do documento"
+                },
+                {
+                    "name": "cep",
+                    "label": "CEP",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-2",
+                    "placeholder": "00000-000"
+                },
+                {
+                    "name": "endereco",
+                    "label": "Endereço",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Rua, número"
+                },
+                {
+                    "name": "complemento",
+                    "label": "Complemento",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Apartamento, sala, etc."
+                },
+                {
+                    "name": "estado",
+                    "label": "Estado",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-2",
+                    "options": [
+                        {"value": "AC", "label": "Acre"},
+                        {"value": "AL", "label": "Alagoas"},
+                        {"value": "AP", "label": "Amapá"},
+                        {"value": "AM", "label": "Amazonas"},
+                        {"value": "BA", "label": "Bahia"},
+                        {"value": "CE", "label": "Ceará"},
+                        {"value": "DF", "label": "Distrito Federal"},
+                        {"value": "ES", "label": "Espírito Santo"},
+                        {"value": "GO", "label": "Goiás"},
+                        {"value": "MA", "label": "Maranhão"},
+                        {"value": "MT", "label": "Mato Grosso"},
+                        {"value": "MS", "label": "Mato Grosso do Sul"},
+                        {"value": "MG", "label": "Minas Gerais"},
+                        {"value": "PA", "label": "Pará"},
+                        {"value": "PB", "label": "Paraíba"},
+                        {"value": "PR", "label": "Paraná"},
+                        {"value": "PE", "label": "Pernambuco"},
+                        {"value": "PI", "label": "Piauí"},
+                        {"value": "RJ", "label": "Rio de Janeiro"},
+                        {"value": "RN", "label": "Rio Grande do Norte"},
+                        {"value": "RS", "label": "Rio Grande do Sul"},
+                        {"value": "RO", "label": "Rondônia"},
+                        {"value": "RR", "label": "Roraima"},
+                        {"value": "SC", "label": "Santa Catarina"},
+                        {"value": "SP", "label": "São Paulo"},
+                        {"value": "SE", "label": "Sergipe"},
+                        {"value": "TO", "label": "Tocantins"}
+                    ]
+                },
+                {
+                    "name": "cidade",
+                    "label": "Cidade",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Nome da cidade"
+                },
+                {
+                    "name": "telefone",
+                    "label": "Telefone",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "(00) 00000-0000"
+                },
+                {
+                    "name": "email",
+                    "label": "E-mail",
+                    "type": "email",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "email@exemplo.com"
+                }
+            ]
+        },
+        {
+            "name": "Réu",
+            "slug": "reu",
+            "description": "Dados da pessoa ou empresa que está sendo processada",
+            "icon": "fa-gavel",
+            "color": "danger",
+            "order": 2,
+            "fields_schema": [
+                {
+                    "name": "nome",
+                    "label": "Nome Completo/Razão Social",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-6",
+                    "placeholder": "Nome completo ou razão social"
+                },
+                {
+                    "name": "documento_tipo",
+                    "label": "Tipo de Documento",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "cpf", "label": "CPF"},
+                        {"value": "cnpj", "label": "CNPJ"},
+                        {"value": "rg", "label": "RG"},
+                        {"value": "passaporte", "label": "Passaporte"}
+                    ]
+                },
+                {
+                    "name": "documento_numero",
+                    "label": "Número do Documento",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-3",
+                    "placeholder": "Número do documento"
+                },
+                {
+                    "name": "cep",
+                    "label": "CEP",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-2",
+                    "placeholder": "00000-000"
+                },
+                {
+                    "name": "endereco",
+                    "label": "Endereço",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Rua, número"
+                },
+                {
+                    "name": "complemento",
+                    "label": "Complemento",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Apartamento, sala, etc."
+                },
+                {
+                    "name": "estado",
+                    "label": "Estado",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-2",
+                    "options": [
+                        {"value": "AC", "label": "Acre"},
+                        {"value": "AL", "label": "Alagoas"},
+                        {"value": "AP", "label": "Amapá"},
+                        {"value": "AM", "label": "Amazonas"},
+                        {"value": "BA", "label": "Bahia"},
+                        {"value": "CE", "label": "Ceará"},
+                        {"value": "DF", "label": "Distrito Federal"},
+                        {"value": "ES", "label": "Espírito Santo"},
+                        {"value": "GO", "label": "Goiás"},
+                        {"value": "MA", "label": "Maranhão"},
+                        {"value": "MT", "label": "Mato Grosso"},
+                        {"value": "MS", "label": "Mato Grosso do Sul"},
+                        {"value": "MG", "label": "Minas Gerais"},
+                        {"value": "PA", "label": "Pará"},
+                        {"value": "PB", "label": "Paraíba"},
+                        {"value": "PR", "label": "Paraná"},
+                        {"value": "PE", "label": "Pernambuco"},
+                        {"value": "PI", "label": "Piauí"},
+                        {"value": "RJ", "label": "Rio de Janeiro"},
+                        {"value": "RN", "label": "Rio Grande do Norte"},
+                        {"value": "RS", "label": "Rio Grande do Sul"},
+                        {"value": "RO", "label": "Rondônia"},
+                        {"value": "RR", "label": "Roraima"},
+                        {"value": "SC", "label": "Santa Catarina"},
+                        {"value": "SP", "label": "São Paulo"},
+                        {"value": "SE", "label": "Sergipe"},
+                        {"value": "TO", "label": "Tocantins"}
+                    ]
+                },
+                {
+                    "name": "cidade",
+                    "label": "Cidade",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Nome da cidade"
+                },
+                {
+                    "name": "telefone",
+                    "label": "Telefone",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "(00) 00000-0000"
+                },
+                {
+                    "name": "email",
+                    "label": "E-mail",
+                    "type": "email",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "email@exemplo.com"
+                }
+            ]
+        },
+        {
+            "name": "Testemunha",
+            "slug": "testemunha",
+            "description": "Dados das testemunhas do processo",
+            "icon": "fa-users",
+            "color": "info",
+            "order": 3,
+            "fields_schema": [
+                {
+                    "name": "nome",
+                    "label": "Nome Completo",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-6",
+                    "placeholder": "Nome completo da testemunha"
+                },
+                {
+                    "name": "documento_tipo",
+                    "label": "Tipo de Documento",
+                    "type": "select",
+                    "required": True,
+                    "size": "col-md-3",
+                    "options": [
+                        {"value": "cpf", "label": "CPF"},
+                        {"value": "rg", "label": "RG"},
+                        {"value": "passaporte", "label": "Passaporte"}
+                    ]
+                },
+                {
+                    "name": "documento_numero",
+                    "label": "Número do Documento",
+                    "type": "text",
+                    "required": True,
+                    "size": "col-md-3",
+                    "placeholder": "Número do documento"
+                },
+                {
+                    "name": "cep",
+                    "label": "CEP",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-2",
+                    "placeholder": "00000-000"
+                },
+                {
+                    "name": "endereco",
+                    "label": "Endereço",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "Rua, número"
+                },
+                {
+                    "name": "complemento",
+                    "label": "Complemento",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Apartamento, sala, etc."
+                },
+                {
+                    "name": "estado",
+                    "label": "Estado",
+                    "type": "select",
+                    "required": False,
+                    "size": "col-md-2",
+                    "options": [
+                        {"value": "AC", "label": "Acre"},
+                        {"value": "AL", "label": "Alagoas"},
+                        {"value": "AP", "label": "Amapá"},
+                        {"value": "AM", "label": "Amazonas"},
+                        {"value": "BA", "label": "Bahia"},
+                        {"value": "CE", "label": "Ceará"},
+                        {"value": "DF", "label": "Distrito Federal"},
+                        {"value": "ES", "label": "Espírito Santo"},
+                        {"value": "GO", "label": "Goiás"},
+                        {"value": "MA", "label": "Maranhão"},
+                        {"value": "MT", "label": "Mato Grosso"},
+                        {"value": "MS", "label": "Mato Grosso do Sul"},
+                        {"value": "MG", "label": "Minas Gerais"},
+                        {"value": "PA", "label": "Pará"},
+                        {"value": "PB", "label": "Paraíba"},
+                        {"value": "PR", "label": "Paraná"},
+                        {"value": "PE", "label": "Pernambuco"},
+                        {"value": "PI", "label": "Piauí"},
+                        {"value": "RJ", "label": "Rio de Janeiro"},
+                        {"value": "RN", "label": "Rio Grande do Norte"},
+                        {"value": "RS", "label": "Rio Grande do Sul"},
+                        {"value": "RO", "label": "Rondônia"},
+                        {"value": "RR", "label": "Roraima"},
+                        {"value": "SC", "label": "Santa Catarina"},
+                        {"value": "SP", "label": "São Paulo"},
+                        {"value": "SE", "label": "Sergipe"},
+                        {"value": "TO", "label": "Tocantins"}
+                    ]
+                },
+                {
+                    "name": "cidade",
+                    "label": "Cidade",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "Nome da cidade"
+                },
+                {
+                    "name": "telefone",
+                    "label": "Telefone",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "(00) 00000-0000"
+                },
+                {
+                    "name": "email",
+                    "label": "E-mail",
+                    "type": "email",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "email@exemplo.com"
+                }
+            ]
+        },
+        {
+            "name": "Dados do Processo",
+            "slug": "dados-processo",
+            "description": "Informações básicas sobre o processo judicial",
+            "icon": "fa-balance-scale",
+            "color": "warning",
+            "order": 4,
+            "fields_schema": [
+                {
+                    "name": "numero_processo",
+                    "label": "Número do Processo",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "0000000-00.0000.0.00.0000"
+                },
+                {
+                    "name": "vara",
+                    "label": "Vara/Órgão Julgador",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "1ª Vara Cível, Juizado Especial, etc."
+                },
+                {
+                    "name": "comarca",
+                    "label": "Comarca/Foro",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-4",
+                    "placeholder": "São Paulo, Campinas, etc."
+                },
+                {
+                    "name": "valor_causa",
+                    "label": "Valor da Causa (R$)",
+                    "type": "number",
+                    "required": False,
+                    "size": "col-md-3",
+                    "placeholder": "0.00",
+                    "step": "0.01"
+                },
+                {
+                    "name": "data_distribuicao",
+                    "label": "Data de Distribuição",
+                    "type": "date",
+                    "required": False,
+                    "size": "col-md-3"
+                },
+                {
+                    "name": "juiz_relator",
+                    "label": "Juiz/Relator",
+                    "type": "text",
+                    "required": False,
+                    "size": "col-md-6",
+                    "placeholder": "Nome do juiz responsável"
+                }
+            ]
+        },
+        {
+            "name": "Fatos",
+            "slug": "fatos",
+            "description": "Descrição dos fatos que motivaram a ação",
+            "icon": "fa-file-text",
+            "color": "secondary",
+            "order": 5,
+            "fields_schema": [
+                {
+                    "name": "descricao_fatos",
+                    "label": "Descrição dos Fatos",
+                    "type": "textarea",
+                    "required": True,
+                    "size": "col-md-12",
+                    "placeholder": "Descreva detalhadamente os fatos que motivaram a propositura desta ação...",
+                    "rows": 6
+                }
+            ]
+        },
+        {
+            "name": "Fundamentação Jurídica",
+            "slug": "fundamentacao",
+            "description": "Base legal e fundamentos jurídicos da ação",
+            "icon": "fa-book",
+            "color": "success",
+            "order": 6,
+            "fields_schema": [
+                {
+                    "name": "fundamentos_juridicos",
+                    "label": "Fundamentos Jurídicos",
+                    "type": "textarea",
+                    "required": True,
+                    "size": "col-md-12",
+                    "placeholder": "Cite os dispositivos legais aplicáveis ao caso...",
+                    "rows": 6
+                }
+            ]
+        },
+        {
+            "name": "Pedidos",
+            "slug": "pedidos",
+            "description": "Pedidos formulados na petição inicial",
+            "icon": "fa-list",
+            "color": "primary",
+            "order": 7,
+            "fields_schema": [
+                {
+                    "name": "pedidos_formulados",
+                    "label": "Pedidos Formulados",
+                    "type": "textarea",
+                    "required": True,
+                    "size": "col-md-12",
+                    "placeholder": "Formule os pedidos que estão sendo requeridos...",
+                    "rows": 6
+                }
+            ]
+        }
+    ]
+
+    app = create_app()
+    with app.app_context():
+        for section_data in sections_data:
+            # Verificar se já existe
+            existing = PetitionSection.query.filter_by(slug=section_data["slug"]).first()
+            if existing:
+                print(f"Seção '{section_data['name']}' já existe, pulando...")
+                continue
+
+            # Criar nova seção
+            section = PetitionSection(
+                name=section_data["name"],
+                slug=section_data["slug"],
+                description=section_data["description"],
+                icon=section_data["icon"],
+                color=section_data["color"],
+                order=section_data["order"],
+                fields_schema=section_data["fields_schema"],
+                is_active=True
+            )
+
+            db.session.add(section)
+            print(f"Seção '{section_data['name']}' criada com sucesso!")
+
+        db.session.commit()
+        print("Todas as seções foram criadas/atualizadas!")
+
+if __name__ == "__main__":
+    create_petition_sections()

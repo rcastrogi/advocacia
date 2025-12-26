@@ -44,6 +44,10 @@ def check_password_expiration():
 
     # Verificar apenas se usuário está autenticado
     if current_user.is_authenticated:
+        # 🔥 USUÁRIOS MASTER SÃO ISENTOS DE TODAS AS VERIFICAÇÕES DE SEGURANÇA 🔥
+        if current_user.is_master:
+            return  # Master tem acesso irrestrito
+
         # Não verificar na própria página de mudança de senha
         if request.endpoint and request.endpoint not in exempt_endpoints:
             # Verificar se senha expirou ou se mudança é forçada
@@ -63,7 +67,10 @@ def check_password_expiration():
 
 
 @bp.route("/login", methods=["GET", "POST"])
-@limiter.limit("10 per minute")  # Limita a 10 tentativas por minuto
+@limiter.limit(
+    "10 per minute",
+    exempt_when=lambda: current_user.is_authenticated and current_user.is_master,
+)  # Master nunca é limitado
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("main.dashboard"))
@@ -127,6 +134,26 @@ def login():
         # Fluxo normal: consultar banco de dados para outros usuários
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
+            # 🔥 PROTEÇÃO ESPECIAL PARA USUÁRIO MASTER 🔥
+            # Usuários master NUNCA são bloqueados e sempre podem fazer login
+            if user.is_master:
+                # Master bypassa todas as verificações de segurança
+                login_user(user, remember=form.remember_me.data)
+                flash("Login realizado com sucesso (usuário master)", "success")
+                next_page = request.args.get("next")
+                if not next_page or urlparse(next_page).netloc != "":
+                    next_page = url_for("main.dashboard")
+                return redirect(next_page)
+
+            # 🔥 PROTEÇÃO CONTRA USUÁRIOS INATIVOS 🔥
+            # Usuários normais devem estar ativos para fazer login
+            if not user.is_active:
+                flash(
+                    "Sua conta foi desativada. Entre em contato com o administrador.",
+                    "error",
+                )
+                return render_template("auth/login.html", title="Login", form=form)
+
             # Verificar se usuário requer 2FA
             if user.requires_2fa():
                 # Verificar código 2FA
@@ -155,8 +182,10 @@ def login():
 
             login_user(user, remember=form.remember_me.data)
 
-            # Verificar se senha expirou imediatamente após login
-            if user.force_password_change or user.is_password_expired():
+            # 🔥 USUÁRIOS MASTER NÃO SÃO AFETADOS POR EXPIRAÇÃO DE SENHA 🔥
+            if not user.is_master and (
+                user.force_password_change or user.is_password_expired()
+            ):
                 flash("Sua senha expirou. Por favor, defina uma nova senha.", "warning")
                 return redirect(url_for("auth.change_password"))
 
@@ -323,7 +352,7 @@ def profile():
     # Verificar se é usuário demo
     is_demo = current_user.id == 999999
 
-    form = ProfileForm(current_user.email)
+    form = ProfileForm(current_user.email, current_user.user_type)
     if form.validate_on_submit():
         if is_demo:
             flash(
