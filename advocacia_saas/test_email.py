@@ -5,10 +5,12 @@ Execute: python test_email.py
 """
 
 import os
+
 from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente
 load_dotenv()
+
 
 def test_email_config():
     """Testa se as configurações de email estão corretas"""
@@ -17,11 +19,11 @@ def test_email_config():
 
     # Verificar variáveis obrigatórias
     required_vars = [
-        'MAIL_SERVER',
-        'MAIL_PORT',
-        'MAIL_USERNAME',
-        'MAIL_PASSWORD',
-        'MAIL_DEFAULT_SENDER'
+        "MAIL_SERVER",
+        "MAIL_PORT",
+        "MAIL_USERNAME",
+        "MAIL_PASSWORD",
+        "MAIL_DEFAULT_SENDER",
     ]
 
     missing_vars = []
@@ -31,7 +33,7 @@ def test_email_config():
             missing_vars.append(var)
         else:
             # Não mostrar senha completa por segurança
-            if var == 'MAIL_PASSWORD' and len(value) > 10:
+            if var == "MAIL_PASSWORD" and len(value) > 10:
                 display_value = value[:6] + "..." + value[-4:]
             else:
                 display_value = value
@@ -55,12 +57,14 @@ MAIL_DEFAULT_SENDER=noreply@seudominio.com
     # Testar import do Flask-Mail
     try:
         from flask_mail import Mail
+
         print("✅ Flask-Mail importado com sucesso")
     except ImportError:
         print("❌ Flask-Mail não instalado. Execute: pip install Flask-Mail")
         return False
 
     return True
+
 
 def test_send_email():
     """Testa envio de email"""
@@ -71,12 +75,12 @@ def test_send_email():
     print("\n📧 Testando envio de email...")
 
     try:
-        from flask import Flask
         from app.utils.email import send_email
+        from flask import Flask
 
         # Criar app Flask mínimo para teste
         app = Flask(__name__)
-        app.config.from_object('config.Config')
+        app.config.from_object("config.Config")
 
         with app.app_context():
             # Email de teste
@@ -88,18 +92,18 @@ def test_send_email():
 
             # Dados de teste
             test_deadline = {
-                'title': 'PRAZO DE TESTE - Configuração SendGrid',
-                'user': {'name': 'Usuário de Teste'},
-                'due_date': '2025-12-31',
-                'days_until': 3
+                "title": "PRAZO DE TESTE - Configuração SendGrid",
+                "user": {"name": "Usuário de Teste"},
+                "due_date": "2025-12-31",
+                "days_until": 3,
             }
 
             # Tentar enviar
             send_email(
                 to=test_email,
-                subject='🧪 Teste de Configuração - SendGrid',
-                template='emails/deadline_alert.html',
-                deadline=test_deadline
+                subject="🧪 Teste de Configuração - SendGrid",
+                template="emails/deadline_alert.html",
+                deadline=test_deadline,
             )
 
             print(f"✅ Email de teste enviado para: {test_email}")
@@ -108,6 +112,7 @@ def test_send_email():
     except Exception as e:
         print(f"❌ Erro ao enviar email: {e}")
         print("Verifique suas configurações do SendGrid")
+
 
 if __name__ == "__main__":
     print("🚀 Teste de Configuração de Email - SendGrid\n")
@@ -120,11 +125,11 @@ if __name__ == "__main__":
 
         choice = input("\nOpção: ").strip()
 
-        if choice == '1':
+        if choice == "1":
             test_email_config()
-        elif choice == '2':
+        elif choice == "2":
             test_send_email()
-        elif choice == '3':
+        elif choice == "3":
             print("👋 Até logo!")
             break
         else:

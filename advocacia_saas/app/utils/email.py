@@ -12,16 +12,20 @@ def send_email(to, subject, template, **kwargs):
     """
     Envia email usando template
     """
-    if not current_app.config.get('MAIL_SERVER'):
+    if not current_app.config.get("MAIL_SERVER"):
         # Email não configurado, skip silenciosamente
-        current_app.logger.info(f"Email não enviado (não configurado): {subject} para {to}")
+        current_app.logger.info(
+            f"Email não enviado (não configurado): {subject} para {to}"
+        )
         return
 
     try:
         msg = Message(
             subject=subject,
             recipients=[to] if isinstance(to, str) else to,
-            sender=current_app.config.get('MAIL_DEFAULT_SENDER', 'noreply@advocaciasaas.com')
+            sender=current_app.config.get(
+                "MAIL_DEFAULT_SENDER", "noreply@advocaciasaas.com"
+            ),
         )
         msg.html = render_template(template, **kwargs)
         mail.send(msg)
