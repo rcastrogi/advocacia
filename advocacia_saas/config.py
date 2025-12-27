@@ -78,6 +78,9 @@ class Config:
     )  # 5 minutos
     CACHE_KEY_PREFIX = os.environ.get("CACHE_KEY_PREFIX", "petitio")
 
+    # Rate limiting (desabilitado em desenvolvimento)
+    RATELIMIT_ENABLED = False
+
     # OpenAI API
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 

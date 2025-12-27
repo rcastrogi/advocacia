@@ -34,6 +34,8 @@ from app.models import (
     CreditPackage,
     CreditTransaction,
     Payment,
+    PetitionModel,
+    PetitionModelSection,
     PetitionSection,
     PetitionType,
     PetitionTypeSection,
@@ -3355,3 +3357,286 @@ def roadmap_feedback_export():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment;filename=roadmap_feedback.csv"},
     )
+
+
+# ==========================================
+# PETITION MODELS MANAGEMENT
+# ==========================================
+
+
+@bp.route("/petitions/models")
+@login_required
+def petition_models_list():
+    """Lista todos os modelos de petição"""
+    current_app.logger.info("Acessando lista de modelos de petição")
+    _require_admin()
+
+    petition_models = PetitionModel.query.order_by(PetitionModel.name).all()
+    current_app.logger.info(f"Encontrados {len(petition_models)} modelos de petição")
+
+    return render_template(
+        "admin/petition_models_list.html",
+        title="Modelos de Petição",
+        petition_models=petition_models,
+    )
+
+
+@bp.route("/petitions/models/new", methods=["GET", "POST"])
+@login_required
+def petition_model_new():
+    """Criar novo modelo de petição"""
+    current_app.logger.info("Acessando criação de novo modelo de petição")
+    _require_admin()
+
+    petition_types = PetitionType.query.order_by(PetitionType.name).all()
+    sections = PetitionSection.query.order_by(PetitionSection.name).all()
+    current_app.logger.info(f"Encontrados {len(petition_types)} tipos de petição")
+
+    if request.method == "POST":
+        current_app.logger.info("Processando POST para criar modelo")
+        name = request.form.get("name")
+        description = request.form.get("description")
+        petition_type_id = request.form.get("petition_type_id")
+        is_active = request.form.get("is_active") == "on"
+        use_dynamic_form = request.form.get("use_dynamic_form") == "on"
+
+        # Gerar slug único baseado no nome
+        slug = generate_unique_slug(f"Modelo - {name}", PetitionModel)
+
+        petition_model = PetitionModel(
+            name=f"Modelo - {name}",
+            slug=slug,
+            description=description,
+            petition_type_id=petition_type_id,
+            is_active=is_active,
+            use_dynamic_form=use_dynamic_form,
+        )
+
+        db.session.add(petition_model)
+        db.session.commit()
+        current_app.logger.info(
+            f"Modelo criado com sucesso: {petition_model.name} (ID: {petition_model.id})"
+        )
+
+        # Adicionar seções se especificadas
+        section_order_str = request.form.get("section_order", "")
+        if section_order_str:
+            # Parse da string de ordem: "order-1,order-2,order-3"
+            section_ids = []
+            for order_item in section_order_str.split(","):
+                if order_item.startswith("order-"):
+                    try:
+                        section_id = int(order_item.replace("order-", ""))
+                        section_ids.append(section_id)
+                    except ValueError:
+                        continue
+
+            current_app.logger.info(
+                f"Adicionando seções ao novo modelo {petition_model.id}: {section_ids}"
+            )
+
+            # Adicionar seções na ordem especificada
+            for order, section_id in enumerate(section_ids, 1):
+                section = PetitionSection.query.get(section_id)
+                if section:
+                    model_section = PetitionModelSection(
+                        petition_model=petition_model, section=section, order=order
+                    )
+                    db.session.add(model_section)
+
+            db.session.commit()
+
+        flash("Modelo de petição criado com sucesso!", "success")
+        return redirect(url_for("admin.petition_models_list"))
+
+    return render_template(
+        "admin/petition_model_form.html",
+        title="Novo Modelo de Petição",
+        petition_types=petition_types,
+        sections=sections,
+        petition_model=None,
+    )
+
+
+@bp.route("/petitions/models/<int:model_id>/edit", methods=["GET", "POST"])
+@login_required
+def petition_model_edit(model_id):
+    """Editar modelo de petição"""
+    _require_admin()
+
+    petition_model = PetitionModel.query.get_or_404(model_id)
+    petition_types = PetitionType.query.order_by(PetitionType.name).all()
+    sections = PetitionSection.query.order_by(PetitionSection.name).all()
+
+    current_app.logger.info(
+        f"Carregando página de edição do modelo {model_id}: {petition_model.name if petition_model else 'None'}"
+    )
+
+    if request.method == "POST":
+        petition_model.description = request.form.get("description")
+        petition_model.petition_type_id = request.form.get("petition_type_id")
+        petition_model.is_active = request.form.get("is_active") == "on"
+        petition_model.use_dynamic_form = request.form.get("use_dynamic_form") == "on"
+
+        # Atualizar seções do modelo
+        section_order_str = request.form.get("section_order", "")
+        if section_order_str:
+            # Parse da string de ordem: "order-1,order-2,order-3"
+            section_ids = []
+            for order_item in section_order_str.split(","):
+                if order_item.startswith("order-"):
+                    try:
+                        section_id = int(order_item.replace("order-", ""))
+                        section_ids.append(section_id)
+                    except ValueError:
+                        continue
+
+            current_app.logger.info(
+                f"Atualizando seções do modelo {model_id}: {section_ids}"
+            )
+
+            # Remover todas as seções atuais
+            petition_model.model_sections.delete()
+
+            # Adicionar seções na nova ordem
+            for order, section_id in enumerate(section_ids, 1):
+                section = PetitionSection.query.get(section_id)
+                if section:
+                    model_section = PetitionModelSection(
+                        petition_model=petition_model, section=section, order=order
+                    )
+                    db.session.add(model_section)
+
+        db.session.commit()
+
+        flash("Modelo de petição atualizado com sucesso!", "success")
+        return redirect(url_for("admin.petition_models_list"))
+
+    return render_template(
+        "admin/petition_model_form.html",
+        title="Editar Modelo de Petição",
+        petition_types=petition_types,
+        sections=sections,
+        petition_model=petition_model,
+    )
+
+
+@bp.route("/petitions/models/<int:model_id>/sections/add", methods=["POST"])
+@login_required
+def petition_model_add_section(model_id):
+    """Adicionar seção ao modelo de petição"""
+    _require_admin()
+
+    petition_model = PetitionModel.query.get_or_404(model_id)
+    section_id = request.form.get("section_id", type=int)
+
+    current_app.logger.info(f"Adicionando seção {section_id} ao modelo {model_id}")
+
+    if not section_id:
+        flash("Seção não especificada.", "danger")
+        return redirect(url_for("admin.petition_model_edit", model_id=model_id))
+
+    section = PetitionSection.query.get_or_404(section_id)
+
+    # Verificar se já existe
+    existing = PetitionModelSection.query.filter_by(
+        petition_model_id=model_id, section_id=section_id
+    ).first()
+
+    if existing:
+        flash("Esta seção já está associada ao modelo.", "warning")
+        return redirect(url_for("admin.petition_model_edit", model_id=model_id))
+
+    # Calcular a próxima ordem
+    max_order = (
+        db.session.query(func.max(PetitionModelSection.order))
+        .filter_by(petition_model_id=model_id)
+        .scalar()
+        or 0
+    )
+
+    model_section = PetitionModelSection(
+        petition_model_id=model_id,
+        section_id=section_id,
+        order=max_order + 1,
+        is_required=False,
+        is_expanded=True,
+    )
+
+    db.session.add(model_section)
+    db.session.commit()
+
+    flash(f"Seção '{section.name}' adicionada ao modelo.", "success")
+    return redirect(url_for("admin.petition_model_edit", model_id=model_id))
+
+
+@bp.route(
+    "/petitions/models/<int:model_id>/sections/<int:section_id>/remove",
+    methods=["POST"],
+)
+@login_required
+def petition_model_remove_section(model_id, section_id):
+    """Remover seção do modelo de petição"""
+    _require_admin()
+
+    model_section = PetitionModelSection.query.filter_by(
+        petition_model_id=model_id, section_id=section_id
+    ).first_or_404()
+
+    current_app.logger.info(f"Removendo seção {section_id} do modelo {model_id}")
+
+    section_name = model_section.section.name
+    db.session.delete(model_section)
+    db.session.commit()
+
+    flash(f"Seção '{section_name}' removida do modelo.", "success")
+    return redirect(url_for("admin.petition_model_edit", model_id=model_id))
+
+
+@bp.route("/petitions/models/<int:model_id>/sections/order", methods=["POST"])
+@login_required
+def petition_model_update_section_order(model_id):
+    """Atualizar ordem das seções do modelo de petição"""
+    _require_admin()
+
+    petition_model = PetitionModel.query.get_or_404(model_id)
+    section_orders = request.form.getlist("section_order[]")
+
+    current_app.logger.info(
+        f"Atualizando ordem das seções do modelo {model_id}: {section_orders}"
+    )
+
+    # Atualizar ordem para cada seção
+    for i, order in enumerate(section_orders):
+        section_id = int(order.split("-")[1])  # formato: order-section_id
+        model_section = PetitionModelSection.query.filter_by(
+            petition_model_id=model_id, section_id=section_id
+        ).first()
+
+        if model_section:
+            model_section.order = i + 1
+
+    db.session.commit()
+    return jsonify({"success": True})
+
+
+@bp.route("/petitions/models/<int:model_id>/delete", methods=["POST"])
+@login_required
+def petition_model_delete(model_id):
+    """Excluir modelo de petição"""
+    _require_admin()
+
+    petition_model = PetitionModel.query.get_or_404(model_id)
+
+    # Verificar se há petições usando este modelo
+    if petition_model.petitions:
+        flash(
+            "Não é possível excluir um modelo que possui petições associadas.", "danger"
+        )
+        return redirect(url_for("admin.petition_models_list"))
+
+    db.session.delete(petition_model)
+    db.session.commit()
+
+    flash("Modelo de petição excluído com sucesso!", "success")
+    return redirect(url_for("admin.petition_models_list"))

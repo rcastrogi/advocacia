@@ -3089,3 +3089,108 @@ class DeletionRequest(db.Model):
         if notes:
             self.notes = notes
         db.session.commit()
+
+
+class PetitionModel(db.Model):
+    """
+    Modelo de Petição - Define a configuração completa de um tipo de petição.
+    Separa a classificação (PetitionType) da configuração (PetitionModel).
+    """
+
+    __tablename__ = "petition_models"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(180), nullable=False)
+    slug = db.Column(db.String(80), unique=True, nullable=False)
+    description = db.Column(db.Text)
+
+    # Relacionamento com o tipo de petição (classificação)
+    petition_type_id = db.Column(
+        db.Integer, db.ForeignKey("petition_types.id"), nullable=False
+    )
+
+    # Status
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Configurações do modelo
+    use_dynamic_form = db.Column(db.Boolean, default=True)
+
+    # Template padrão (opcional)
+    default_template_id = db.Column(
+        db.Integer, db.ForeignKey("petition_templates.id"), nullable=True
+    )
+
+    # Quem criou
+    created_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+
+    # Relacionamentos
+    petition_type = db.relationship("PetitionType", backref="models")
+    default_template = db.relationship(
+        "PetitionTemplate", foreign_keys=[default_template_id]
+    )
+    creator = db.relationship("User", foreign_keys=[created_by])
+
+    def get_sections_ordered(self):
+        """Retorna as seções deste modelo ordenadas."""
+        return self.model_sections.order_by(PetitionModelSection.order).all()
+
+    def __repr__(self):
+        return f"<PetitionModel {self.slug}>"
+
+
+class PetitionModelSection(db.Model):
+    """
+    Relaciona modelos de petição com suas seções (muitos para muitos com metadados).
+    Similar ao PetitionTypeSection, mas para modelos.
+    """
+
+    __tablename__ = "petition_model_sections"
+
+    id = db.Column(db.Integer, primary_key=True)
+    petition_model_id = db.Column(
+        db.Integer, db.ForeignKey("petition_models.id"), nullable=False
+    )
+    section_id = db.Column(
+        db.Integer, db.ForeignKey("petition_sections.id"), nullable=False
+    )
+    order = db.Column(db.Integer, default=0)  # Ordem desta seção neste modelo
+    is_required = db.Column(db.Boolean, default=False)  # Seção obrigatória?
+    is_expanded = db.Column(db.Boolean, default=True)  # Começa expandida?
+
+    # Sobrescrever campos específicos para este modelo (opcional)
+    # Ex: {"author_name": {"label": "Nome do Requerente"}} - muda apenas o label
+    field_overrides = db.Column(db.JSON, default=dict)
+
+    # Relacionamentos
+    petition_model = db.relationship(
+        "PetitionModel",
+        backref=db.backref(
+            "model_sections", lazy="dynamic", order_by="PetitionModelSection.order"
+        ),
+    )
+    section = db.relationship(
+        "PetitionSection", backref=db.backref("model_sections", lazy="dynamic")
+    )
+
+    def get_fields(self):
+        """Retorna os campos da seção com overrides aplicados para este modelo."""
+        import copy
+
+        fields = copy.deepcopy(self.section.get_fields()) if self.section else []
+        overrides = self.field_overrides or {}
+
+        for field in fields:
+            field_name = field.get("name")
+            if field_name in overrides:
+                field.update(overrides[field_name])
+
+        return fields
+
+    def __repr__(self):
+        return f"<PetitionModelSection model={self.petition_model_id} section={self.section_id}>"

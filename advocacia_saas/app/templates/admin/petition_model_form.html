@@ -1,0 +1,493 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin_content %}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Conteúdo principal -->
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        {% if petition_model %}Editar{% else %}Novo{% endif %} Modelo de Petição
+                    </h1>
+                    <p class="text-muted">
+                        {% if petition_model %}
+                            Configure as definições do modelo de petição
+                        {% else %}
+                            Crie um novo modelo de configuração para um tipo de petição
+                        {% endif %}
+                    </p>
+                </div>
+                <a href="{{ url_for('admin.petition_models_list') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+            </div>
+
+            <!-- Formulário -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        {% if petition_model %}Editar Modelo{% else %}Criar Novo Modelo{% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="model-form">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Nome do Modelo *</label>
+                                    <input type="text" class="form-control" id="name" name="name"
+                                           value="{% if petition_model %}{{ petition_model.name|replace('Modelo - ', '') }}{% endif %}"
+                                           placeholder="Ex: Ação de Cobrança" required>
+                                    <div class="form-text">
+                                        O prefixo "Modelo -" será adicionado automaticamente
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Descrição</label>
+                                    <textarea class="form-control" id="description" name="description"
+                                              rows="3" placeholder="Descrição opcional do modelo">{{ petition_model.description if petition_model else '' }}</textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="petition_type_id" class="form-label">Tipo de Petição *</label>
+                                    <select class="form-select" id="petition_type_id" name="petition_type_id" required>
+                                        <option value="">Selecione um tipo...</option>
+                                        {% for pt in petition_types %}
+                                        <option value="{{ pt.id }}"
+                                                {% if petition_model and petition_model.petition_type_id == pt.id %}selected{% endif %}>
+                                            {{ pt.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">
+                                        O tipo de petição define a classificação desta configuração
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0">Configurações</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                                   {% if not petition_model or petition_model.is_active %}checked{% endif %}>
+                                            <label class="form-check-label" for="is_active">
+                                                Modelo Ativo
+                                            </label>
+                                            <div class="form-text">
+                                                Modelos inativos não aparecem para os usuários
+                                            </div>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="use_dynamic_form" name="use_dynamic_form"
+                                                   {% if not petition_model or petition_model.use_dynamic_form %}checked{% endif %}>
+                                            <label class="form-check-label" for="use_dynamic_form">
+                                                Usar Formulário Dinâmico
+                                            </label>
+                                            <div class="form-text">
+                                                Permite personalização avançada das seções
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% if petition_model %}
+                                <div class="card border-warning mt-3">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="mb-0">Informações do Modelo</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="mb-1"><strong>Slug:</strong> {{ petition_model.slug }}</p>
+                                        <p class="mb-1"><strong>Seções:</strong> {{ petition_model.model_sections|list|length }}</p>
+                                        <p class="mb-1"><strong>Criado em:</strong> {{ petition_model.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                                        {% if petition_model.updated_at %}
+                                        <p class="mb-0"><strong>Atualizado em:</strong> {{ petition_model.updated_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                {% if not petition_model %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Criar Modelo
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Campo oculto para ordem das seções -->
+                        <input type="hidden" id="section_order" name="section_order" value="">
+                    </form>
+                </div>
+            </div>
+
+            {% if petition_model %}
+            <!-- Gerenciamento de Seções -->
+            <div class="card shadow mt-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Seções do Modelo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Gerenciamento de Seções com Interface Customizada -->
+                    <div class="row">
+                        <!-- Seções Disponíveis -->
+                        <div class="col-md-5">
+                            <h6 class="text-muted mb-3">Seções Disponíveis</h6>
+                            <select id="available-sections" class="form-select" multiple size="10" style="height: 300px;">
+                                {% for section in sections %}
+                                {% set already_added = petition_model.model_sections.filter_by(section_id=section.id).first() %}
+                                {% if not already_added %}
+                                <option value="{{ section.id }}">{{ section.name }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Botões de Controle -->
+                        <div class="col-md-2 text-center d-flex flex-column justify-content-center">
+                            <button type="button" id="add-selected" class="btn btn-success mb-2" title="Adicionar selecionados">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <button type="button" id="add-all" class="btn btn-outline-success mb-2" title="Adicionar todos">
+                                <i class="fas fa-angle-double-right"></i>
+                            </button>
+                            <button type="button" id="remove-selected" class="btn btn-danger mb-2" title="Remover selecionados">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button type="button" id="remove-all" class="btn btn-outline-danger" title="Remover todos">
+                                <i class="fas fa-angle-double-left"></i>
+                            </button>
+                        </div>
+
+                        <!-- Seções Selecionadas -->
+                        <div class="col-md-5">
+                            <h6 class="text-muted mb-3">Seções Selecionadas (Ordem)</h6>
+                            <div class="d-flex">
+                                <select id="selected-sections" class="form-select me-2" multiple size="10" style="height: 300px; flex: 1;">
+                                    {% for model_section in petition_model.get_sections_ordered() %}
+                                    <option value="{{ model_section.section.id }}">{{ model_section.section.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <!-- Botões de Reordenação -->
+                                <div class="reorder-buttons">
+                                    <button type="button" id="move-up" title="Mover para cima">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                    <button type="button" id="move-down" title="Mover para baixo">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="row mt-4">
+                <div class="col-12 text-end">
+                    <a href="{{ url_for('admin.petition_models_list') }}" class="btn btn-secondary me-2">
+                        Cancelar
+                    </a>
+                    <button type="submit" form="model-form" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Salvar Alterações
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        </div>
+    </div>
+</div>
+
+<!-- Interface de Seções - JavaScript Isolado -->
+<script>
+(function() {
+    'use strict';
+
+    console.log('🚀 Inicializando interface de seções...');
+
+    try {
+        // Verificar se elementos existem
+        const addBtn = document.getElementById('add-selected');
+        const addAllBtn = document.getElementById('add-all');
+        const removeBtn = document.getElementById('remove-selected');
+        const removeAllBtn = document.getElementById('remove-all');
+        const moveUpBtn = document.getElementById('move-up');
+        const moveDownBtn = document.getElementById('move-down');
+        const available = document.getElementById('available-sections');
+        const selected = document.getElementById('selected-sections');
+
+        console.log('Elementos encontrados:', {
+            addBtn: !!addBtn,
+            addAllBtn: !!addAllBtn,
+            removeBtn: !!removeBtn,
+            removeAllBtn: !!removeAllBtn,
+            moveUpBtn: !!moveUpBtn,
+            moveDownBtn: !!moveDownBtn,
+            available: !!available,
+            selected: !!selected
+        });
+
+        if (addBtn && addAllBtn && removeBtn && removeAllBtn && moveUpBtn && moveDownBtn && available && selected) {
+            console.log('✅ Todos os elementos encontrados - inicializando...');
+
+            // Funções da interface
+            function addSelected() {
+                const selectedOptions = Array.from(available.selectedOptions);
+                selectedOptions.forEach(option => {
+                    selected.appendChild(option);
+                });
+                saveOrder();
+                updateReorderButtons();
+            }
+
+            function addAll() {
+                const options = Array.from(available.options);
+                options.forEach(option => {
+                    selected.appendChild(option);
+                });
+                saveOrder();
+                updateReorderButtons();
+            }
+
+            function removeSelected() {
+                const selectedOptions = Array.from(selected.selectedOptions);
+                selectedOptions.forEach(option => {
+                    available.appendChild(option);
+                });
+                saveOrder();
+                updateReorderButtons();
+            }
+
+            function removeAll() {
+                const options = Array.from(selected.options);
+                options.forEach(option => {
+                    available.appendChild(option);
+                });
+                saveOrder();
+                updateReorderButtons();
+            }
+
+            function moveUp() {
+                const selectedOptions = selected.selectedOptions;
+                if (selectedOptions.length !== 1) {
+                    return; // Só permite mover um item por vez
+                }
+                const option = selectedOptions[0];
+                const prevOption = option.previousElementSibling;
+                if (prevOption) {
+                    selected.insertBefore(option, prevOption);
+                    saveOrder();
+                    updateReorderButtons();
+                }
+            }
+
+            function moveDown() {
+                const selectedOptions = selected.selectedOptions;
+                if (selectedOptions.length !== 1) {
+                    return; // Só permite mover um item por vez
+                }
+                const option = selectedOptions[0];
+                const nextOption = option.nextElementSibling;
+                if (nextOption) {
+                    selected.insertBefore(nextOption, option);
+                    saveOrder();
+                    updateReorderButtons();
+                }
+            }
+
+            function saveOrder() {
+                const selectedOptions = Array.from(selected.options);
+                const order = selectedOptions.map(option => 'order-' + option.value);
+                const sectionOrderField = document.getElementById('section_order');
+                if (sectionOrderField) {
+                    sectionOrderField.value = order.join(',');
+                }
+            }
+
+            function flashButton(button) {
+                if (button) {
+                    button.style.backgroundColor = '#28a745';
+                    button.style.color = 'white';
+                    setTimeout(() => {
+                        button.style.backgroundColor = '';
+                        button.style.color = '';
+                    }, 200);
+                }
+            }
+
+            // Vincular eventos
+            addBtn.onclick = function(e) {
+                e.preventDefault();
+                flashButton(this);
+                addSelected();
+            };
+
+            addAllBtn.onclick = function(e) {
+                e.preventDefault();
+                flashButton(this);
+                addAll();
+            };
+
+            removeBtn.onclick = function(e) {
+                e.preventDefault();
+                flashButton(this);
+                removeSelected();
+            };
+
+            removeAllBtn.onclick = function(e) {
+                e.preventDefault();
+                flashButton(this);
+                removeAll();
+            };
+
+            moveUpBtn.onclick = function(e) {
+                e.preventDefault();
+                flashButton(this);
+                moveUp();
+            };
+
+            moveDownBtn.onclick = function(e) {
+                e.preventDefault();
+                flashButton(this);
+                moveDown();
+            };
+
+            // Função para atualizar estado dos botões de reordenação
+            function updateReorderButtons() {
+                const selectedOptions = selected.selectedOptions;
+                const hasSelection = selectedOptions.length === 1;
+                const canMoveUp = hasSelection && selectedOptions[0].previousElementSibling;
+                const canMoveDown = hasSelection && selectedOptions[0].nextElementSibling;
+
+                moveUpBtn.disabled = !canMoveUp;
+                moveDownBtn.disabled = !canMoveDown;
+
+                moveUpBtn.style.opacity = canMoveUp ? '1' : '0.5';
+                moveDownBtn.style.opacity = canMoveDown ? '1' : '0.5';
+
+                // Gerenciar destaque visual do item selecionado
+                updateSelectedHighlight();
+            }
+
+            // Função para destacar o item selecionado
+            function updateSelectedHighlight() {
+                // Remover destaque de todos os itens
+                Array.from(selected.options).forEach(option => {
+                    option.classList.remove('selected-highlight');
+                });
+
+                // Adicionar destaque ao item selecionado (se apenas um)
+                const selectedOptions = selected.selectedOptions;
+                if (selectedOptions.length === 1) {
+                    selectedOptions[0].classList.add('selected-highlight');
+                }
+            }
+
+            // Atualizar botões quando seleção muda
+            selected.addEventListener('change', updateReorderButtons);
+            selected.addEventListener('click', updateReorderButtons);
+
+            // Inicializar estado dos botões
+            updateReorderButtons();
+
+        } else {
+            console.error('❌ Elementos da interface não encontrados');
+            alert('❌ ERRO: Elementos da interface de seções não encontrados!');
+        }
+
+    } catch (error) {
+        console.error('💥 ERRO CRÍTICO na interface de seções:', error);
+        alert('💥 ERRO CRÍTICO: ' + error.message);
+    }
+
+})();
+</script>
+
+{% endblock %}
+
+<style>
+.dual-listbox-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.dual-listbox-container .form-select {
+    flex: 1;
+    min-height: 300px;
+}
+
+.dual-listbox-container .control-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dual-listbox-container .control-buttons button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+/* Botões de reordenação */
+.reorder-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.reorder-buttons button {
+    width: 24px;
+    height: 24px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    padding: 0;
+    border: 1px solid #0d1b2a;
+    background-color: #0d1b2a;
+    color: #c9a85c;
+    transition: all 0.2s ease;
+}
+
+.reorder-buttons button:hover:not(:disabled) {
+    background-color: #1b263b;
+    border-color: #1b263b;
+    color: #d4b76a;
+    transform: scale(1.05);
+}
+
+.reorder-buttons button:active:not(:disabled) {
+    background-color: #c9a85c;
+    color: #0d1b2a;
+    transform: scale(0.95);
+}
+
+/* Destaque do item selecionado */
+#selected-sections option.selected-highlight {
+    background-color: #0d1b2a !important;
+    color: #c9a85c !important;
+    font-weight: 500;
+}
+</style>
+

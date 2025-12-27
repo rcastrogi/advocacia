@@ -4,54 +4,151 @@
 <div class="container-fluid py-4">
     <div class="row">
         <!-- Sidebar de navegação admin -->
-        <div class="col-lg-2 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white">
+        <div class="col-lg-2 mb-4 admin-sidebar-col">
+            <div class="card shadow-sm admin-sidebar">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">
-                        <i class="fas fa-cog me-2"></i>Administração
+                        <i class="fas fa-cog me-2"></i><span class="menu-title">Administração</span>
                     </h6>
+                    <button id="sidebar-toggle" class="btn btn-sm btn-outline-light" title="Minimizar menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
                 </div>
                 <div class="list-group list-group-flush">
                     <a href="{{ url_for('admin.dashboard') }}" 
-                       class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'admin.dashboard' else '' }}">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                       class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'admin.dashboard' else '' }}"
+                       title="Dashboard">
+                        <i class="fas fa-tachometer-alt me-2"></i><span>Dashboard</span>
                     </a>
                     <a href="{{ url_for('admin.users_list') }}" 
-                       class="list-group-item list-group-item-action {{ 'active' if 'users' in request.endpoint else '' }}">
-                        <i class="fas fa-users me-2"></i>Usuários
+                       class="list-group-item list-group-item-action {{ 'active' if 'users' in request.endpoint else '' }}"
+                       title="Gerenciar Usuários">
+                        <i class="fas fa-users me-2"></i><span>Usuários</span>
                     </a>
                     <a href="{{ url_for('main.admin_testimonials') }}" 
-                       class="list-group-item list-group-item-action {{ 'active' if 'testimonials' in request.endpoint else '' }}">
-                        <i class="fas fa-comments me-2"></i>Depoimentos
+                       class="list-group-item list-group-item-action {{ 'active' if 'testimonials' in request.endpoint else '' }}"
+                       title="Gerenciar Depoimentos">
+                        <i class="fas fa-comments me-2"></i><span>Depoimentos</span>
                     </a>
                     <a href="{{ url_for('billing.plans') }}" 
-                       class="list-group-item list-group-item-action">
-                        <i class="fas fa-tags me-2"></i>Planos
+                       class="list-group-item list-group-item-action"
+                       title="Gerenciar Planos">
+                        <i class="fas fa-tags me-2"></i><span>Planos</span>
                     </a>
-                    <a href="{{ url_for('billing.petition_types') }}" 
-                       class="list-group-item list-group-item-action">
-                        <i class="fas fa-file-alt me-2"></i>Tipos de Petição
+                    <a href="{{ url_for('admin.petition_types_list') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'petition_types' in request.endpoint else '' }}"
+                       title="Tipos de Petição">
+                        <i class="fas fa-file-alt me-2"></i><span>Tipos de Petição</span>
+                    </a>
+                    <a href="{{ url_for('admin.petition_models_list') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'petition_models' in request.endpoint else '' }}"
+                       title="Modelos de Petição">
+                        <i class="fas fa-cogs me-2"></i><span>Modelos de Petição</span>
                     </a>
                     <a href="{{ url_for('admin.petition_sections_list') }}" 
-                       class="list-group-item list-group-item-action {{ 'active' if 'petition_sections' in request.endpoint else '' }}">
-                        <i class="fas fa-puzzle-piece me-2"></i>Seções de Petição
+                       class="list-group-item list-group-item-action {{ 'active' if 'petition_sections' in request.endpoint else '' }}"
+                       title="Seções de Petição">
+                        <i class="fas fa-puzzle-piece me-2"></i><span>Seções de Petição</span>
                     </a>
                     <a href="{{ url_for('admin.roadmap') }}" 
-                       class="list-group-item list-group-item-action {{ 'active' if 'roadmap' in request.endpoint and 'feedback' not in request.endpoint else '' }}">
-                        <i class="fas fa-road me-2"></i>Roadmap
+                       class="list-group-item list-group-item-action {{ 'active' if 'roadmap' in request.endpoint and 'feedback' not in request.endpoint else '' }}"
+                       title="Roadmap">
+                        <i class="fas fa-road me-2"></i><span>Roadmap</span>
                     </a>
                     <a href="{{ url_for('admin.roadmap_feedback') }}" 
-                       class="list-group-item list-group-item-action {{ 'active' if 'roadmap_feedback' in request.endpoint else '' }}">
-                        <i class="fas fa-comments me-2"></i>Feedback Roadmap
+                       class="list-group-item list-group-item-action {{ 'active' if 'roadmap_feedback' in request.endpoint else '' }}"
+                       title="Feedback Roadmap">
+                        <i class="fas fa-comments me-2"></i><span>Feedback Roadmap</span>
                     </a>
                 </div>
             </div>
         </div>
         
         <!-- Conteúdo principal -->
-        <div class="col-lg-10">
+        <div class="col-lg-10 admin-content">
             {% block admin_content %}{% endblock %}
         </div>
     </div>
 </div>
+
+<style>
+/* Menu Admin Minimizable */
+.admin-sidebar {
+    transition: width 0.3s ease;
+}
+
+.admin-sidebar.minimized {
+    width: 70px;
+}
+
+.admin-sidebar.minimized .menu-title {
+    display: none;
+}
+
+.admin-sidebar.minimized .list-group-item {
+    text-align: center;
+    padding: 12px 8px;
+}
+
+.admin-sidebar.minimized .list-group-item i {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.admin-sidebar.minimized .list-group-item span {
+    display: none;
+}
+
+.admin-sidebar.minimized .card-header {
+    justify-content: center !important;
+}
+
+.admin-sidebar.minimized .card-header .menu-title {
+    display: none;
+}
+
+.admin-sidebar.minimized .card-header h6 .fa-cog {
+    display: none;
+}
+
+/* Responsividade */
+@media (max-width: 991.98px) {
+    .admin-sidebar.minimized {
+        width: 50px;
+    }
+}
+</style>
+
+<script>
+// Controle do menu admin minimizável
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.querySelector('.admin-sidebar');
+    const toggleBtn = document.getElementById('sidebar-toggle');
+    const toggleIcon = toggleBtn.querySelector('i');
+
+    // Carregar estado salvo
+    const isMinimized = localStorage.getItem('adminSidebarMinimized') === 'true';
+    if (isMinimized) {
+        sidebar.classList.add('minimized');
+        toggleIcon.className = 'fas fa-angle-right';
+        toggleBtn.title = 'Expandir menu';
+    }
+
+    // Toggle do menu
+    toggleBtn.addEventListener('click', function() {
+        const isMinimized = sidebar.classList.toggle('minimized');
+
+        if (isMinimized) {
+            toggleIcon.className = 'fas fa-angle-right';
+            toggleBtn.title = 'Expandir menu';
+            localStorage.setItem('adminSidebarMinimized', 'true');
+        } else {
+            toggleIcon.className = 'fas fa-bars';
+            toggleBtn.title = 'Minimizar menu';
+            localStorage.setItem('adminSidebarMinimized', 'false');
+        }
+    });
+});
+</script>
+
 {% endblock %}

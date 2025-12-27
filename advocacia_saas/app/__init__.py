@@ -100,7 +100,7 @@ def create_app(config_class=Config):
         limiter.storage_uri = storage_uri
         limiter.init_app(app)
 
-    socketio.init_app(app, cors_allowed_origins="*")
+    # socketio.init_app(app, cors_allowed_origins="*")
 
     # Initialize cache
     if app.config.get("REDIS_URL"):
