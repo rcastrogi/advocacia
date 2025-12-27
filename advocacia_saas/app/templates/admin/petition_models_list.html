@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+{% extends "base_admin.html" %}
 
 {% block admin_content %}
 
@@ -8,6 +8,9 @@
         <p class="text-muted">Gerencie os modelos de configuração para cada tipo de petição</p>
     </div>
     <a href="{{ url_for('admin.petition_model_new') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Novo Modelo
+    </a>
+</div>
         <i class="fas fa-plus me-2"></i>Novo Modelo
     </a>
 </div>
@@ -174,4 +177,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
