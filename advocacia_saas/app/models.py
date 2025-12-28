@@ -477,6 +477,7 @@ class User(UserMixin, db.Model):
     def is_client(self):
         """Verifica se é usuário cliente (acessa portal do cliente)"""
         from app.models import Client
+
         return Client.query.filter_by(user_id=self.id).first() is not None
 
     def deactivate(self):
