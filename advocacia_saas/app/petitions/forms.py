@@ -106,7 +106,7 @@ class FamilyPetitionForm(FlaskForm):
             ("EXONERACAO_ALIMENTOS", "AÇÃO DE EXONERAÇÃO DE ALIMENTOS"),
             ("OUTROS", "OUTROS"),
         ],
-        render_kw={"class": "form-select"}
+        render_kw={"class": "form-select"},
     )
     action_type_other = StringField(
         "Especificar tipo de ação",
@@ -396,7 +396,7 @@ class SimplePetitionForm(FlaskForm):
             ("EXONERACAO_ALIMENTOS", "AÇÃO DE EXONERAÇÃO DE ALIMENTOS"),
             ("OUTROS", "OUTROS"),
         ],
-        render_kw={"class": "form-select"}
+        render_kw={"class": "form-select"},
     )
     action_type_other = StringField(
         "Especificar tipo de ação original",

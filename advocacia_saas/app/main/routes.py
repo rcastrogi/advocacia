@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 import traceback
+from datetime import datetime, timezone
 
 from flask import (
     flash,
@@ -148,6 +148,7 @@ def peticionador():
     try:
         # Log do acesso à página peticionador
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info(f"Usuário {current_user.email} acessou a página peticionador")
 
@@ -160,7 +161,9 @@ def peticionador():
 
         with open("logs/peticionador_access.log", "a", encoding="utf-8") as f:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f"[{timestamp}] Usuário {current_user.email} acessou peticionador\n")
+            f.write(
+                f"[{timestamp}] Usuário {current_user.email} acessou peticionador\n"
+            )
 
         # Buscar tipos de petição com formulário dinâmico ativo
         dynamic_petition_types = (
@@ -178,8 +181,12 @@ def peticionador():
     except Exception as e:
         # Log do erro
         import logging
+
         logger = logging.getLogger(__name__)
-        logger.error(f"Erro na página peticionador para usuário {current_user.email}: {str(e)}", exc_info=True)
+        logger.error(
+            f"Erro na página peticionador para usuário {current_user.email}: {str(e)}",
+            exc_info=True,
+        )
 
         # Gravar erro em arquivo texto
         import os
