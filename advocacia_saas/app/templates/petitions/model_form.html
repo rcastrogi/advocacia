@@ -275,25 +275,6 @@
                                                :class="{ 'required': field.required || sectionConfig.is_required }">
                                             <span x-text="field.label || field.name"></span>
                                         </label>
-                                        <textarea :id="'field-' + field.name"
-                                                  class="form-control"
-                                                  :name="field.name"
-                                                  :rows="field.rows || 3"
-                                                  :placeholder="field.placeholder || ''"
-                                                  :required="field.required || sectionConfig.is_required"
-                                                  :value="getFieldValue(field.name)"
-                                                  @input="updateFieldValue(field.name, $event.target.value)"
-                                                  :class="getFieldValidationClass(field.name)"></textarea>
-                                        <div class="form-text" x-text="field.help_text || ''"></div>
-                                    </template>
-
-                                    <!-- Campo de rich text (Quill) -->
-                                    <template x-if="field.type === 'richtext'">
-                                        <label :for="'field-' + field.name"
-                                               class="form-label"
-                                               :class="{ 'required': field.required || sectionConfig.is_required }">
-                                            <span x-text="field.label || field.name"></span>
-                                        </label>
 
                                         <!-- Toolbar de IA (se disponível) -->
                                         <div class="ai-toolbar d-flex justify-content-between align-items-center"
@@ -315,6 +296,26 @@
                                                 </small>
                                             </div>
                                         </div>
+
+                                        <textarea :id="'field-' + field.name"
+                                                  class="form-control"
+                                                  :name="field.name"
+                                                  :rows="field.rows || 3"
+                                                  :placeholder="field.placeholder || ''"
+                                                  :required="field.required || sectionConfig.is_required"
+                                                  :value="getFieldValue(field.name)"
+                                                  @input="updateFieldValue(field.name, $event.target.value)"
+                                                  :class="getFieldValidationClass(field.name)"></textarea>
+                                        <div class="form-text" x-text="field.help_text || ''"></div>
+                                    </template>
+
+                                    <!-- Campo de rich text (Quill) -->
+                                    <template x-if="field.type === 'richtext'">
+                                        <label :for="'field-' + field.name"
+                                               class="form-label"
+                                               :class="{ 'required': field.required || sectionConfig.is_required }">
+                                            <span x-text="field.label || field.name"></span>
+                                        </label>
 
                                         <div class="quill-wrapper">
                                             <div :id="'quill-' + field.name"></div>

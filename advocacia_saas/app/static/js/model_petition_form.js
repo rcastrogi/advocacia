@@ -39,10 +39,11 @@ document.addEventListener('alpine:init', () => {
                 this.loadDraft();
             }
 
-            // Inicializar editores Quill após DOM estar pronto
+            // Inicializar editores Quill e toolbars de IA após DOM estar pronto
             this.$nextTick(() => {
                 this.initAllQuillEditors();
                 this.applyMasks();
+                this.initAIToolbars();
             });
 
             // Auto-save a cada 30 segundos quando há mudanças
@@ -70,6 +71,9 @@ document.addEventListener('alpine:init', () => {
             const container = document.getElementById('quill-' + fieldName);
             if (!container || this.quillEditors[fieldName]) return;
 
+            // Criar toolbar de IA antes do editor
+            this.createAIToolbarForField(fieldName, container);
+
             const quill = new Quill(container, {
                 theme: 'snow',
                 placeholder: 'Digite o conteúdo aqui...',
@@ -95,6 +99,74 @@ document.addEventListener('alpine:init', () => {
             if (this.formData[fieldName]) {
                 quill.root.innerHTML = this.formData[fieldName];
             }
+        },
+
+        createAIToolbarForField(fieldName, container, fieldType = 'editor') {
+            // Verificar se já existe uma toolbar
+            let element = container;
+            if (fieldType === 'editor') {
+                const wrapper = container.closest('.quill-wrapper');
+                if (wrapper && wrapper.previousElementSibling && wrapper.previousElementSibling.classList.contains('ai-toolbar')) {
+                    return; // Já existe
+                }
+                element = wrapper;
+            } else if (fieldType === 'textarea') {
+                if (container.previousElementSibling && container.previousElementSibling.classList.contains('ai-toolbar')) {
+                    return; // Já existe
+                }
+                element = container;
+            }
+
+            // Criar toolbar de IA
+            const toolbar = document.createElement('div');
+            toolbar.className = 'ai-toolbar d-flex justify-content-between align-items-center';
+            toolbar.innerHTML = `
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-success"
+                            @click="generateAIContent('${fieldName}')">
+                        <i class="fas fa-magic me-1"></i> Gerar com IA
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            @click="improveContent('${fieldName}')">
+                        <i class="fas fa-edit me-1"></i> Melhorar
+                    </button>
+                </div>
+                <div class="ai-credits-indicator">
+                    <small class="text-muted">
+                        <i class="fas fa-coins me-1"></i>
+                        Créditos: <span x-text="aiCredits"></span>
+                    </small>
+                </div>
+            `;
+
+            // Inserir antes do elemento
+            if (element) {
+                element.parentNode.insertBefore(toolbar, element);
+            }
+        },
+
+        initAIToolbars() {
+            // Procurar todos os campos que têm IA habilitada
+            this.sections.forEach(section => {
+                if (section.section.fields_schema) {
+                    section.section.fields_schema.forEach(field => {
+                        if (field.ai_enabled && (field.type === 'richtext' || field.type === 'textarea')) {
+                            const fieldName = field.name;
+                            const element = document.querySelector(`[name="${fieldName}"]`) ||
+                                          document.getElementById('quill-' + fieldName);
+
+                            if (element) {
+                                if (field.type === 'richtext') {
+                                    const container = element;
+                                    this.createAIToolbarForField(fieldName, container);
+                                } else if (field.type === 'textarea') {
+                                    this.createAIToolbarForField(fieldName, element, 'textarea');
+                                }
+                            }
+                        }
+                    });
+                }
+            });
         },
 
         applyMasks() {

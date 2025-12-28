@@ -60,15 +60,31 @@ const PetitioAI = {
 
     // Injeta botões de IA nos campos do editor
     injectAIButtons() {
+        // Verifica se estamos em um formulário dinâmico (que já tem toolbars Alpine.js)
+        const isDynamicForm = document.querySelector('[x-data*="dynamicPetitionForm"]') ||
+                             document.querySelector('[x-data*="modelPetitionForm"]');
+
+        if (isDynamicForm) {
+            console.log('PetitioAI: Formulário dinâmico detectado, pulando injeção automática');
+            return;
+        }
+
+        // Verifica se já existem toolbars de IA do sistema Alpine.js
+        const existingToolbars = document.querySelectorAll('.ai-toolbar[x-show]');
+        if (existingToolbars.length > 0) {
+            console.log('PetitioAI: Toolbars Alpine.js já existem, pulando injeção automática');
+            return;
+        }
+
         const editorFields = document.querySelectorAll('.quill-wrapper');
-        
+
         editorFields.forEach(wrapper => {
             const editorId = wrapper.querySelector('.quill-editor')?.id;
             if (!editorId) return;
-            
+
             const fieldName = editorId.replace('quill_', '');
             const sectionType = this.detectSectionType(fieldName);
-            
+
             if (sectionType) {
                 this.createAIToolbar(wrapper, fieldName, sectionType);
             }

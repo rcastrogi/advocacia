@@ -568,14 +568,53 @@ def generate_dynamic():
     # Buscar tipo de petição
     petition_type = PetitionType.query.get_or_404(petition_type_id)
 
-    # Gerar conteúdo HTML simples
-    template_content = f"""
-    <h1>{petition_type.name}</h1>
-    <p><strong>Autor:</strong> {form_data.get("author_name", "Não informado")}</p>
-    <p><strong>Valor da Causa:</strong> R$ {form_data.get("valor_causa", "0,00")}</p>
-    <p><strong>Fórum:</strong> {form_data.get("forum", "Não informado")}</p>
-    <p><strong>Vara:</strong> {form_data.get("vara", "Não informado")}</p>
-    """
+    # Buscar seções configuradas para este tipo
+    sections_config = (
+        db.session.query(PetitionTypeSection)
+        .filter_by(petition_type_id=petition_type.id)
+        .order_by(PetitionTypeSection.order)
+        .all()
+    )
+
+    # Gerar conteúdo HTML baseado nas seções e campos preenchidos
+    template_content = f"<h1>{petition_type.name}</h1>\n\n"
+
+    for config in sections_config:
+        section = db.session.get(PetitionSection, config.section_id)
+        if section and section.is_active and section.fields_schema:
+            # Adicionar cabeçalho da seção
+            template_content += f"<h2>{section.name}</h2>\n"
+
+            for field in section.fields_schema:
+                field_name = f"{section.slug}_{field['name']}"
+                field_value = form_data.get(field_name, "").strip()
+
+                if field_value:  # Só incluir campos preenchidos
+                    field_label = field.get('label', field['name'].replace('_', ' ').title())
+
+                    # Formatar o conteúdo baseado no tipo de campo
+                    if field['type'] == 'editor':
+                        # Para campos de editor, o conteúdo já vem em HTML
+                        template_content += f"<div>{field_value}</div>\n\n"
+                    elif field['type'] == 'textarea':
+                        # Para textarea, converter quebras de linha em parágrafos
+                        paragraphs = field_value.split('\n\n')
+                        for para in paragraphs:
+                            if para.strip():
+                                template_content += f"<p>{para.strip()}</p>\n"
+                        template_content += "\n"
+                    else:
+                        # Para outros campos, mostrar como parágrafo simples
+                        template_content += f"<p><strong>{field_label}:</strong> {field_value}</p>\n"
+
+    # Se não há conteúdo das seções, mostrar mensagem padrão
+    if template_content == f"<h1>{petition_type.name}</h1>\n\n":
+        template_content += f"""
+        <p><strong>Autor:</strong> {form_data.get("author_name", "Não informado")}</p>
+        <p><strong>Valor da Causa:</strong> R$ {form_data.get("valor_causa", "0,00")}</p>
+        <p><strong>Fórum:</strong> {form_data.get("forum", "Não informado")}</p>
+        <p><strong>Vara:</strong> {form_data.get("vara", "Não informado")}</p>
+        """
 
     # Gerar PDF
     try:

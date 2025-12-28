@@ -7,7 +7,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
-from app.models import PetitionType, SavedPetition, User
+from app.models import PetitionSection, PetitionType, PetitionTypeSection, SavedPetition, User
 
 
 class TestPetitionSystem:
@@ -59,6 +59,40 @@ class TestPetitionSystem:
         user.set_password("Test123!")
         db_session.add(user)
 
+        # Criar seção
+        section = PetitionSection(
+            slug="qualificacao",
+            name="Qualificação das Partes",
+            description="Dados das partes envolvidas",
+            icon="users",
+            color="#007bff",
+            fields_schema=[
+                {
+                    "name": "autor_nome",
+                    "label": "Nome do Autor",
+                    "type": "text",
+                    "required": True,
+                    "ai_enabled": False
+                },
+                {
+                    "name": "autor_endereco",
+                    "label": "Endereço do Autor",
+                    "type": "textarea",
+                    "required": False,
+                    "ai_enabled": True
+                },
+                {
+                    "name": "reu_nome",
+                    "label": "Nome do Réu",
+                    "type": "text",
+                    "required": True,
+                    "ai_enabled": False
+                }
+            ],
+            is_active=True,
+        )
+        db_session.add(section)
+
         # Criar tipo de petição
         petition_type = PetitionType(
             slug="peticao-teste",
@@ -66,8 +100,20 @@ class TestPetitionSystem:
             category="civel",
             is_billable=True,
             base_price=Decimal("10.00"),
+            use_dynamic_form=True,
         )
         db_session.add(petition_type)
+        db_session.commit()
+
+        # Criar relação tipo-seção
+        type_section = PetitionTypeSection(
+            petition_type_id=petition_type.id,
+            section_id=section.id,
+            order=1,
+            is_required=True,
+            is_expanded=True,
+        )
+        db_session.add(type_section)
         db_session.commit()
 
         # Mock da verificação de assinatura
@@ -82,7 +128,7 @@ class TestPetitionSystem:
                 },
             )
 
-            # Gerar petição via API dinâmica (simplified test)
+            # Gerar petição via API dinâmica com dados de seções
             response = client.post(
                 "/petitions/generate-dynamic",
                 json={
@@ -92,6 +138,9 @@ class TestPetitionSystem:
                         "valor_causa": "5000.00",
                         "forum": "Forum Central",
                         "vara": "1ª Vara Cível",
+                        "qualificacao_autor_nome": "João Silva Santos",
+                        "qualificacao_autor_endereco": "Rua das Flores, 123\nCentro\nSão Paulo - SP",
+                        "qualificacao_reu_nome": "Empresa XYZ Ltda",
                     },
                 },
             )
