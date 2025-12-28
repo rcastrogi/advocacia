@@ -87,7 +87,8 @@
     <!-- Accessibility CSS -->
     <link href="{{ url_for('static', filename='css/accessibility.css') }}?v={{ range(1, 10000) | random }}" rel="stylesheet">
     <!-- Sistema Unificado de Notificações -->
-    <script src="{{ url_for('static', filename='js/notification-system.js') }}"></script>
+    <!-- Intro.js CSS for guided tours -->
+    <link href="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/minified/introjs.min.css" rel="stylesheet">
     
     <!-- HTMX + Alpine.js Styles -->
     <style>
@@ -236,6 +237,91 @@
         
         /* Alpine cloak - hide elements until Alpine loads */
         [x-cloak] { display: none !important; }
+        
+        /* Tour System Styles */
+        .custom-intro-tooltip {
+            background: linear-gradient(135deg, #1a365d, #2d3748) !important;
+            color: white !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3) !important;
+            max-width: 350px !important;
+        }
+        
+        .custom-intro-tooltip .introjs-tooltiptext {
+            color: white !important;
+            font-size: 14px !important;
+            line-height: 1.5 !important;
+        }
+        
+        .custom-intro-tooltip .introjs-bullets ul li a {
+            background: rgba(255,255,255,0.3) !important;
+        }
+        
+        .custom-intro-tooltip .introjs-bullets ul li a.active {
+            background: #4299e1 !important;
+        }
+        
+        .custom-intro-tooltip .introjs-button {
+            background: #4299e1 !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 6px !important;
+            padding: 8px 16px !important;
+            font-weight: 500 !important;
+            transition: all 0.2s !important;
+        }
+        
+        .custom-intro-tooltip .introjs-button:hover {
+            background: #3182ce !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        .custom-intro-tooltip .introjs-skipbutton {
+            background: rgba(255,255,255,0.1) !important;
+            color: rgba(255,255,255,0.8) !important;
+        }
+        
+        .custom-intro-tooltip .introjs-skipbutton:hover {
+            background: rgba(255,255,255,0.2) !important;
+            color: white !important;
+        }
+        
+        .custom-intro-highlight {
+            box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.3) !important;
+            border-radius: 8px !important;
+        }
+        
+        /* Help tooltips */
+        .help-tooltip {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 1000;
+            margin-top: 8px;
+            min-width: 250px;
+        }
+        
+        .help-tooltip-header {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-bottom: 1px solid #e2e8f0;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .help-tooltip-body {
+            padding: 12px 16px;
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.5;
+        }
     </style>
     
     {% block styles %}{% endblock %}
@@ -885,8 +971,17 @@
     <!-- jQuery Mask Plugin -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     
+    <!-- Intro.js for guided tours -->
+    <script src="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/minified/intro.min.js"></script>
+    
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    
+    <!-- Tour System -->
+    <script src="{{ url_for('static', filename='js/tour-system.js') }}"></script>
+    
+    <!-- Contextual Help System -->
+    <script src="{{ url_for('static', filename='js/contextual-help.js') }}"></script>
     
     <!-- Accessibility JS -->
     <script src="{{ url_for('static', filename='js/accessibility.js') }}?v={{ range(1, 10000) | random }}"></script>
