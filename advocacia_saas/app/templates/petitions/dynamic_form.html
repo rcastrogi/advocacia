@@ -429,7 +429,29 @@
                         {% elif field.type == 'textarea' %}
                         <!-- Área de Texto -->
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
-                        <textarea class="form-control" 
+
+                        <!-- Toolbar de IA (se disponível) -->
+                        <div class="ai-toolbar d-flex justify-content-between align-items-center"
+                             x-show="field.ai_enabled">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-success"
+                                        @click="generateAIContent('{{ section_config.section.slug }}_{{ field.name }}')">
+                                    <i class="fas fa-magic me-1"></i> Gerar com IA
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        @click="improveContent('{{ section_config.section.slug }}_{{ field.name }}')">
+                                    <i class="fas fa-edit me-1"></i> Melhorar
+                                </button>
+                            </div>
+                            <div class="ai-credits-indicator">
+                                <small class="text-muted">
+                                    <i class="fas fa-coins me-1"></i>
+                                    Créditos: <span x-text="aiCredits"></span>
+                                </small>
+                            </div>
+                        </div>
+
+                        <textarea class="form-control"
                                   name="{{ section_config.section.slug }}_{{ field.name }}"
                                   x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                   rows="{{ field.rows or 3 }}"
@@ -439,8 +461,30 @@
                         {% elif field.type == 'editor' %}
                         <!-- Editor Rich Text (Quill) -->
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+
+                        <!-- Toolbar de IA (se disponível) -->
+                        <div class="ai-toolbar d-flex justify-content-between align-items-center"
+                             x-show="field.ai_enabled">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-success"
+                                        @click="generateAIContent('{{ section_config.section.slug }}_{{ field.name }}')">
+                                    <i class="fas fa-magic me-1"></i> Gerar com IA
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        @click="improveContent('{{ section_config.section.slug }}_{{ field.name }}')">
+                                    <i class="fas fa-edit me-1"></i> Melhorar
+                                </button>
+                            </div>
+                            <div class="ai-credits-indicator">
+                                <small class="text-muted">
+                                    <i class="fas fa-coins me-1"></i>
+                                    Créditos: <span x-text="aiCredits"></span>
+                                </small>
+                            </div>
+                        </div>
+
                         <div class="quill-wrapper mb-3">
-                            <div class="quill-editor" 
+                            <div class="quill-editor"
                                  id="quill_{{ section_config.section.slug }}_{{ field.name }}"
                                  x-ref="editor_{{ section_config.section.slug }}_{{ field.name }}"
                                  x-init="$nextTick(() => initQuillEditor('{{ section_config.section.slug }}_{{ field.name }}'))">
@@ -688,12 +732,22 @@ document.addEventListener('alpine:init', () => {
         attachments: [],  // Lista de anexos da petição
         quillEditors: {},
         autoSaveTimeout: null,
+        aiCredits: 10, // Créditos de IA disponíveis
         
         init() {
             // Inicializar estado de expansão das seções
             if (this.sections && this.sections.length > 0) {
                 this.sections.forEach(s => {
                     this.sectionExpanded[s.section.slug] = s.is_expanded !== false;
+
+                    // Habilitar IA para campos de texto
+                    if (s.section.fields_schema) {
+                        s.section.fields_schema.forEach(field => {
+                            if (field.type === 'editor' || field.type === 'textarea') {
+                                field.ai_enabled = true;
+                            }
+                        });
+                    }
                 });
             }
             
@@ -1261,6 +1315,212 @@ document.addEventListener('alpine:init', () => {
             modal.show();
         },
         
+        async generateAIContent(fieldName) {
+            console.log('generateAIContent called for field:', fieldName);
+            console.log('PetitioAI available:', typeof PetitioAI);
+
+            if (typeof PetitioAI === 'undefined') {
+                console.error('PetitioAI is undefined');
+                this.showToast('Sistema de IA não disponível', 'error');
+                return;
+            }
+
+            const ai = PetitioAI;
+            console.log('AI object:', ai);
+
+            // Encontrar o campo na estrutura de seções
+            let field = null;
+            let sectionName = '';
+            for (const section of this.sections) {
+                if (section.section.fields_schema) {
+                    field = section.section.fields_schema.find(f => section.section.slug + '_' + f.name === fieldName);
+                    if (field) {
+                        sectionName = section.section.name;
+                        break;
+                    }
+                }
+            }
+
+            console.log('Field found:', field);
+
+            if (!field) {
+                console.error('Field not found for name:', fieldName);
+                this.showToast('Campo não encontrado', 'error');
+                return;
+            }
+
+            // Verificar créditos
+            console.log('User credits:', ai.userCredits, 'Unlimited:', ai.isUnlimited);
+            if (!ai.isUnlimited && ai.userCredits < ai.creditCosts.section) {
+                console.log('Insufficient credits');
+                this.showToast('Créditos insuficientes para gerar conteúdo', 'warning');
+                return;
+            }
+
+            const existingContent = this.formData[fieldName] || '';
+            console.log('Existing content length:', existingContent.length);
+
+            // Confirmação se já tem conteúdo
+            if (existingContent && existingContent.length > 50) {
+                if (!confirm('Este campo já tem conteúdo. Deseja substituir pelo conteúdo gerado?')) {
+                    return;
+                }
+            }
+
+            try {
+                // Mostrar loading
+                console.log('Starting AI generation...');
+                this.showToast('Gerando conteúdo com IA...', 'info');
+
+                // Preparar contexto
+                const context = {
+                    petition_type: window.PETITION_TYPE?.slug || 'petition',
+                    section_type: sectionName || 'general'
+                };
+                console.log('Context:', context);
+
+                // Fazer requisição para gerar conteúdo
+                console.log('Making API request to /ai/api/generate/section');
+                const response = await fetch('/ai/api/generate/section', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        section_type: sectionName || 'general',
+                        petition_type: window.PETITION_TYPE?.slug || 'petition',
+                        context: context,
+                        existing_content: existingContent,
+                        premium: false
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (data.success) {
+                    // Inserir conteúdo no campo
+                    if (field.type === 'editor' && this.quillEditors[fieldName]) {
+                        this.quillEditors[fieldName].root.innerHTML = data.content;
+                    }
+                    this.formData[fieldName] = data.content;
+
+                    // Atualizar créditos se necessário
+                    if (data.credits_remaining !== '∞') {
+                        this.aiCredits = data.credits_remaining;
+                    }
+
+                    this.showToast('Conteúdo gerado com sucesso!', 'success');
+                } else {
+                    if (response.status === 402) {
+                        this.showToast('Créditos insuficientes', 'warning');
+                    } else {
+                        this.showToast(data.error || 'Erro ao gerar conteúdo', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao gerar conteúdo com IA:', error);
+                this.showToast('Erro ao gerar conteúdo com IA', 'error');
+            }
+        },
+
+        async improveContent(fieldName) {
+            console.log('improveContent called for field:', fieldName);
+            console.log('PetitioAI available:', typeof PetitioAI);
+
+            if (typeof PetitioAI === 'undefined') {
+                console.error('PetitioAI is undefined');
+                this.showToast('Sistema de IA não disponível', 'error');
+                return;
+            }
+
+            const ai = PetitioAI;
+            const currentContent = this.formData[fieldName] || '';
+            console.log('Current content length:', currentContent.length);
+
+            if (!currentContent.trim()) {
+                console.log('Content is empty');
+                this.showToast('Campo vazio. Digite algum conteúdo primeiro.', 'warning');
+                return;
+            }
+
+            // Verificar créditos
+            console.log('User credits:', ai.userCredits, 'Unlimited:', ai.isUnlimited);
+            if (!ai.isUnlimited && ai.userCredits < ai.creditCosts.improve) {
+                console.log('Insufficient credits for improvement');
+                this.showToast('Créditos insuficientes para melhorar conteúdo', 'warning');
+                return;
+            }
+
+            try {
+                // Mostrar loading
+                console.log('Starting content improvement...');
+                this.showToast('Melhorando conteúdo com IA...', 'info');
+
+                // Encontrar o campo na estrutura de seções
+                let sectionName = '';
+                for (const section of this.sections) {
+                    if (section.section.fields_schema) {
+                        const field = section.section.fields_schema.find(f => section.section.slug + '_' + f.name === fieldName);
+                        if (field) {
+                            sectionName = section.section.name;
+                            break;
+                        }
+                    }
+                }
+
+                // Preparar contexto
+                const context = {
+                    petition_type: window.PETITION_TYPE?.slug || 'petition',
+                    section_type: sectionName || 'general'
+                };
+                console.log('Context:', context);
+
+                // Fazer requisição para melhorar conteúdo
+                console.log('Making API request to /ai/api/generate/improve');
+                const response = await fetch('/ai/api/generate/improve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: currentContent,
+                        context: JSON.stringify(context),
+                        premium: false
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (data.success) {
+                    // Atualizar conteúdo no campo
+                    if (this.quillEditors[fieldName]) {
+                        this.quillEditors[fieldName].root.innerHTML = data.content;
+                    }
+                    this.formData[fieldName] = data.content;
+
+                    // Atualizar créditos se necessário
+                    if (data.credits_remaining !== '∞') {
+                        this.aiCredits = data.credits_remaining;
+                    }
+
+                    this.showToast('Conteúdo melhorado com sucesso!', 'success');
+                } else {
+                    if (response.status === 402) {
+                        this.showToast('Créditos insuficientes', 'warning');
+                    } else {
+                        this.showToast(data.error || 'Erro ao melhorar conteúdo', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao melhorar conteúdo com IA:', error);
+                this.showToast('Erro ao melhorar conteúdo com IA', 'error');
+            }
+        },
+        
         async generatePetition() {
             this.isGenerating = true;
             
@@ -1304,4 +1564,7 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 </script>
+
+<!-- JavaScript para formulários dinâmicos baseados em modelos -->
+<script src="{{ url_for('static', filename='js/model_petition_form.js') }}"></script>
 {% endblock %}
