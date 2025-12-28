@@ -590,22 +590,26 @@ def generate_dynamic():
                 field_value = form_data.get(field_name, "").strip()
 
                 if field_value:  # Só incluir campos preenchidos
-                    field_label = field.get('label', field['name'].replace('_', ' ').title())
+                    field_label = field.get(
+                        "label", field["name"].replace("_", " ").title()
+                    )
 
                     # Formatar o conteúdo baseado no tipo de campo
-                    if field['type'] == 'editor':
+                    if field["type"] == "editor":
                         # Para campos de editor, o conteúdo já vem em HTML
                         template_content += f"<div>{field_value}</div>\n\n"
-                    elif field['type'] == 'textarea':
+                    elif field["type"] == "textarea":
                         # Para textarea, converter quebras de linha em parágrafos
-                        paragraphs = field_value.split('\n\n')
+                        paragraphs = field_value.split("\n\n")
                         for para in paragraphs:
                             if para.strip():
                                 template_content += f"<p>{para.strip()}</p>\n"
                         template_content += "\n"
                     else:
                         # Para outros campos, mostrar como parágrafo simples
-                        template_content += f"<p><strong>{field_label}:</strong> {field_value}</p>\n"
+                        template_content += (
+                            f"<p><strong>{field_label}:</strong> {field_value}</p>\n"
+                        )
 
     # Se não há conteúdo das seções, mostrar mensagem padrão
     if template_content == f"<h1>{petition_type.name}</h1>\n\n":

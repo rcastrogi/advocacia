@@ -7,7 +7,13 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
-from app.models import PetitionSection, PetitionType, PetitionTypeSection, SavedPetition, User
+from app.models import (
+    PetitionSection,
+    PetitionType,
+    PetitionTypeSection,
+    SavedPetition,
+    User,
+)
 
 
 class TestPetitionSystem:
@@ -72,22 +78,22 @@ class TestPetitionSystem:
                     "label": "Nome do Autor",
                     "type": "text",
                     "required": True,
-                    "ai_enabled": False
+                    "ai_enabled": False,
                 },
                 {
                     "name": "autor_endereco",
                     "label": "Endereço do Autor",
                     "type": "textarea",
                     "required": False,
-                    "ai_enabled": True
+                    "ai_enabled": True,
                 },
                 {
                     "name": "reu_nome",
                     "label": "Nome do Réu",
                     "type": "text",
                     "required": True,
-                    "ai_enabled": False
-                }
+                    "ai_enabled": False,
+                },
             ],
             is_active=True,
         )
