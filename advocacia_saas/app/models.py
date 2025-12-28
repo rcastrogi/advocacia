@@ -473,6 +473,12 @@ class User(UserMixin, db.Model):
         """Verifica se é usuário master (super admin)"""
         return self.user_type == "master"
 
+    @property
+    def is_client(self):
+        """Verifica se é usuário cliente (acessa portal do cliente)"""
+        from app.models import Client
+        return Client.query.filter_by(user_id=self.id).first() is not None
+
     def deactivate(self):
         """Desativa o usuário (com proteção para master)"""
         if self.is_master:

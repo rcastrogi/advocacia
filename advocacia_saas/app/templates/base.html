@@ -749,6 +749,15 @@
     
     <!-- Petitio App - Alpine.js Global Store -->
     <script>
+        // Global user data
+        window.currentUser = {
+            isAuthenticated: {{ current_user.is_authenticated|tojson }},
+            {% if current_user.is_authenticated %}
+            userType: '{{ current_user.user_type }}',
+            isClient: {{ current_user.is_client|tojson }},
+            {% endif %}
+        };
+
         // Global Alpine.js App Data
         function petitioApp() {
             return {
