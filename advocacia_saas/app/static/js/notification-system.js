@@ -79,7 +79,6 @@ class NotificationSystem {
                 });
             }
         } catch (error) {
-            console.log('Flash messages not available:', error);
         }
     }
 

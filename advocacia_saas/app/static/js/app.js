@@ -61,11 +61,15 @@ $(document).ready(function() {
         }
     });
 
-    // Auto search CEP when 8 digits are entered
+    // Auto search CEP when 8 digits are entered (with delay to avoid too many requests)
+    let cepTimeout;
     $('input[name*="cep"]').on('input', function() {
         const cep = this.value.replace(/\D/g, '');
+        clearTimeout(cepTimeout);
         if (cep.length === 8) {
-            searchCEP(cep);
+            cepTimeout = setTimeout(() => {
+                searchCEP(cep);
+            }, 500); // Wait 500ms after user stops typing
         }
     });
 });
@@ -84,14 +88,13 @@ function searchCEP(cep) {
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    // TOAST DESABILITADO PARA EVITAR DUPLICAÇÃO
-                    // if (window.showErrorToast) {
-                    //     window.showErrorToast(data.error);
-                    // } else {
-                        showAlert('error', data.error);
-                    // }
+                    // Mostrar aviso amigável para CEP não encontrado
+                    if (window.showWarningToast) {
+                        window.showWarningToast('CEP não encontrado. Verifique se está correto.');
+                    } else {
+                        showAlert('warning', 'CEP não encontrado. Verifique se está correto.');
+                    }
                 } else {
-                    console.log('✅ CEP encontrado! Preenchendo e bloqueando campos...');
                     
                     // Get field references
                     const streetField = document.getElementById('street');
@@ -153,7 +156,6 @@ function searchCEP(cep) {
 
 // Lock fields filled by CEP API
 function lockCEPFields(streetField, neighborhoodField, ufField, cityField) {
-    console.log('🔒 Bloqueando campos preenchidos pelo CEP...');
     
     const lockedValues = {
         street: streetField ? streetField.value : '',
@@ -212,7 +214,6 @@ function lockCEPFields(streetField, neighborhoodField, ufField, cityField) {
         field.addEventListener('mousedown', preventChange, true);
     });
     
-    console.log('✅ Campos bloqueados com sucesso!');
 }
 
 // Unlock fields when CEP changes
@@ -228,7 +229,6 @@ $(document).ready(function() {
         
         [streetField, neighborhoodField, ufField, cityField].forEach(field => {
             if (field && field.dataset.cepLocked === 'true') {
-                console.log('🔓 Desbloqueando campo:', field.id);
                 
                 // Clone to remove all event listeners
                 const newField = field.cloneNode(true);
@@ -288,7 +288,6 @@ function showAlert(type, message) {
         window.showNotification(message, type);
     } else {
         // Fallback se o sistema unificado não estiver carregado
-        console.log('Notification system not ready, falling back to console:', type, message);
     }
 }
 

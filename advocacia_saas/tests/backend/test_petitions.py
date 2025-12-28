@@ -7,7 +7,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
-from app.models import PetitionTemplate, PetitionType, SavedPetition, User
+from app.models import PetitionType, SavedPetition, User
 
 
 class TestPetitionSystem:
@@ -15,7 +15,7 @@ class TestPetitionSystem:
 
     def test_petition_creation_requires_authentication(self, client):
         """Testa que criação de petições requer autenticação"""
-        response = client.get("/petitions/civil")
+        response = client.get("/petitions/saved")
         assert response.status_code == 302  # Redirect to login
 
     def test_petition_creation_requires_subscription(self, client, db_session):
@@ -43,63 +43,8 @@ class TestPetitionSystem:
         )
 
         # Usuário deve ter acesso (plano padrão automático)
-        response = client.get("/petitions/civil")
+        response = client.get("/petitions/saved")
         assert response.status_code == 200  # Acesso permitido com plano padrão
-
-    def test_petition_template_creation(self, client, db_session):
-        """Testa criação de template de petição - funcionalidade crítica"""
-        # Criar usuário com assinatura ativa (simular)
-        user = User(
-            username="testuser",
-            full_name="Test User",
-            email="test@example.com",
-            oab_number="123456",
-            user_type="advogado",
-        )
-        user.set_password("Test123!")
-        db_session.add(user)
-
-        # Criar tipo de petição
-        petition_type = PetitionType(
-            slug="peticao-template",
-            name="Petição Template",
-            category="civel",
-            is_billable=True,
-            base_price=Decimal("10.00"),
-        )
-        db_session.add(petition_type)
-        db_session.commit()
-
-        # Mock da verificação de assinatura
-        with patch("app.petitions.routes.subscription_required", lambda f: f):
-            # Login
-            client.post(
-                "/auth/login",
-                data={
-                    "email": "test@example.com",
-                    "password": "Test123!",
-                    "submit": "Entrar",
-                },
-            )
-
-            # Primeiro acessar a página para popular as choices do form
-            client.get("/petitions/templates/personal/new")
-
-            # Test that the route exists and is accessible
-            response = client.post(
-                "/petitions/templates/personal/new",
-                data={
-                    "name": "Template Teste",
-                    "category": "civel",
-                    "description": "Template para teste",
-                    "content": "<p>Conteúdo do template</p>",
-                    "petition_type_id": str(petition_type.id),
-                    "is_active": "true",
-                },
-            )
-
-            # The route exists and processes the request (may return 200 for validation errors or 302 for success)
-            assert response.status_code in [200, 302]
 
     def test_petition_generation(self, client, db_session):
         """Testa geração de petição - funcionalidade crítica"""
@@ -115,24 +60,6 @@ class TestPetitionSystem:
         db_session.add(user)
 
         # Criar tipo de petição
-        petition_type = PetitionType(
-            slug="peticao-gen",
-            name="Petição Geração",
-            category="civel",
-            is_billable=True,
-            base_price=Decimal("10.00"),
-        )
-        db_session.add(petition_type)
-
-        # Criar template
-        template = PetitionTemplate(
-            name="Template Teste",
-            category="civel",
-            description="Template para teste",
-            content="<p>Nome: {{ author_name }}</p><p>Valor: R$ {{ valor_causa }}</p>",
-            owner_id=user.id,
-            petition_type_id=petition_type.id,
-        )
         petition_type = PetitionType(
             slug="peticao-teste",
             name="Petição Teste",
@@ -399,59 +326,6 @@ class TestPetitionSystem:
             # But the mocks should still be checked if the route existed
             # For now, just verify the petition type was created
             assert petition_type.slug == "peticao-billable"
-
-    def test_petition_template_validation(self, client, db_session):
-        """Testa validação de templates de petição"""
-        # Criar usuário
-        user = User(
-            username="testuser",
-            full_name="Test User",
-            email="test@example.com",
-            oab_number="123456",
-            user_type="advogado",
-        )
-        user.set_password("Test123!")
-        db_session.add(user)
-
-        # Criar tipo de petição
-        petition_type = PetitionType(
-            slug="peticao-validacao",
-            name="Petição Validação",
-            category="civel",
-            is_billable=True,
-            base_price=Decimal("10.00"),
-        )
-        db_session.add(petition_type)
-        db_session.commit()
-
-        # Mock da verificação de assinatura
-        with patch("app.petitions.routes.subscription_required", lambda f: f):
-            # Login
-            client.post(
-                "/auth/login",
-                data={
-                    "email": "test@example.com",
-                    "password": "Test123!",
-                    "submit": "Entrar",
-                },
-            )
-
-            # Primeiro acessar a página para popular as choices do form
-            client.get("/petitions/templates/personal/new")
-
-            # Tentar criar template sem nome
-            response = client.post(
-                "/petitions/templates/personal/new",
-                data={
-                    "name": "",  # Nome vazio
-                    "category": "civel",
-                    "content": "<p>Conteúdo</p>",
-                    "petition_type_id": petition_type.id,
-                },
-            )
-
-            # Should return the form with validation errors
-            assert response.status_code == 200
 
     def test_petition_access_control(self, client, db_session):
         """Testa controle de acesso a petições de outros usuários"""

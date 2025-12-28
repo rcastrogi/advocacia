@@ -112,7 +112,7 @@ def create_comprehensive_petition_sections():
                 {
                     "name": "cep",
                     "label": "CEP",
-                    "type": "text",
+                    "type": "cep",
                     "required": False,
                     "size": "col-md-2",
                     "placeholder": "00000-000",
@@ -278,7 +278,7 @@ def create_comprehensive_petition_sections():
                 {
                     "name": "cep",
                     "label": "CEP",
-                    "type": "text",
+                    "type": "cep",
                     "required": False,
                     "size": "col-md-2",
                     "placeholder": "00000-000",
@@ -400,7 +400,7 @@ def create_comprehensive_petition_sections():
                 {
                     "name": "cep",
                     "label": "CEP",
-                    "type": "text",
+                    "type": "cep",
                     "required": False,
                     "size": "col-md-2",
                     "placeholder": "00000-000",

@@ -3399,6 +3399,7 @@ def petition_model_new():
         petition_type_id = request.form.get("petition_type_id")
         is_active = request.form.get("is_active") == "on"
         use_dynamic_form = request.form.get("use_dynamic_form") == "on"
+        template_content = request.form.get("template_content")
 
         # Gerar slug único baseado no nome
         slug = generate_unique_slug(f"Modelo - {name}", PetitionModel)
@@ -3410,6 +3411,7 @@ def petition_model_new():
             petition_type_id=petition_type_id,
             is_active=is_active,
             use_dynamic_form=use_dynamic_form,
+            template_content=template_content,
         )
 
         db.session.add(petition_model)
@@ -3477,6 +3479,7 @@ def petition_model_edit(model_id):
         petition_model.petition_type_id = request.form.get("petition_type_id")
         petition_model.is_active = request.form.get("is_active") == "on"
         petition_model.use_dynamic_form = request.form.get("use_dynamic_form") == "on"
+        petition_model.template_content = request.form.get("template_content")
 
         # Atualizar seções do modelo
         section_order_str = request.form.get("section_order", "")

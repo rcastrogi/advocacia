@@ -278,8 +278,8 @@
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
                         <input type="text" 
                                class="form-control {% if field.mask %}{{ field.mask }}-mask{% endif %}" 
-                               name="{{ field.name }}"
-                               x-model="formData['{{ field.name }}']"
+                               name="{{ section_config.section.slug }}_{{ field.name }}"
+                               x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                placeholder="{{ field.placeholder or '' }}"
                                {% if field.required %}required aria-required="true"{% endif %}>
                         
@@ -288,8 +288,8 @@
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
                         <input type="email" 
                                class="form-control" 
-                               name="{{ field.name }}"
-                               x-model="formData['{{ field.name }}']"
+                               name="{{ section_config.section.slug }}_{{ field.name }}"
+                               x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                placeholder="{{ field.placeholder or '' }}"
                                {% if field.required %}required{% endif %}>
                         
@@ -308,8 +308,8 @@
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
                         <input type="text" 
                                class="form-control cnpj-mask" 
-                               name="{{ field.name }}"
-                               x-model="formData['{{ field.name }}']"
+                               name="{{ section_config.section.slug }}_{{ field.name }}"
+                               x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                placeholder="00.000.000/0000-00"
                                {% if field.required %}required{% endif %}>
                         
@@ -318,8 +318,8 @@
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
                         <input type="text" 
                                class="form-control phone-mask" 
-                               name="{{ field.name }}"
-                               x-model="formData['{{ field.name }}']"
+                               name="{{ section_config.section.slug }}_{{ field.name }}"
+                               x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                placeholder="(00) 00000-0000"
                                {% if field.required %}required{% endif %}>
                         
@@ -329,33 +329,33 @@
                         <div class="input-group">
                             <input type="text" 
                                    class="form-control cep-mask" 
-                                   name="{{ field.name }}"
-                                   x-model="formData['{{ field.name }}']"
-                                   @blur="buscarCEP('{{ field.name }}')"
-                                   @keyup.enter="buscarCEP('{{ field.name }}')"
+                                   name="{{ section_config.section.slug }}_{{ field.name }}"
+                                   x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
+                                   @blur="buscarCEP('{{ section_config.section.slug }}_{{ field.name }}')"
+                                   @keyup.enter="buscarCEP('{{ section_config.section.slug }}_{{ field.name }}')"
                                    placeholder="00000-000"
                                    {% if field.required %}required{% endif %}>
                             <button type="button" 
                                     class="btn btn-outline-secondary" 
-                                    @click="buscarCEP('{{ field.name }}')"
-                                    :disabled="cepLoading === '{{ field.name }}'">
-                                <span x-show="cepLoading !== '{{ field.name }}'">
+                                    style="height: 37px !important; min-height: 37px !important; width: 25%; padding: 8px 0; box-sizing: border-box;"
+                                    @click="buscarCEP('{{ section_config.section.slug }}_{{ field.name }}')"
+                                    :disabled="cepLoading === '{{ section_config.section.slug }}_{{ field.name }}'">
+                                <span x-show="cepLoading !== '{{ section_config.section.slug }}_{{ field.name }}'">
                                     <i class="fas fa-search"></i>
                                 </span>
-                                <span x-show="cepLoading === '{{ field.name }}'">
+                                <span x-show="cepLoading === '{{ section_config.section.slug }}_{{ field.name }}'">
                                     <i class="fas fa-spinner fa-spin"></i>
                                 </span>
                             </button>
                         </div>
-                        <small class="text-muted">Digite o CEP e clique em buscar para preencher o endereço automaticamente</small>
                         
                         {% elif field.type == 'date' %}
                         <!-- Campo de Data -->
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
                         <input type="date" 
                                class="form-control" 
-                               name="{{ field.name }}"
-                               x-model="formData['{{ field.name }}']"
+                               name="{{ section_config.section.slug }}_{{ field.name }}"
+                               x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                {% if field.required %}required{% endif %}>
                         
                         {% elif field.type == 'number' %}
@@ -363,8 +363,8 @@
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
                         <input type="number" 
                                class="form-control" 
-                               name="{{ field.name }}"
-                               x-model="formData['{{ field.name }}']"
+                               name="{{ section_config.section.slug }}_{{ field.name }}"
+                               x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                placeholder="{{ field.placeholder or '' }}"
                                {% if field.min is defined %}min="{{ field.min }}"{% endif %}
                                {% if field.max is defined %}max="{{ field.max }}"{% endif %}
@@ -378,8 +378,8 @@
                             <span class="input-group-text">R$</span>
                             <input type="text" 
                                    class="form-control money-mask" 
-                                   name="{{ field.name }}"
-                                   x-model="formData['{{ field.name }}']"
+                                   name="{{ section_config.section.slug }}_{{ field.name }}"
+                                   x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                    placeholder="{{ field.placeholder or '0,00' }}"
                                    {% if field.required %}required{% endif %}>
                         </div>
@@ -388,12 +388,12 @@
                         <!-- Campo de Seleção -->
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
                         <select class="form-select" 
-                                name="{{ field.name }}"
-                                x-model="formData['{{ field.name }}']"
+                                name="{{ section_config.section.slug }}_{{ field.name }}"
+                                x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                 {% if field.required %}required{% endif %}>
                             <option value="">Selecione...</option>
                             {% for option in field.options %}
-                            <option value="{{ option }}">{{ option }}</option>
+                            <option value="{{ option.value }}">{{ option.label }}</option>
                             {% endfor %}
                         </select>
                         
@@ -405,12 +405,12 @@
                             <div class="form-check">
                                 <input type="radio" 
                                        class="form-check-input" 
-                                       name="{{ field.name }}"
-                                       id="{{ field.name }}_{{ loop.index }}"
-                                       value="{{ option }}"
-                                       x-model="formData['{{ field.name }}']"
+                                       name="{{ section_config.section.slug }}_{{ field.name }}"
+                                       id="{{ section_config.section.slug }}_{{ field.name }}_{{ loop.index }}"
+                                       value="{{ option.value }}"
+                                       x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                        {% if field.required %}required{% endif %}>
-                                <label class="form-check-label" for="{{ field.name }}_{{ loop.index }}">{{ option }}</label>
+                                <label class="form-check-label" for="{{ section_config.section.slug }}_{{ field.name }}_{{ loop.index }}">{{ option.label }}</label>
                             </div>
                             {% endfor %}
                         </div>
@@ -420,18 +420,18 @@
                         <div class="form-check">
                             <input type="checkbox" 
                                    class="form-check-input" 
-                                   name="{{ field.name }}"
-                                   id="{{ field.name }}"
-                                   x-model="formData['{{ field.name }}']">
-                            <label class="form-check-label" for="{{ field.name }}">{{ field.label }}</label>
+                                   name="{{ section_config.section.slug }}_{{ field.name }}"
+                                   id="{{ section_config.section.slug }}_{{ field.name }}"
+                                   x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']">
+                            <label class="form-check-label" for="{{ section_config.section.slug }}_{{ field.name }}">{{ field.label }}</label>
                         </div>
                         
                         {% elif field.type == 'textarea' %}
                         <!-- Área de Texto -->
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
                         <textarea class="form-control" 
-                                  name="{{ field.name }}"
-                                  x-model="formData['{{ field.name }}']"
+                                  name="{{ section_config.section.slug }}_{{ field.name }}"
+                                  x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                   rows="{{ field.rows or 3 }}"
                                   placeholder="{{ field.placeholder or '' }}"
                                   {% if field.required %}required{% endif %}></textarea>
@@ -441,20 +441,20 @@
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
                         <div class="quill-wrapper mb-3">
                             <div class="quill-editor" 
-                                 id="quill_{{ field.name }}"
-                                 x-ref="editor_{{ field.name }}"
-                                 x-init="$nextTick(() => initQuillEditor('{{ field.name }}'))">
+                                 id="quill_{{ section_config.section.slug }}_{{ field.name }}"
+                                 x-ref="editor_{{ section_config.section.slug }}_{{ field.name }}"
+                                 x-init="$nextTick(() => initQuillEditor('{{ section_config.section.slug }}_{{ field.name }}'))">
                             </div>
                         </div>
-                        <input type="hidden" name="{{ field.name }}" x-model="formData['{{ field.name }}']">
+                        <input type="hidden" name="{{ section_config.section.slug }}_{{ field.name }}" x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']">
                         
                         {% elif field.type == 'processo' %}
                         <!-- Campo de Número de Processo (formato CNJ) -->
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
                         <input type="text" 
                                class="form-control processo-mask" 
-                               name="{{ field.name }}"
-                               x-model="formData['{{ field.name }}']"
+                               name="{{ section_config.section.slug }}_{{ field.name }}"
+                               x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                placeholder="0000000-00.0000.0.00.0000"
                                {% if field.required %}required{% endif %}>
                         
@@ -462,8 +462,8 @@
                         <!-- Campo de Estado (UF) -->
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
                         <select class="form-select" 
-                                name="{{ field.name }}"
-                                x-model="formData['{{ field.name }}']"
+                                name="{{ section_config.section.slug }}_{{ field.name }}"
+                                x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
                                 {% if field.required %}required{% endif %}>
                             <option value="">Selecione...</option>
                             <option value="AC">Acre</option>
@@ -739,7 +739,7 @@ document.addEventListener('alpine:init', () => {
                     s.section.fields_schema.forEach(field => {
                         if (field.type === 'editor') {
                             this.$nextTick(() => {
-                                this.initQuillEditor(field.name);
+                                this.initQuillEditor(s.section.slug + '_' + field.name);
                             });
                         }
                     });
@@ -879,35 +879,28 @@ document.addEventListener('alpine:init', () => {
                 const data = await response.json();
                 
                 if (!data.erro) {
-                    // Extrair prefixo do campo CEP (ex: autor_cep -> autor_, reu_cep -> reu_)
-                    const prefix = fieldName.replace(/_?cep$/i, '');
-                    const prefixWithUnderscore = prefix ? prefix + '_' : '';
+                    // Extrair prefixo da seção do campo CEP (ex: autor_cep -> autor_, reu_cep -> reu_)
+                    const sectionPrefix = fieldName.replace(/_cep$/i, '_');
                     
                     // Mapeamento de campos do ViaCEP para possíveis nomes de campos
                     const fieldMappings = {
                         logradouro: ['endereco', 'rua', 'logradouro', 'address', 'street'],
                         bairro: ['bairro', 'neighborhood', 'district'],
                         localidade: ['cidade', 'city', 'municipio', 'localidade'],
-                        uf: ['estado', 'uf', 'state'],
-                        complemento: ['complemento', 'complement']
+                        uf: ['estado', 'uf', 'state']
                     };
                     
                     // Tentar preencher cada campo
                     for (const [viaCepField, possibleNames] of Object.entries(fieldMappings)) {
                         if (!data[viaCepField]) continue;
                         
-                        // Tentar encontrar o campo com o prefixo
+                        // Tentar encontrar o campo com o prefixo da seção
                         for (const name of possibleNames) {
-                            const fieldNameWithPrefix = prefixWithUnderscore + name;
-                            const fieldNameWithoutPrefix = name;
+                            const fieldNameWithSection = sectionPrefix + name;
                             
-                            // Verificar se o campo existe no formData ou nas seções
-                            if (this.fieldExists(fieldNameWithPrefix)) {
-                                this.formData[fieldNameWithPrefix] = data[viaCepField];
-                                break;
-                            } else if (prefix && this.fieldExists(fieldNameWithoutPrefix)) {
-                                // Só usar sem prefixo se não houver prefixo específico
-                                this.formData[fieldNameWithoutPrefix] = data[viaCepField];
+                            // Verificar se o campo existe no formData
+                            if (this.fieldExists(fieldNameWithSection)) {
+                                this.formData[fieldNameWithSection] = data[viaCepField];
                                 break;
                             }
                         }
@@ -926,11 +919,18 @@ document.addEventListener('alpine:init', () => {
         },
         
         fieldExists(fieldName) {
+            // Extrair o nome do campo e o prefixo da seção
+            const parts = fieldName.split('_');
+            if (parts.length < 2) return false;
+            
+            const sectionSlug = parts[0];
+            const actualFieldName = parts.slice(1).join('_');
+            
             // Verificar se o campo existe nas seções configuradas
             for (const section of this.sections) {
-                if (section.section.fields_schema) {
+                if (section.section.slug === sectionSlug && section.section.fields_schema) {
                     for (const field of section.section.fields_schema) {
-                        if (field.name === fieldName) {
+                        if (field.name === actualFieldName) {
                             return true;
                         }
                     }

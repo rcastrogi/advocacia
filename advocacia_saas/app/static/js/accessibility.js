@@ -268,5 +268,4 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     
-    console.log('Recursos de acessibilidade carregados');
 });

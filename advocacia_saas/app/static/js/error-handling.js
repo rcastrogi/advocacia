@@ -55,7 +55,6 @@ window.showSuccessToast = showSuccessToast;
 // Função para exibir toast de sucesso - DESABILITADA
 function showSuccessToast(message, title = 'Sucesso', duration = 3000) {
     // SISTEMA DESABILITADO PARA EVITAR DUPLICAÇÃO COM FLASH MESSAGES
-    console.log('Toast de sucesso desabilitado:', message);
     return;
     
     // Código original comentado
@@ -157,5 +156,4 @@ window.addEventListener('unhandledrejection', function(event) {
 window.showErrorToast = showErrorToast;
 window.showSuccessToast = showSuccessToast;
 
-console.log('✅ Sistema de tratamento de erros iniciado - APENAS LOGGING');
 // Não mostra toasts automaticamente para evitar spam ao usuário

@@ -384,38 +384,26 @@
 
 {% block scripts %}
 <script>
-console.log('🚀 Script de formulário carregado!');
-console.log('Elementos encontrados:', {
-    uf: document.getElementById('uf') ? 'OK' : 'ERRO',
-    city: document.getElementById('city') ? 'OK' : 'ERRO',
-    searchCep: document.getElementById('searchCep') ? 'OK' : 'ERRO',
-    cep: document.getElementById('cep') ? 'OK' : 'ERRO',
-    street: document.getElementById('street') ? 'OK' : 'ERRO',
-    neighborhood: document.getElementById('neighborhood') ? 'OK' : 'ERRO'
-});
 
 // CEP Search
 document.getElementById('searchCep').addEventListener('click', function() {
     const cep = document.getElementById('cep').value.replace(/\D/g, '');
-    console.log('🔍 Buscando CEP:', cep);
     
     if (cep.length === 8) {
         fetch(`/api/cep/${cep}`)
             .then(response => {
-                console.log('📡 Resposta recebida:', response.status);
                 return response.json();
             })
             .then(data => {
-                console.log('📦 Dados recebidos:', data);
                 
                 if (data.error) {
-                    if (window.showErrorToast) {
-                        window.showErrorToast(data.error);
+                    // Mostrar aviso amigável para CEP não encontrado
+                    if (window.showWarningToast) {
+                        window.showWarningToast('CEP não encontrado. Verifique se está correto.');
                     } else {
-                        alert(data.error);
+                        alert('CEP não encontrado. Verifique se está correto.');
                     }
                 } else {
-                    console.log('✅ CEP válido! Preenchendo campos...');
                     
                     // Fill fields
                     const streetField = document.getElementById('street');
@@ -423,23 +411,12 @@ document.getElementById('searchCep').addEventListener('click', function() {
                     const ufField = document.getElementById('uf');
                     const cityField = document.getElementById('city');
                     
-                    console.log('📝 Campos encontrados:', {
-                        street: streetField ? 'OK' : 'NÃO ENCONTRADO',
-                        neighborhood: neighborhoodField ? 'OK' : 'NÃO ENCONTRADO',
-                        uf: ufField ? 'OK' : 'NÃO ENCONTRADO',
-                        city: cityField ? 'OK' : 'NÃO ENCONTRADO'
-                    });
-                    
                     streetField.value = data.street;
                     neighborhoodField.value = data.neighborhood;
                     
                     // Set UF and City
                     ufField.value = data.uf;
                     cityField.value = data.city;
-                    
-                    console.log('✅ Campos preenchidos com sucesso!');
-                    console.log('📍 Cidade preenchida:', data.city, '→', cityField.value);
-                    console.log('🔒 INICIANDO BLOQUEIO DOS CAMPOS...');
                         
                         // Store locked values
                         const lockedValues = {
@@ -451,7 +428,6 @@ document.getElementById('searchCep').addEventListener('click', function() {
                         
                         // Function to prevent any changes
                         const preventChange = function(e) {
-                            console.log('❌ TENTATIVA BLOQUEADA:', e.type);
                             e.preventDefault();
                             e.stopPropagation();
                             e.stopImmediatePropagation();
@@ -461,7 +437,6 @@ document.getElementById('searchCep').addEventListener('click', function() {
                         
                         const restoreValue = function(field, value) {
                             return function(e) {
-                                console.log('🔄 RESTAURANDO VALOR:', field.id);
                                 field.value = value;
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -469,7 +444,6 @@ document.getElementById('searchCep').addEventListener('click', function() {
                         };
                         
                         // Lock street field
-                        console.log('🔒 Bloqueando campo LOGRADOURO');
                         streetField.dataset.locked = 'true';
                         streetField.dataset.lockedValue = lockedValues.street;
                         streetField.readOnly = true;
@@ -484,7 +458,6 @@ document.getElementById('searchCep').addEventListener('click', function() {
                         streetField.addEventListener('focus', preventChange, true);
                         
                         // Lock neighborhood field
-                        console.log('🔒 Bloqueando campo BAIRRO');
                         neighborhoodField.dataset.locked = 'true';
                         neighborhoodField.dataset.lockedValue = lockedValues.neighborhood;
                         neighborhoodField.readOnly = true;
@@ -499,7 +472,6 @@ document.getElementById('searchCep').addEventListener('click', function() {
                         neighborhoodField.addEventListener('focus', preventChange, true);
                         
                         // Lock UF field
-                        console.log('🔒 Bloqueando campo UF');
                         ufField.dataset.locked = 'true';
                         ufField.dataset.lockedValue = lockedValues.uf;
                         ufField.disabled = true;
@@ -510,7 +482,6 @@ document.getElementById('searchCep').addEventListener('click', function() {
                         ufField.addEventListener('focus', preventChange, true);
                         
                         // Lock city field
-                        console.log('🔒 Bloqueando campo CIDADE');
                         cityField.dataset.locked = 'true';
                         cityField.dataset.lockedValue = lockedValues.city;
                         cityField.readOnly = true;
@@ -539,8 +510,6 @@ document.getElementById('searchCep').addEventListener('click', function() {
                         neighborhoodField.style.backgroundColor = '#e9ecef';
                         ufField.style.backgroundColor = '#e9ecef';
                         cityField.style.backgroundColor = '#e9ecef';
-                        
-                        console.log('✅ CAMPOS BLOQUEADOS COM SUCESSO!');
                         
                         // Show success message
                         if (window.showSuccessToast) {

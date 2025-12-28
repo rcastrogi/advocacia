@@ -59,64 +59,6 @@ class CivilPetitionForm(FlaskForm):
     submit = SubmitField("Gerar PDF")
 
 
-class PetitionTemplateForm(FlaskForm):
-    name = StringField("Nome do modelo", validators=[DataRequired(), Length(max=180)])
-    category = SelectField(
-        "Categoria",
-        choices=[
-            ("civel", "Cível"),
-            ("trabalhista", "Trabalhista"),
-            ("familia", "Família"),
-            ("criminal", "Criminal"),
-            ("tributario", "Tributário"),
-            ("outros", "Outros"),
-        ],
-        default="civel",
-    )
-    petition_type_id = SelectField(
-        "Tipo de petição",
-        coerce=int,
-        validators=[DataRequired()],
-    )
-    description = TextAreaField(
-        "Descrição",
-        validators=[Optional()],
-        render_kw={"rows": 3},
-    )
-    content = TextAreaField(
-        "Conteúdo (variáveis Jinja)",
-        validators=[DataRequired(), Length(min=50)],
-        render_kw={"rows": 18, "class": "font-monospace"},
-    )
-    # Default values for form fields
-    default_facts = TextAreaField(
-        "Texto padrão - Fatos",
-        validators=[Optional()],
-        render_kw={
-            "rows": 5,
-            "placeholder": "Texto padrão para o campo 'Fatos' que será carregado automaticamente",
-        },
-    )
-    default_fundamentos = TextAreaField(
-        "Texto padrão - Fundamentação",
-        validators=[Optional()],
-        render_kw={
-            "rows": 5,
-            "placeholder": "Texto padrão para o campo 'Fundamentação' que será carregado automaticamente",
-        },
-    )
-    default_pedidos = TextAreaField(
-        "Texto padrão - Pedidos",
-        validators=[Optional()],
-        render_kw={
-            "rows": 5,
-            "placeholder": "Texto padrão para o campo 'Pedidos' que será carregado automaticamente",
-        },
-    )
-    is_active = BooleanField("Ativo", default=True)
-    submit = SubmitField("Salvar modelo")
-
-
 class FamilyPetitionForm(FlaskForm):
     template_id = SelectField(
         "Modelo",
@@ -136,10 +78,40 @@ class FamilyPetitionForm(FlaskForm):
     process_number = StringField(
         "Número do Processo", validators=[Optional(), Length(max=100)]
     )
-    action_type = StringField(
+    action_type = SelectField(
         "Tipo da ação",
+        validators=[Optional()],
+        choices=[
+            ("", "Selecione o tipo de ação"),
+            ("ACOES_FAMILIARES", "AÇÕES FAMILIARES"),
+            ("DIVORCIO_LITIGIOSO", "AÇÃO DE DIVÓRCIO LITIGIOSO"),
+            ("DIVORCIO_CONSENSUAL", "AÇÃO DE DIVÓRCIO CONSENSUAL"),
+            ("GUARDA", "AÇÃO DE GUARDA"),
+            ("ALIMENTOS", "AÇÃO DE ALIMENTOS"),
+            ("REGULAMENTACAO_VISITAS", "AÇÃO DE REGULAMENTAÇÃO DE VISITAS"),
+            ("INVASAO_POSSE", "AÇÃO DE INVASÃO DE POSSE"),
+            ("USUCAPIAO", "AÇÃO DE USUCAPIÃO"),
+            ("OBRIGACOES_CONTRATUAIS", "AÇÕES OBRIGAÇÕES CONTRATUAIS"),
+            ("COBRANCA", "AÇÃO DE COBRANÇA"),
+            ("EXECUCAO", "AÇÃO DE EXECUÇÃO"),
+            ("MONITORIA", "AÇÃO MONITORIA"),
+            ("RESCISAO_CONTRATUAL", "AÇÃO DE RESCISÃO CONTRATUAL"),
+            ("INDENIZACAO_DANOS", "AÇÃO DE INDENIZAÇÃO POR DANOS"),
+            ("RESPONSABILIDADE_CIVIL", "AÇÃO DE RESPONSABILIDADE CIVIL"),
+            ("DIREITO_CONSUMIDOR", "AÇÕES DIREITO DO CONSUMIDOR"),
+            ("ANULACAO_CONTRATO", "AÇÃO DE ANULAÇÃO DE CONTRATO"),
+            ("RECONHECIMENTO_UNIAO_ESTAVEL", "AÇÃO DE RECONHECIMENTO DE UNIÃO ESTÁVEL"),
+            ("PARTILHA_BENS", "AÇÃO DE PARTILHA DE BENS"),
+            ("REVISIONAL_ALIMENTOS", "AÇÃO REVISIONAL DE ALIMENTOS"),
+            ("EXONERACAO_ALIMENTOS", "AÇÃO DE EXONERAÇÃO DE ALIMENTOS"),
+            ("OUTROS", "OUTROS"),
+        ],
+        render_kw={"class": "form-select"}
+    )
+    action_type_other = StringField(
+        "Especificar tipo de ação",
         validators=[Optional(), Length(max=180)],
-        render_kw={"placeholder": "Ex: AÇÃO DE DIVÓRCIO C/C GUARDA E ALIMENTOS"},
+        render_kw={"placeholder": "Ex: AÇÃO DE DESPEJO, AÇÃO POSSESSÓRIA, etc."},
     )
 
     # Dados do casamento
@@ -396,10 +368,40 @@ class SimplePetitionForm(FlaskForm):
         validators=[DataRequired(), Length(max=100)],
         render_kw={"placeholder": "Ex: 1234567-89.2024.8.26.0002"},
     )
-    action_type = StringField(
+    action_type = SelectField(
         "Tipo da ação original",
+        validators=[Optional()],
+        choices=[
+            ("", "Selecione o tipo de ação"),
+            ("ACOES_FAMILIARES", "AÇÕES FAMILIARES"),
+            ("DIVORCIO_LITIGIOSO", "AÇÃO DE DIVÓRCIO LITIGIOSO"),
+            ("DIVORCIO_CONSENSUAL", "AÇÃO DE DIVÓRCIO CONSENSUAL"),
+            ("GUARDA", "AÇÃO DE GUARDA"),
+            ("ALIMENTOS", "AÇÃO DE ALIMENTOS"),
+            ("REGULAMENTACAO_VISITAS", "AÇÃO DE REGULAMENTAÇÃO DE VISITAS"),
+            ("INVASAO_POSSE", "AÇÃO DE INVASÃO DE POSSE"),
+            ("USUCAPIAO", "AÇÃO DE USUCAPIÃO"),
+            ("OBRIGACOES_CONTRATUAIS", "AÇÕES OBRIGAÇÕES CONTRATUAIS"),
+            ("COBRANCA", "AÇÃO DE COBRANÇA"),
+            ("EXECUCAO", "AÇÃO DE EXECUÇÃO"),
+            ("MONITORIA", "AÇÃO MONITORIA"),
+            ("RESCISAO_CONTRATUAL", "AÇÃO DE RESCISÃO CONTRATUAL"),
+            ("INDENIZACAO_DANOS", "AÇÃO DE INDENIZAÇÃO POR DANOS"),
+            ("RESPONSABILIDADE_CIVIL", "AÇÃO DE RESPONSABILIDADE CIVIL"),
+            ("DIREITO_CONSUMIDOR", "AÇÕES DIREITO DO CONSUMIDOR"),
+            ("ANULACAO_CONTRATO", "AÇÃO DE ANULAÇÃO DE CONTRATO"),
+            ("RECONHECIMENTO_UNIAO_ESTAVEL", "AÇÃO DE RECONHECIMENTO DE UNIÃO ESTÁVEL"),
+            ("PARTILHA_BENS", "AÇÃO DE PARTILHA DE BENS"),
+            ("REVISIONAL_ALIMENTOS", "AÇÃO REVISIONAL DE ALIMENTOS"),
+            ("EXONERACAO_ALIMENTOS", "AÇÃO DE EXONERAÇÃO DE ALIMENTOS"),
+            ("OUTROS", "OUTROS"),
+        ],
+        render_kw={"class": "form-select"}
+    )
+    action_type_other = StringField(
+        "Especificar tipo de ação original",
         validators=[Optional(), Length(max=180)],
-        render_kw={"placeholder": "Ex: AÇÃO DE REPARAÇÃO DE DANOS"},
+        render_kw={"placeholder": "Ex: AÇÃO DE DESPEJO, AÇÃO POSSESSÓRIA, etc."},
     )
 
     # Partes

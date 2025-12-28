@@ -95,30 +95,20 @@ def login():
         email = request.form.get("email")
         password = request.form.get("password")
 
-        print(f"[DEBUG] Tentativa de login: {email}")
-
         user = User.query.filter_by(email=email).first()
 
         if not user:
-            print(f"[DEBUG] Usuário não encontrado: {email}")
             flash("Email ou senha incorretos", "danger")
         elif not check_password_hash(user.password_hash, password):
-            print(f"[DEBUG] Senha incorreta para: {email}")
             flash("Email ou senha incorretos", "danger")
         else:
-            print(f"[DEBUG] Senha correta! Verificando se é cliente...")
             # Verificar se é cliente
             client = Client.query.filter_by(user_id=user.id).first()
             if client:
-                print(f"[DEBUG] Cliente encontrado! ID: {client.id}")
                 login_user(user, remember=True)
                 next_page = request.args.get("next")
-                print(
-                    f"[DEBUG] Redirecionando para: {next_page or url_for('portal.index')}"
-                )
                 return redirect(next_page or url_for("portal.index"))
             else:
-                print(f"[DEBUG] Usuário não é cliente!")
                 flash(
                     "Acesso não autorizado. Este login é apenas para clientes.",
                     "danger",

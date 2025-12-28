@@ -196,6 +196,33 @@
                 </div>
             </div>
 
+            <!-- Template do Modelo -->
+            <div class="card shadow mt-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Template do Modelo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="template_content" class="form-label">
+                            Conteúdo do Template <span class="text-muted">(Jinja2)</span>
+                        </label>
+                        <textarea class="form-control" id="template_content" name="template_content"
+                                  rows="20" placeholder="Digite o template Jinja2 aqui...">{{ petition_model.template_content if petition_model else '' }}</textarea>
+                        <div class="form-text">
+                            Use sintaxe Jinja2 para inserir os dados do formulário. Exemplo: {{ "{{ autor_nome }}" }}
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Dica:</strong> O template será usado para gerar o PDF da petição.
+                        Você pode usar todas as variáveis disponíveis no formulário dinâmico.
+                    </div>
+                </div>
+            </div>
+
             <!-- Botões de Ação -->
             <div class="row mt-4">
                 <div class="col-12 text-end">
@@ -218,8 +245,6 @@
 (function() {
     'use strict';
 
-    console.log('🚀 Inicializando interface de seções...');
-
     try {
         // Verificar se elementos existem
         const addBtn = document.getElementById('add-selected');
@@ -231,19 +256,7 @@
         const available = document.getElementById('available-sections');
         const selected = document.getElementById('selected-sections');
 
-        console.log('Elementos encontrados:', {
-            addBtn: !!addBtn,
-            addAllBtn: !!addAllBtn,
-            removeBtn: !!removeBtn,
-            removeAllBtn: !!removeAllBtn,
-            moveUpBtn: !!moveUpBtn,
-            moveDownBtn: !!moveDownBtn,
-            available: !!available,
-            selected: !!selected
-        });
-
         if (addBtn && addAllBtn && removeBtn && removeAllBtn && moveUpBtn && moveDownBtn && available && selected) {
-            console.log('✅ Todos os elementos encontrados - inicializando...');
 
             // Funções da interface
             function addSelected() {

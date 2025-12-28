@@ -124,13 +124,6 @@ class User(UserMixin, db.Model):
         lazy="dynamic",
         cascade="all, delete-orphan",
     )
-    petition_templates = db.relationship(
-        "PetitionTemplate",
-        backref="owner",
-        lazy="dynamic",
-        cascade="all, delete-orphan",
-        foreign_keys="PetitionTemplate.owner_id",
-    )
 
     def set_password(self, password, skip_history_check=False):
         """
@@ -866,55 +859,6 @@ class PetitionType(db.Model):
         return f"<PetitionType {self.slug}>"
 
 
-class PetitionTemplate(db.Model):
-    __tablename__ = "petition_templates"
-
-    id = db.Column(db.Integer, primary_key=True)
-    slug = db.Column(db.String(120), unique=True, nullable=False)
-    name = db.Column(db.String(180), nullable=False)
-    description = db.Column(db.Text)
-    category = db.Column(db.String(50), default="civel")
-    content = db.Column(db.Text, nullable=False)
-    # JSON field to store default values for form fields (facts, fundamentos, pedidos, etc.)
-    default_values = db.Column(db.Text, default="{}")
-    is_global = db.Column(db.Boolean, default=False)
-    is_active = db.Column(db.Boolean, default=True)
-    owner_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    petition_type_id = db.Column(
-        db.Integer, db.ForeignKey("petition_types.id"), nullable=False
-    )
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(
-        db.DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
-    )
-
-    petition_type = db.relationship("PetitionType", backref="templates")
-
-    def get_default_values(self) -> dict:
-        """Returns the default values as a dictionary."""
-        if self.default_values:
-            try:
-                return json.loads(self.default_values)
-            except (json.JSONDecodeError, TypeError):
-                return {}
-        return {}
-
-    def set_default_values(self, values: dict):
-        """Sets the default values from a dictionary."""
-        self.default_values = json.dumps(values, ensure_ascii=False)
-
-    def is_accessible_by(self, user: "User") -> bool:
-        if self.is_global:
-            return True
-        return self.owner_id == user.id
-
-    def __repr__(self):
-        scope = "global" if self.is_global else f"user={self.owner_id}"
-        return f"<PetitionTemplate {self.slug} ({scope})>"
-
-
 class BillingPlan(db.Model):
     __tablename__ = "billing_plans"
 
@@ -1425,7 +1369,10 @@ class SavedPetition(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     petition_type_id = db.Column(
-        db.Integer, db.ForeignKey("petition_types.id"), nullable=False
+        db.Integer, db.ForeignKey("petition_types.id"), nullable=True
+    )
+    petition_model_id = db.Column(
+        db.Integer, db.ForeignKey("petition_models.id"), nullable=True
     )
 
     # Identificação
@@ -1459,6 +1406,9 @@ class SavedPetition(db.Model):
     )
     petition_type = db.relationship(
         "PetitionType", backref=db.backref("saved_petitions", lazy="dynamic")
+    )
+    petition_model = db.relationship(
+        "PetitionModel", backref=db.backref("saved_petitions", lazy="dynamic")
     )
 
     def get_status_display(self):
@@ -3121,19 +3071,14 @@ class PetitionModel(db.Model):
     # Configurações do modelo
     use_dynamic_form = db.Column(db.Boolean, default=True)
 
-    # Template padrão (opcional)
-    default_template_id = db.Column(
-        db.Integer, db.ForeignKey("petition_templates.id"), nullable=True
-    )
+    # Template personalizado do modelo (conteúdo Jinja2)
+    template_content = db.Column(db.Text)
 
     # Quem criou
     created_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
 
     # Relacionamentos
     petition_type = db.relationship("PetitionType", backref="models")
-    default_template = db.relationship(
-        "PetitionTemplate", foreign_keys=[default_template_id]
-    )
     creator = db.relationship("User", foreign_keys=[created_by])
 
     def get_sections_ordered(self):

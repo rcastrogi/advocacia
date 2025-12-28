@@ -615,7 +615,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }).then(response => {
                 if (response.ok) {
-                    console.log('Notificação marcada como lida');
                     // Remove element from DOM
                     toastElement.remove();
                 }
@@ -659,7 +658,6 @@ document.addEventListener('DOMContentLoaded', function() {
             oscillator.stop(audioContext.currentTime + 0.3);
         } catch (error) {
             // Silenciosamente falhar se áudio não for suportado
-            console.log('Som de notificação não disponível');
         }
     }
 });

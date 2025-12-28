@@ -141,7 +141,6 @@ function waitForJQuery(callback, maxAttempts = 50) {
     function checkJQuery() {
         attempts++;
         if (typeof jQuery !== 'undefined' && typeof $ !== 'undefined') {
-            console.log('✅ [SECTION_FORM] jQuery carregado após', attempts, 'tentativas');
             callback();
         } else if (attempts < maxAttempts) {
             setTimeout(checkJQuery, 100);
@@ -155,7 +154,6 @@ function waitForJQuery(callback, maxAttempts = 50) {
 
 // Inicializar quando jQuery estiver disponível
 waitForJQuery(function() {
-    console.log('🔍 [SECTION_FORM] jQuery disponível, inicializando formulário de seção');
 
     // Preview dos campos
     function updatePreview() {
@@ -351,7 +349,6 @@ waitForJQuery(function() {
         const fields = window.sectionFieldsData || [];
         
         if (!Array.isArray(fields) || fields.length === 0) {
-            console.log('ℹ️ [SECTION_FORM] Nenhum campo existente para carregar');
             $('#fields_schema').val('[]');
             return;
         }
@@ -366,7 +363,6 @@ waitForJQuery(function() {
 
             fieldCounter = Math.max(fieldCounter, fields.length);
             updatePreview();
-            console.log('✅ [SECTION_FORM] Carregados', fields.length, 'campos existentes');
         } catch (e) {
             console.error('❌ [SECTION_FORM] Erro ao carregar campos existentes:', e);
             $('#fields_schema').val('[]');
@@ -577,7 +573,6 @@ waitForJQuery(function() {
         $('#slug').val(slug);
     });
 
-    console.log('🎯 [SECTION_FORM] Formulário de seção carregado completamente');
 });
 </script>
 {% endblock %}

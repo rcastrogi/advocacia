@@ -78,7 +78,7 @@ def migrate_single_type(type_id):
                 for type_section in type_sections:
                     model_section = PetitionModelSection(
                         petition_model_id=model.id,
-                        petition_section_id=type_section.section_id,
+                        section_id=type_section.section_id,
                         order=type_section.order,
                         is_required=type_section.is_required,
                         field_overrides=type_section.field_overrides or {},

@@ -86,10 +86,8 @@
 </div>
 
 <script>
-console.log('🔍 [SECTIONS] Iniciando carregamento do JavaScript da página de seções');
 
 $(document).ready(function() {
-    console.log('✅ [SECTIONS] Document ready - inicializando DataTable');
 
     try {
         $('#petitionSectionsTable').DataTable({
@@ -99,7 +97,6 @@ $(document).ready(function() {
             "order": [[0, "asc"]],
             "pageLength": 25
         });
-        console.log('✅ [SECTIONS] DataTable inicializado com sucesso');
     } catch (error) {
         console.error('❌ [SECTIONS] Erro ao inicializar DataTable:', error);
     }
@@ -108,12 +105,7 @@ $(document).ready(function() {
 // Verificar se a tabela existe
 if ($('#petitionSectionsTable').length === 0) {
     console.error('❌ [SECTIONS] Tabela petitionSectionsTable não encontrada no DOM');
-} else {
-    console.log('✅ [SECTIONS] Tabela petitionSectionsTable encontrada no DOM');
-    const rowCount = $('#petitionSectionsTable tbody tr').length;
-    console.log(`📊 [SECTIONS] Tabela contém ${rowCount} linhas de dados`);
 }
 
-console.log('🎯 [SECTIONS] JavaScript da página de seções carregado completamente');
 </script>
 {% endblock %}

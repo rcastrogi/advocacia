@@ -21,7 +21,6 @@ const PetitioAI = {
         await this.fetchCreditsBalance();
         this.injectAIButtons();
         this.setupEventListeners();
-        console.log('✨ PetitioAI inicializado');
     },
 
     // Busca saldo de créditos
@@ -458,7 +457,6 @@ const PetitioAI = {
         if (window.showNotification) {
             window.showNotification(message, type);
         } else {
-            console.log('Notification system not ready:', message, type);
         }
     }
 };

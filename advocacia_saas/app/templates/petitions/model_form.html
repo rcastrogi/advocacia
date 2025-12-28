@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    /* Quill Editor Styles */
+    .quill-wrapper {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .quill-wrapper .ql-toolbar {
+        border: none !important;
+        border-bottom: 1px solid #ced4da !important;
+        background: #f8f9fa;
+    }
+    .quill-wrapper .ql-container {
+        border: none !important;
+        min-height: 250px;
+        font-size: 1rem;
+    }
+    .quill-wrapper .ql-editor {
+        min-height: 250px;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .quill-wrapper .ql-editor.ql-blank::before {
+        font-style: italic;
+        color: #6c757d;
+    }
+    .ql-container { border-radius: 0 0 4px 4px !important; }
+    .ql-toolbar { border-radius: 4px 4px 0 0 !important; }
+
+    /* Indicadores de validação */
+    .field-valid { border-color: #198754 !important; }
+    .field-invalid { border-color: #dc3545 !important; }
+    .field-warning { border-color: #ffc107 !important; }
+
+    /* Auto-save indicator */
+    .auto-save-indicator {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+    .auto-save-indicator.saving { background: #ffc107; color: #000; }
+    .auto-save-indicator.saved { background: #198754; color: #fff; }
+    .auto-save-indicator.error { background: #dc3545; color: #fff; }
+
+    /* Seções colapsáveis */
+    .section-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .section-header {
+        cursor: pointer;
+        padding: 1rem 1.25rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+        border-bottom: 1px solid #e0e0e0;
+        user-select: none;
+        transition: background 0.2s;
+    }
+    .section-header:hover {
+        background: linear-gradient(135deg, #f0f0f0 0%, #fff 100%);
+    }
+    .section-header .section-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+    .section-body {
+        padding: 1.25rem;
+        background: #fff;
+    }
+    .section-required::after {
+        content: ' *';
+        color: #dc3545;
+    }
+
+    /* Indicador de campo obrigatório no label */
+    label.required::after,
+    .form-label.required::after {
+        content: ' *';
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    /* Chevron animado */
+    .chevron-icon {
+        transition: transform 0.3s ease;
+    }
+    .section-collapsed .chevron-icon {
+        transform: rotate(-90deg);
+    }
+
+    /* Campos condicionais */
+    .conditional-field {
+        animation: fadeSlideIn 0.3s ease;
+    }
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Badge de seção */
+    .section-badge {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+
+    /* Estilos para toolbar de IA */
+    .ai-toolbar {
+        padding: 8px 12px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9f7ef 100%);
+        border-radius: 8px 8px 0 0;
+        border: 1px solid #e0e0e0;
+        border-bottom: none;
+    }
+    .ai-toolbar .btn {
+        font-size: 0.85rem;
+    }
+    .ai-toolbar + .quill-wrapper {
+        border-radius: 0 0 4px 4px;
+    }
+    .ai-credits-indicator .alert {
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dados das seções em variável global para Alpine -->
+<script>
+    window.PETITION_SECTIONS = {{ sections_json | safe }};
+    window.PETITION_MODEL = {
+        id: {{ petition_model.id }},
+        slug: {{ petition_model.slug | tojson }},
+        name: {{ petition_model.name | tojson }},
+        description: {{ petition_model.description | tojson }}
+    };
+    // Dados de edição (se houver)
+    window.EDIT_PETITION = {{ edit_petition_json | safe if edit_petition_json else 'null' }};
+</script>
+
+<div class="container py-4"
+     x-data="modelPetitionForm()"
+     x-init="init()"
+     x-cloak>
+
+    <!-- Auto-save indicator -->
+    <div class="auto-save-indicator"
+         x-show="autoSaveStatus !== 'idle'"
+         x-transition
+         :class="{
+             'saving': autoSaveStatus === 'saving',
+             'saved': autoSaveStatus === 'saved',
+             'error': autoSaveStatus === 'error'
+         }">
+        <span x-show="autoSaveStatus === 'saving'">
+            <i class="fas fa-circle-notch fa-spin me-1"></i> Salvando...
+        </span>
+        <span x-show="autoSaveStatus === 'saved'">
+            <i class="fas fa-check me-1"></i> Salvo automaticamente
+        </span>
+        <span x-show="autoSaveStatus === 'error'">
+            <i class="fas fa-exclamation-triangle me-1"></i> Erro ao salvar
+        </span>
+    </div>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas {{ petition_model.icon or 'fa-file-alt' }}"></i>
+                {{ petition_model.name }}
+                {% if edit_petition %}
+                <span class="badge bg-warning ms-2">Editando</span>
+                {% endif %}
+            </h1>
+            <p class="text-muted mb-0">{{ petition_model.description or 'Preencha os dados para gerar a petição baseada no modelo.' }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('petitions.saved_list') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-folder-open me-1"></i> Minhas Petições
+            </a>
+            <a href="{{ url_for('main.peticionador') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
+            </a>
+            <button type="button" class="btn btn-sm btn-primary" @click="savePetition()" :disabled="isSaving">
+                <i class="fas fa-save me-1"></i>
+                <span x-text="isSaving ? 'Salvando...' : 'Salvar'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Formulário -->
+    <form @submit.prevent="generatePetition()" id="petitionForm">
+        <!-- Campo oculto para ID do modelo -->
+        <input type="hidden" name="petition_model_id" value="{{ petition_model.id }}">
+
+        <!-- Seções dinâmicas -->
+        <div class="sections-container">
+            <template x-for="(sectionConfig, index) in sections" :key="sectionConfig.section.id">
+                <div class="section-card"
+                     :class="{ 'section-collapsed': !sectionConfig.is_expanded }"
+                     x-data="{ isExpanded: sectionConfig.is_expanded }">
+
+                    <!-- Header da seção -->
+                    <div class="section-header d-flex align-items-center justify-content-between"
+                         @click="isExpanded = !isExpanded">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon"
+                                 :style="{ backgroundColor: sectionConfig.section.color || '#6c757d', color: 'white' }">
+                                <i :class="sectionConfig.section.icon || 'fas fa-file-alt'"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 section-title"
+                                    :class="{ 'section-required': sectionConfig.is_required }">
+                                    <span x-text="sectionConfig.section.name"></span>
+                                </h5>
+                                <p class="text-muted mb-0 small" x-text="sectionConfig.section.description || ''"></p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge section-badge"
+                                  :class="sectionConfig.is_required ? 'bg-danger' : 'bg-secondary'">
+                                <span x-text="sectionConfig.is_required ? 'Obrigatório' : 'Opcional'"></span>
+                            </span>
+                            <i class="fas fa-chevron-down chevron-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- Corpo da seção -->
+                    <div class="section-body" x-show="isExpanded" x-transition>
+                        <div class="row">
+                            <template x-for="field in sectionConfig.section.fields_schema" :key="field.name">
+                                <div class="col-12 mb-3"
+                                     :class="getFieldColClass(field)"
+                                     x-data="fieldComponent(field, sectionConfig.field_overrides[field.name] || {})"
+                                     x-init="init()">
+
+                                    <!-- Campo de texto simples -->
+                                    <template x-if="field.type === 'text' || field.type === 'string'">
+                                        <label :for="'field-' + field.name"
+                                               class="form-label"
+                                               :class="{ 'required': field.required || sectionConfig.is_required }">
+                                            <span x-text="field.label || field.name"></span>
+                                        </label>
+                                        <input :type="field.input_type || 'text'"
+                                               :id="'field-' + field.name"
+                                               class="form-control"
+                                               :name="field.name"
+                                               :placeholder="field.placeholder || ''"
+                                               :required="field.required || sectionConfig.is_required"
+                                               :value="getFieldValue(field.name)"
+                                               @input="updateFieldValue(field.name, $event.target.value)"
+                                               :class="getFieldValidationClass(field.name)">
+                                        <div class="form-text" x-text="field.help_text || ''"></div>
+                                    </template>
+
+                                    <!-- Campo de textarea -->
+                                    <template x-if="field.type === 'textarea'">
+                                        <label :for="'field-' + field.name"
+                                               class="form-label"
+                                               :class="{ 'required': field.required || sectionConfig.is_required }">
+                                            <span x-text="field.label || field.name"></span>
+                                        </label>
+                                        <textarea :id="'field-' + field.name"
+                                                  class="form-control"
+                                                  :name="field.name"
+                                                  :rows="field.rows || 3"
+                                                  :placeholder="field.placeholder || ''"
+                                                  :required="field.required || sectionConfig.is_required"
+                                                  :value="getFieldValue(field.name)"
+                                                  @input="updateFieldValue(field.name, $event.target.value)"
+                                                  :class="getFieldValidationClass(field.name)"></textarea>
+                                        <div class="form-text" x-text="field.help_text || ''"></div>
+                                    </template>
+
+                                    <!-- Campo de rich text (Quill) -->
+                                    <template x-if="field.type === 'richtext'">
+                                        <label :for="'field-' + field.name"
+                                               class="form-label"
+                                               :class="{ 'required': field.required || sectionConfig.is_required }">
+                                            <span x-text="field.label || field.name"></span>
+                                        </label>
+
+                                        <!-- Toolbar de IA (se disponível) -->
+                                        <div class="ai-toolbar d-flex justify-content-between align-items-center"
+                                             x-show="field.ai_enabled">
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-sm btn-outline-success"
+                                                        @click="generateAIContent(field.name)">
+                                                    <i class="fas fa-magic me-1"></i> Gerar com IA
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                                        @click="improveContent(field.name)">
+                                                    <i class="fas fa-edit me-1"></i> Melhorar
+                                                </button>
+                                            </div>
+                                            <div class="ai-credits-indicator">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-coins me-1"></i>
+                                                    Créditos: <span x-text="aiCredits"></span>
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div class="quill-wrapper">
+                                            <div :id="'quill-' + field.name"></div>
+                                        </div>
+                                        <input :name="field.name"
+                                               type="hidden"
+                                               :value="getFieldValue(field.name)">
+                                        <div class="form-text" x-text="field.help_text || ''"></div>
+                                    </template>
+
+                                    <!-- Campo de select -->
+                                    <template x-if="field.type === 'select'">
+                                        <label :for="'field-' + field.name"
+                                               class="form-label"
+                                               :class="{ 'required': field.required || sectionConfig.is_required }">
+                                            <span x-text="field.label || field.name"></span>
+                                        </label>
+                                        <select :id="'field-' + field.name"
+                                                class="form-select"
+                                                :name="field.name"
+                                                :required="field.required || sectionConfig.is_required"
+                                                :value="getFieldValue(field.name)"
+                                                @change="updateFieldValue(field.name, $event.target.value)"
+                                                :class="getFieldValidationClass(field.name)">
+                                            <option value="">Selecione...</option>
+                                            <template x-for="option in field.options || []" :key="option.value">
+                                                <option :value="option.value" x-text="option.label"></option>
+                                            </template>
+                                        </select>
+                                        <div class="form-text" x-text="field.help_text || ''"></div>
+                                    </template>
+
+                                    <!-- Campo de checkbox -->
+                                    <template x-if="field.type === 'boolean' || field.type === 'checkbox'">
+                                        <div class="form-check">
+                                            <input :id="'field-' + field.name"
+                                                   class="form-check-input"
+                                                   type="checkbox"
+                                                   :name="field.name"
+                                                   :checked="getFieldValue(field.name)"
+                                                   @change="updateFieldValue(field.name, $event.target.checked)">
+                                            <label :for="'field-' + field.name"
+                                                   class="form-check-label"
+                                                   :class="{ 'required': field.required || sectionConfig.is_required }">
+                                                <span x-text="field.label || field.name"></span>
+                                            </label>
+                                        </div>
+                                        <div class="form-text" x-text="field.help_text || ''"></div>
+                                    </template>
+
+                                    <!-- Campo de data -->
+                                    <template x-if="field.type === 'date'">
+                                        <label :for="'field-' + field.name"
+                                               class="form-label"
+                                               :class="{ 'required': field.required || sectionConfig.is_required }">
+                                            <span x-text="field.label || field.name"></span>
+                                        </label>
+                                        <input type="date"
+                                               :id="'field-' + field.name"
+                                               class="form-control"
+                                               :name="field.name"
+                                               :required="field.required || sectionConfig.is_required"
+                                               :value="getFieldValue(field.name)"
+                                               @input="updateFieldValue(field.name, $event.target.value)"
+                                               :class="getFieldValidationClass(field.name)">
+                                        <div class="form-text" x-text="field.help_text || ''"></div>
+                                    </template>
+
+                                    <!-- Campo de número -->
+                                    <template x-if="field.type === 'number' || field.type === 'integer'">
+                                        <label :for="'field-' + field.name"
+                                               class="form-label"
+                                               :class="{ 'required': field.required || sectionConfig.is_required }">
+                                            <span x-text="field.label || field.name"></span>
+                                        </label>
+                                        <input type="number"
+                                               :id="'field-' + field.name"
+                                               class="form-control"
+                                               :name="field.name"
+                                               :min="field.min"
+                                               :max="field.max"
+                                               :step="field.step || 1"
+                                               :placeholder="field.placeholder || ''"
+                                               :required="field.required || sectionConfig.is_required"
+                                               :value="getFieldValue(field.name)"
+                                               @input="updateFieldValue(field.name, $event.target.value)"
+                                               :class="getFieldValidationClass(field.name)">
+                                        <div class="form-text" x-text="field.help_text || ''"></div>
+                                    </template>
+
+                                    <!-- Campo de moeda -->
+                                    <template x-if="field.type === 'currency' || field.type === 'decimal'">
+                                        <label :for="'field-' + field.name"
+                                               class="form-label"
+                                               :class="{ 'required': field.required || sectionConfig.is_required }">
+                                            <span x-text="field.label || field.name"></span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">R$</span>
+                                            <input type="number"
+                                                   :id="'field-' + field.name"
+                                                   class="form-control"
+                                                   :name="field.name"
+                                                   step="0.01"
+                                                   min="0"
+                                                   :placeholder="field.placeholder || ''"
+                                                   :required="field.required || sectionConfig.is_required"
+                                                   :value="getFieldValue(field.name)"
+                                                   @input="updateFieldValue(field.name, $event.target.value)"
+                                                   :class="getFieldValidationClass(field.name)">
+                                        </div>
+                                        <div class="form-text" x-text="field.help_text || ''"></div>
+                                    </template>
+
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Botões de ação -->
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" @click="validateForm()">
+                    <i class="fas fa-check-circle me-1"></i> Validar
+                </button>
+                <button type="button" class="btn btn-outline-info" @click="previewPetition()">
+                    <i class="fas fa-eye me-1"></i> Visualizar
+                </button>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-success" @click="generatePetition()" :disabled="isGenerating">
+                    <i class="fas fa-file-pdf me-1"></i>
+                    <span x-text="isGenerating ? 'Gerando PDF...' : 'Gerar Petição'"></span>
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Modal de preview -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Preview da Petição</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="previewContent" class="border p-3" style="min-height: 400px; background: #f8f9fa;">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                            <p>Carregando preview...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-success" @click="generatePetition()" :disabled="isGenerating">
+                        <i class="fas fa-file-pdf me-1"></i> Gerar PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script src="{{ url_for('static', filename='js/petitio-ai.js') }}"></script>
+<script src="{{ url_for('static', filename='js/model_petition_form.js') }}"></script>
+
+{% endblock %}

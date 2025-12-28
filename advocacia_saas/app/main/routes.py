@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import traceback
 
 from flask import (
     flash,
@@ -144,18 +145,56 @@ def dashboard():
 @login_required
 @subscription_required
 def peticionador():
-    # Buscar tipos de petição com formulário dinâmico ativo
-    dynamic_petition_types = (
-        PetitionType.query.filter_by(use_dynamic_form=True, is_active=True)
-        .order_by(PetitionType.name)
-        .all()
-    )
+    try:
+        # Log do acesso à página peticionador
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Usuário {current_user.email} acessou a página peticionador")
 
-    return render_template(
-        "peticionador.html",
-        title="Peticionador",
-        dynamic_petition_types=dynamic_petition_types,
-    )
+        # Gravar em arquivo texto específico para peticionador
+        import os
+        from datetime import datetime
+
+        if not os.path.exists("logs"):
+            os.mkdir("logs")
+
+        with open("logs/peticionador_access.log", "a", encoding="utf-8") as f:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"[{timestamp}] Usuário {current_user.email} acessou peticionador\n")
+
+        # Buscar tipos de petição com formulário dinâmico ativo
+        dynamic_petition_types = (
+            PetitionType.query.filter_by(use_dynamic_form=True, is_active=True)
+            .order_by(PetitionType.name)
+            .all()
+        )
+
+        return render_template(
+            "peticionador.html",
+            title="Peticionador",
+            dynamic_petition_types=dynamic_petition_types,
+        )
+
+    except Exception as e:
+        # Log do erro
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Erro na página peticionador para usuário {current_user.email}: {str(e)}", exc_info=True)
+
+        # Gravar erro em arquivo texto
+        import os
+        from datetime import datetime
+
+        if not os.path.exists("logs"):
+            os.mkdir("logs")
+
+        with open("logs/peticionador_errors.log", "a", encoding="utf-8") as f:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"[{timestamp}] ERRO - Usuário {current_user.email}: {str(e)}\n")
+            f.write(f"Traceback: {traceback.format_exc()}\n\n")
+
+        # Re-raise para que o error handler global capture
+        raise
 
 
 @bp.route("/termos")
