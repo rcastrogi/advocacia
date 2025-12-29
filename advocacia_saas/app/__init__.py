@@ -90,6 +90,7 @@ def create_app(config_class=Config):
 
     # Initialize email notifications system
     from app.processes.email_notifications import init_mail
+
     init_mail(app)
 
     # Initialize rate limiter only if enabled

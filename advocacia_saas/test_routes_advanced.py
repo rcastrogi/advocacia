@@ -3,10 +3,12 @@
 Teste das rotas das funcionalidades avançadas
 """
 
-import requests
 import sys
 
+import requests
+
 base_url = "http://127.0.0.1:5000"
+
 
 def test_route(route, description):
     try:
@@ -17,6 +19,7 @@ def test_route(route, description):
     except requests.exceptions.RequestException as e:
         print(f"❌ {description}: {route} (Erro: {e})")
         return False
+
 
 print("🧪 Testando rotas das funcionalidades avançadas...")
 print("=" * 50)

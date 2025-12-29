@@ -15,6 +15,7 @@ from app import create_app
 from app.models import db
 from sqlalchemy import text
 
+
 def run_migration():
     """Executa a migração das novas funcionalidades."""
 
@@ -26,7 +27,8 @@ def run_migration():
         try:
             # Criar tabelas do calendário
             print("📅 Criando tabelas do calendário...")
-            db.session.execute(text("""
+            db.session.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS calendar_events (
                     id SERIAL PRIMARY KEY,
                     user_id INTEGER NOT NULL REFERENCES "user"(id),
@@ -54,19 +56,23 @@ def run_migration():
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
-            """))
+            """)
+            )
 
             # Criar índices para calendar_events
-            db.session.execute(text("""
+            db.session.execute(
+                text("""
                 CREATE INDEX IF NOT EXISTS idx_calendar_events_user_id ON calendar_events(user_id);
                 CREATE INDEX IF NOT EXISTS idx_calendar_events_start_datetime ON calendar_events(start_datetime);
                 CREATE INDEX IF NOT EXISTS idx_calendar_events_process_id ON calendar_events(process_id);
                 CREATE INDEX IF NOT EXISTS idx_calendar_events_client_id ON calendar_events(client_id);
-            """))
+            """)
+            )
 
             # Criar tabelas de automação
             print("🤖 Criando tabelas de automação...")
-            db.session.execute(text("""
+            db.session.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS process_automations (
                     id SERIAL PRIMARY KEY,
                     user_id INTEGER NOT NULL REFERENCES "user"(id),
@@ -87,17 +93,21 @@ def run_migration():
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
-            """))
+            """)
+            )
 
             # Criar índices para process_automations
-            db.session.execute(text("""
+            db.session.execute(
+                text("""
                 CREATE INDEX IF NOT EXISTS idx_process_automations_user_id ON process_automations(user_id);
                 CREATE INDEX IF NOT EXISTS idx_process_automations_active ON process_automations(is_active);
-            """))
+            """)
+            )
 
             # Criar tabelas de relatórios
             print("📊 Criando tabelas de relatórios...")
-            db.session.execute(text("""
+            db.session.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS process_reports (
                     id SERIAL PRIMARY KEY,
                     user_id INTEGER NOT NULL REFERENCES "user"(id),
@@ -121,28 +131,33 @@ def run_migration():
                     completed_at TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
-            """))
+            """)
+            )
 
             # Criar índices para process_reports
-            db.session.execute(text("""
+            db.session.execute(
+                text("""
                 CREATE INDEX IF NOT EXISTS idx_process_reports_user_id ON process_reports(user_id);
                 CREATE INDEX IF NOT EXISTS idx_process_reports_type ON process_reports(report_type);
                 CREATE INDEX IF NOT EXISTS idx_process_reports_status ON process_reports(status);
                 CREATE INDEX IF NOT EXISTS idx_process_reports_created_at ON process_reports(created_at);
-            """))
+            """)
+            )
 
             # Verificar se as tabelas foram criadas
-            tables_created = db.session.execute(text("""
+            tables_created = db.session.execute(
+                text("""
                 SELECT table_name
                 FROM information_schema.tables
                 WHERE table_schema = 'public'
                 AND table_name IN ('calendar_events', 'process_automations', 'process_reports')
-            """)).fetchall()
+            """)
+            ).fetchall()
 
             created_tables = [row[0] for row in tables_created]
 
             print("✅ Tabelas criadas com sucesso!")
-            for table in ['calendar_events', 'process_automations', 'process_reports']:
+            for table in ["calendar_events", "process_automations", "process_reports"]:
                 if table in created_tables:
                     print(f"   - {table}")
                 else:
@@ -152,13 +167,16 @@ def run_migration():
             print("🔧 Inserindo automações padrão...")
 
             # Verificar se já existem automações
-            existing_automations = db.session.execute(text("""
+            existing_automations = db.session.execute(
+                text("""
                 SELECT COUNT(*) FROM process_automations
-            """)).scalar()
+            """)
+            ).scalar()
 
             if existing_automations == 0:
                 # Inserir automação de lembrete de prazos
-                db.session.execute(text("""
+                db.session.execute(
+                    text("""
                     INSERT INTO process_automations (
                         user_id, name, description, is_active, trigger_type,
                         trigger_condition, action_type, action_config,
@@ -178,7 +196,8 @@ def run_migration():
                     FROM "user" u
                     WHERE u.user_type IN ('advogado', 'master')
                     LIMIT 1
-                """))
+                """)
+                )
 
                 print("   ✅ Automação de lembrete de prazos criada")
 
@@ -196,6 +215,7 @@ def run_migration():
             db.session.rollback()
             print(f"❌ Erro durante a migração: {str(e)}")
             raise
+
 
 if __name__ == "__main__":
     run_migration()

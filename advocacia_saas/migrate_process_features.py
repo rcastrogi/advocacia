@@ -3,7 +3,8 @@ Migração para adicionar modelos de andamentos, custos e anexos de processos
 """
 
 from app import create_app, db
-from app.models import ProcessMovement, ProcessCost, ProcessAttachment
+from app.models import ProcessAttachment, ProcessCost, ProcessMovement
+
 
 def run_migration():
     """Executa a migração para criar as novas tabelas"""
@@ -28,6 +29,7 @@ def run_migration():
             return False
 
     return True
+
 
 if __name__ == "__main__":
     run_migration()

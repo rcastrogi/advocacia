@@ -3341,7 +3341,9 @@ class ProcessMovement(db.Model):
     description = db.Column(db.Text, nullable=False)
 
     # Tipo de andamento
-    movement_type = db.Column(db.String(100))  # 'distribuicao', 'audiencia', 'decisao', 'recurso', etc.
+    movement_type = db.Column(
+        db.String(100)
+    )  # 'distribuicao', 'audiencia', 'decisao', 'recurso', etc.
 
     # Detalhes adicionais
     court_decision = db.Column(db.Text)  # Decisão do juiz/relator
@@ -3353,7 +3355,9 @@ class ProcessMovement(db.Model):
     internal_notes = db.Column(db.Text)  # Anotações internas do advogado
 
     # Status da movimentação
-    is_important = db.Column(db.Boolean, default=False)  # Marca movimentações importantes
+    is_important = db.Column(
+        db.Boolean, default=False
+    )  # Marca movimentações importantes
     requires_action = db.Column(db.Boolean, default=False)  # Requer ação do advogado
 
     # Timestamps
@@ -3366,7 +3370,10 @@ class ProcessMovement(db.Model):
 
     # Relacionamentos
     process = db.relationship(
-        "Process", backref=db.backref("movements", lazy="dynamic", order_by="ProcessMovement.movement_date.desc()")
+        "Process",
+        backref=db.backref(
+            "movements", lazy="dynamic", order_by="ProcessMovement.movement_date.desc()"
+        ),
     )
 
     def __repr__(self):
@@ -3386,7 +3393,9 @@ class ProcessCost(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     # Tipo de custo
-    cost_type = db.Column(db.String(50), nullable=False)  # 'custas', 'honorarios', 'taxas', 'despesas'
+    cost_type = db.Column(
+        db.String(50), nullable=False
+    )  # 'custas', 'honorarios', 'taxas', 'despesas'
     description = db.Column(db.String(300), nullable=False)
 
     # Valores
@@ -3394,15 +3403,21 @@ class ProcessCost(db.Model):
     currency = db.Column(db.String(3), default="BRL")  # BRL, USD, EUR
 
     # Status do pagamento
-    payment_status = db.Column(db.String(20), default="pending")  # pending, paid, overdue, cancelled
+    payment_status = db.Column(
+        db.String(20), default="pending"
+    )  # pending, paid, overdue, cancelled
 
     # Datas
     due_date = db.Column(db.Date)
     payment_date = db.Column(db.Date)
 
     # Detalhes específicos
-    court_fee_type = db.Column(db.String(100))  # Para custas: 'distribuicao', 'taxa_judiciaria', etc.
-    attorney_fee_type = db.Column(db.String(100))  # Para honorários: 'inicial', 'audiencia', 'sustentacao', etc.
+    court_fee_type = db.Column(
+        db.String(100)
+    )  # Para custas: 'distribuicao', 'taxa_judiciaria', etc.
+    attorney_fee_type = db.Column(
+        db.String(100)
+    )  # Para honorários: 'inicial', 'audiencia', 'sustentacao', etc.
 
     # Documentos comprobatórios
     receipt_url = db.Column(db.String(500))  # Link para recibo/comprovante
@@ -3447,6 +3462,7 @@ class ProcessCost(db.Model):
         """Verifica se o custo está vencido."""
         if self.payment_status == "pending" and self.due_date:
             from datetime import date
+
             return self.due_date < date.today()
         return False
 
@@ -3476,14 +3492,18 @@ class ProcessAttachment(db.Model):
     # Metadados
     title = db.Column(db.String(300), nullable=False)
     description = db.Column(db.Text)
-    document_type = db.Column(db.String(100))  # 'peticao', 'decisao', 'prova', 'contrato', etc.
+    document_type = db.Column(
+        db.String(100)
+    )  # 'peticao', 'decisao', 'prova', 'contrato', etc.
 
     # Relacionamento com movimentação (opcional)
     movement_id = db.Column(db.Integer, db.ForeignKey("process_movements.id"))
 
     # Controle de versão
     version = db.Column(db.Integer, default=1)
-    parent_attachment_id = db.Column(db.Integer, db.ForeignKey("process_attachments.id"))
+    parent_attachment_id = db.Column(
+        db.Integer, db.ForeignKey("process_attachments.id")
+    )
     is_latest_version = db.Column(db.Boolean, default=True)
 
     # Visibilidade
@@ -3506,9 +3526,15 @@ class ProcessAttachment(db.Model):
     last_accessed_at = db.Column(db.DateTime)
 
     # Relacionamentos
-    process = db.relationship("Process", backref=db.backref("attachments", lazy="dynamic"))
-    user = db.relationship("User", backref=db.backref("process_attachments", lazy="dynamic"))
-    movement = db.relationship("ProcessMovement", backref=db.backref("attachments", lazy="dynamic"))
+    process = db.relationship(
+        "Process", backref=db.backref("attachments", lazy="dynamic")
+    )
+    user = db.relationship(
+        "User", backref=db.backref("process_attachments", lazy="dynamic")
+    )
+    movement = db.relationship(
+        "ProcessMovement", backref=db.backref("attachments", lazy="dynamic")
+    )
     versions = db.relationship(
         "ProcessAttachment",
         backref=db.backref("parent_attachment", remote_side=[id]),
@@ -3591,17 +3617,25 @@ class CalendarEvent(db.Model):
     virtual_link = db.Column(db.String(500))  # Link para reunião virtual
 
     # Tipo de evento
-    event_type = db.Column(db.String(50), nullable=False)  # 'audiencia', 'prazo', 'reuniao', 'compromisso'
-    priority = db.Column(db.String(20), default="normal")  # 'low', 'normal', 'high', 'urgent'
+    event_type = db.Column(
+        db.String(50), nullable=False
+    )  # 'audiencia', 'prazo', 'reuniao', 'compromisso'
+    priority = db.Column(
+        db.String(20), default="normal"
+    )  # 'low', 'normal', 'high', 'urgent'
 
     # Relacionamento com processo (opcional)
     process_id = db.Column(db.Integer, db.ForeignKey("processes.id"))
     client_id = db.Column(db.Integer, db.ForeignKey("client.id"))
 
     # Status
-    status = db.Column(db.String(20), default="scheduled")  # 'scheduled', 'confirmed', 'completed', 'cancelled'
+    status = db.Column(
+        db.String(20), default="scheduled"
+    )  # 'scheduled', 'confirmed', 'completed', 'cancelled'
     reminder_sent = db.Column(db.Boolean, default=False)
-    reminder_minutes_before = db.Column(db.Integer, default=60)  # Minutos antes do lembrete
+    reminder_minutes_before = db.Column(
+        db.Integer, default=60
+    )  # Minutos antes do lembrete
 
     # Recorrência (para eventos recorrentes)
     is_recurring = db.Column(db.Boolean, default=False)
@@ -3625,9 +3659,15 @@ class CalendarEvent(db.Model):
     )
 
     # Relacionamentos
-    user = db.relationship("User", backref=db.backref("calendar_events", lazy="dynamic"))
-    process = db.relationship("Process", backref=db.backref("calendar_events", lazy="dynamic"))
-    client = db.relationship("Client", backref=db.backref("calendar_events", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("calendar_events", lazy="dynamic")
+    )
+    process = db.relationship(
+        "Process", backref=db.backref("calendar_events", lazy="dynamic")
+    )
+    client = db.relationship(
+        "Client", backref=db.backref("calendar_events", lazy="dynamic")
+    )
 
     def get_event_type_display(self):
         """Retorna o tipo de evento formatado."""
@@ -3663,7 +3703,9 @@ class CalendarEvent(db.Model):
         """Verifica se o evento é nos próximos X horas."""
         now = datetime.now(timezone.utc)
         time_diff = self.start_datetime - now
-        return time_diff.total_seconds() > 0 and time_diff.total_seconds() <= (hours * 3600)
+        return time_diff.total_seconds() > 0 and time_diff.total_seconds() <= (
+            hours * 3600
+        )
 
     def needs_reminder(self):
         """Verifica se precisa enviar lembrete."""
@@ -3671,7 +3713,9 @@ class CalendarEvent(db.Model):
             return False
 
         now = datetime.now(timezone.utc)
-        reminder_time = self.start_datetime - timedelta(minutes=self.reminder_minutes_before)
+        reminder_time = self.start_datetime - timedelta(
+            minutes=self.reminder_minutes_before
+        )
         return now >= reminder_time
 
     def to_dict(self):
@@ -3719,11 +3763,15 @@ class ProcessAutomation(db.Model):
     is_active = db.Column(db.Boolean, default=True)
 
     # Gatilho (trigger)
-    trigger_type = db.Column(db.String(50), nullable=False)  # 'movement', 'deadline', 'status_change', 'date'
+    trigger_type = db.Column(
+        db.String(50), nullable=False
+    )  # 'movement', 'deadline', 'status_change', 'date'
     trigger_condition = db.Column(db.JSON, default=dict)  # Condições específicas
 
     # Ação a ser executada
-    action_type = db.Column(db.String(50), nullable=False)  # 'notification', 'email', 'task', 'reminder'
+    action_type = db.Column(
+        db.String(50), nullable=False
+    )  # 'notification', 'email', 'task', 'reminder'
     action_config = db.Column(db.JSON, default=dict)  # Configuração da ação
 
     # Escopo
@@ -3746,7 +3794,9 @@ class ProcessAutomation(db.Model):
     )
 
     # Relacionamentos
-    user = db.relationship("User", backref=db.backref("process_automations", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("process_automations", lazy="dynamic")
+    )
 
     def should_trigger(self, event_data):
         """Verifica se a automação deve ser acionada para determinado evento."""
@@ -3817,6 +3867,7 @@ class ProcessAutomation(db.Model):
 
         # Criar notificação
         from app.models import Notification
+
         Notification.create_notification(
             user_id=self.user_id,
             notification_type="automation",
@@ -3855,7 +3906,9 @@ class ProcessReport(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     # Tipo de relatório
-    report_type = db.Column(db.String(50), nullable=False)  # 'performance', 'financial', 'timeline', 'custom'
+    report_type = db.Column(
+        db.String(50), nullable=False
+    )  # 'performance', 'financial', 'timeline', 'custom'
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
 
@@ -3877,7 +3930,9 @@ class ProcessReport(db.Model):
     average_resolution_time = db.Column(db.Integer)  # Em dias
 
     # Status
-    status = db.Column(db.String(20), default="generating")  # 'generating', 'completed', 'failed'
+    status = db.Column(
+        db.String(20), default="generating"
+    )  # 'generating', 'completed', 'failed'
     error_message = db.Column(db.Text)
 
     # Arquivo gerado (opcional)
@@ -3894,7 +3949,9 @@ class ProcessReport(db.Model):
     )
 
     # Relacionamentos
-    user = db.relationship("User", backref=db.backref("process_reports", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("process_reports", lazy="dynamic")
+    )
 
     def generate_report(self):
         """Gera o relatório baseado no tipo."""
@@ -3922,7 +3979,7 @@ class ProcessReport(db.Model):
 
     def _generate_performance_report(self):
         """Gera relatório de performance dos processos."""
-        from app.models import Process, ProcessMovement, ProcessCost
+        from app.models import Process, ProcessCost, ProcessMovement
 
         # Consultar processos no período
         processes = Process.query.filter(
@@ -3933,15 +3990,22 @@ class ProcessReport(db.Model):
 
         # Calcular métricas
         self.total_processes = len(processes)
-        self.active_processes = len([p for p in processes if p.status in ["ongoing", "distributed"]])
+        self.active_processes = len(
+            [p for p in processes if p.status in ["ongoing", "distributed"]]
+        )
         self.completed_processes = len([p for p in processes if p.status == "finished"])
 
         # Custos totais
-        total_costs = db.session.query(db.func.sum(ProcessCost.amount)).filter(
-            ProcessCost.user_id == self.user_id,
-            ProcessCost.created_at >= self.start_date,
-            ProcessCost.created_at <= self.end_date,
-        ).scalar() or 0
+        total_costs = (
+            db.session.query(db.func.sum(ProcessCost.amount))
+            .filter(
+                ProcessCost.user_id == self.user_id,
+                ProcessCost.created_at >= self.start_date,
+                ProcessCost.created_at <= self.end_date,
+            )
+            .scalar()
+            or 0
+        )
         self.total_costs = Decimal(str(total_costs))
 
         # Tempo médio de resolução
@@ -3965,10 +4029,19 @@ class ProcessReport(db.Model):
             "monthly_distribution": self._get_monthly_distribution(),
             "cost_breakdown": self._get_cost_breakdown(),
             "performance_metrics": {
-                "completion_rate": (self.completed_processes / self.total_processes * 100) if self.total_processes > 0 else 0,
-                "active_rate": (self.active_processes / self.total_processes * 100) if self.total_processes > 0 else 0,
-                "average_cost_per_process": float(self.total_costs) / self.total_processes if self.total_processes > 0 else 0,
-            }
+                "completion_rate": (
+                    self.completed_processes / self.total_processes * 100
+                )
+                if self.total_processes > 0
+                else 0,
+                "active_rate": (self.active_processes / self.total_processes * 100)
+                if self.total_processes > 0
+                else 0,
+                "average_cost_per_process": float(self.total_costs)
+                / self.total_processes
+                if self.total_processes > 0
+                else 0,
+            },
         }
 
     def _generate_financial_report(self):
@@ -4017,11 +4090,15 @@ class ProcessReport(db.Model):
         """Gera relatório de timeline dos processos."""
         from app.models import ProcessMovement
 
-        movements = ProcessMovement.query.join(Process).filter(
-            Process.user_id == self.user_id,
-            ProcessMovement.movement_date >= self.start_date,
-            ProcessMovement.movement_date <= self.end_date,
-        ).all()
+        movements = (
+            ProcessMovement.query.join(Process)
+            .filter(
+                Process.user_id == self.user_id,
+                ProcessMovement.movement_date >= self.start_date,
+                ProcessMovement.movement_date <= self.end_date,
+            )
+            .all()
+        )
 
         # Agrupar movimentações por tipo e mês
         movements_by_type = {}
@@ -4043,7 +4120,9 @@ class ProcessReport(db.Model):
             "movements_by_type": movements_by_type,
             "movements_by_month": movements_by_month,
             "total_movements": len(movements),
-            "average_movements_per_process": len(movements) / self.total_processes if self.total_processes > 0 else 0,
+            "average_movements_per_process": len(movements) / self.total_processes
+            if self.total_processes > 0
+            else 0,
         }
 
     def _generate_custom_report(self):
@@ -4091,7 +4170,9 @@ class ProcessReport(db.Model):
             "total_costs": float(self.total_costs),
             "report_data": self.report_data,
             "created_at": self.created_at.isoformat(),
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
         }
 
     def __repr__(self):
