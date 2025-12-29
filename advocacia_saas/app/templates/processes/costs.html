@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-white mb-2">
+                    <i class="fas fa-dollar-sign me-2"></i>Custos e Honorários
+                </h1>
+                <p class="text-white opacity-75 mb-0">
+                    {{ process.title }} - {{ process.process_number or 'Sem número' }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <!-- Process Info & Summary -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>{{ process.title }}</h5>
+                            <p class="text-muted mb-1">
+                                <strong>Número:</strong> {{ process.process_number or 'Não informado' }}
+                            </p>
+                            <p class="text-muted mb-0">
+                                <strong>Status:</strong>
+                                <span class="badge bg-{{ process.get_status_color() }}">
+                                    {{ process.get_status_text() }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <a href="{{ url_for('process_management.add_cost', process_id=process.id) }}"
+                               class="btn btn-success">
+                                <i class="fas fa-plus me-1"></i>Adicionar Custo
+                            </a>
+                            <a href="{{ url_for('processes.list_processes') }}" class="btn btn-outline-secondary ms-2">
+                                <i class="fas fa-arrow-left me-1"></i>Voltar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Resumo Financeiro</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h5 mb-1 text-success">R$ {{ "%.2f"|format(total_paid) }}</div>
+                            <small class="text-muted">Pago</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h5 mb-1 text-warning">R$ {{ "%.2f"|format(total_pending) }}</div>
+                            <small class="text-muted">Pendente</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <div class="h6 mb-1">Total: R$ {{ "%.2f"|format(total_paid + total_pending) }}</div>
+                        <small class="text-muted">{{ costs|length }} custos registrados</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Costs List -->
+    {% if costs %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Histórico de Custos</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Tipo</th>
+                                        <th>Descrição</th>
+                                        <th>Valor</th>
+                                        <th>Vencimento</th>
+                                        <th>Status</th>
+                                        <th>Data Pagamento</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cost in costs %}
+                                    <tr class="{% if cost.is_overdue() %}table-danger{% endif %}">
+                                        <td>
+                                            <span class="badge bg-secondary">{{ cost.get_type_display() }}</span>
+                                            {% if cost.court_fee_type %}
+                                                <br><small class="text-muted">{{ cost.court_fee_type|title }}</small>
+                                            {% endif %}
+                                            {% if cost.attorney_fee_type %}
+                                                <br><small class="text-muted">{{ cost.attorney_fee_type|title }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong>{{ cost.description }}</strong>
+                                            {% if cost.notes %}
+                                                <br><small class="text-muted">{{ cost.notes[:50] }}{% if cost.notes|length > 50 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong>R$ {{ "%.2f"|format(cost.amount) }}</strong>
+                                        </td>
+                                        <td>
+                                            {% if cost.due_date %}
+                                                {{ cost.due_date.strftime('%d/%m/%Y') }}
+                                                {% if cost.is_overdue() %}
+                                                    <br><small class="text-danger"><i class="fas fa-exclamation-triangle"></i> Vencido</small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ cost.get_status_display()[1] }}">
+                                                {{ cost.get_status_display()[0] }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if cost.payment_date %}
+                                                {{ cost.payment_date.strftime('%d/%m/%Y') }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if cost.payment_status == 'pending' %}
+                                                <form method="POST" action="{{ url_for('process_management.mark_cost_paid', cost_id=cost.id) }}"
+                                                      style="display: inline;">
+                                                    <button type="submit" class="btn btn-sm btn-success"
+                                                            onclick="return confirm('Marcar este custo como pago?')">
+                                                        <i class="fas fa-check"></i> Pagar
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-dollar-sign fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum custo registrado</h5>
+                        <p class="text-muted">Adicione custos judiciais e honorários para este processo.</p>
+                        <a href="{{ url_for('process_management.add_cost', process_id=process.id) }}"
+                           class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>Adicionar Primeiro Custo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

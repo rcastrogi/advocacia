@@ -1,0 +1,500 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios Avançados{% endblock %}
+
+{% block head %}
+<!-- Chart.js para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    .report-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .report-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .report-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    .status-badge {
+        font-size: 0.75em;
+        padding: 4px 8px;
+        border-radius: 12px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+
+    .metric-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        line-height: 1;
+    }
+
+    .metric-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+    }
+
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .report-type-card {
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .report-type-card:hover {
+        border-color: #007bff;
+        transform: translateY(-2px);
+    }
+
+    .report-type-card.selected {
+        border-color: #007bff;
+        background-color: #f8f9ff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">Relatórios Avançados</h1>
+                    <p class="text-muted">Análises detalhadas sobre performance e métricas dos processos</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('advanced.new_report') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Novo Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas Gerais -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card metric-card">
+                <div class="card-body text-center">
+                    <div class="metric-value" id="totalProcesses">-</div>
+                    <div class="metric-label">Total de Processos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card metric-card">
+                <div class="card-body text-center">
+                    <div class="metric-value" id="activeProcesses">-</div>
+                    <div class="metric-label">Processos Ativos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card metric-card">
+                <div class="card-body text-center">
+                    <div class="metric-value" id="totalCosts">R$ -</div>
+                    <div class="metric-label">Custos Totais</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card metric-card">
+                <div class="card-body text-center">
+                    <div class="metric-value" id="avgResolutionTime">-</div>
+                    <div class="metric-label">Tempo Médio de Resolução</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos de Visão Geral -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Processos por Status</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Distribuição por Tribunal</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="courtChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatórios Existentes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Relatórios Gerados</h6>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" onclick="filterReports('all')">Todos</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterReports('completed')">Concluídos</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterReports('generating')">Gerando</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterReports('failed')">Falhas</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if reports %}
+                        <div class="row" id="reportsContainer">
+                            {% for report in reports %}
+                            <div class="col-md-6 col-lg-4 mb-4 report-item" data-status="{{ report.status }}">
+                                <div class="card report-card h-100" onclick="viewReport({{ report.id }})">
+                                    <div class="card-body">
+                                        <div class="report-status">
+                                            {% if report.status == 'completed' %}
+                                                <span class="badge bg-success status-badge">Concluído</span>
+                                            {% elif report.status == 'generating' %}
+                                                <span class="badge bg-primary status-badge">Gerando</span>
+                                            {% elif report.status == 'failed' %}
+                                                <span class="badge bg-danger status-badge">Falhou</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary status-badge">Pendente</span>
+                                            {% endif %}
+                                        </div>
+
+                                        <h6 class="card-title mb-2">{{ report.title }}</h6>
+                                        <p class="card-text text-muted small mb-3">{{ report.description or 'Sem descrição' }}</p>
+
+                                        <div class="row text-center mb-2">
+                                            <div class="col-6">
+                                                <div class="fw-bold">{{ report.total_processes }}</div>
+                                                <small class="text-muted">Processos</small>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="fw-bold">R$ {{ "%.2f"|format(report.total_costs) }}</div>
+                                                <small class="text-muted">Custos</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar"></i>
+                                                {{ report.start_date|local_date }} - {{ report.end_date|local_date }}
+                                            </small>
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <span class="badge bg-info">{{ report.report_type.title() }}</span>
+                                        </div>
+
+                                        <div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock"></i>
+                                                Criado em {{ report.created_at|local_datetime }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-transparent">
+                                        <div class="btn-group w-100" role="group">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation(); viewReport({{ report.id }})">
+                                                <i class="fas fa-eye"></i> Ver
+                                            </button>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="event.stopPropagation(); deleteReport({{ report.id }})">
+                                                <i class="fas fa-trash"></i> Excluir
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                            <h5>Nenhum relatório gerado</h5>
+                            <p class="text-muted">Crie seu primeiro relatório para analisar os dados dos seus processos.</p>
+                            <a href="{{ url_for('advanced.new_report') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Criar Primeiro Relatório
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de Relatórios Rápidos -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Relatórios Rápidos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card report-type-card text-center" onclick="createQuickReport('performance')">
+                                <div class="card-body">
+                                    <i class="fas fa-tachometer-alt fa-2x text-primary mb-2"></i>
+                                    <h6>Relatório de Performance</h6>
+                                    <p class="card-text small text-muted">Análise completa da performance dos processos</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card report-type-card text-center" onclick="createQuickReport('financial')">
+                                <div class="card-body">
+                                    <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                                    <h6>Relatório Financeiro</h6>
+                                    <p class="card-text small text-muted">Análise de custos e honorários</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card report-type-card text-center" onclick="createQuickReport('timeline')">
+                                <div class="card-body">
+                                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                                    <h6>Relatório de Timeline</h6>
+                                    <p class="card-text small text-muted">Evolução temporal dos processos</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card report-type-card text-center" onclick="createCustomReport()">
+                                <div class="card-body">
+                                    <i class="fas fa-cogs fa-2x text-info mb-2"></i>
+                                    <h6>Relatório Customizado</h6>
+                                    <p class="card-text small text-muted">Configure filtros personalizados</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir este relatório?</p>
+                <p class="text-muted small">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Excluir</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let statusChart = null;
+let courtChart = null;
+
+// Carregar métricas ao carregar página
+document.addEventListener('DOMContentLoaded', function() {
+    loadMetrics();
+});
+
+function loadMetrics() {
+    fetch('{{ url_for("advanced.get_processes_metrics") }}')
+        .then(response => response.json())
+        .then(data => {
+            // Atualizar métricas
+            document.getElementById('totalProcesses').textContent = data.total_processes || 0;
+            document.getElementById('activeProcesses').textContent = data.active_processes || 0;
+            document.getElementById('totalCosts').textContent = 'R$ ' + (data.total_costs || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            document.getElementById('avgResolutionTime').textContent = data.avg_resolution_days ? data.avg_resolution_days + ' dias' : '-';
+
+            // Criar gráficos
+            createStatusChart(data.status_counts || {});
+            createCourtChart(data.status_counts || {}); // Usar status_counts como exemplo
+        })
+        .catch(error => {
+            console.error('Erro ao carregar métricas:', error);
+        });
+}
+
+function createStatusChart(statusData) {
+    const ctx = document.getElementById('statusChart').getContext('2d');
+
+    if (statusChart) {
+        statusChart.destroy();
+    }
+
+    statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(statusData),
+            datasets: [{
+                data: Object.values(statusData),
+                backgroundColor: [
+                    '#28a745', // success
+                    '#007bff', // primary
+                    '#ffc107', // warning
+                    '#dc3545', // danger
+                    '#6c757d', // secondary
+                    '#17a2b8'  // info
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
+        }
+    });
+}
+
+function createCourtChart(courtData) {
+    const ctx = document.getElementById('courtChart').getContext('2d');
+
+    if (courtChart) {
+        courtChart.destroy();
+    }
+
+    courtChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(courtData),
+            datasets: [{
+                label: 'Processos',
+                data: Object.values(courtData),
+                backgroundColor: '#007bff',
+                borderColor: '#0056b3',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+function filterReports(status) {
+    const items = document.querySelectorAll('.report-item');
+    const buttons = document.querySelectorAll('.btn-group-sm .btn');
+
+    // Atualizar botões ativos
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    // Filtrar itens
+    items.forEach(item => {
+        if (status === 'all' || item.dataset.status === status) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function viewReport(reportId) {
+    window.location.href = `/advanced/reports/${reportId}`;
+}
+
+function deleteReport(reportId) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const confirmBtn = document.getElementById('confirmDelete');
+
+    confirmBtn.onclick = function() {
+        fetch(`/advanced/reports/${reportId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value || ''
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                modal.hide();
+                location.reload();
+            } else {
+                alert('Erro ao excluir relatório');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao excluir relatório');
+        });
+    };
+
+    modal.show();
+}
+
+function createQuickReport(type) {
+    // Redirecionar para criação com tipo pré-selecionado
+    const today = new Date();
+    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+
+    const params = new URLSearchParams({
+        report_type: type,
+        start_date: lastMonth.toISOString().split('T')[0],
+        end_date: today.toISOString().split('T')[0]
+    });
+
+    window.location.href = `/advanced/reports/new?${params}`;
+}
+
+function createCustomReport() {
+    window.location.href = '{{ url_for("advanced.new_report") }}';
+}
+</script>
+{% endblock %}

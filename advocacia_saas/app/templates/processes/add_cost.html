@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-white mb-2">
+                    <i class="fas fa-plus me-2"></i>Adicionar Custo/Honorário
+                </h1>
+                <p class="text-white opacity-75 mb-0">
+                    {{ process.title }} - {{ process.process_number or 'Sem número' }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Novo Custo ou Honorário</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cost_type" class="form-label">Tipo *</label>
+                                <select class="form-select" id="cost_type" name="cost_type" required onchange="toggleFields()">
+                                    <option value="">Selecione...</option>
+                                    <option value="custas">Custas Judiciais</option>
+                                    <option value="honorarios">Honorários</option>
+                                    <option value="taxas">Taxas</option>
+                                    <option value="despesas">Despesas</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="amount" class="form-label">Valor (R$) *</label>
+                                <input type="number" class="form-control" id="amount" name="amount"
+                                       step="0.01" min="0" required
+                                       placeholder="0,00">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição *</label>
+                            <input type="text" class="form-control" id="description" name="description"
+                                   required placeholder="Descreva o custo ou honorário...">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="due_date" class="form-label">Data de Vencimento</label>
+                                <input type="date" class="form-control" id="due_date" name="due_date">
+                            </div>
+                        </div>
+
+                        <!-- Campos específicos para custas -->
+                        <div id="courtFeeFields" style="display: none;">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Detalhes das Custas</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="court_fee_type" class="form-label">Tipo de Custa</label>
+                                        <select class="form-select" id="court_fee_type" name="court_fee_type">
+                                            <option value="">Selecione...</option>
+                                            <option value="distribuicao">Taxa de Distribuição</option>
+                                            <option value="taxa_judiciaria">Taxa Judiciária</option>
+                                            <option value="custas_processuais">Custas Processuais</option>
+                                            <option value="taxa_remuneratoria">Taxa Remuneratória</option>
+                                            <option value="multa">Multa</option>
+                                            <option value="outros">Outros</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campos específicos para honorários -->
+                        <div id="attorneyFeeFields" style="display: none;">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Detalhes dos Honorários</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="attorney_fee_type" class="form-label">Tipo de Honorário</label>
+                                        <select class="form-select" id="attorney_fee_type" name="attorney_fee_type">
+                                            <option value="">Selecione...</option>
+                                            <option value="inicial">Honorários Iniciais</option>
+                                            <option value="audiencia">Audiência</option>
+                                            <option value="sustentacao">Sustentação Oral</option>
+                                            <option value="recursal">Recursal</option>
+                                            <option value="sucesso">Êxito</option>
+                                            <option value="contrato">Contrato</option>
+                                            <option value="outros">Outros</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Observações</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2"
+                                      placeholder="Observações adicionais..."></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('process_management.costs', process_id=process.id) }}"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i>Salvar Custo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleFields() {
+    const costType = document.getElementById('cost_type').value;
+    const courtFeeFields = document.getElementById('courtFeeFields');
+    const attorneyFeeFields = document.getElementById('attorneyFeeFields');
+
+    courtFeeFields.style.display = costType === 'custas' ? 'block' : 'none';
+    attorneyFeeFields.style.display = costType === 'honorarios' ? 'block' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Formatar valor como moeda
+    const amountInput = document.getElementById('amount');
+    amountInput.addEventListener('blur', function() {
+        if (this.value) {
+            this.value = parseFloat(this.value).toFixed(2);
+        }
+    });
+});
+</script>
+{% endblock %}

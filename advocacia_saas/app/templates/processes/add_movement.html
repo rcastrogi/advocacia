@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-white mb-2">
+                    <i class="fas fa-plus me-2"></i>Adicionar Andamento
+                </h1>
+                <p class="text-white opacity-75 mb-0">
+                    {{ process.title }} - {{ process.process_number or 'Sem número' }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Novo Andamento Processual</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="movement_date" class="form-label">Data e Hora do Andamento *</label>
+                                <input type="datetime-local" class="form-control" id="movement_date"
+                                       name="movement_date" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="movement_type" class="form-label">Tipo de Andamento</label>
+                                <select class="form-select" id="movement_type" name="movement_type">
+                                    <option value="">Selecione...</option>
+                                    <option value="distribuicao">Distribuição</option>
+                                    <option value="audiencia">Audiência</option>
+                                    <option value="decisao">Decisão</option>
+                                    <option value="recurso">Recurso</option>
+                                    <option value="citacao">Citação</option>
+                                    <option value="intimacao">Intimação</option>
+                                    <option value="juntada">Juntada de Documento</option>
+                                    <option value="prazo">Prazo</option>
+                                    <option value="outros">Outros</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição do Andamento *</label>
+                            <textarea class="form-control" id="description" name="description"
+                                      rows="3" required
+                                      placeholder="Descreva o que aconteceu no andamento..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="court_decision" class="form-label">Decisão do Juízo/Relator</label>
+                            <textarea class="form-control" id="court_decision" name="court_decision"
+                                      rows="2"
+                                      placeholder="Conteúdo da decisão, despacho ou sentença..."></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="responsible_party" class="form-label">Parte Responsável</label>
+                                <input type="text" class="form-control" id="responsible_party"
+                                       name="responsible_party"
+                                       placeholder="Ex: Juiz, Autor, Réu, etc.">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="internal_notes" class="form-label">Anotações Internas</label>
+                                <input type="text" class="form-control" id="internal_notes"
+                                       name="internal_notes"
+                                       placeholder="Observações particulares do escritório...">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_important"
+                                           name="is_important">
+                                    <label class="form-check-label" for="is_important">
+                                        <strong>Andamento Importante</strong>
+                                        <br><small class="text-muted">Será destacado na timeline</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="requires_action"
+                                           name="requires_action">
+                                    <label class="form-check-label" for="requires_action">
+                                        <strong>Requer Ação</strong>
+                                        <br><small class="text-muted">Precisa de atenção do advogado</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('process_management.movements', process_id=process.id) }}"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Salvar Andamento
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Definir data/hora atual como padrão
+    const now = new Date();
+    const localDateTime = now.toISOString().slice(0, 16);
+    document.getElementById('movement_date').value = localDateTime;
+});
+</script>
+{% endblock %}

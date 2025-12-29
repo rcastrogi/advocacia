@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block title %}Automação de Processos{% endblock %}
+
+{% block head %}
+<style>
+    .automation-status {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .automation-status.active {
+        background-color: #28a745;
+        box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+    }
+
+    .automation-status.inactive {
+        background-color: #6c757d;
+        box-shadow: 0 0 0 2px rgba(108, 117, 125, 0.3);
+    }
+
+    .trigger-badge {
+        font-size: 0.75em;
+        padding: 2px 6px;
+        border-radius: 3px;
+    }
+
+    .action-badge {
+        font-size: 0.75em;
+        padding: 2px 6px;
+        border-radius: 3px;
+    }
+
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">Automação de Processos</h1>
+                    <p class="text-muted">Configure ações automáticas baseadas em eventos processuais</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('advanced.new_automation') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nova Automação
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="dashboard-card h-100 position-relative">
+                <div class="card-icon bg-primary">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="stats-number">{{ automations|selectattr('is_active')|list|length }}</div>
+                <div class="stats-label">Automações Ativas</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="dashboard-card h-100 position-relative">
+                <div class="card-icon bg-info">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="stats-number">
+                    {{ automations|sum(attribute='execution_count') }}
+                </div>
+                <div class="stats-label">Execuções Totais</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="dashboard-card h-100 position-relative">
+                <div class="card-icon bg-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-number">
+                    {{ automations|sum(attribute='success_count') }}
+                </div>
+                <div class="stats-label">Execuções Bem-sucedidas</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="dashboard-card h-100 position-relative">
+                <div class="card-icon bg-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stats-number">
+                    {{ automations|sum(attribute='failure_count') }}
+                </div>
+                <div class="stats-label">Falhas</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Automações -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Automações Configuradas</h6>
+                </div>
+                <div class="card-body">
+                    {% if automations %}
+                        <div class="row">
+                            {% for automation in automations %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="dashboard-card h-100 position-relative">
+                                    <div class="automation-status {{ 'active' if automation.is_active else 'inactive' }}"></div>
+                                    <div class="card-icon bg-primary">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <h4 class="mb-2">{{ automation.name }}</h4>
+
+                                    {% if automation.description %}
+                                    <p class="text-muted mb-3">{{ automation.description }}</p>
+                                    {% endif %}
+
+                                    <div class="mb-3">
+                                        <span class="badge bg-primary trigger-badge me-1">
+                                            <i class="fas fa-bolt"></i> {{ get_trigger_display(automation.trigger_type) }}
+                                        </span>
+                                        <span class="badge bg-success action-badge">
+                                            <i class="fas fa-play"></i> {{ get_action_display(automation.action_type) }}
+                                        </span>
+                                    </div>
+
+                                    <div class="row text-center mb-3">
+                                        <div class="col-4">
+                                            <div class="fw-bold">{{ automation.execution_count }}</div>
+                                            <small class="text-muted">Execuções</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="fw-bold text-success">{{ automation.success_count }}</div>
+                                            <small class="text-muted">Sucessos</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="fw-bold text-danger">{{ automation.failure_count }}</div>
+                                            <small class="text-muted">Falhas</small>
+                                        </div>
+                                    </div>
+
+                                    {% if automation.last_executed_at %}
+                                    <div class="mb-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock"></i>
+                                            Última execução: {{ automation.last_executed_at|local_datetime }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox"
+                                                   id="toggle-{{ automation.id }}"
+                                                   {{ 'checked' if automation.is_active else '' }}
+                                                   onchange="toggleAutomation({{ automation.id }})">
+                                            <label class="form-check-label small" for="toggle-{{ automation.id }}">
+                                                {{ 'Ativa' if automation.is_active else 'Inativa' }}
+                                            </label>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-secondary" onclick="editAutomation({{ automation.id }})" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteAutomation({{ automation.id }})" title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+                            <h5>Nenhuma automação configurada</h5>
+                            <p class="text-muted">Crie sua primeira automação para automatizar tarefas processuais.</p>
+                            <a href="{{ url_for('advanced.new_automation') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Criar Primeira Automação
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de Sugestões -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Sugestões de Automação</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="dashboard-card h-100 position-relative">
+                                <div class="card-icon bg-primary">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <h4 class="mb-2">Lembrete de Prazos</h4>
+                                <p class="text-muted mb-3">Envie notificações automáticas quando prazos estiverem próximos do vencimento.</p>
+                                <button class="btn btn-primary btn-sm" onclick="createSuggestedAutomation('deadline_reminder')">
+                                    Criar Automação
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="dashboard-card h-100 position-relative">
+                                <div class="card-icon bg-success">
+                                    <i class="fas fa-gavel"></i>
+                                </div>
+                                <h4 class="mb-2">Acompanhamento de Audiências</h4>
+                                <p class="text-muted mb-3">Notifique sobre novas audiências e alterações de data/hora.</p>
+                                <button class="btn btn-success btn-sm" onclick="createSuggestedAutomation('hearing_notification')">
+                                    Criar Automação
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="dashboard-card h-100 position-relative">
+                                <div class="card-icon bg-warning">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <h4 class="mb-2">Controle de Custas</h4>
+                                <p class="text-muted mb-3">Alerta quando custos judiciais estiverem próximos do vencimento.</p>
+                                <button class="btn btn-warning btn-sm" onclick="createSuggestedAutomation('cost_alert')">
+                                    Criar Automação
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir esta automação?</p>
+                <p class="text-muted small">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Excluir</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function get_trigger_display(trigger_type) {
+    const triggers = {
+        'movement': 'Movimentação',
+        'deadline': 'Prazo',
+        'status_change': 'Mudança de Status',
+        'date': 'Data Específica'
+    };
+    return triggers[trigger_type] || trigger_type;
+}
+
+function get_action_display(action_type) {
+    const actions = {
+        'notification': 'Notificação',
+        'email': 'Email',
+        'task': 'Tarefa',
+        'reminder': 'Lembrete'
+    };
+    return actions[action_type] || action_type;
+}
+
+function toggleAutomation(automationId) {
+    fetch(`/advanced/automation/${automationId}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value || ''
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro ao alterar status da automação');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao alterar status da automação');
+    });
+}
+
+function editAutomation(automationId) {
+    // Implementar edição - por enquanto redireciona
+    window.location.href = `/advanced/automation/${automationId}/edit`;
+}
+
+function deleteAutomation(automationId) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const confirmBtn = document.getElementById('confirmDelete');
+
+    confirmBtn.onclick = function() {
+        fetch(`/advanced/automation/${automationId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value || ''
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                modal.hide();
+                location.reload();
+            } else {
+                alert('Erro ao excluir automação');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao excluir automação');
+        });
+    };
+
+    modal.show();
+}
+
+function createSuggestedAutomation(type) {
+    const suggestions = {
+        'deadline_reminder': {
+            name: 'Lembrete de Prazos',
+            description: 'Notifica automaticamente sobre prazos próximos do vencimento',
+            trigger_type: 'deadline',
+            action_type: 'notification'
+        },
+        'hearing_notification': {
+            name: 'Notificação de Audiências',
+            description: 'Alerta sobre novas audiências e alterações',
+            trigger_type: 'movement',
+            action_type: 'email'
+        },
+        'cost_alert': {
+            name: 'Alerta de Custas',
+            description: 'Notifica sobre custos judiciais próximos do vencimento',
+            trigger_type: 'date',
+            action_type: 'notification'
+        }
+    };
+
+    const suggestion = suggestions[type];
+    if (suggestion) {
+        // Redirecionar para criação com parâmetros
+        const params = new URLSearchParams(suggestion);
+        window.location.href = `/advanced/automation/new?${params}`;
+    }
+}
+
+// Função para obter CSRF token
+function getCsrfToken() {
+    // Implementar obtenção do token CSRF se necessário
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+</script>
+{% endblock %}

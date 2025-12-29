@@ -3323,3 +3323,776 @@ process_petitions = db.Table(
         "relation_type", db.String(50), default="related"
     ),  # initial, contestation, appeal, etc.
 )
+
+
+class ProcessMovement(db.Model):
+    """
+    Histórico de andamentos/movimentações processuais.
+    Registra todas as movimentações do processo no tribunal.
+    """
+
+    __tablename__ = "process_movements"
+
+    id = db.Column(db.Integer, primary_key=True)
+    process_id = db.Column(db.Integer, db.ForeignKey("processes.id"), nullable=False)
+
+    # Data e descrição
+    movement_date = db.Column(db.DateTime, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+
+    # Tipo de andamento
+    movement_type = db.Column(db.String(100))  # 'distribuicao', 'audiencia', 'decisao', 'recurso', etc.
+
+    # Detalhes adicionais
+    court_decision = db.Column(db.Text)  # Decisão do juiz/relator
+    deadline_extension = db.Column(db.Date)  # Novo prazo se aplicável
+    responsible_party = db.Column(db.String(200))  # Parte responsável pela movimentação
+
+    # Documentos relacionados
+    document_url = db.Column(db.String(500))  # Link para documento no sistema judicial
+    internal_notes = db.Column(db.Text)  # Anotações internas do advogado
+
+    # Status da movimentação
+    is_important = db.Column(db.Boolean, default=False)  # Marca movimentações importantes
+    requires_action = db.Column(db.Boolean, default=False)  # Requer ação do advogado
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relacionamentos
+    process = db.relationship(
+        "Process", backref=db.backref("movements", lazy="dynamic", order_by="ProcessMovement.movement_date.desc()")
+    )
+
+    def __repr__(self):
+        return f"<ProcessMovement {self.process_id} - {self.movement_date} - {self.description[:50]}>"
+
+
+class ProcessCost(db.Model):
+    """
+    Controle de custas judiciais e honorários.
+    Registra todos os custos relacionados ao processo.
+    """
+
+    __tablename__ = "process_costs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    process_id = db.Column(db.Integer, db.ForeignKey("processes.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Tipo de custo
+    cost_type = db.Column(db.String(50), nullable=False)  # 'custas', 'honorarios', 'taxas', 'despesas'
+    description = db.Column(db.String(300), nullable=False)
+
+    # Valores
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    currency = db.Column(db.String(3), default="BRL")  # BRL, USD, EUR
+
+    # Status do pagamento
+    payment_status = db.Column(db.String(20), default="pending")  # pending, paid, overdue, cancelled
+
+    # Datas
+    due_date = db.Column(db.Date)
+    payment_date = db.Column(db.Date)
+
+    # Detalhes específicos
+    court_fee_type = db.Column(db.String(100))  # Para custas: 'distribuicao', 'taxa_judiciaria', etc.
+    attorney_fee_type = db.Column(db.String(100))  # Para honorários: 'inicial', 'audiencia', 'sustentacao', etc.
+
+    # Documentos comprobatórios
+    receipt_url = db.Column(db.String(500))  # Link para recibo/comprovante
+    invoice_number = db.Column(db.String(100))  # Número da nota fiscal
+
+    # Observações
+    notes = db.Column(db.Text)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relacionamentos
+    process = db.relationship("Process", backref=db.backref("costs", lazy="dynamic"))
+    user = db.relationship("User", backref=db.backref("process_costs", lazy="dynamic"))
+
+    def get_status_display(self):
+        """Retorna o status formatado para exibição."""
+        status_map = {
+            "pending": ("Pendente", "warning"),
+            "paid": ("Pago", "success"),
+            "overdue": ("Vencido", "danger"),
+            "cancelled": ("Cancelado", "secondary"),
+        }
+        return status_map.get(self.status, ("Desconhecido", "secondary"))
+
+    def get_type_display(self):
+        """Retorna o tipo formatado."""
+        type_map = {
+            "custas": "Custas Judiciais",
+            "honorarios": "Honorários",
+            "taxas": "Taxas",
+            "despesas": "Despesas",
+        }
+        return type_map.get(self.cost_type, self.cost_type.title())
+
+    def is_overdue(self):
+        """Verifica se o custo está vencido."""
+        if self.payment_status == "pending" and self.due_date:
+            from datetime import date
+            return self.due_date < date.today()
+        return False
+
+    def __repr__(self):
+        return f"<ProcessCost {self.process_id} - {self.cost_type} - R$ {self.amount}>"
+
+
+class ProcessAttachment(db.Model):
+    """
+    Anexos específicos para processos judiciais.
+    Documentos relacionados diretamente ao processo.
+    """
+
+    __tablename__ = "process_attachments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    process_id = db.Column(db.Integer, db.ForeignKey("processes.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Informações do arquivo
+    filename = db.Column(db.String(500), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    file_size = db.Column(db.Integer)
+    file_type = db.Column(db.String(100))  # MIME type
+    file_extension = db.Column(db.String(10))
+
+    # Metadados
+    title = db.Column(db.String(300), nullable=False)
+    description = db.Column(db.Text)
+    document_type = db.Column(db.String(100))  # 'peticao', 'decisao', 'prova', 'contrato', etc.
+
+    # Relacionamento com movimentação (opcional)
+    movement_id = db.Column(db.Integer, db.ForeignKey("process_movements.id"))
+
+    # Controle de versão
+    version = db.Column(db.Integer, default=1)
+    parent_attachment_id = db.Column(db.Integer, db.ForeignKey("process_attachments.id"))
+    is_latest_version = db.Column(db.Boolean, default=True)
+
+    # Visibilidade
+    is_confidential = db.Column(db.Boolean, default=False)
+    is_visible_to_client = db.Column(db.Boolean, default=False)
+
+    # Status
+    status = db.Column(db.String(20), default="active")  # active, archived, deleted
+
+    # Tags para busca
+    tags = db.Column(db.String(500))  # Separadas por vírgula
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+    last_accessed_at = db.Column(db.DateTime)
+
+    # Relacionamentos
+    process = db.relationship("Process", backref=db.backref("attachments", lazy="dynamic"))
+    user = db.relationship("User", backref=db.backref("process_attachments", lazy="dynamic"))
+    movement = db.relationship("ProcessMovement", backref=db.backref("attachments", lazy="dynamic"))
+    versions = db.relationship(
+        "ProcessAttachment",
+        backref=db.backref("parent_attachment", remote_side=[id]),
+        lazy="dynamic",
+    )
+
+    def get_size_formatted(self):
+        """Retorna tamanho formatado do arquivo."""
+        if not self.file_size:
+            return "N/A"
+
+        size = self.file_size
+        for unit in ["B", "KB", "MB", "GB"]:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
+
+    def mark_accessed(self):
+        """Marca anexo como acessado."""
+        self.last_accessed_at = datetime.now(timezone.utc)
+        db.session.commit()
+
+    def create_new_version(self, new_path, new_size=None):
+        """Cria nova versão do anexo."""
+        # Marcar versão atual como não mais recente
+        self.is_latest_version = False
+        db.session.commit()
+
+        # Criar nova versão
+        new_version = ProcessAttachment(
+            process_id=self.process_id,
+            user_id=self.user_id,
+            filename=self.filename,
+            file_path=new_path,
+            file_size=new_size or self.file_size,
+            file_type=self.file_type,
+            file_extension=self.file_extension,
+            title=self.title,
+            description=self.description,
+            document_type=self.document_type,
+            movement_id=self.movement_id,
+            version=self.version + 1,
+            parent_attachment_id=self.id,
+            is_latest_version=True,
+            is_confidential=self.is_confidential,
+            is_visible_to_client=self.is_visible_to_client,
+            tags=self.tags,
+        )
+        db.session.add(new_version)
+        db.session.commit()
+        return new_version
+
+    def __repr__(self):
+        return f"<ProcessAttachment {self.process_id} - {self.title}>"
+
+
+class CalendarEvent(db.Model):
+    """
+    Eventos do calendário jurídico.
+    Inclui audiências, prazos, reuniões e compromissos relacionados aos processos.
+    """
+
+    __tablename__ = "calendar_events"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Título e descrição
+    title = db.Column(db.String(300), nullable=False)
+    description = db.Column(db.Text)
+
+    # Data e hora
+    start_datetime = db.Column(db.DateTime, nullable=False)
+    end_datetime = db.Column(db.DateTime, nullable=False)
+    all_day = db.Column(db.Boolean, default=False)
+
+    # Localização
+    location = db.Column(db.String(300))  # Endereço físico ou virtual
+    virtual_link = db.Column(db.String(500))  # Link para reunião virtual
+
+    # Tipo de evento
+    event_type = db.Column(db.String(50), nullable=False)  # 'audiencia', 'prazo', 'reuniao', 'compromisso'
+    priority = db.Column(db.String(20), default="normal")  # 'low', 'normal', 'high', 'urgent'
+
+    # Relacionamento com processo (opcional)
+    process_id = db.Column(db.Integer, db.ForeignKey("processes.id"))
+    client_id = db.Column(db.Integer, db.ForeignKey("client.id"))
+
+    # Status
+    status = db.Column(db.String(20), default="scheduled")  # 'scheduled', 'confirmed', 'completed', 'cancelled'
+    reminder_sent = db.Column(db.Boolean, default=False)
+    reminder_minutes_before = db.Column(db.Integer, default=60)  # Minutos antes do lembrete
+
+    # Recorrência (para eventos recorrentes)
+    is_recurring = db.Column(db.Boolean, default=False)
+    recurrence_rule = db.Column(db.String(200))  # RRULE do iCalendar
+    recurrence_end_date = db.Column(db.Date)
+
+    # Participantes
+    participants = db.Column(db.Text)  # JSON com lista de participantes
+    attendees = db.Column(db.Text)  # JSON com confirmações de presença
+
+    # Notas e observações
+    notes = db.Column(db.Text)
+    outcome = db.Column(db.Text)  # Resultado/ata da reunião
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relacionamentos
+    user = db.relationship("User", backref=db.backref("calendar_events", lazy="dynamic"))
+    process = db.relationship("Process", backref=db.backref("calendar_events", lazy="dynamic"))
+    client = db.relationship("Client", backref=db.backref("calendar_events", lazy="dynamic"))
+
+    def get_event_type_display(self):
+        """Retorna o tipo de evento formatado."""
+        type_map = {
+            "audiencia": ("Audiência", "court"),
+            "prazo": ("Prazo Processual", "clock"),
+            "reuniao": ("Reunião", "users"),
+            "compromisso": ("Compromisso", "calendar"),
+        }
+        return type_map.get(self.event_type, (self.event_type.title(), "calendar"))
+
+    def get_priority_display(self):
+        """Retorna a prioridade formatada."""
+        priority_map = {
+            "low": ("Baixa", "secondary"),
+            "normal": ("Normal", "info"),
+            "high": ("Alta", "warning"),
+            "urgent": ("Urgente", "danger"),
+        }
+        return priority_map.get(self.priority, ("Normal", "info"))
+
+    def get_status_display(self):
+        """Retorna o status formatado."""
+        status_map = {
+            "scheduled": ("Agendado", "primary"),
+            "confirmed": ("Confirmado", "success"),
+            "completed": ("Concluído", "secondary"),
+            "cancelled": ("Cancelado", "danger"),
+        }
+        return status_map.get(self.status, ("Desconhecido", "secondary"))
+
+    def is_upcoming(self, hours=24):
+        """Verifica se o evento é nos próximos X horas."""
+        now = datetime.now(timezone.utc)
+        time_diff = self.start_datetime - now
+        return time_diff.total_seconds() > 0 and time_diff.total_seconds() <= (hours * 3600)
+
+    def needs_reminder(self):
+        """Verifica se precisa enviar lembrete."""
+        if self.reminder_sent or self.status in ["completed", "cancelled"]:
+            return False
+
+        now = datetime.now(timezone.utc)
+        reminder_time = self.start_datetime - timedelta(minutes=self.reminder_minutes_before)
+        return now >= reminder_time
+
+    def to_dict(self):
+        """Serializa para JSON."""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "start_datetime": self.start_datetime.isoformat(),
+            "end_datetime": self.end_datetime.isoformat(),
+            "all_day": self.all_day,
+            "location": self.location,
+            "virtual_link": self.virtual_link,
+            "event_type": self.event_type,
+            "event_type_display": self.get_event_type_display(),
+            "priority": self.priority,
+            "priority_display": self.get_priority_display(),
+            "status": self.status,
+            "status_display": self.get_status_display(),
+            "process_id": self.process_id,
+            "client_id": self.client_id,
+            "notes": self.notes,
+            "outcome": self.outcome,
+            "created_at": self.created_at.isoformat(),
+        }
+
+    def __repr__(self):
+        return f"<CalendarEvent {self.title} - {self.start_datetime}>"
+
+
+class ProcessAutomation(db.Model):
+    """
+    Regras de automação para processos judiciais.
+    Define ações automáticas baseadas em eventos ou condições.
+    """
+
+    __tablename__ = "process_automations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Configuração da automação
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+
+    # Gatilho (trigger)
+    trigger_type = db.Column(db.String(50), nullable=False)  # 'movement', 'deadline', 'status_change', 'date'
+    trigger_condition = db.Column(db.JSON, default=dict)  # Condições específicas
+
+    # Ação a ser executada
+    action_type = db.Column(db.String(50), nullable=False)  # 'notification', 'email', 'task', 'reminder'
+    action_config = db.Column(db.JSON, default=dict)  # Configuração da ação
+
+    # Escopo
+    applies_to_all_processes = db.Column(db.Boolean, default=False)
+    specific_processes = db.Column(db.Text)  # JSON com IDs de processos específicos
+    process_types = db.Column(db.Text)  # JSON com tipos de processo
+
+    # Estatísticas
+    execution_count = db.Column(db.Integer, default=0)
+    last_executed_at = db.Column(db.DateTime)
+    success_count = db.Column(db.Integer, default=0)
+    failure_count = db.Column(db.Integer, default=0)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relacionamentos
+    user = db.relationship("User", backref=db.backref("process_automations", lazy="dynamic"))
+
+    def should_trigger(self, event_data):
+        """Verifica se a automação deve ser acionada para determinado evento."""
+        # Implementar lógica de verificação de condições
+        if not self.is_active:
+            return False
+
+        # Verificar tipo de gatilho
+        if self.trigger_type != event_data.get("trigger_type"):
+            return False
+
+        # Verificar condições específicas
+        conditions = self.trigger_condition or {}
+        for key, value in conditions.items():
+            if event_data.get(key) != value:
+                return False
+
+        # Verificar escopo
+        if not self.applies_to_all_processes:
+            process_id = event_data.get("process_id")
+            if process_id:
+                specific_ids = self.get_specific_process_ids()
+                if specific_ids and process_id not in specific_ids:
+                    return False
+
+        return True
+
+    def get_specific_process_ids(self):
+        """Retorna lista de IDs de processos específicos."""
+        if not self.specific_processes:
+            return []
+        try:
+            return json.loads(self.specific_processes)
+        except (TypeError, ValueError):
+            return []
+
+    def execute_action(self, event_data):
+        """Executa a ação da automação."""
+        try:
+            self.execution_count += 1
+            self.last_executed_at = datetime.now(timezone.utc)
+
+            # Implementar diferentes tipos de ação
+            if self.action_type == "notification":
+                self._execute_notification(event_data)
+            elif self.action_type == "email":
+                self._execute_email(event_data)
+            elif self.action_type == "task":
+                self._execute_task(event_data)
+            elif self.action_type == "reminder":
+                self._execute_reminder(event_data)
+
+            self.success_count += 1
+            db.session.commit()
+            return True
+
+        except Exception as e:
+            self.failure_count += 1
+            db.session.commit()
+            print(f"Erro ao executar automação {self.id}: {str(e)}")
+            return False
+
+    def _execute_notification(self, event_data):
+        """Executa ação de notificação."""
+        config = self.action_config or {}
+        title = config.get("title", "Notificação Automática")
+        message = config.get("message", "Uma automação foi acionada.")
+
+        # Criar notificação
+        from app.models import Notification
+        Notification.create_notification(
+            user_id=self.user_id,
+            notification_type="automation",
+            title=title,
+            message=message,
+        )
+
+    def _execute_email(self, event_data):
+        """Executa ação de envio de email."""
+        # Implementar envio de email
+        pass
+
+    def _execute_task(self, event_data):
+        """Executa ação de criação de tarefa."""
+        # Implementar criação de tarefa
+        pass
+
+    def _execute_reminder(self, event_data):
+        """Executa ação de lembrete."""
+        # Implementar lembrete
+        pass
+
+    def __repr__(self):
+        return f"<ProcessAutomation {self.name} - {self.trigger_type} -> {self.action_type}>"
+
+
+class ProcessReport(db.Model):
+    """
+    Relatórios avançados sobre processos e performance.
+    Armazena métricas e estatísticas para análise.
+    """
+
+    __tablename__ = "process_reports"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Tipo de relatório
+    report_type = db.Column(db.String(50), nullable=False)  # 'performance', 'financial', 'timeline', 'custom'
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+
+    # Período do relatório
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+
+    # Filtros aplicados
+    filters = db.Column(db.JSON, default=dict)  # Filtros usados na geração
+
+    # Dados do relatório (JSON)
+    report_data = db.Column(db.JSON, default=dict)
+
+    # Métricas calculadas
+    total_processes = db.Column(db.Integer, default=0)
+    active_processes = db.Column(db.Integer, default=0)
+    completed_processes = db.Column(db.Integer, default=0)
+    total_costs = db.Column(db.Numeric(12, 2), default=Decimal("0.00"))
+    average_resolution_time = db.Column(db.Integer)  # Em dias
+
+    # Status
+    status = db.Column(db.String(20), default="generating")  # 'generating', 'completed', 'failed'
+    error_message = db.Column(db.Text)
+
+    # Arquivo gerado (opcional)
+    file_path = db.Column(db.String(500))
+    file_size = db.Column(db.Integer)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    completed_at = db.Column(db.DateTime)
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relacionamentos
+    user = db.relationship("User", backref=db.backref("process_reports", lazy="dynamic"))
+
+    def generate_report(self):
+        """Gera o relatório baseado no tipo."""
+        try:
+            self.status = "generating"
+            db.session.commit()
+
+            if self.report_type == "performance":
+                self._generate_performance_report()
+            elif self.report_type == "financial":
+                self._generate_financial_report()
+            elif self.report_type == "timeline":
+                self._generate_timeline_report()
+            elif self.report_type == "custom":
+                self._generate_custom_report()
+
+            self.status = "completed"
+            self.completed_at = datetime.now(timezone.utc)
+            db.session.commit()
+
+        except Exception as e:
+            self.status = "failed"
+            self.error_message = str(e)
+            db.session.commit()
+
+    def _generate_performance_report(self):
+        """Gera relatório de performance dos processos."""
+        from app.models import Process, ProcessMovement, ProcessCost
+
+        # Consultar processos no período
+        processes = Process.query.filter(
+            Process.user_id == self.user_id,
+            Process.created_at >= self.start_date,
+            Process.created_at <= self.end_date,
+        ).all()
+
+        # Calcular métricas
+        self.total_processes = len(processes)
+        self.active_processes = len([p for p in processes if p.status in ["ongoing", "distributed"]])
+        self.completed_processes = len([p for p in processes if p.status == "finished"])
+
+        # Custos totais
+        total_costs = db.session.query(db.func.sum(ProcessCost.amount)).filter(
+            ProcessCost.user_id == self.user_id,
+            ProcessCost.created_at >= self.start_date,
+            ProcessCost.created_at <= self.end_date,
+        ).scalar() or 0
+        self.total_costs = Decimal(str(total_costs))
+
+        # Tempo médio de resolução
+        completed_processes = [p for p in processes if p.status == "finished"]
+        if completed_processes:
+            total_days = 0
+            count = 0
+            for process in completed_processes:
+                if process.distribution_date and process.updated_at:
+                    days = (process.updated_at.date() - process.distribution_date).days
+                    if days > 0:
+                        total_days += days
+                        count += 1
+            if count > 0:
+                self.average_resolution_time = total_days // count
+
+        # Dados detalhados
+        self.report_data = {
+            "processes_by_status": self._count_processes_by_status(processes),
+            "processes_by_court": self._count_processes_by_court(processes),
+            "monthly_distribution": self._get_monthly_distribution(),
+            "cost_breakdown": self._get_cost_breakdown(),
+            "performance_metrics": {
+                "completion_rate": (self.completed_processes / self.total_processes * 100) if self.total_processes > 0 else 0,
+                "active_rate": (self.active_processes / self.total_processes * 100) if self.total_processes > 0 else 0,
+                "average_cost_per_process": float(self.total_costs) / self.total_processes if self.total_processes > 0 else 0,
+            }
+        }
+
+    def _generate_financial_report(self):
+        """Gera relatório financeiro."""
+        from app.models import ProcessCost
+
+        costs = ProcessCost.query.filter(
+            ProcessCost.user_id == self.user_id,
+            ProcessCost.created_at >= self.start_date,
+            ProcessCost.created_at <= self.end_date,
+        ).all()
+
+        # Agrupar custos por tipo
+        cost_by_type = {}
+        cost_by_status = {}
+        monthly_costs = {}
+
+        for cost in costs:
+            # Por tipo
+            cost_type = cost.get_type_display()
+            if cost_type not in cost_by_type:
+                cost_by_type[cost_type] = 0
+            cost_by_type[cost_type] += float(cost.amount)
+
+            # Por status
+            status_display = cost.get_status_display()[0]
+            if status_display not in cost_by_status:
+                cost_by_status[status_display] = 0
+            cost_by_status[status_display] += float(cost.amount)
+
+            # Por mês
+            month_key = cost.created_at.strftime("%Y-%m")
+            if month_key not in monthly_costs:
+                monthly_costs[month_key] = 0
+            monthly_costs[month_key] += float(cost.amount)
+
+        self.report_data = {
+            "cost_by_type": cost_by_type,
+            "cost_by_status": cost_by_status,
+            "monthly_costs": monthly_costs,
+            "total_costs": float(self.total_costs),
+            "overdue_costs": len([c for c in costs if c.is_overdue()]),
+        }
+
+    def _generate_timeline_report(self):
+        """Gera relatório de timeline dos processos."""
+        from app.models import ProcessMovement
+
+        movements = ProcessMovement.query.join(Process).filter(
+            Process.user_id == self.user_id,
+            ProcessMovement.movement_date >= self.start_date,
+            ProcessMovement.movement_date <= self.end_date,
+        ).all()
+
+        # Agrupar movimentações por tipo e mês
+        movements_by_type = {}
+        movements_by_month = {}
+
+        for movement in movements:
+            # Por tipo
+            if movement.movement_type not in movements_by_type:
+                movements_by_type[movement.movement_type] = 0
+            movements_by_type[movement.movement_type] += 1
+
+            # Por mês
+            month_key = movement.movement_date.strftime("%Y-%m")
+            if month_key not in movements_by_month:
+                movements_by_month[month_key] = 0
+            movements_by_month[month_key] += 1
+
+        self.report_data = {
+            "movements_by_type": movements_by_type,
+            "movements_by_month": movements_by_month,
+            "total_movements": len(movements),
+            "average_movements_per_process": len(movements) / self.total_processes if self.total_processes > 0 else 0,
+        }
+
+    def _generate_custom_report(self):
+        """Gera relatório customizado."""
+        # Implementar lógica para relatórios customizados
+        pass
+
+    def _count_processes_by_status(self, processes):
+        """Conta processos por status."""
+        status_count = {}
+        for process in processes:
+            status_text = process.get_status_display()[0]
+            status_count[status_text] = status_count.get(status_text, 0) + 1
+        return status_count
+
+    def _count_processes_by_court(self, processes):
+        """Conta processos por tribunal."""
+        court_count = {}
+        for process in processes:
+            court = process.court or "Não informado"
+            court_count[court] = court_count.get(court, 0) + 1
+        return court_count
+
+    def _get_monthly_distribution(self):
+        """Distribuição mensal de processos."""
+        # Implementar distribuição mensal
+        return {}
+
+    def _get_cost_breakdown(self):
+        """Quebramento de custos."""
+        # Implementar quebramento de custos
+        return {}
+
+    def to_dict(self):
+        """Serializa para JSON."""
+        return {
+            "id": self.id,
+            "report_type": self.report_type,
+            "title": self.title,
+            "description": self.description,
+            "start_date": self.start_date.isoformat(),
+            "end_date": self.end_date.isoformat(),
+            "status": self.status,
+            "total_processes": self.total_processes,
+            "total_costs": float(self.total_costs),
+            "report_data": self.report_data,
+            "created_at": self.created_at.isoformat(),
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+        }
+
+    def __repr__(self):
+        return f"<ProcessReport {self.title} - {self.report_type}>"

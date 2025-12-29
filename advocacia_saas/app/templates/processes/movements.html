@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-white mb-2">
+                    <i class="fas fa-history me-2"></i>Andamentos do Processo
+                </h1>
+                <p class="text-white opacity-75 mb-0">
+                    {{ process.title }} - {{ process.process_number or 'Sem número' }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <!-- Process Info -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>{{ process.title }}</h5>
+                            <p class="text-muted mb-1">
+                                <strong>Número:</strong> {{ process.process_number or 'Não informado' }}
+                            </p>
+                            <p class="text-muted mb-1">
+                                <strong>Vara:</strong> {{ process.jurisdiction or 'Não informado' }}
+                            </p>
+                            <p class="text-muted mb-0">
+                                <strong>Status:</strong>
+                                <span class="badge bg-{{ process.get_status_color() }}">
+                                    {{ process.get_status_text() }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <a href="{{ url_for('process_management.add_movement', process_id=process.id) }}"
+                               class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Adicionar Andamento
+                            </a>
+                            <a href="{{ url_for('processes.list_processes') }}" class="btn btn-outline-secondary ms-2">
+                                <i class="fas fa-arrow-left me-1"></i>Voltar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movements Timeline -->
+    {% if movements.items %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Histórico de Andamentos</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="timeline">
+                            {% for movement in movements.items %}
+                            <div class="timeline-item {% if movement.is_important %}timeline-important{% endif %}">
+                                <div class="timeline-marker {% if movement.is_important %}bg-danger{% else %}bg-primary{% endif %}">
+                                    {% if movement.movement_type == 'distribuicao' %}
+                                        <i class="fas fa-gavel"></i>
+                                    {% elif movement.movement_type == 'audiencia' %}
+                                        <i class="fas fa-microphone"></i>
+                                    {% elif movement.movement_type == 'decisao' %}
+                                        <i class="fas fa-balance-scale"></i>
+                                    {% elif movement.movement_type == 'recurso' %}
+                                        <i class="fas fa-undo"></i>
+                                    {% else %}
+                                        <i class="fas fa-file-alt"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">
+                                                {{ movement.description }}
+                                                {% if movement.is_important %}
+                                                    <span class="badge bg-danger ms-2">Importante</span>
+                                                {% endif %}
+                                                {% if movement.requires_action %}
+                                                    <span class="badge bg-warning ms-2">Requer Ação</span>
+                                                {% endif %}
+                                            </h6>
+                                            <p class="text-muted small mb-2">
+                                                {{ movement.movement_date.strftime('%d/%m/%Y %H:%M') }}
+                                                {% if movement.movement_type %}
+                                                    • {{ movement.movement_type|title }}
+                                                {% endif %}
+                                                {% if movement.responsible_party %}
+                                                    • {{ movement.responsible_party }}
+                                                {% endif %}
+                                            </p>
+                                            {% if movement.court_decision %}
+                                                <div class="alert alert-info py-2 px-3 mb-2">
+                                                    <strong>Decisão:</strong> {{ movement.court_decision }}
+                                                </div>
+                                            {% endif %}
+                                            {% if movement.internal_notes %}
+                                                <div class="text-muted small">
+                                                    <strong>Anotações:</strong> {{ movement.internal_notes }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                {% if movements.has_prev or movements.has_next %}
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if movements.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('process_management.movements', process_id=process.id, page=movements.prev_num) }}">
+                                Anterior
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Anterior</span>
+                        </li>
+                        {% endif %}
+
+                        {% for page_num in movements.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num == movements.page %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                                {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('process_management.movements', process_id=process.id, page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if movements.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('process_management.movements', process_id=process.id, page=movements.next_num) }}">
+                                Próximo
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Próximo</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum andamento registrado</h5>
+                        <p class="text-muted">Seja o primeiro a adicionar um andamento para este processo.</p>
+                        <a href="{{ url_for('process_management.add_movement', process_id=process.id) }}"
+                           class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Adicionar Primeiro Andamento
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.timeline-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 5px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border: 3px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.timeline-content {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.timeline-important .timeline-content {
+    border-left: 4px solid #dc3545;
+}
+
+.timeline-important .timeline-marker {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+</style>
+{% endblock %}

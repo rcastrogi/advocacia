@@ -88,6 +88,10 @@ def create_app(config_class=Config):
     mail.init_app(app)
     migrate.init_app(app, db)
 
+    # Initialize email notifications system
+    from app.processes.email_notifications import init_mail
+    init_mail(app)
+
     # Initialize rate limiter only if enabled
     if app.config.get("RATELIMIT_ENABLED", True):
         # Use Redis for rate limiting if available, otherwise memory
@@ -201,6 +205,10 @@ def create_app(config_class=Config):
     from app.processes import bp as processes_bp
 
     app.register_blueprint(processes_bp, url_prefix="/processes")
+
+    from app.advanced import advanced_bp
+
+    app.register_blueprint(advanced_bp)
 
     # Register error handlers
     from app.error_handlers import init_logging, register_error_handlers

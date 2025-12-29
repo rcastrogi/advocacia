@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Novo Andamento - {{ process.title }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        .header { background: #007bff; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }
+        .content { padding: 20px; }
+        .movement-info { background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0; border-left: 4px solid #007bff; }
+        .process-info { background: #e9ecef; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        .footer { text-align: center; color: #6c757d; font-size: 12px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Novo Andamento Processual</h1>
+        </div>
+
+        <div class="content">
+            <p>Olá {{ user.full_name or user.username }},</p>
+
+            <p>Um novo andamento foi registrado no seguinte processo:</p>
+
+            <div class="process-info">
+                <h3>{{ process.title }}</h3>
+                <p><strong>Número do Processo:</strong> {{ process.process_number or 'Não informado' }}</p>
+                <p><strong>Status Atual:</strong> {{ process.get_status_text() }}</p>
+            </div>
+
+            <div class="movement-info">
+                <h4>Detalhes do Andamento</h4>
+                <p><strong>Data/Hora:</strong> {{ movement.movement_date.strftime('%d/%m/%Y %H:%M') }}</p>
+                <p><strong>Tipo:</strong> {{ movement.movement_type|title if movement.movement_type else 'Não informado' }}</p>
+                <p><strong>Descrição:</strong> {{ movement.description }}</p>
+                {% if movement.court_decision %}
+                <p><strong>Decisão:</strong> {{ movement.court_decision }}</p>
+                {% endif %}
+                {% if movement.responsible_party %}
+                <p><strong>Parte Responsável:</strong> {{ movement.responsible_party }}</p>
+                {% endif %}
+                {% if movement.is_important %}
+                <p><strong>⚠️ Este andamento foi marcado como IMPORTANTE</strong></p>
+                {% endif %}
+                {% if movement.requires_action %}
+                <p><strong>🔥 Este andamento REQUER AÇÃO do advogado</strong></p>
+                {% endif %}
+            </div>
+
+            {% if movement.internal_notes %}
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                <strong>Anotações Internas:</strong><br>
+                {{ movement.internal_notes }}
+            </div>
+            {% endif %}
+
+            <p>
+                <a href="{{ url_for('process_management.movements', process_id=process.id, _external=True) }}"
+                   style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+                    Ver Todos os Andamentos
+                </a>
+            </p>
+
+            <p>Atenciosamente,<br>
+            Sistema de Gestão Processual</p>
+        </div>
+
+        <div class="footer">
+            <p>Esta é uma mensagem automática. Não responda este email.</p>
+        </div>
+    </div>
+</body>
+</html>

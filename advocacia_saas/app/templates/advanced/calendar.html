@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block title %}Calendário Jurídico{% endblock %}
+
+{% block head %}
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+
+<style>
+    #calendar {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    .fc-event {
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.85em;
+        padding: 2px 4px;
+    }
+
+    .fc-event:hover {
+        opacity: 0.8;
+    }
+
+    .event-tooltip {
+        max-width: 300px;
+    }
+
+    .event-type-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.75em;
+        font-weight: bold;
+        color: white;
+    }
+
+    .event-priority-high {
+        background-color: #dc3545;
+    }
+
+    .event-priority-urgent {
+        background-color: #8b0000;
+    }
+
+    .calendar-controls {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .calendar-controls .btn {
+        white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+        .calendar-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .calendar-controls .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">Calendário Jurídico</h1>
+                    <p class="text-muted">Gerencie audiências, prazos e compromissos processuais</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('advanced.new_calendar_event') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Novo Evento
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controles do Calendário -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="calendar-controls">
+                        <button id="todayBtn" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-calendar-day"></i> Hoje
+                        </button>
+                        <button id="prevBtn" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </button>
+                        <button id="nextBtn" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-chevron-right"></i> Próximo
+                        </button>
+                        <span id="currentDate" class="fw-bold text-primary mx-3"></span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button id="monthView" class="btn btn-outline-primary active">Mês</button>
+                            <button id="weekView" class="btn btn-outline-primary">Semana</button>
+                            <button id="dayView" class="btn btn-outline-primary">Dia</button>
+                            <button id="listView" class="btn btn-outline-primary">Lista</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendário -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legenda -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Legenda</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-danger me-2" style="width: 20px; height: 20px;"></div>
+                                <span>Audiências</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-warning me-2" style="width: 20px; height: 20px;"></div>
+                                <span>Prazos</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-primary me-2" style="width: 20px; height: 20px;"></div>
+                                <span>Reuniões</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-success me-2" style="width: 20px; height: 20px;"></div>
+                                <span>Compromissos</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i>
+                                Cores mais escuras indicam prioridade alta ou urgente
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes do Evento -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventModalTitle">Detalhes do Evento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="eventModalBody">
+                <!-- Conteúdo será carregado dinamicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <div id="eventModalActions">
+                    <!-- Ações serão carregadas dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/pt-br.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let calendar;
+    let currentView = 'dayGridMonth';
+
+    // Inicializar calendário
+    const calendarEl = document.getElementById('calendar');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'pt-br',
+        initialView: 'dayGridMonth',
+        headerToolbar: false, // Usaremos controles customizados
+        height: 'auto',
+        events: {
+            url: '{{ url_for("advanced.get_calendar_events") }}',
+            failure: function() {
+                alert('Erro ao carregar eventos do calendário');
+            }
+        },
+        eventClick: function(info) {
+            showEventDetails(info.event);
+        },
+        eventMouseEnter: function(info) {
+            showEventTooltip(info);
+        },
+        eventMouseLeave: function() {
+            hideEventTooltip();
+        },
+        dayMaxEvents: 3,
+        moreLinkClick: 'popover'
+    });
+
+    calendar.render();
+
+    // Atualizar título da data atual
+    updateCurrentDate();
+
+    // Controles do calendário
+    document.getElementById('todayBtn').addEventListener('click', function() {
+        calendar.today();
+        updateCurrentDate();
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', function() {
+        calendar.prev();
+        updateCurrentDate();
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', function() {
+        calendar.next();
+        updateCurrentDate();
+    });
+
+    // Controles de visualização
+    document.getElementById('monthView').addEventListener('click', function() {
+        setActiveView('monthView');
+        calendar.changeView('dayGridMonth');
+        currentView = 'dayGridMonth';
+        updateCurrentDate();
+    });
+
+    document.getElementById('weekView').addEventListener('click', function() {
+        setActiveView('weekView');
+        calendar.changeView('timeGridWeek');
+        currentView = 'timeGridWeek';
+        updateCurrentDate();
+    });
+
+    document.getElementById('dayView').addEventListener('click', function() {
+        setActiveView('dayView');
+        calendar.changeView('timeGridDay');
+        currentView = 'timeGridDay';
+        updateCurrentDate();
+    });
+
+    document.getElementById('listView').addEventListener('click', function() {
+        setActiveView('listView');
+        calendar.changeView('listMonth');
+        currentView = 'listMonth';
+        updateCurrentDate();
+    });
+
+    function setActiveView(activeId) {
+        ['monthView', 'weekView', 'dayView', 'listView'].forEach(id => {
+            document.getElementById(id).classList.remove('active');
+        });
+        document.getElementById(activeId).classList.add('active');
+    }
+
+    function updateCurrentDate() {
+        const date = calendar.getDate();
+        const view = calendar.view;
+        let dateText = '';
+
+        if (view.type === 'dayGridMonth') {
+            dateText = new Intl.DateTimeFormat('pt-BR', {
+                year: 'numeric',
+                month: 'long'
+            }).format(date);
+        } else if (view.type === 'timeGridWeek') {
+            const start = view.activeStart;
+            const end = view.activeEnd;
+            dateText = `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`;
+        } else if (view.type === 'timeGridDay') {
+            dateText = date.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        } else {
+            dateText = view.title;
+        }
+
+        document.getElementById('currentDate').textContent = dateText;
+    }
+
+    function showEventDetails(event) {
+        const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+        const modalTitle = document.getElementById('eventModalTitle');
+        const modalBody = document.getElementById('eventModalBody');
+        const modalActions = document.getElementById('eventModalActions');
+
+        modalTitle.textContent = event.title;
+
+        // Construir conteúdo do modal
+        let content = `
+            <div class="row">
+                <div class="col-md-8">
+                    <h6>Detalhes do Evento</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Tipo:</strong></td>
+                            <td>${getEventTypeDisplay(event.extendedProps.type)}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data/Hora:</strong></td>
+                            <td>${formatEventDateTime(event.start, event.end, event.allDay)}</td>
+                        </tr>
+                        ${event.extendedProps.location ? `
+                        <tr>
+                            <td><strong>Local:</strong></td>
+                            <td>${event.extendedProps.location}</td>
+                        </tr>
+                        ` : ''}
+                        ${event.extendedProps.priority !== 'normal' ? `
+                        <tr>
+                            <td><strong>Prioridade:</strong></td>
+                            <td><span class="badge bg-${event.extendedProps.priority === 'urgent' ? 'danger' : 'warning'}">${event.extendedProps.priority.toUpperCase()}</span></td>
+                        </tr>
+                        ` : ''}
+                    </table>
+
+                    ${event.extendedProps.description ? `
+                    <h6>Descrição</h6>
+                    <p>${event.extendedProps.description}</p>
+                    ` : ''}
+
+                    ${event.extendedProps.notes ? `
+                    <h6>Observações</h6>
+                    <p class="text-muted">${event.extendedProps.notes}</p>
+                    ` : ''}
+                </div>
+                <div class="col-md-4">
+                    <h6>Ações</h6>
+                    <div class="d-grid gap-2">
+                        <a href="/advanced/calendar/event/${event.id}/edit" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent(${event.id})">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        modalBody.innerHTML = content;
+        modal.show();
+    }
+
+    function getEventTypeDisplay(type) {
+        const types = {
+            'audiencia': 'Audiência',
+            'prazo': 'Prazo Processual',
+            'reuniao': 'Reunião',
+            'compromisso': 'Compromisso'
+        };
+        return types[type] || type;
+    }
+
+    function formatEventDateTime(start, end, allDay) {
+        if (allDay) {
+            if (start.toDateString() === end.toDateString()) {
+                return start.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            } else {
+                return `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`;
+            }
+        } else {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            if (start.toDateString() === end.toDateString()) {
+                return `${start.toLocaleDateString('pt-BR', options)} - ${end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+            } else {
+                return `${start.toLocaleString('pt-BR', options)} - ${end.toLocaleString('pt-BR', options)}`;
+            }
+        }
+    }
+
+    function showEventTooltip(info) {
+        // Implementar tooltip se necessário
+    }
+
+    function hideEventTooltip() {
+        // Implementar esconder tooltip se necessário
+    }
+
+    // Função global para deletar evento
+    window.deleteEvent = function(eventId) {
+        if (confirm('Tem certeza que deseja excluir este evento?')) {
+            fetch(`/advanced/calendar/event/${eventId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value || ''
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    calendar.refetchEvents();
+                    bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+                    alert('Evento excluído com sucesso!');
+                } else {
+                    alert('Erro ao excluir evento.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao excluir evento.');
+            });
+        }
+    };
+});
+</script>
+{% endblock %}

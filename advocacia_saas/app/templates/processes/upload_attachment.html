@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-white mb-2">
+                    <i class="fas fa-upload me-2"></i>Enviar Anexo
+                </h1>
+                <p class="text-white opacity-75 mb-0">
+                    {{ process.title }} - {{ process.process_number or 'Sem número' }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Novo Anexo</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Arquivo *</label>
+                            <input type="file" class="form-control" id="file" name="file"
+                                   accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt,.rtf" required>
+                            <div class="form-text">
+                                Tipos aceitos: PDF, DOC, DOCX, PNG, JPG, JPEG, TXT, RTF (máx. 10MB)
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título do Documento *</label>
+                            <input type="text" class="form-control" id="title" name="title"
+                                   required placeholder="Ex: Petição Inicial, Sentença, Contrato...">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="document_type" class="form-label">Tipo de Documento</label>
+                                <select class="form-select" id="document_type" name="document_type">
+                                    <option value="">Selecione...</option>
+                                    <option value="peticao">Petição</option>
+                                    <option value="decisao">Decisão/Sentença</option>
+                                    <option value="prova">Prova/Documento Probatório</option>
+                                    <option value="contrato">Contrato</option>
+                                    <option value="comprovante">Comprovante</option>
+                                    <option value="intimacao">Intimação</option>
+                                    <option value="recurso">Recurso</option>
+                                    <option value="outros">Outros</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="tags" class="form-label">Tags (separadas por vírgula)</label>
+                                <input type="text" class="form-control" id="tags" name="tags"
+                                       placeholder="Ex: urgente, contrato, prova">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="description" name="description"
+                                      rows="3" placeholder="Descrição do documento..."></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_confidential"
+                                           name="is_confidential">
+                                    <label class="form-check-label" for="is_confidential">
+                                        <strong>Documento Confidencial</strong>
+                                        <br><small class="text-muted">Não será visível ao cliente</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_visible_to_client"
+                                           name="is_visible_to_client">
+                                    <label class="form-check-label" for="is_visible_to_client">
+                                        <strong>Visível ao Cliente</strong>
+                                        <br><small class="text-muted">Cliente pode acessar via portal</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('process_management.attachments', process_id=process.id) }}"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-1"></i>Enviar Anexo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file');
+    const titleInput = document.getElementById('title');
+
+    // Auto-preencher título baseado no nome do arquivo
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0 && !titleInput.value) {
+            const fileName = this.files[0].name;
+            const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+            titleInput.value = nameWithoutExt.replace(/[_-]/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+        }
+    });
+
+    // Validação de tamanho do arquivo
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            const fileSize = this.files[0].size;
+            const maxSize = 10 * 1024 * 1024; // 10MB
+
+            if (fileSize > maxSize) {
+                alert('Arquivo muito grande! Tamanho máximo: 10MB');
+                this.value = '';
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
