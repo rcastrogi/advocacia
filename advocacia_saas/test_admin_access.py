@@ -5,8 +5,10 @@ Script para testar acesso ao painel admin
 
 import os
 import sys
-import requests
 from datetime import datetime
+
+import requests
+
 
 def test_admin_access():
     """Testa acesso ao painel admin via HTTP"""
@@ -59,6 +61,7 @@ def test_admin_access():
     print()
     print("Ou veja os logs recentes:")
     print("python monitor_portal_logs.py --recent 20")
+
 
 if __name__ == "__main__":
     test_admin_access()

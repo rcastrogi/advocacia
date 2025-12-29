@@ -267,7 +267,10 @@ def edit_plan(plan_id):
 def users():
     """Redirecionamento: Gerenciamento de usuários movido para admin/users"""
     _require_admin()
-    flash("Gerenciamento de usuários e planos agora disponível em Admin > Usuários", "info")
+    flash(
+        "Gerenciamento de usuários e planos agora disponível em Admin > Usuários",
+        "info",
+    )
     return redirect(url_for("admin.users_list"))
 
 
@@ -321,16 +324,18 @@ def api_plans():
     """API para obter lista de planos ativos"""
     _require_admin()
     plans = BillingPlan.query.filter_by(active=True).order_by(BillingPlan.name).all()
-    return jsonify([
-        {
-            "id": plan.id,
-            "name": plan.name,
-            "plan_type": plan.plan_type,
-            "monthly_fee": float(plan.monthly_fee) if plan.monthly_fee else 0,
-            "yearly_fee": float(plan.yearly_fee) if plan.yearly_fee else 0,
-        }
-        for plan in plans
-    ])
+    return jsonify(
+        [
+            {
+                "id": plan.id,
+                "name": plan.name,
+                "plan_type": plan.plan_type,
+                "monthly_fee": float(plan.monthly_fee) if plan.monthly_fee else 0,
+                "yearly_fee": float(plan.yearly_fee) if plan.yearly_fee else 0,
+            }
+            for plan in plans
+        ]
+    )
 
 
 @bp.route("/users/<int:user_id>/assign-plan", methods=["POST"])
@@ -338,17 +343,17 @@ def api_plans():
 def assign_plan(user_id):
     """Atribuir plano a um usuário via API"""
     _require_admin()
-    
+
     user = User.query.get_or_404(user_id)
     plan_id = request.form.get("plan_id")
     status = request.form.get("status", "active")
-    
+
     if not plan_id:
         flash("Plano não especificado.", "warning")
         return redirect(url_for("admin.users_list"))
-    
+
     plan = BillingPlan.query.get_or_404(plan_id)
-    
+
     # Mark existing plans as old
     for user_plan in user.plans.filter_by(is_current=True).all():
         user_plan.is_current = False
@@ -365,6 +370,6 @@ def assign_plan(user_id):
 
     user.billing_status = "delinquent" if status == "delinquent" else "active"
     db.session.commit()
-    
+
     flash(f"Plano '{plan.name}' atribuído a {user.full_name or user.email}.", "success")
     return redirect(url_for("admin.users_list"))

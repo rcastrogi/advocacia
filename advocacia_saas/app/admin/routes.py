@@ -5,13 +5,13 @@ Dashboard completo para gerenciar usuários e métricas da plataforma.
 
 import csv
 import json
+import logging
+import os
 import traceback
 import zipfile
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from io import BytesIO, StringIO
-import logging
-import os
 
 from flask import (
     Response,
@@ -52,19 +52,21 @@ from app.models import (
 )
 
 # Configurar logging específico para admin
-admin_logger = logging.getLogger('admin')
+admin_logger = logging.getLogger("admin")
 admin_logger.setLevel(logging.DEBUG)
 
 # Criar handler para arquivo
-admin_log_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs', 'admin.log')
+admin_log_file = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "admin.log"
+)
 os.makedirs(os.path.dirname(admin_log_file), exist_ok=True)
 
-admin_file_handler = logging.FileHandler(admin_log_file, encoding='utf-8')
+admin_file_handler = logging.FileHandler(admin_log_file, encoding="utf-8")
 admin_file_handler.setLevel(logging.DEBUG)
 
 # Criar formatter
 admin_formatter = logging.Formatter(
-    '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s'
+    "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s"
 )
 admin_file_handler.setFormatter(admin_formatter)
 
@@ -81,7 +83,9 @@ def _require_admin():
         abort(403)
 
     if current_user.user_type != "master":
-        admin_logger.warning(f"Usuário {current_user.email} (tipo: {current_user.user_type}) tentou acessar área admin sem permissões")
+        admin_logger.warning(
+            f"Usuário {current_user.email} (tipo: {current_user.user_type}) tentou acessar área admin sem permissões"
+        )
         abort(403)
 
     admin_logger.info(f"Usuário admin {current_user.email} acessou área administrativa")
@@ -234,7 +238,9 @@ def users_list():
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 20, type=int)
 
-        admin_logger.debug(f"Filtros aplicados - search: '{search}', status: {status_filter}, type: {user_type_filter}")
+        admin_logger.debug(
+            f"Filtros aplicados - search: '{search}', status: {status_filter}, type: {user_type_filter}"
+        )
 
         # Query base
         query = User.query
@@ -279,7 +285,9 @@ def users_list():
         # Calcular métricas em bulk (evita N+1 queries)
         users_with_metrics = _get_bulk_user_metrics(users)
 
-        admin_logger.info(f"Lista de usuários carregada: {len(users)} usuários encontrados (página {page})")
+        admin_logger.info(
+            f"Lista de usuários carregada: {len(users)} usuários encontrados (página {page})"
+        )
 
         return render_template(
             "admin/users_list.html",
@@ -294,7 +302,9 @@ def users_list():
         )
 
     except Exception as e:
-        admin_logger.error(f"Erro ao carregar lista de usuários para {current_user.email}: {str(e)}")
+        admin_logger.error(
+            f"Erro ao carregar lista de usuários para {current_user.email}: {str(e)}"
+        )
         admin_logger.error(f"Traceback: {traceback.format_exc()}")
         flash("Erro ao carregar lista de usuários. Tente novamente.", "danger")
         return redirect(url_for("admin.dashboard"))
@@ -1813,9 +1823,13 @@ def _get_bulk_user_metrics(users):
 
     # 4. Créditos de IA
     credits_data = {}
-    for row in db.session.query(
-        UserCredits.user_id, UserCredits.balance, UserCredits.total_used
-    ).filter(UserCredits.user_id.in_(user_ids)).all():
+    for row in (
+        db.session.query(
+            UserCredits.user_id, UserCredits.balance, UserCredits.total_used
+        )
+        .filter(UserCredits.user_id.in_(user_ids))
+        .all()
+    ):
         credits_data[row[0]] = (row[1], row[2])
 
     # 5. Gerações de IA totais e mensais
@@ -1838,11 +1852,16 @@ def _get_bulk_user_metrics(users):
 
     # 6. Tokens e custo de IA
     ai_stats = {}
-    for row in db.session.query(
-        AIGeneration.user_id,
-        func.coalesce(func.sum(AIGeneration.tokens_total), 0),
-        func.coalesce(func.sum(AIGeneration.cost_usd), 0),
-    ).filter(AIGeneration.user_id.in_(user_ids)).group_by(AIGeneration.user_id).all():
+    for row in (
+        db.session.query(
+            AIGeneration.user_id,
+            func.coalesce(func.sum(AIGeneration.tokens_total), 0),
+            func.coalesce(func.sum(AIGeneration.cost_usd), 0),
+        )
+        .filter(AIGeneration.user_id.in_(user_ids))
+        .group_by(AIGeneration.user_id)
+        .all()
+    ):
         ai_stats[row[0]] = (row[1], row[2])
 
     # 7. Plano atual
@@ -1992,7 +2011,9 @@ def _get_user_metrics(user, detailed=False):
     )
 
     ai_tokens_total = ai_stats.tokens if ai_stats and ai_stats.tokens is not None else 0
-    ai_cost_total = ai_stats.cost if ai_stats and ai_stats.cost is not None else Decimal("0.00")
+    ai_cost_total = (
+        ai_stats.cost if ai_stats and ai_stats.cost is not None else Decimal("0.00")
+    )
 
     # Plano atual
     current_plan = UserPlan.query.filter_by(user_id=user.id, is_current=True).first()

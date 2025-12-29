@@ -21,7 +21,9 @@ def update_roadmap_status():
         print("🔄 Atualizando status do roadmap...")
 
         # Atualizar Dashboard de Analytics Avançado para completed
-        dashboard_item = RoadmapItem.query.filter_by(slug="dashboard-analytics-avancado").first()
+        dashboard_item = RoadmapItem.query.filter_by(
+            slug="dashboard-analytics-avancado"
+        ).first()
         if dashboard_item:
             dashboard_item.status = "completed"
             dashboard_item.actual_completion_date = datetime.utcnow().date()
@@ -30,7 +32,9 @@ def update_roadmap_status():
             print("⚠️ Item 'Dashboard de Analytics Avançado' não encontrado")
 
         # Atualizar Otimização de Performance para completed
-        performance_item = RoadmapItem.query.filter_by(slug="otimizacao-performance").first()
+        performance_item = RoadmapItem.query.filter_by(
+            slug="otimizacao-performance"
+        ).first()
         if performance_item:
             performance_item.status = "completed"
             performance_item.actual_completion_date = datetime.utcnow().date()
@@ -39,10 +43,15 @@ def update_roadmap_status():
             print("⚠️ Item 'Otimização de Performance' não encontrado")
 
         # Adicionar Portal do Cliente Avançado se não existir
-        portal_item = RoadmapItem.query.filter_by(slug="portal-cliente-avancado").first()
+        portal_item = RoadmapItem.query.filter_by(
+            slug="portal-cliente-avancado"
+        ).first()
         if not portal_item:
             from app.models import RoadmapCategory
-            funcionalidades_cat = RoadmapCategory.query.filter_by(slug="funcionalidades").first()
+
+            funcionalidades_cat = RoadmapCategory.query.filter_by(
+                slug="funcionalidades"
+            ).first()
             if funcionalidades_cat:
                 portal_item = RoadmapItem(
                     category_id=funcionalidades_cat.id,
@@ -60,7 +69,8 @@ def update_roadmap_status():
                     user_impact="high",
                     tags="portal, cliente, processos, comunicação",
                     planned_start_date=datetime.utcnow().date() - timedelta(days=30),
-                    planned_completion_date=datetime.utcnow().date() + timedelta(days=30),
+                    planned_completion_date=datetime.utcnow().date()
+                    + timedelta(days=30),
                     actual_start_date=datetime.utcnow().date() - timedelta(days=30),
                     actual_completion_date=datetime.utcnow().date(),
                 )

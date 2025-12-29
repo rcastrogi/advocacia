@@ -14,6 +14,7 @@ from app.models import User
 from flask import Flask
 from flask_login import current_user, login_user
 
+
 def diagnose_admin_access():
     """Diagnóstica problemas de acesso ao painel admin"""
 
@@ -66,11 +67,14 @@ def diagnose_admin_access():
         # Verificar rota admin
         try:
             from app.admin.routes import _require_admin
+
             print("✅ Função _require_admin() encontrada")
 
             # Simular teste de permissão (se houver usuário logado)
-            if hasattr(app, 'login_manager') and current_user.is_authenticated:
-                print(f"Usuário atual logado: {current_user.email} (tipo: {current_user.user_type})")
+            if hasattr(app, "login_manager") and current_user.is_authenticated:
+                print(
+                    f"Usuário atual logado: {current_user.email} (tipo: {current_user.user_type})"
+                )
                 try:
                     _require_admin()
                     print("✅ Usuário atual tem permissões admin")
@@ -92,6 +96,7 @@ def diagnose_admin_access():
 
         print("2. Verificar se está logado com usuário master")
         print("3. Se o problema persistir, verifique os logs em logs/portal.log")
+
 
 if __name__ == "__main__":
     diagnose_admin_access()

@@ -13,6 +13,7 @@ from app import create_app, db
 from app.models import User
 from werkzeug.security import generate_password_hash
 
+
 def fix_admin_access():
     """Corrige problemas de acesso ao painel admin"""
 
@@ -55,7 +56,7 @@ def fix_admin_access():
                 user_type="master",
                 is_active=True,
                 password_hash=generate_password_hash("admin123"),
-                created_at=datetime.utcnow()
+                created_at=datetime.utcnow(),
             )
 
             db.session.add(master_user)
@@ -81,6 +82,7 @@ def fix_admin_access():
         print("URL para testar acesso direto:")
         print("http://localhost:5000/admin/usuarios")
         print("(Substitua localhost:5000 pela URL correta do seu ambiente)")
+
 
 if __name__ == "__main__":
     fix_admin_access()
