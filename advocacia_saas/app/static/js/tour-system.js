@@ -56,6 +56,11 @@ class TourSystem {
                     position: 'bottom'
                 },
                 {
+                    element: '[href*="processes"]',
+                    intro: 'Sistema completo de gerenciamento de processos judiciais com dashboard, relatórios e notificações.',
+                    position: 'bottom'
+                },
+                {
                     element: '[href*="credits_dashboard"]',
                     intro: 'Monitore seus créditos de IA disponíveis para gerar petições.',
                     position: 'left'
@@ -378,6 +383,139 @@ class TourSystem {
                 }
             ]
         };
+
+        // Tour do Sistema de Processos (Dashboard e Gerenciamento)
+        this.tours.processes_dashboard = {
+            steps: [
+                {
+                    element: '.breadcrumb-custom',
+                    intro: 'Bem-vindo ao Sistema de Gerenciamento de Processos! Acompanhe todos os seus casos judiciais.',
+                    position: 'bottom'
+                },
+                {
+                    element: '.dashboard-card',
+                    intro: 'Cards com estatísticas dos seus processos: total, aguardando distribuição, em andamento e petições sem número.',
+                    position: 'right'
+                },
+                {
+                    element: '[href*="processes"]',
+                    intro: 'Acesse o dashboard completo de processos com métricas detalhadas.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="urgent-deadlines"]',
+                    intro: 'Alertas de prazos urgentes - processos com vencimento em até 7 dias.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="notifications"]',
+                    intro: 'Notificações importantes sobre mudanças nos seus processos.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="quick-actions"]',
+                    intro: 'Ações rápidas: ver todos os processos, petições pendentes, relatórios e novo processo.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="recent-processes"]',
+                    intro: 'Processos criados recentemente com status e informações básicas.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="pending-petitions"]',
+                    intro: 'Petições que foram criadas mas ainda não têm número de processo vinculado.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="status-distribution"]',
+                    intro: 'Distribuição visual dos processos por status atual.',
+                    position: 'left'
+                }
+            ]
+        };
+
+        // Tour da Página de Relatórios de Processos
+        this.tours.processes_reports = {
+            steps: [
+                {
+                    element: '.breadcrumb-custom',
+                    intro: 'Página de Relatórios - Análises detalhadas dos seus processos judiciais.',
+                    position: 'bottom'
+                },
+                {
+                    element: '.dashboard-card',
+                    intro: 'Clique em qualquer tipo de relatório para gerar análises específicas.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="status-distribution-report"]',
+                    intro: 'Relatório de distribuição por status - veja como seus processos estão distribuídos.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="monthly-creation-report"]',
+                    intro: 'Acompanhe a evolução da criação de processos mês a mês.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="court-distribution-report"]',
+                    intro: 'Análise de processos por tribunal e justiça - onde seus casos tramitam.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="deadline-analysis-report"]',
+                    intro: 'Análise completa de prazos: próximos, vencidos e urgentes.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="petition-link-report"]',
+                    intro: 'Relatório de vinculação entre petições e processos criados.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="date-filters"]',
+                    intro: 'Configure período do relatório com datas inicial e final.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="report-results"]',
+                    intro: 'Aqui serão exibidos os resultados dos relatórios gerados.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="export-report"]',
+                    intro: 'Exporte relatórios em diferentes formatos para análise externa.',
+                    position: 'left'
+                }
+            ]
+        };
+
+        // Tour da API de Processos
+        this.tours.processes_api = {
+            steps: [
+                {
+                    element: '[data-tour="api-endpoints"]',
+                    intro: 'APIs RESTful completas para integração com outros sistemas.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="process-crud"]',
+                    intro: 'Operações completas: criar, ler, atualizar e excluir processos.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="notifications-api"]',
+                    intro: 'APIs para gerenciar notificações e alertas de processos.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="reports-api"]',
+                    intro: 'Gere relatórios programaticamente através das APIs.',
+                    position: 'right'
+                }
+            ]
+        };
     }
 
     startTour(tourName) {
@@ -513,7 +651,7 @@ class TourSystem {
             // Tours para advogados/escritórios
             tourOptions = [
                 {
-                    id: 'dashboard',
+                    id: 'lawyer_dashboard',
                     icon: 'fas fa-tachometer-alt text-primary',
                     title: 'Dashboard',
                     description: 'Conheça a página inicial e navegação principal'
@@ -525,14 +663,20 @@ class TourSystem {
                     description: 'Aprenda a criar petições com IA e modelos'
                 },
                 {
-                    id: 'dynamic_form',
-                    icon: 'fas fa-edit text-info',
-                    title: 'Formulários',
-                    description: 'Entenda como preencher os formulários dinâmicos'
+                    id: 'processes_dashboard',
+                    icon: 'fas fa-balance-scale text-info',
+                    title: 'Processos',
+                    description: 'Sistema completo de gerenciamento de processos judiciais'
+                },
+                {
+                    id: 'processes_reports',
+                    icon: 'fas fa-chart-bar text-warning',
+                    title: 'Relatórios de Processos',
+                    description: 'Análises e relatórios detalhados dos seus processos'
                 },
                 {
                     id: 'clients',
-                    icon: 'fas fa-users text-warning',
+                    icon: 'fas fa-users text-secondary',
                     title: 'Clientes',
                     description: 'Gerencie seus clientes e seus casos'
                 }

@@ -777,6 +777,18 @@ textarea.form-control {
     height: 100%;
 }
 
+@media (max-width: 768px) {
+    .dashboard-card {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-card {
+        padding: 1rem;
+    }
+}
+
 .dashboard-card:hover {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
     transform: translateY(-5px);
@@ -793,6 +805,24 @@ textarea.form-control {
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
     transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .card-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .card-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+        margin-bottom: 0.8rem;
+    }
 }
 
 .card-icon.bg-primary {

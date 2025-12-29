@@ -660,7 +660,9 @@
                 <a :href="'/petitions/saved/' + petitionId" class="ms-2">Ver detalhes</a>
             </div>
         </template>
-    </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal de Preview -->
@@ -1583,6 +1585,7 @@ document.addEventListener('alpine:init', () => {
                     },
                     body: JSON.stringify({
                         petition_type_id: window.PETITION_TYPE.id,
+                        petition_model_id: {{ petition_model.id }},
                         form_data: this.formData
                     })
                 });

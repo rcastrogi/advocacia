@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-white mb-2">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Petições Pendentes
+                </h1>
+                <p class="text-white opacity-75 mb-0">
+                    Petições finalizadas que ainda não têm número de processo
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    {% if petitions.items %}
+        <div class="alert alert-warning">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Atenção:</strong> Estas petições foram finalizadas mas ainda não possuem número de processo.
+            Adicione o número assim que receber a confirmação da distribuição.
+        </div>
+
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Título da Petição</th>
+                                <th>Tipo</th>
+                                <th>Finalizada em</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for petition in petitions.items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ petition.title or 'Petição sem título' }}</strong>
+                                    {% if petition.notes %}
+                                        <br><small class="text-muted">{{ petition.notes[:100] }}{% if petition.notes|length > 100 %}...{% endif %}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ petition.petition_type.name if petition.petition_type else 'Tipo não informado' }}
+                                    {% if petition.petition_model %}
+                                        <br><small class="text-muted">{{ petition.petition_model.name }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ petition.completed_at.strftime('%d/%m/%Y %H:%M') if petition.completed_at else 'Data não informada' }}
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ petition.get_status_display()[0] }}</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary btn-sm" title="Ver petição"
+                                                onclick="window.open('{{ url_for('petitions.view_petition', petition_id=petition.id) }}', '_blank')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-outline-warning btn-sm" title="Adicionar número do processo"
+                                                data-bs-toggle="modal" data-bs-target="#addProcessNumberModal"
+                                                data-petition-id="{{ petition.id }}"
+                                                data-petition-title="{{ petition.title }}">
+                                            <i class="fas fa-plus"></i> Número
+                                        </button>
+                                        <button class="btn btn-outline-info btn-sm" title="Criar processo"
+                                                data-bs-toggle="modal" data-bs-target="#createProcessModal"
+                                                data-petition-id="{{ petition.id }}"
+                                                data-petition-title="{{ petition.title }}">
+                                            <i class="fas fa-folder-plus"></i> Processo
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if petitions.has_prev or petitions.has_next %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if petitions.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('processes.pending_petitions', page=petitions.prev_num) }}">
+                        Anterior
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Anterior</span>
+                </li>
+                {% endif %}
+
+                {% for page_num in petitions.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num == petitions.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('processes.pending_petitions', page=page_num) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if petitions.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('processes.pending_petitions', page=petitions.next_num) }}">
+                        Próximo
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Próximo</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                <h4 class="text-success">Parabéns!</h4>
+                <p class="text-muted">
+                    Todas as suas petições possuem número de processo. Mantenha essa organização!
+                </p>
+                <a href="{{ url_for('processes.dashboard') }}" class="btn btn-primary">
+                    <i class="fas fa-tachometer-alt me-2"></i>Ver Dashboard
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal para adicionar número do processo -->
+<div class="modal fade" id="addProcessNumberModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adicionar Número do Processo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addProcessNumberForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="petitionTitle" class="form-label">Petição</label>
+                        <input type="text" class="form-control" id="petitionTitle" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="processNumber" class="form-label">Número do Processo</label>
+                        <input type="text" class="form-control" id="processNumber"
+                               placeholder="0000000-00.0000.0.00.0000" required>
+                        <div class="form-text">Formato: 0000000-00.0000.0.00.0000</div>
+                    </div>
+                    <input type="hidden" id="petitionId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para criar processo -->
+<div class="modal fade" id="createProcessModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Criar Processo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createProcessForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="processTitle" class="form-label">Título do Processo</label>
+                        <input type="text" class="form-control" id="processTitle" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="processPlaintiff" class="form-label">Autor</label>
+                                <input type="text" class="form-control" id="processPlaintiff">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="processDefendant" class="form-label">Réu</label>
+                                <input type="text" class="form-control" id="processDefendant">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="processCourt" class="form-label">Tribunal</label>
+                                <select class="form-select" id="processCourt">
+                                    <option value="">Selecione...</option>
+                                    <option value="Justiça Federal">Justiça Federal</option>
+                                    <option value="Justiça Estadual">Justiça Estadual</option>
+                                    <option value="Justiça do Trabalho">Justiça do Trabalho</option>
+                                    <option value="Justiça Militar">Justiça Militar</option>
+                                    <option value="Justiça Eleitoral">Justiça Eleitoral</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="processJurisdiction" class="form-label">Vara/Juízo</label>
+                                <input type="text" class="form-control" id="processJurisdiction"
+                                       placeholder="1ª Vara Cível, Juizado Especial, etc.">
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="createProcessPetitionId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Criar Processo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal para adicionar número do processo
+    const addProcessNumberModal = document.getElementById('addProcessNumberModal');
+    addProcessNumberModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const petitionId = button.getAttribute('data-petition-id');
+        const petitionTitle = button.getAttribute('data-petition-title');
+
+        document.getElementById('petitionId').value = petitionId;
+        document.getElementById('petitionTitle').value = petitionTitle;
+    });
+
+    // Modal para criar processo
+    const createProcessModal = document.getElementById('createProcessModal');
+    createProcessModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const petitionId = button.getAttribute('data-petition-id');
+        const petitionTitle = button.getAttribute('data-petition-title');
+
+        document.getElementById('createProcessPetitionId').value = petitionId;
+        document.getElementById('processTitle').value = petitionTitle;
+    });
+
+    // Form para adicionar número do processo
+    document.getElementById('addProcessNumberForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const petitionId = document.getElementById('petitionId').value;
+        const processNumber = document.getElementById('processNumber').value;
+
+        // Aqui você implementará a chamada AJAX para salvar
+        console.log('Adicionando número', processNumber, 'para petição', petitionId);
+
+        // Por enquanto, apenas fecha o modal
+        bootstrap.Modal.getInstance(addProcessNumberModal).hide();
+
+        // Recarrega a página
+        location.reload();
+    });
+
+    // Form para criar processo
+    document.getElementById('createProcessForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = {
+            title: document.getElementById('processTitle').value,
+            plaintiff: document.getElementById('processPlaintiff').value,
+            defendant: document.getElementById('processDefendant').value,
+            court: document.getElementById('processCourt').value,
+            jurisdiction: document.getElementById('processJurisdiction').value,
+            petitionId: document.getElementById('createProcessPetitionId').value
+        };
+
+        // Aqui você implementará a chamada AJAX para criar o processo
+        console.log('Criando processo:', formData);
+
+        // Por enquanto, apenas fecha o modal
+        bootstrap.Modal.getInstance(createProcessModal).hide();
+
+        // Recarrega a página
+        location.reload();
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

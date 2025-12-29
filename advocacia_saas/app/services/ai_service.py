@@ -405,6 +405,50 @@ Seja objetivo e fundamentado."""
 
         return self._call_openai(messages, model=model, max_tokens=2500)
 
+    def generate_petition_content(
+        self,
+        prompt: str,
+        context: str = "",
+        premium: bool = False,
+    ) -> str:
+        """
+        Gera conteúdo de petição baseado em um prompt específico.
+
+        Args:
+            prompt: Prompt do usuário descrevendo o que gerar
+            context: Contexto adicional (tipo de petição, dados do modelo, etc.)
+            premium: Se True, usa GPT-4o
+
+        Returns:
+            str: Conteúdo gerado
+        """
+        system_prompt = """Você é um advogado brasileiro altamente qualificado e experiente, especializado na redação de petições jurídicas.
+
+INSTRUÇÕES IMPORTANTES:
+1. Use linguagem jurídica formal e técnica apropriada
+2. Cite artigos de lei quando relevante (CF, CPC, CC, CLT, etc.)
+3. Seja preciso e objetivo
+4. Mantenha a estrutura profissional de documentos jurídicos
+5. Use formatação adequada com parágrafos bem estruturados
+6. Responda APENAS com o conteúdo solicitado, sem explicações adicionais
+7. NÃO inclua saudações ou despedidas
+8. Use português brasileiro formal
+9. Adapte o conteúdo ao contexto fornecido quando disponível"""
+
+        user_prompt = prompt
+        if context:
+            user_prompt = f"CONTEXTO:\n{context}\n\nSOLICITAÇÃO:\n{prompt}"
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        model = MODELS["premium"] if premium else MODELS["fast"]
+
+        content, _ = self._call_openai(messages, model=model, max_tokens=2000)
+        return content
+
 
 # Instância global do serviço
 ai_service = AIService()

@@ -8,6 +8,8 @@ from unittest.mock import patch
 
 import pytest
 from app.models import (
+    PetitionModel,
+    PetitionModelSection,
     PetitionSection,
     PetitionType,
     PetitionTypeSection,
@@ -111,15 +113,26 @@ class TestPetitionSystem:
         db_session.add(petition_type)
         db_session.commit()
 
-        # Criar relação tipo-seção
-        type_section = PetitionTypeSection(
+        # Criar modelo de petição
+        petition_model = PetitionModel(
+            name="Modelo - Petição Teste",
+            slug="modelo-peticao-teste",
             petition_type_id=petition_type.id,
+            is_active=True,
+            use_dynamic_form=True,
+        )
+        db_session.add(petition_model)
+        db_session.commit()
+
+        # Criar relação modelo-seção
+        model_section = PetitionModelSection(
+            petition_model_id=petition_model.id,
             section_id=section.id,
             order=1,
             is_required=True,
             is_expanded=True,
         )
-        db_session.add(type_section)
+        db_session.add(model_section)
         db_session.commit()
 
         # Mock da verificação de assinatura
@@ -138,7 +151,7 @@ class TestPetitionSystem:
             response = client.post(
                 "/petitions/generate-dynamic",
                 json={
-                    "petition_type_id": petition_type.id,
+                    "petition_model_id": petition_model.id,
                     "form_data": {
                         "author_name": "João Silva",
                         "valor_causa": "5000.00",

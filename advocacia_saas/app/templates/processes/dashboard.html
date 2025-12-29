@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-white mb-2">
+                    <i class="fas fa-balance-scale me-2"></i>Processos - Dashboard
+                </h1>
+                <p class="text-white opacity-75 mb-0">
+                    Acompanhe seus processos judiciais e petições
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 col-12 mb-3">
+            <div class="dashboard-card h-100">
+                <div class="card-icon bg-primary">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <h4>{{ stats.total_processes }}</h4>
+                <p class="text-muted mb-0">Total de Processos</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-12 mb-3">
+            <div class="dashboard-card h-100">
+                <div class="card-icon bg-warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h4>{{ stats.pending_processes }}</h4>
+                <p class="text-muted mb-0">Aguardando Distribuição</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-12 mb-3">
+            <div class="dashboard-card h-100">
+                <div class="card-icon bg-info">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <h4>{{ stats.ongoing_processes }}</h4>
+                <p class="text-muted mb-0">Em Andamento</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-12 mb-3">
+            <div class="dashboard-card h-100">
+                <div class="card-icon bg-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h4>{{ stats.petitions_without_number }}</h4>
+                <p class="text-muted mb-0">Petições sem Número</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deadline Alerts -->
+    {% if urgent_deadlines %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning" data-tour="urgent-deadlines">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Prazos Urgentes:</strong> Você tem {{ urgent_deadlines }} processo(s) com prazo vencendo em até 7 dias.
+                <a href="{{ url_for('processes.list_processes') }}?status=ongoing" class="alert-link">Ver processos</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Notifications -->
+    {% if unread_notifications %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card" data-tour="notifications">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="card-icon bg-primary me-3" style="margin-bottom: 0;">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h4 class="mb-0">Notificações ({{ unread_notifications|length }})</h4>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for notification in unread_notifications[:5] %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ notification.title }}</h6>
+                                <p class="mb-1 text-muted small">{{ notification.message }}</p>
+                                <small class="text-muted">
+                                    {{ notification.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                </small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="markAsRead({{ notification.id }})">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if unread_notifications|length > 5 %}
+                <div class="text-center mt-3">
+                    <a href="#" class="btn btn-sm btn-outline-primary">Ver Todas as Notificações</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card" data-tour="quick-actions">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="card-icon bg-success me-3" style="margin-bottom: 0;">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h4 class="mb-0">Ações Rápidas</h4>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('processes.list_processes') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-list me-2"></i>Ver Todos os Processos
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('processes.pending_petitions') }}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Petições Pendentes
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('processes.reports') }}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-chart-bar me-2"></i>Relatórios
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="#" class="btn btn-outline-success w-100">
+                            <i class="fas fa-plus me-2"></i>Novo Processo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Processes and Pending Petitions -->
+    <div class="row">
+        <!-- Recent Processes -->
+        <div class="col-md-6">
+            <div class="dashboard-card h-100" data-tour="recent-processes">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="card-icon bg-info me-3" style="margin-bottom: 0;">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h4 class="mb-0">Processos Recentes</h4>
+                </div>
+                {% if recent_processes %}
+                    <div class="list-group list-group-flush">
+                        {% for process in recent_processes %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ process.title }}</h6>
+                                    <p class="mb-1 text-muted small">
+                                        {% if process.process_number %}
+                                            Nº: {{ process.process_number }}
+                                        {% else %}
+                                            <span class="text-warning">Sem número</span>
+                                        {% endif %}
+                                    </p>
+                                    <p class="mb-0 text-muted small">
+                                        {{ process.plaintiff or 'Autor não informado' }} vs {{ process.defendant or 'Réu não informado' }}
+                                    </p>
+                                </div>
+                                <span class="badge bg-{{ process.get_status_color() }} ms-2">
+                                    {{ process.get_status_text() }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('processes.list_processes') }}" class="btn btn-sm btn-outline-primary">
+                            Ver Todos
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-4">
+                        <i class="fas fa-folder-open fa-2x mb-3"></i><br>
+                        Nenhum processo cadastrado ainda.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pending Petitions -->
+        <div class="col-md-6">
+            <div class="dashboard-card h-100" data-tour="pending-petitions">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="card-icon bg-warning me-3" style="margin-bottom: 0;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h4 class="mb-0">Petições sem Número</h4>
+                </div>
+                {% if petitions_without_number %}
+                    <div class="list-group list-group-flush">
+                        {% for petition in petitions_without_number %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ petition.title or 'Petição sem título' }}</h6>
+                                    <p class="mb-1 text-muted small">
+                                        Tipo: {{ petition.petition_type.name if petition.petition_type else 'Não informado' }}
+                                    </p>
+                                    <p class="mb-0 text-muted small">
+                                        Criada em {{ petition.completed_at.strftime('%d/%m/%Y') if petition.completed_at else 'Data não informada' }}
+                                    </p>
+                                </div>
+                                <span class="badge bg-warning ms-2">Pendente</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('processes.pending_petitions') }}" class="btn btn-sm btn-outline-warning">
+                            Ver Todas
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-4">
+                        <i class="fas fa-check-circle fa-2x mb-3 text-success"></i><br>
+                        Todas as petições têm número de processo!
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Distribution Chart -->
+    {% if processes_by_status %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="dashboard-card" data-tour="status-distribution">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="card-icon bg-secondary me-3" style="margin-bottom: 0;">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h4 class="mb-0">Distribuição por Status</h4>
+                </div>
+                <div class="row">
+                    {% for status, count in processes_by_status.items() %}
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                        <div class="text-center">
+                            <div class="h4 mb-1">{{ count }}</div>
+                            <small class="text-muted">{{ status.replace('_', ' ')|title }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function markAsRead(notificationId) {
+    fetch(`/processes/api/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            // Recarregar a página para atualizar as notificações
+            location.reload();
+        } else {
+            alert('Erro ao marcar notificação como lida');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao marcar notificação como lida');
+    });
+}
+
+// Verificar notificações automaticamente a cada 5 minutos
+setInterval(function() {
+    // Aqui poderia implementar uma verificação automática de novas notificações
+    console.log('Verificando notificações...');
+}, 300000); // 5 minutos
+</script>
+{% endblock %}

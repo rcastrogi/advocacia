@@ -198,6 +198,10 @@ def create_app(config_class=Config):
 
     app.register_blueprint(lgpd_bp)
 
+    from app.processes import bp as processes_bp
+
+    app.register_blueprint(processes_bp, url_prefix="/processes")
+
     # Register error handlers
     from app.error_handlers import init_logging, register_error_handlers
 

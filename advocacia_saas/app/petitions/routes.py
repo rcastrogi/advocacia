@@ -468,7 +468,7 @@ def _extract_attachments(files):
 @login_required
 @subscription_required
 def dynamic_form(slug):
-    """Renderiza o formulário dinâmico baseado nas seções configuradas para o tipo de petição."""
+    """Renderiza o formulário dinâmico baseado nas seções do modelo de petição."""
 
     # Buscar tipo de petição
     petition_type = PetitionType.query.filter_by(slug=slug).first_or_404()
@@ -478,6 +478,18 @@ def dynamic_form(slug):
         # Redirecionar para formulário tradicional se não for dinâmico
         flash(
             "Este tipo de petição não está configurado para formulário dinâmico.",
+            "warning",
+        )
+        return redirect(url_for("main.peticionador"))
+
+    # Buscar modelo padrão para este tipo de petição
+    petition_model = PetitionModel.query.filter_by(
+        petition_type_id=petition_type.id, is_active=True
+    ).first()
+
+    if not petition_model:
+        flash(
+            "Nenhum modelo ativo encontrado para este tipo de petição.",
             "warning",
         )
         return redirect(url_for("main.peticionador"))
@@ -495,18 +507,13 @@ def dynamic_form(slug):
             flash("Petições canceladas não podem ser editadas.", "warning")
             edit_petition = None
 
-    # Buscar seções configuradas para este tipo
-    sections_config = (
-        db.session.query(PetitionTypeSection)
-        .filter_by(petition_type_id=petition_type.id)
-        .order_by(PetitionTypeSection.order)
-        .all()
-    )
+    # Buscar seções configuradas para o modelo
+    sections_config = petition_model.get_sections_ordered()
 
     # Montar estrutura para o template
     sections = []
     for config in sections_config:
-        section = db.session.get(PetitionSection, config.section_id)
+        section = config.section
         if section and section.is_active:
             sections.append(
                 {
@@ -545,6 +552,7 @@ def dynamic_form(slug):
     return render_template(
         "petitions/dynamic_form.html",
         petition_type=petition_type,
+        petition_model=petition_model,
         sections=sections,
         sections_json=sections_json,
         edit_petition=edit_petition,
@@ -562,19 +570,85 @@ def generate_dynamic():
     if not data:
         return jsonify({"error": "Dados não fornecidos"}), 400
 
-    petition_type_id = data.get("petition_type_id")
+    petition_model_id = data.get("petition_model_id")
     form_data = data.get("form_data", {})
 
-    # Buscar tipo de petição
-    petition_type = PetitionType.query.get_or_404(petition_type_id)
+    # Buscar modelo de petição
+    petition_model = PetitionModel.query.get_or_404(petition_model_id)
+    petition_type = petition_model.petition_type
 
-    # Buscar seções configuradas para este tipo
-    sections_config = (
-        db.session.query(PetitionTypeSection)
-        .filter_by(petition_type_id=petition_type.id)
-        .order_by(PetitionTypeSection.order)
-        .all()
-    )
+    # Verificar se há template Jinja2 definido
+    if petition_model.template_content and petition_model.template_content.strip():
+        # Usar template Jinja2
+        try:
+            from jinja2 import Template
+
+            template = Template(petition_model.template_content)
+            rendered_content = template.render(**form_data)
+
+            # Gerar PDF com o conteúdo renderizado
+            pdf_buffer = BytesIO()
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    @page {{ margin: 2.5cm 3cm; }}
+                    body {{ font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; text-align: justify; }}
+                    h1, h2, h3 {{ font-family: Arial, sans-serif; }}
+                    h1 {{ font-size: 14pt; text-align: center; margin-top: 24pt; }}
+                    h2 {{ font-size: 12pt; margin-top: 18pt; }}
+                    p {{ text-indent: 2cm; margin-bottom: 12pt; }}
+                    .header {{ text-align: center; margin-bottom: 24pt; }}
+                    .signature {{ margin-top: 48pt; text-align: center; }}
+                </style>
+            </head>
+            <body>
+                <pre style="font-family: 'Times New Roman', serif; white-space: pre-wrap;">{rendered_content}</pre>
+            </body>
+            </html>
+            """
+
+            pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
+
+            if pisa_status.err:
+                return jsonify({"error": "Erro ao gerar PDF"}), 500
+
+            pdf_buffer.seek(0)
+
+            # Registrar uso
+            try:
+                record_petition_usage(current_user, petition_type)
+            except BillingAccessError as e:
+                return jsonify({"error": str(e)}), 403
+
+            filename = (
+                f"{petition_type.slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            )
+
+            return send_file(
+                pdf_buffer,
+                mimetype="application/pdf",
+                as_attachment=True,
+                download_name=filename,
+            )
+
+        except Exception as e:
+            current_app.logger.error(f"Erro ao renderizar template Jinja2: {str(e)}")
+            # Fallback para geração dinâmica
+            return _generate_dynamic_fallback(petition_model, petition_type, form_data)
+
+    else:
+        # Usar geração dinâmica tradicional
+        return _generate_dynamic_fallback(petition_model, petition_type, form_data)
+
+
+def _generate_dynamic_fallback(petition_model, petition_type, form_data):
+    """Fallback para geração dinâmica tradicional quando não há template Jinja2"""
+
+    # Buscar seções configuradas para o modelo
+    sections_config = petition_model.get_sections_ordered()
 
     # Gerar conteúdo HTML baseado nas seções e campos preenchidos
     template_content = f"<h1>{petition_type.name}</h1>\n\n"

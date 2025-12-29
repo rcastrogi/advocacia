@@ -1,0 +1,576 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-white mb-2">
+                    <i class="fas fa-chart-bar me-2"></i>Relatórios de Processos
+                </h1>
+                <p class="text-white opacity-75 mb-0">
+                    Análises e relatórios sobre seus processos judiciais
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <!-- Report Types -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Tipos de Relatório Disponíveis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-4 col-md-6 col-12 mb-3">
+                            <div class="dashboard-card h-100" onclick="generateReport('status_distribution')" style="cursor: pointer;" data-tour="status-distribution-report">
+                                <div class="card-icon bg-primary">
+                                    <i class="fas fa-chart-pie"></i>
+                                </div>
+                                <h6>Distribuição por Status</h6>
+                                <p class="text-muted mb-0 small">Análise da distribuição de processos por status atual</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6 col-12 mb-3">
+                            <div class="dashboard-card h-100" onclick="generateReport('monthly_creation')" style="cursor: pointer;" data-tour="monthly-creation-report">
+                                <div class="card-icon bg-success">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <h6>Criação Mensal</h6>
+                                <p class="text-muted mb-0 small">Evolução da criação de processos por mês</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6 col-12 mb-3">
+                            <div class="dashboard-card h-100" onclick="generateReport('court_distribution')" style="cursor: pointer;" data-tour="court-distribution-report">
+                                <div class="card-icon bg-warning">
+                                    <i class="fas fa-gavel"></i>
+                                </div>
+                                <h6>Distribuição por Tribunal</h6>
+                                <p class="text-muted mb-0 small">Análise de processos por tribunal/justiça</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6 col-12 mb-3">
+                            <div class="dashboard-card h-100" onclick="generateReport('deadline_analysis')" style="cursor: pointer;" data-tour="deadline-analysis-report">
+                                <div class="card-icon bg-danger">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <h6>Análise de Prazos</h6>
+                                <p class="text-muted mb-0 small">Prazos próximos, vencidos e análise de urgência</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6 col-12 mb-3">
+                            <div class="dashboard-card h-100" onclick="generateReport('petition_process_link')" style="cursor: pointer;" data-tour="petition-link-report">
+                                <div class="card-icon bg-info">
+                                    <i class="fas fa-link"></i>
+                                </div>
+                                <h6>Vinculação Petições-Processos</h6>
+                                <p class="text-muted mb-0 small">Taxas de vinculação e organização de documentos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Período do Relatório</h5>
+                </div>
+                <div class="card-body">
+                    <form id="reportForm" class="row g-3" data-tour="date-filters">
+                        <div class="col-md-4">
+                            <label for="startDate" class="form-label">Data Inicial</label>
+                            <input type="date" class="form-control" id="startDate" name="start_date">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="endDate" class="form-label">Data Final</label>
+                            <input type="date" class="form-control" id="endDate" name="end_date">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="setLast30Days()">
+                                Últimos 30 dias
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="setLast90Days()">
+                                Últimos 90 dias
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Results -->
+    <div id="reportResults" class="row" style="display: none;" data-tour="report-results">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0" id="reportTitle">Resultado do Relatório</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportReport()" data-tour="export-report">
+                        <i class="fas fa-download me-1"></i>Exportar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="reportContent">
+                        <!-- Report content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentReportType = null;
+let currentReportData = null;
+
+function generateReport(reportType) {
+    currentReportType = reportType;
+
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    let url = `/processes/api/reports/${reportType}`;
+    const params = [];
+
+    if (startDate) params.push(`start_date=${startDate}`);
+    if (endDate) params.push(`end_date=${endDate}`);
+
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
+
+    // Show loading
+    document.getElementById('reportContent').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="mt-2">Gerando relatório...</p>
+        </div>
+    `;
+    document.getElementById('reportResults').style.display = 'block';
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            currentReportData = data;
+            displayReport(data);
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            document.getElementById('reportContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Erro ao gerar relatório. Tente novamente.
+                </div>
+            `;
+        });
+}
+
+function displayReport(data) {
+    if (data.error) {
+        document.getElementById('reportContent').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                ${data.error}
+            </div>
+        `;
+        return;
+    }
+
+    let content = '';
+
+    switch (data.report_type) {
+        case 'status_distribution':
+            content = generateStatusDistributionReport(data);
+            break;
+        case 'monthly_creation':
+            content = generateMonthlyCreationReport(data);
+            break;
+        case 'court_distribution':
+            content = generateCourtDistributionReport(data);
+            break;
+        case 'deadline_analysis':
+            content = generateDeadlineAnalysisReport(data);
+            break;
+        case 'petition_process_link':
+            content = generatePetitionProcessLinkReport(data);
+            break;
+        default:
+            content = '<div class="alert alert-warning">Tipo de relatório não suportado</div>';
+    }
+
+    document.getElementById('reportContent').innerHTML = content;
+    document.getElementById('reportTitle').textContent = getReportTitle(data.report_type);
+}
+
+function generateStatusDistributionReport(data) {
+    let html = `
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Período: ${formatDate(data.period.start_date)} - ${formatDate(data.period.end_date)}</h6>
+                <p class="text-muted">Total de processos: ${data.total_processes}</p>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Quantidade</th>
+                        <th>Percentual</th>
+                        <th>Gráfico</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    data.distribution.forEach(item => {
+        html += `
+            <tr>
+                <td>${item.label}</td>
+                <td>${item.count}</td>
+                <td>${item.percentage}%</td>
+                <td>
+                    <div class="progress" style="width: 100px;">
+                        <div class="progress-bar" role="progressbar" style="width: ${item.percentage}%"></div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    return html;
+}
+
+function generateMonthlyCreationReport(data) {
+    let html = `
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Período: ${formatDate(data.period.start_date)} - ${formatDate(data.period.end_date)}</h6>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Mês/Ano</th>
+                        <th>Quantidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    data.monthly_data.forEach(item => {
+        html += `
+            <tr>
+                <td>${item.month_name} ${item.year}</td>
+                <td>${item.count}</td>
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    return html;
+}
+
+function generateCourtDistributionReport(data) {
+    let html = `
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Período: ${formatDate(data.period.start_date)} - ${formatDate(data.period.end_date)}</h6>
+                <p class="text-muted">Total de processos: ${data.total_processes}</p>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Tribunal</th>
+                        <th>Quantidade</th>
+                        <th>Percentual</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    data.distribution.forEach(item => {
+        html += `
+            <tr>
+                <td>${item.court}</td>
+                <td>${item.count}</td>
+                <td>${item.percentage}%</td>
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    return html;
+}
+
+function generateDeadlineAnalysisReport(data) {
+    let html = `
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Período: ${formatDate(data.period.start_date)} - ${formatDate(data.period.end_date)}</h6>
+                <p class="text-muted">Total de processos com prazos: ${data.total_with_deadlines}</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card text-white bg-danger">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${data.summary.overdue_count}</h5>
+                        <p class="card-text">Vencidos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${data.summary.due_today_count}</h5>
+                        <p class="card-text">Vencem Hoje</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${data.summary.due_soon_count}</h5>
+                        <p class="card-text">Vencem em 7 dias</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${data.summary.upcoming_count}</h5>
+                        <p class="card-text">Próximos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Mostrar detalhes dos prazos urgentes
+    if (data.analysis.overdue.length > 0 || data.analysis.due_today.length > 0 || data.analysis.due_soon.length > 0) {
+        html += `
+            <div class="mt-4">
+                <h6>Prazos Urgentes:</h6>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Processo</th>
+                                <th>Número</th>
+                                <th>Prazo</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        [...data.analysis.overdue, ...data.analysis.due_today, ...data.analysis.due_soon].forEach(item => {
+            let statusClass = 'danger';
+            let statusText = 'Vencido';
+
+            if (item.days_until === 0) {
+                statusClass = 'warning';
+                statusText = 'Vence hoje';
+            } else if (item.days_until > 0) {
+                statusClass = 'info';
+                statusText = `Vence em ${item.days_until} dias`;
+            }
+
+            html += `
+                <tr class="table-${statusClass}">
+                    <td>${item.title}</td>
+                    <td>${item.process_number || 'Sem número'}</td>
+                    <td>${formatDate(item.deadline)}</td>
+                    <td>${statusText}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    return html;
+}
+
+function generatePetitionProcessLinkReport(data) {
+    let html = `
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Período: ${formatDate(data.period.start_date)} - ${formatDate(data.period.end_date)}</h6>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${data.metrics.total_petitions}</h5>
+                        <p class="card-text">Total de Petições</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${data.metrics.completed_petitions}</h5>
+                        <p class="card-text">Petições Finalizadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${data.metrics.linked_petitions}</h5>
+                        <p class="card-text">Petições Vinculadas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${data.metrics.completion_rate}%</h5>
+                        <p class="card-text">Taxa de Finalização</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${data.metrics.number_assignment_rate}%</h5>
+                        <p class="card-text">Taxa de Numeração</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${data.metrics.linking_rate}%</h5>
+                        <p class="card-text">Taxa de Vinculação</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    return html;
+}
+
+function getReportTitle(reportType) {
+    const titles = {
+        'status_distribution': 'Distribuição por Status',
+        'monthly_creation': 'Criação Mensal de Processos',
+        'court_distribution': 'Distribuição por Tribunal',
+        'deadline_analysis': 'Análise de Prazos',
+        'petition_process_link': 'Vinculação Petições-Processos'
+    };
+    return titles[reportType] || 'Relatório';
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+}
+
+function setLast30Days() {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 30);
+
+    document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+    document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+}
+
+function setLast90Days() {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 90);
+
+    document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+    document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+}
+
+function exportReport() {
+    if (!currentReportData) {
+        alert('Nenhum relatório para exportar');
+        return;
+    }
+
+    // Criar conteúdo CSV básico
+    let csvContent = 'data:text/csv;charset=utf-8,';
+
+    // Adicionar cabeçalhos baseado no tipo de relatório
+    switch (currentReportType) {
+        case 'status_distribution':
+            csvContent += 'Status,Quantidade,Percentual\n';
+            currentReportData.distribution.forEach(item => {
+                csvContent += `${item.label},${item.count},${item.percentage}\n`;
+            });
+            break;
+        case 'monthly_creation':
+            csvContent += 'Mes/Ano,Quantidade\n';
+            currentReportData.monthly_data.forEach(item => {
+                csvContent += `${item.month_name} ${item.year},${item.count}\n`;
+            });
+            break;
+        // Adicionar outros tipos conforme necessário
+        default:
+            csvContent += 'Dados do relatório\n';
+            csvContent += JSON.stringify(currentReportData, null, 2);
+    }
+
+    // Download do arquivo
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `relatorio_processos_${currentReportType}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Set default date range to last 30 days
+document.addEventListener('DOMContentLoaded', function() {
+    setLast30Days();
+});
+</script>
+{% endblock %}

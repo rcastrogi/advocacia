@@ -3643,3 +3643,226 @@ def petition_model_delete(model_id):
 
     flash("Modelo de petição excluído com sucesso!", "success")
     return redirect(url_for("admin.petition_models_list"))
+
+
+@bp.route("/petitions/models/<int:model_id>/fields", methods=["GET"])
+@login_required
+def petition_model_fields(model_id):
+    """Retornar campos disponíveis para um modelo de petição"""
+    _require_admin()
+
+    petition_model = PetitionModel.query.get_or_404(model_id)
+
+    # Obter todas as seções do modelo (PetitionModelSection objects)
+    model_sections = petition_model.get_sections_ordered()
+
+    fields = []
+
+    for model_section in model_sections:
+        # Acessar a seção real através do relacionamento
+        section = model_section.section
+
+        # Adicionar campos do fields_schema da seção
+        if section and hasattr(section, "fields_schema") and section.fields_schema:
+            if isinstance(section.fields_schema, list):
+                for field_def in section.fields_schema:
+                    if isinstance(field_def, dict) and "name" in field_def:
+                        fields.append(
+                            {
+                                "name": field_def.get("name"),
+                                "display_name": field_def.get(
+                                    "label", field_def.get("name", "")
+                                ),
+                                "category": section.name,
+                                "field_type": field_def.get("type", "text"),
+                                "required": field_def.get("required", False),
+                            }
+                        )
+
+    return jsonify({"fields": fields})
+
+
+@bp.route("/petitions/models/<int:model_id>/generate_template", methods=["POST"])
+@login_required
+def petition_model_generate_template(model_id):
+    """Gerar template Jinja2 baseado nas seções do modelo"""
+    _require_admin()
+
+    petition_model = PetitionModel.query.get_or_404(model_id)
+
+    try:
+        # Obter seções ordenadas
+        sections = petition_model.get_sections_ordered()
+
+        template_parts = []
+
+        # Cabeçalho da petição
+        template_parts.append(
+            "EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(ÍZA) DE DIREITO DA {{ vara }}"
+        )
+        template_parts.append("")
+        template_parts.append("{{ autor_nome }}, {{ autor_qualificacao }}, vem propor:")
+        template_parts.append("")
+        template_parts.append("{{ tipo_acao }}")
+        template_parts.append("")
+        template_parts.append("em face de {{ reu_nome }}, {{ reu_qualificacao }}")
+        template_parts.append("")
+
+        # Adicionar seções dinâmicas
+        for model_section in sections:
+            section = model_section.section
+            if section:
+                section_name = section.name.upper()
+                template_parts.append(f"{{{{ {section_name} }}}}")
+                template_parts.append("")
+
+        # Rodapé
+        template_parts.append("{{ local }}, {{ data }}")
+        template_parts.append("")
+        template_parts.append("{{ advogado_nome }}")
+        template_parts.append("{{ advogado_oab }}")
+
+        template_content = "\n".join(template_parts)
+
+        return jsonify({"success": True, "template": template_content})
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao gerar template: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@bp.route("/petitions/models/<int:model_id>/validate_template", methods=["POST"])
+@login_required
+def petition_model_validate_template(model_id):
+    """Validar template Jinja2"""
+    _require_admin()
+
+    petition_model = PetitionModel.query.get_or_404(model_id)
+    data = request.get_json()
+
+    template = data.get("template", "")
+
+    if not template.strip():
+        return jsonify({"valid": False, "errors": ["Template vazio"]})
+
+    try:
+        # Tentar compilar o template Jinja2
+        from jinja2 import Template, TemplateSyntaxError
+
+        Template(template)
+        return jsonify({"valid": True})
+
+    except TemplateSyntaxError as e:
+        return jsonify(
+            {
+                "valid": False,
+                "errors": [f"Erro de sintaxe na linha {e.lineno}: {e.message}"],
+            }
+        )
+    except Exception as e:
+        return jsonify({"valid": False, "errors": [f"Erro desconhecido: {str(e)}"]})
+
+
+@bp.route("/petitions/models/<int:model_id>/preview_template", methods=["POST"])
+@login_required
+def petition_model_preview_template(model_id):
+    """Gerar preview do template Jinja2"""
+    _require_admin()
+
+    petition_model = PetitionModel.query.get_or_404(model_id)
+    data = request.get_json()
+
+    template_content = data.get("template", "")
+
+    if not template_content.strip():
+        return jsonify({"success": False, "error": "Template vazio"})
+
+    try:
+        from jinja2 import Template
+
+        # Criar dados de exemplo para preview
+        sample_data = {
+            "vara": "1ª Vara Cível da Comarca de São Paulo",
+            "autor_nome": "João Silva Santos",
+            "autor_qualificacao": "brasileiro, casado, empresário, portador do CPF 123.456.789-00, residente e domiciliado na Rua das Flores, 123, São Paulo/SP",
+            "tipo_acao": "AÇÃO DE COBRANÇA",
+            "reu_nome": "Empresa XYZ Ltda",
+            "reu_qualificacao": "pessoa jurídica de direito privado, inscrita no CNPJ 12.345.678/0001-90, com sede na Avenida Paulista, 1000, São Paulo/SP",
+            "local": "São Paulo",
+            "data": "15 de janeiro de 2024",
+            "advogado_nome": "Dr. Maria Aparecida",
+            "advogado_oab": "OAB/SP 123.456",
+        }
+
+        # Adicionar campos das seções como dados de exemplo
+        sections = petition_model.get_sections_ordered()
+        for model_section in sections:
+            section = model_section.section
+            if section:
+                section_name = section.name.upper().replace(" ", "_")
+                sample_data[section_name] = f"[CONTEÚDO DA SEÇÃO: {section.name}]"
+
+        # Renderizar template
+        template = Template(template_content)
+        rendered = template.render(**sample_data)
+
+        return jsonify({"success": True, "preview": rendered})
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao gerar preview: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@bp.route("/petitions/models/<int:model_id>/generate_with_ai", methods=["POST"])
+@login_required
+def petition_model_generate_with_ai(model_id):
+    """Gerar conteúdo usando IA"""
+    _require_admin()
+
+    petition_model = PetitionModel.query.get_or_404(model_id)
+    data = request.get_json()
+
+    prompt = data.get("prompt", "").strip()
+
+    if not prompt:
+        return jsonify({"success": False, "error": "Prompt vazio"})
+
+    try:
+        # Importar serviço de IA
+        from app.ai.services import AIService
+
+        ai_service = AIService()
+
+        # Verificar créditos do usuário
+        user_credits = UserCredits.get_or_create(current_user.id)
+        if not user_credits.has_credits(1):
+            return jsonify(
+                {"success": False, "error": "Créditos insuficientes para usar a IA"}
+            )
+
+        # Contexto adicional sobre o modelo
+        context = f"""
+        Modelo de Petição: {petition_model.name}
+        Tipo: {petition_model.petition_type.name if petition_model.petition_type else "N/A"}
+        Descrição: {petition_model.description or "N/A"}
+        """
+
+        # Gerar conteúdo
+        generated_content = ai_service.generate_petition_content(
+            prompt=prompt, context=context
+        )
+
+        # Deduzir créditos
+        user_credits.use_credits(1)
+
+        return jsonify(
+            {
+                "success": True,
+                "content": generated_content,
+                "credits_remaining": user_credits.balance,
+            }
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao gerar com IA: {str(e)}")
+        return jsonify({"success": False, "error": "Erro interno do servidor"}), 500

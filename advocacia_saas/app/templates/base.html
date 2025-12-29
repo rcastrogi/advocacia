@@ -549,6 +549,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('processes.dashboard') }}">
+                            <i class="fas fa-balance-scale"></i> Processos
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('clients.index') }}">
                             <i class="fas fa-users"></i> Clientes
                         </a>
@@ -991,6 +996,9 @@
     
     <!-- Contextual Help System -->
     <script src="{{ url_for('static', filename='js/contextual-help.js') }}"></script>
+    
+    <!-- Notification System -->
+    <script src="{{ url_for('static', filename='js/notification-system.js') }}"></script>
     
     <!-- Accessibility JS -->
     <script src="{{ url_for('static', filename='js/accessibility.js') }}?v={{ range(1, 10000) | random }}"></script>

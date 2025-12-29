@@ -3146,3 +3146,180 @@ class PetitionModelSection(db.Model):
 
     def __repr__(self):
         return f"<PetitionModelSection model={self.petition_model_id} section={self.section_id}>"
+
+
+class Process(db.Model):
+    """
+    Modelo para acompanhamento de processos judiciais.
+    Centraliza informações sobre processos em andamento.
+    """
+
+    __tablename__ = "processes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Identificação do processo
+    process_number = db.Column(
+        db.String(30), unique=True, index=True
+    )  # Número oficial do processo
+    title = db.Column(db.String(300), nullable=False)  # Título descritivo
+
+    # Informações judiciais
+    court = db.Column(
+        db.String(100)
+    )  # Tribunal/Justiça (Federal, Estadual, Trabalhista, etc.)
+    court_instance = db.Column(db.String(100))  # Instância (1ª, 2ª, etc.)
+    jurisdiction = db.Column(db.String(100))  # Vara/Órgão julgador
+    district = db.Column(db.String(100))  # Comarca/Foro
+    judge = db.Column(db.String(200))  # Juiz/Relator
+
+    # Partes envolvidas
+    plaintiff = db.Column(db.String(300))  # Autor/Requerente
+    defendant = db.Column(db.String(300))  # Réu/Requerido
+
+    # Status e andamento
+    status = db.Column(db.String(50), default="pending_distribution", index=True)
+    # Status possíveis: pending_distribution, distributed, ongoing, suspended, archived, finished
+
+    # Datas importantes
+    distribution_date = db.Column(db.Date)  # Data de distribuição
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relacionamentos
+    user = db.relationship("User", backref=db.backref("processes", lazy="dynamic"))
+
+    # Petições relacionadas (muitos-para-muitos)
+    petitions = db.relationship(
+        "SavedPetition",
+        secondary="process_petitions",
+        backref=db.backref("processes", lazy="dynamic"),
+    )
+
+    # Cliente relacionado
+    client_id = db.Column(db.Integer, db.ForeignKey("client.id"))
+    client = db.relationship("Client", backref=db.backref("processes", lazy="dynamic"))
+
+    # Controle de prazos
+    next_deadline = db.Column(db.Date)  # Próximo prazo processual
+    deadline_description = db.Column(db.String(300))  # Descrição do prazo
+    priority = db.Column(db.String(20), default="normal")  # low, normal, high, urgent
+
+    def get_status_display(self):
+        """Retorna o status formatado para exibição."""
+        status_map = {
+            "pending_distribution": ("Aguardando Distribuição", "warning"),
+            "distributed": ("Distribuído", "info"),
+            "ongoing": ("Em Andamento", "primary"),
+            "suspended": ("Suspenso", "secondary"),
+            "archived": ("Arquivado", "dark"),
+            "finished": ("Finalizado", "success"),
+        }
+        return status_map.get(self.status, ("Desconhecido", "secondary"))
+
+    def get_status_color(self):
+        """Retorna apenas a cor do status."""
+        return self.get_status_display()[1]
+
+    def get_status_text(self):
+        """Retorna apenas o texto do status."""
+        return self.get_status_display()[0]
+
+    def get_priority_display(self):
+        """Retorna a prioridade formatada."""
+        priority_map = {
+            "low": ("Baixa", "secondary"),
+            "normal": ("Normal", "info"),
+            "high": ("Alta", "warning"),
+            "urgent": ("Urgente", "danger"),
+        }
+        return priority_map.get(self.priority, ("Normal", "info"))
+
+    def is_overdue(self):
+        """Verifica se há prazo vencido."""
+        if self.next_deadline:
+            from datetime import date
+
+            return self.next_deadline < date.today()
+        return False
+
+    def days_until_deadline(self):
+        """Retorna dias até o próximo prazo."""
+        if self.next_deadline:
+            from datetime import date
+
+            return (self.next_deadline - date.today()).days
+        return None
+
+    def __repr__(self):
+        return f"<Process {self.process_number or 'Sem número'} - {self.title}>"
+
+
+# Modelo para notificações de processos
+class ProcessNotification(db.Model):
+    """
+    Notificações relacionadas a processos judiciais.
+    """
+
+    __tablename__ = "process_notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    process_id = db.Column(db.Integer, db.ForeignKey("processes.id"), nullable=True)
+
+    # Tipo de notificação
+    notification_type = db.Column(
+        db.String(50), nullable=False
+    )  # deadline, status_change, new_document, etc.
+
+    # Conteúdo
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+
+    # Status
+    read = db.Column(db.Boolean, default=False)
+    read_at = db.Column(db.DateTime)
+
+    # Metadados
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    sent_at = db.Column(db.DateTime)  # Quando foi enviada por email/SMS
+
+    # Dados adicionais em JSON
+    extra_data = db.Column(db.JSON, default=dict)
+
+    # Relacionamentos
+    user = db.relationship(
+        "User", backref=db.backref("process_notifications", lazy="dynamic")
+    )
+    process = db.relationship(
+        "Process", backref=db.backref("notifications", lazy="dynamic")
+    )
+
+    def mark_as_read(self):
+        """Marca a notificação como lida."""
+        self.read = True
+        self.read_at = datetime.now(timezone.utc)
+
+    def __repr__(self):
+        return f"<ProcessNotification {self.notification_type} - {self.title}>"
+
+
+# Tabela de associação para relação muitos-para-muitos entre processos e petições
+process_petitions = db.Table(
+    "process_petitions",
+    db.Column(
+        "process_id", db.Integer, db.ForeignKey("processes.id"), primary_key=True
+    ),
+    db.Column(
+        "petition_id", db.Integer, db.ForeignKey("saved_petitions.id"), primary_key=True
+    ),
+    db.Column("created_at", db.DateTime, default=lambda: datetime.now(timezone.utc)),
+    db.Column(
+        "relation_type", db.String(50), default="related"
+    ),  # initial, contestation, appeal, etc.
+)

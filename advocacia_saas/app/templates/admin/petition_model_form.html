@@ -196,32 +196,141 @@
                 </div>
             </div>
 
-            <!-- Template do Modelo -->
+
+
+            <!-- Template Jinja2 -->
             <div class="card shadow mt-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        Template do Modelo
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary mb-0">
+                        <i class="fas fa-code me-2"></i>Template Jinja2
                     </h6>
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="toggleTemplateHelp()">
+                        <i class="fas fa-question-circle me-1"></i>Ajuda
+                    </button>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <label for="template_content" class="form-label">
-                            Conteúdo do Template <span class="text-muted">(Jinja2)</span>
-                        </label>
-                        <textarea class="form-control" id="template_content" name="template_content"
-                                  rows="20" placeholder="Digite o template Jinja2 aqui...">{{ petition_model.template_content if petition_model else '' }}</textarea>
-                        <div class="form-text">
-                            Use sintaxe Jinja2 para inserir os dados do formulário. Exemplo: {{ "{{ autor_nome }}" }}
+                    <div class="row">
+                        <!-- Editor de Template -->
+                        <div class="col-lg-8">
+                            <div class="mb-3">
+                                <label for="template_content" class="form-label">
+                                    Template da Petição
+                                    <span class="badge bg-info ms-2">Opcional</span>
+                                </label>
+                                <textarea class="form-control font-monospace" id="template_content" name="template_content"
+                                          rows="20" placeholder="Digite o template Jinja2 aqui..."
+                                          style="font-size: 0.9rem; line-height: 1.4;">{{ petition_model.template_content or '' }}</textarea>
+                                <div class="form-text">
+                                    Use variáveis Jinja2 como <code>{{ nome_variavel }}</code> para inserir dados dinâmicos.
+                                    Se vazio, o sistema gera automaticamente baseado nas seções.
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="generateTemplateFromSections()">
+                                    <i class="fas fa-magic me-1"></i>Gerar Template das Seções
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="validateTemplate()">
+                                    <i class="fas fa-check me-1"></i>Validar Template
+                                </button>
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="previewTemplate()">
+                                    <i class="fas fa-eye me-1"></i>Pré-visualizar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Painel Lateral - Campos Disponíveis -->
+                        <div class="col-lg-4">
+                            <div class="card border-light">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-list me-2"></i>Campos Disponíveis
+                                    </h6>
+                                </div>
+                                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                    <div id="available-fields">
+                                        <!-- Campos serão carregados dinamicamente -->
+                                        <div class="text-muted small">
+                                            <i class="fas fa-spinner fa-spin me-1"></i>Carregando campos...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Assistente IA -->
+                            <div class="card border-primary mt-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-robot me-2"></i>Assistente IA
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <label for="ai_prompt" class="form-label small">O que você quer gerar?</label>
+                                        <textarea class="form-control form-control-sm" id="ai_prompt" rows="3"
+                                                  placeholder="Ex: Gere uma seção DOS FATOS para uma ação de cobrança"></textarea>
+                                    </div>
+                                    <button type="button" class="btn btn-primary btn-sm w-100" onclick="generateWithAI()">
+                                        <i class="fas fa-magic me-1"></i>Gerar com IA
+                                    </button>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-coins me-1"></i>
+                                            Créditos: <span id="ai_credits">10</span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Dica:</strong> O template será usado para gerar o PDF da petição.
-                        Você pode usar todas as variáveis disponíveis no formulário dinâmico.
+                    <!-- Modal de Ajuda -->
+                    <div class="modal fade" id="templateHelpModal" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Ajuda - Templates Jinja2</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <h6>Sintaxe Básica:</h6>
+                                    <ul>
+                                        <li><code>{{ variavel }}</code> - Insere o valor de uma variável</li>
+                                        <li><code>{% if condicao %}...{% endif %}</code> - Condicional</li>
+                                        <li><code>{% for item in lista %}...{% endfor %}</code> - Loop</li>
+                                    </ul>
+
+                                    <h6>Exemplo de Template:</h6>
+                                    <pre class="bg-light p-2 small"><code>EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(ÍZA) DE DIREITO DA {{ vara }}
+
+{{ autor_nome }}, {{ autor_qualificacao }}, vem propor:
+
+AÇÃO DE COBRANÇA
+
+em face de {{ reu_nome }}, {{ reu_qualificacao }}
+
+DOS FATOS
+
+{{ fatos }}
+
+Valor da causa: R$ {{ valor_causa }}
+
+{{ local }}, {{ data }}</code></pre>
+
+                                    <h6>Dicas:</h6>
+                                    <ul>
+                                        <li>Use nomes descritivos para as variáveis</li>
+                                        <li>Teste sempre o template antes de usar</li>
+                                        <li>Campos vazios são ignorados automaticamente</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+
 
             <!-- Botões de Ação -->
             <div class="row mt-4">
@@ -330,6 +439,8 @@
                 if (sectionOrderField) {
                     sectionOrderField.value = order.join(',');
                 }
+                // Recarregar campos disponíveis quando as seções mudam
+                loadAvailableFields();
             }
 
             function flashButton(button) {
@@ -426,6 +537,318 @@
     } catch (error) {
         console.error('💥 ERRO CRÍTICO na interface de seções:', error);
         alert('💥 ERRO CRÍTICO: ' + error.message);
+    }
+
+})();
+</script>
+
+<!-- JavaScript para funcionalidades do Template Jinja2 -->
+<script>
+(function() {
+    'use strict';
+
+    // Carregar campos disponíveis quando a página carrega
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAvailableFields();
+    });
+
+    // Função para carregar campos disponíveis
+    function loadAvailableFields() {
+        const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
+        if (!petitionModelId) return;
+
+        fetch(`/admin/petitions/models/${petitionModelId}/fields`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayAvailableFields(data.fields || []);
+            })
+            .catch(error => {
+                console.error('Erro ao carregar campos:', error);
+                document.getElementById('available-fields').innerHTML =
+                    '<div class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Erro ao carregar campos</div>';
+            });
+    }
+
+    // Exibir campos disponíveis
+    function displayAvailableFields(fields) {
+        const container = document.getElementById('available-fields');
+
+        if (fields.length === 0) {
+            container.innerHTML = '<div class="text-muted small">Nenhum campo disponível</div>';
+            return;
+        }
+
+        let html = '<div class="mb-2"><small class="text-muted fw-bold">Clique para inserir no template:</small></div>';
+
+        // Agrupar campos por categoria
+        const groupedFields = {};
+        fields.forEach(field => {
+            const category = field.category || 'Geral';
+            if (!groupedFields[category]) {
+                groupedFields[category] = [];
+            }
+            groupedFields[category].push(field);
+        });
+
+        Object.keys(groupedFields).forEach(category => {
+            html += `<div class="mb-3">
+                <div class="small fw-bold text-primary mb-2">${category}</div>
+                <div class="d-flex flex-wrap gap-1">`;
+
+            groupedFields[category].forEach(field => {
+                const fieldName = field.name || field.field_name;
+                const displayName = field.display_name || fieldName;
+                html += `<button type="button" class="btn btn-sm btn-outline-secondary"
+                    onclick="insertField('${fieldName}')" title="${displayName}">
+                    &#123;&#123; ${fieldName} &#125;&#125;
+                </button>`;
+            });
+
+            html += '</div></div>';
+        });
+
+        container.innerHTML = html;
+    }
+
+    // Inserir campo no template
+    window.insertField = function(fieldName) {
+        const textarea = document.getElementById('template_content');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const before = text.substring(0, start);
+        const after = text.substring(end, text.length);
+        const fieldText = '{{ ' + fieldName + ' }}';
+
+        textarea.value = before + fieldText + after;
+        textarea.focus();
+        textarea.setSelectionRange(start + fieldText.length, start + fieldText.length);
+    };
+
+    // Gerar template das seções
+    window.generateTemplateFromSections = function() {
+        const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
+        if (!petitionModelId) {
+            alert('Erro: ID do modelo não encontrado');
+            return;
+        }
+
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Gerando...';
+        button.disabled = true;
+
+        fetch(`/admin/petitions/models/${petitionModelId}/generate_template`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('template_content').value = data.template;
+                showToast('Template gerado com sucesso!', 'success');
+            } else {
+                showToast('Erro ao gerar template: ' + (data.error || 'Erro desconhecido'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showToast('Erro ao gerar template', 'error');
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    };
+
+    // Validar template
+    window.validateTemplate = function() {
+        const template = document.getElementById('template_content').value;
+        const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
+
+        if (!template.trim()) {
+            showToast('Template vazio - nada para validar', 'warning');
+            return;
+        }
+
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Validando...';
+        button.disabled = true;
+
+        fetch(`/admin/petitions/models/${petitionModelId}/validate_template`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ template: template })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                showToast('Template válido!', 'success');
+            } else {
+                showToast('Erros no template: ' + data.errors.join(', '), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showToast('Erro ao validar template', 'error');
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    };
+
+    // Pré-visualizar template
+    window.previewTemplate = function() {
+        const template = document.getElementById('template_content').value;
+        const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
+
+        if (!template.trim()) {
+            showToast('Template vazio - nada para pré-visualizar', 'warning');
+            return;
+        }
+
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Gerando preview...';
+        button.disabled = true;
+
+        fetch(`/admin/petitions/models/${petitionModelId}/preview_template`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ template: template })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Abrir modal ou nova janela com preview
+                const previewWindow = window.open('', '_blank', 'width=800,height=600');
+                previewWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>Preview do Template</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; margin: 20px; }
+                                pre { white-space: pre-wrap; word-wrap: break-word; }
+                            </style>
+                        </head>
+                        <body>
+                            <h2>Preview do Template</h2>
+                            <pre>${data.preview}</pre>
+                            <button onclick="window.close()">Fechar</button>
+                        </body>
+                    </html>
+                `);
+            } else {
+                showToast('Erro ao gerar preview: ' + (data.error || 'Erro desconhecido'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showToast('Erro ao gerar preview', 'error');
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    };
+
+    // Gerar com IA
+    window.generateWithAI = function() {
+        const prompt = document.getElementById('ai_prompt').value.trim();
+        const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
+
+        if (!prompt) {
+            showToast('Digite um prompt para a IA', 'warning');
+            return;
+        }
+
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Gerando...';
+        button.disabled = true;
+
+        fetch(`/admin/petitions/models/${petitionModelId}/generate_with_ai`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: prompt })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const textarea = document.getElementById('template_content');
+                const currentContent = textarea.value;
+                textarea.value = currentContent + (currentContent ? '\n\n' : '') + data.content;
+                document.getElementById('ai_prompt').value = '';
+                showToast('Conteúdo gerado com IA!', 'success');
+
+                // Atualizar créditos
+                if (data.credits_remaining !== undefined) {
+                    document.getElementById('ai_credits').textContent = data.credits_remaining;
+                }
+            } else {
+                showToast('Erro ao gerar com IA: ' + (data.error || 'Erro desconhecido'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showToast('Erro ao gerar com IA', 'error');
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    };
+
+    // Toggle modal de ajuda
+    window.toggleTemplateHelp = function() {
+        const modal = new bootstrap.Modal(document.getElementById('templateHelpModal'));
+        modal.show();
+    };
+
+    // Função auxiliar para mostrar toasts
+    function showToast(message, type = 'info') {
+        // Criar toast se não existir
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+
+        toastContainer.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        // Remover toast após ocultar
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
     }
 
 })();
