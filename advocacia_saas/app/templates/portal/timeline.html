@@ -1,0 +1,274 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Timeline - Portal do Cliente{% endblock %}
+
+{% block head %}
+<style>
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 30px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-left: 60px;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid;
+    }
+
+    .timeline-item.primary { border-left-color: #007bff; }
+    .timeline-item.info { border-left-color: #17a2b8; }
+    .timeline-item.success { border-left-color: #28a745; }
+    .timeline-item.warning { border-left-color: #ffc107; }
+    .timeline-item.danger { border-left-color: #dc3545; }
+
+    .timeline-icon {
+        position: absolute;
+        left: -42px;
+        top: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 16px;
+    }
+
+    .timeline-date {
+        font-size: 0.9em;
+        color: #6c757d;
+        margin-bottom: 8px;
+    }
+
+    .timeline-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #495057;
+    }
+
+    .timeline-description {
+        color: #6c757d;
+        margin: 0;
+    }
+
+    .timeline-badge {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+    }
+
+    .filter-buttons {
+        margin-bottom: 30px;
+    }
+
+    .filter-btn {
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+
+    .stats-summary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+
+    .stats-summary h4 {
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 1.8em;
+        font-weight: bold;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.9em;
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('portal.index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Timeline</li>
+            </ol>
+        </nav>
+        <h2><i class="fas fa-stream me-2"></i>Timeline do Processo</h2>
+        <p class="text-muted">Acompanhe visualmente todas as atividades e eventos do seu processo</p>
+    </div>
+</div>
+
+<!-- Resumo Estatístico -->
+<div class="stats-summary">
+    <h4><i class="fas fa-chart-line me-2"></i>Resumo da Atividade</h4>
+    <div class="stats-grid">
+        <div class="stat-item">
+            <span class="stat-number">{{ events|selectattr('type', 'equalto', 'process_start')|list|length }}</span>
+            <span class="stat-label">Processos</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">{{ events|selectattr('type', 'equalto', 'movement')|list|length }}</span>
+            <span class="stat-label">Movimentações</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">{{ events|selectattr('type', 'equalto', 'deadline')|list|length }}</span>
+            <span class="stat-label">Prazos</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">{{ events|selectattr('type', 'equalto', 'cost')|list|length }}</span>
+            <span class="stat-label">Custos</span>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="filter-buttons">
+    <button class="btn btn-outline-primary filter-btn active" data-filter="all">
+        <i class="fas fa-list me-1"></i>Todos
+    </button>
+    <button class="btn btn-outline-primary filter-btn" data-filter="process_start">
+        <i class="fas fa-folder-plus me-1"></i>Processos
+    </button>
+    <button class="btn btn-outline-info filter-btn" data-filter="movement">
+        <i class="fas fa-exchange-alt me-1"></i>Movimentações
+    </button>
+    <button class="btn btn-outline-success filter-btn" data-filter="deadline">
+        <i class="fas fa-calendar-alt me-1"></i>Prazos
+    </button>
+    <button class="btn btn-outline-warning filter-btn" data-filter="cost">
+        <i class="fas fa-dollar-sign me-1"></i>Custos
+    </button>
+</div>
+
+<!-- Timeline -->
+<div class="timeline" id="timelineContainer">
+    {% for event in events %}
+    <div class="timeline-item {{ event.color }}" data-type="{{ event.type }}">
+        <div class="timeline-icon bg-{{ event.color }}">
+            <i class="fas {{ event.icon }}"></i>
+        </div>
+
+        <div class="timeline-date">
+            <i class="fas fa-clock me-1"></i>
+            {{ event.date.strftime('%d/%m/%Y %H:%M') }}
+        </div>
+
+        <div class="timeline-title">
+            {{ event.title }}
+        </div>
+
+        {% if event.description %}
+        <div class="timeline-description">
+            {{ event.description }}
+        </div>
+        {% endif %}
+
+        <div class="timeline-badge">
+            <span class="badge bg-{{ event.color }}">
+                {% if event.type == 'process_start' %}
+                    <i class="fas fa-folder-plus me-1"></i>Processo
+                {% elif event.type == 'movement' %}
+                    <i class="fas fa-exchange-alt me-1"></i>Movimentação
+                {% elif event.type == 'deadline' %}
+                    <i class="fas fa-calendar-alt me-1"></i>Prazo
+                {% elif event.type == 'cost' %}
+                    <i class="fas fa-dollar-sign me-1"></i>Custo
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not events %}
+<div class="text-center py-5">
+    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+    <h5>Nenhuma atividade encontrada</h5>
+    <p class="text-muted">As atividades do seu processo aparecerão aqui quando houver movimentações.</p>
+</div>
+{% endif %}
+
+<script>
+// Filtros da timeline
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const timelineItems = document.querySelectorAll('.timeline-item');
+
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+
+            // Remover classe active de todos os botões
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            // Adicionar classe active ao botão clicado
+            this.classList.add('active');
+
+            // Filtrar itens
+            timelineItems.forEach(item => {
+                if (filter === 'all' || item.getAttribute('data-type') === filter) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Animação de entrada dos itens
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    timelineItems.forEach(item => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(20px)';
+        item.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        observer.observe(item);
+    });
+});
+</script>
+{% endblock %}

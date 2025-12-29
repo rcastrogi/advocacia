@@ -1,0 +1,619 @@
+"""
+Rotas do Portal do Cliente
+"""
+
+from flask import (
+    abort,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
+from flask_login import current_user, login_required, login_user, logout_user
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from app import db
+from app.models import ChatRoom, Client, Deadline, Document, Message, User
+from app.portal import bp
+
+
+def client_required(f):
+    """Decorator para verificar se usuário é cliente"""
+    from functools import wraps
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            # Redirecionar para login do portal com next parameter
+            return redirect(url_for("portal.login", next=request.url))
+
+        # Verificar se é cliente
+        client = Client.query.filter_by(user_id=current_user.id).first()
+        if not client:
+            flash("Acesso negado. Este portal é exclusivo para clientes.", "danger")
+            logout_user()
+            return redirect(url_for("portal.login"))
+
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+@bp.route("/")
+@client_required
+def index():
+    """Dashboard do portal do cliente"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    # Estatísticas
+    total_documents = Document.query.filter_by(client_id=client.id).count()
+    pending_deadlines = Deadline.query.filter_by(
+        client_id=client.id, status="pending"
+    ).count()
+
+    # Próximos prazos
+    upcoming_deadlines = (
+        Deadline.query.filter_by(client_id=client.id, status="pending")
+        .order_by(Deadline.deadline_date.asc())
+        .limit(5)
+        .all()
+    )
+
+    # Mensagens não lidas
+    unread_messages = Message.query.filter_by(
+        recipient_id=current_user.id, is_read=False
+    ).count()
+
+    # Atividades recentes
+    recent_documents = (
+        Document.query.filter_by(client_id=client.id)
+        .order_by(Document.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    return render_template(
+        "portal/index.html",
+        client=client,
+        total_documents=total_documents,
+        pending_deadlines=pending_deadlines,
+        upcoming_deadlines=upcoming_deadlines,
+        unread_messages=unread_messages,
+        recent_documents=recent_documents,
+    )
+
+
+@bp.route("/login", methods=["GET", "POST"])
+def login():
+    """Login do cliente"""
+    if current_user.is_authenticated:
+        return redirect(url_for("portal.index"))
+
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        user = User.query.filter_by(email=email).first()
+
+        if not user:
+            flash("Email ou senha incorretos", "danger")
+        elif not check_password_hash(user.password_hash, password):
+            flash("Email ou senha incorretos", "danger")
+        else:
+            # Verificar se é cliente
+            client = Client.query.filter_by(user_id=user.id).first()
+            if client:
+                login_user(user, remember=True)
+                next_page = request.args.get("next")
+                return redirect(next_page or url_for("portal.index"))
+            else:
+                flash(
+                    "Acesso não autorizado. Este login é apenas para clientes.",
+                    "danger",
+                )
+
+    return render_template("portal/login.html")
+
+
+@bp.route("/logout")
+def logout():
+    """Logout do cliente"""
+    logout_user()
+    return redirect(url_for("portal.login"))
+
+
+@bp.route("/documents")
+@client_required
+def documents():
+    """Lista de documentos do cliente"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    # Filtros
+    doc_type = request.args.get("type")
+    search = request.args.get("search")
+
+    query = Document.query.filter_by(client_id=client.id)
+
+    if doc_type:
+        query = query.filter_by(document_type=doc_type)
+
+    if search:
+        query = query.filter(Document.title.ilike(f"%{search}%"))
+
+    documents = query.order_by(Document.created_at.desc()).all()
+
+    return render_template(
+        "portal/documents.html",
+        client=client,
+        documents=documents,
+        doc_type=doc_type,
+        search=search,
+    )
+
+
+@bp.route("/document/<int:doc_id>")
+@client_required
+def view_document(doc_id):
+    """Visualizar documento específico"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+    document = Document.query.filter_by(id=doc_id, client_id=client.id).first_or_404()
+
+    return render_template(
+        "portal/document_view.html", client=client, document=document
+    )
+
+
+@bp.route("/download/<int:doc_id>")
+@client_required
+def download_document(doc_id):
+    """Download de documento"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+    document = Document.query.filter_by(id=doc_id, client_id=client.id).first_or_404()
+
+    if not document.file_path:
+        abort(404)
+
+    import os
+
+    from flask import current_app
+
+    directory = os.path.dirname(
+        os.path.join(current_app.root_path, "static", document.file_path)
+    )
+    filename = os.path.basename(document.file_path)
+
+    return send_from_directory(
+        directory,
+        filename,
+        as_attachment=True,
+        download_name=document.filename or filename,
+    )
+
+
+@bp.route("/deadlines")
+@client_required
+def deadlines():
+    """Lista de prazos do cliente"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    # Filtros
+    status = request.args.get("status", "pending")
+
+    query = Deadline.query.filter_by(client_id=client.id)
+
+    if status:
+        query = query.filter_by(status=status)
+
+    deadlines_list = query.order_by(Deadline.deadline_date.asc()).all()
+
+    return render_template(
+        "portal/deadlines.html", client=client, deadlines=deadlines_list, status=status
+    )
+
+
+@bp.route("/chat")
+@client_required
+def chat():
+    """Chat com advogado"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    # Buscar sala de chat
+    chat_room = ChatRoom.query.filter_by(client_id=client.id).first()
+
+    if not chat_room:
+        flash("Ainda não há um chat iniciado com seu advogado.", "info")
+        return render_template(
+            "portal/chat.html", client=client, chat_room=None, messages=[]
+        )
+
+    # Buscar mensagens
+    messages = (
+        Message.query.filter(
+            db.or_(
+                db.and_(
+                    Message.sender_id == current_user.id,
+                    Message.recipient_id == chat_room.lawyer_id,
+                ),
+                db.and_(
+                    Message.sender_id == chat_room.lawyer_id,
+                    Message.recipient_id == current_user.id,
+                ),
+            )
+        )
+        .order_by(Message.created_at.asc())
+        .all()
+    )
+
+    # Marcar como lidas
+    chat_room.mark_as_read_by(current_user.id)
+    for msg in messages:
+        if msg.recipient_id == current_user.id and not msg.is_read:
+            msg.mark_as_read()
+
+    return render_template(
+        "portal/chat.html", client=client, chat_room=chat_room, messages=messages
+    )
+
+
+@bp.route("/timeline")
+@client_required
+def timeline():
+    """Timeline de atualizações do processo"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    # Combinar diferentes tipos de eventos
+    events = []
+
+    # Documentos
+    for doc in (
+        Document.query.filter_by(client_id=client.id)
+        .order_by(Document.created_at.desc())
+        .limit(10)
+        .all()
+    ):
+        events.append(
+            {
+                "type": "document",
+                "title": f"Documento adicionado: {doc.title}",
+                "description": doc.description,
+                "date": doc.created_at,
+                "icon": "fa-file-alt",
+                "color": "primary",
+            }
+        )
+
+    # Prazos cumpridos
+    for deadline in (
+        Deadline.query.filter_by(client_id=client.id, status="completed")
+        .order_by(Deadline.completed_at.desc())
+        .limit(10)
+        .all()
+    ):
+        events.append(
+            {
+                "type": "deadline",
+                "title": f"Prazo cumprido: {deadline.title}",
+                "description": deadline.completion_notes,
+                "date": deadline.completed_at,
+                "icon": "fa-check-circle",
+                "color": "success",
+            }
+        )
+
+    # Ordenar por data
+    events.sort(key=lambda x: x["date"], reverse=True)
+
+    return render_template("portal/timeline.html", client=client, events=events)
+
+
+@bp.route("/profile", methods=["GET", "POST"])
+@client_required
+def profile():
+    """Perfil do cliente"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    if request.method == "POST":
+        # Atualizar informações básicas
+        client.phone = request.form.get("phone")
+        client.address = request.form.get("address")
+
+        # Atualizar email do usuário
+        current_user.email = request.form.get("email")
+
+        # Atualizar senha se fornecida
+        new_password = request.form.get("new_password")
+        if new_password:
+            current_user.password = generate_password_hash(new_password)
+
+        db.session.commit()
+        flash("Perfil atualizado com sucesso!", "success")
+        return redirect(url_for("portal.profile"))
+
+    return render_template("portal/profile.html", client=client)
+
+
+@bp.route("/upload", methods=["GET", "POST"])
+@client_required
+def upload_document():
+    """Upload de documentos pelo cliente"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    if request.method == "POST":
+        if "file" not in request.files:
+            flash("Nenhum arquivo selecionado", "danger")
+            return redirect(request.url)
+
+        file = request.files["file"]
+        if file.filename == "":
+            flash("Nenhum arquivo selecionado", "danger")
+            return redirect(request.url)
+
+        if file:
+            # Validar tipo de arquivo
+            allowed_extensions = {"pdf", "doc", "docx", "jpg", "jpeg", "png"}
+            if not file.filename.lower().endswith(tuple("." + ext for ext in allowed_extensions)):
+                flash("Tipo de arquivo não permitido. Use: PDF, DOC, DOCX, JPG, PNG", "danger")
+                return redirect(request.url)
+
+            # Validar tamanho (10MB máximo)
+            if len(file.read()) > 10 * 1024 * 1024:
+                flash("Arquivo muito grande. Máximo: 10MB", "danger")
+                return redirect(request.url)
+            file.seek(0)
+
+            # Salvar arquivo
+            import os
+            from werkzeug.utils import secure_filename
+
+            upload_folder = os.path.join(current_app.root_path, "static", "uploads", "client_documents")
+            os.makedirs(upload_folder, exist_ok=True)
+
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(upload_folder, f"{client.id}_{filename}")
+
+            file.save(file_path)
+
+            # Criar registro no banco
+            document = Document(
+                client_id=client.id,
+                title=request.form.get("title", file.filename),
+                document_type=request.form.get("document_type", "outros"),
+                file_path=f"uploads/client_documents/{client.id}_{filename}",
+                filename=file.filename,
+                uploaded_by_client=True
+            )
+
+            db.session.add(document)
+            db.session.commit()
+
+            flash("Documento enviado com sucesso!", "success")
+            return redirect(url_for("portal.documents"))
+
+    return render_template("portal/upload.html", client=client)
+
+
+@bp.route("/api/push/vapid-key")
+@client_required
+def get_vapid_key():
+    """Obter chave VAPID pública para notificações push"""
+    from app.config import Config
+    return jsonify({"publicKey": Config.VAPID_PUBLIC_KEY})
+
+
+@bp.route("/api/push/subscribe", methods=["POST"])
+@client_required
+def subscribe_push():
+    """Inscrever-se para notificações push"""
+    try:
+        data = request.get_json()
+        subscription = data.get("subscription")
+
+        if not subscription:
+            return jsonify({"error": "Subscription data required"}), 400
+
+        client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+        # Salvar subscription no banco (criar tabela se necessário)
+        # Por enquanto, armazenar em sessão ou localStorage do cliente
+        # Em produção, criar tabela push_subscriptions
+
+        return jsonify({"success": True, "message": "Subscribed to push notifications"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/api/push/unsubscribe", methods=["POST"])
+@client_required
+def unsubscribe_push():
+    """Cancelar inscrição de notificações push"""
+    try:
+        data = request.get_json()
+        endpoint = data.get("endpoint")
+
+        # Remover subscription do banco
+        # Implementar lógica de remoção
+
+        return jsonify({"success": True, "message": "Unsubscribed from push notifications"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/calendar")
+@client_required
+def calendar():
+    """Calendário do cliente"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    return render_template("portal/calendar.html", client=client)
+
+
+@bp.route("/api/calendar/events")
+@client_required
+def get_calendar_events():
+    """API para obter eventos do calendário do cliente"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    # Buscar prazos do cliente
+    deadlines = Deadline.query.filter_by(client_id=client.id).all()
+
+    events = []
+    for deadline in deadlines:
+        events.append({
+            'id': f'deadline_{deadline.id}',
+            'title': deadline.title,
+            'start': deadline.deadline_date.isoformat(),
+            'end': deadline.deadline_date.isoformat(),
+            'backgroundColor': '#dc3545' if deadline.is_urgent() else '#ffc107',
+            'borderColor': '#dc3545' if deadline.is_urgent() else '#ffc107',
+            'textColor': '#000',
+            'extendedProps': {
+                'type': 'deadline',
+                'description': deadline.description,
+                'status': deadline.status,
+                'urgent': deadline.is_urgent()
+            }
+        })
+
+    return jsonify(events)
+
+
+@bp.route("/timeline")
+@client_required
+def timeline():
+    """Timeline visual do processo"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    # Buscar processos do cliente
+    processes = Process.query.filter_by(client_id=client.id).all()
+
+    # Criar eventos da timeline
+    timeline_events = []
+
+    for process in processes:
+        # Evento de criação do processo
+        timeline_events.append({
+            "date": process.created_at,
+            "title": f"Processo Iniciado: {process.process_number}",
+            "description": f"Número do processo: {process.process_number}",
+            "type": "process_start",
+            "icon": "fa-folder-plus",
+            "color": "primary"
+        })
+
+        # Buscar movimentações
+        movements = ProcessMovement.query.filter_by(process_id=process.id).order_by(ProcessMovement.movement_date).all()
+
+        for movement in movements:
+            timeline_events.append({
+                "date": movement.movement_date,
+                "title": movement.title,
+                "description": movement.description,
+                "type": "movement",
+                "icon": "fa-exchange-alt",
+                "color": "info"
+            })
+
+        # Buscar custos
+        costs = ProcessCost.query.filter_by(process_id=process.id).order_by(ProcessCost.date).all()
+
+        for cost in costs:
+            timeline_events.append({
+                "date": cost.date,
+                "title": f"Custo: {cost.description}",
+                "description": f"Valor: R$ {cost.amount:.2f}",
+                "type": "cost",
+                "icon": "fa-dollar-sign",
+                "color": "warning"
+            })
+
+    # Buscar prazos
+    deadlines = Deadline.query.filter_by(client_id=client.id).all()
+
+    for deadline in deadlines:
+        timeline_events.append({
+            "date": deadline.deadline_date,
+            "title": f"Prazo: {deadline.title}",
+            "description": deadline.description,
+            "type": "deadline",
+            "icon": "fa-calendar-alt",
+            "color": "danger" if deadline.is_urgent() else "success"
+        })
+
+    # Ordenar por data (mais recente primeiro)
+    timeline_events.sort(key=lambda x: x["date"], reverse=True)
+
+    return render_template("portal/timeline.html", client=client, events=timeline_events)
+
+ 
+ 
+ @ b p . r o u t e ( " / a p i / c h a t / s e n d " ,   m e t h o d s = [ " P O S T " ] ) 
+ @ c l i e n t _ r e q u i r e d 
+ d e f   s e n d _ c h a t _ m e s s a g e ( ) : 
+         " " " E n v i a r   m e n s a g e m   n o   c h a t " " " 
+         t r y : 
+                 d a t a   =   r e q u e s t . g e t _ j s o n ( ) 
+                 c o n t e n t   =   d a t a . g e t ( " c o n t e n t " ,   " " ) . s t r i p ( ) 
+                 m e s s a g e _ t y p e   =   d a t a . g e t ( " m e s s a g e _ t y p e " ,   " t e x t " ) 
+ 
+                 i f   n o t   c o n t e n t : 
+                         r e t u r n   j s o n i f y ( { " e r r o r " :   " C o n t e � d o   d a   m e n s a g e m   �   o b r i g a t � r i o " } ) ,   4 0 0 
+ 
+                 c l i e n t   =   C l i e n t . q u e r y . f i l t e r _ b y ( u s e r _ i d = c u r r e n t _ u s e r . i d ) . f i r s t _ o r _ 4 0 4 ( ) 
+                 c h a t _ r o o m   =   C h a t R o o m . q u e r y . f i l t e r _ b y ( c l i e n t _ i d = c l i e n t . i d ) . f i r s t ( ) 
+ 
+                 i f   n o t   c h a t _ r o o m : 
+                         r e t u r n   j s o n i f y ( { " e r r o r " :   " C h a t   n � o   e n c o n t r a d o " } ) ,   4 0 4 
+ 
+                 #   C r i a r   m e n s a g e m 
+                 m e s s a g e   =   M e s s a g e ( 
+                         s e n d e r _ i d = c u r r e n t _ u s e r . i d , 
+                         r e c i p i e n t _ i d = c h a t _ r o o m . l a w y e r _ i d , 
+                         c o n t e n t = c o n t e n t , 
+                         m e s s a g e _ t y p e = m e s s a g e _ t y p e , 
+                         c h a t _ r o o m _ i d = c h a t _ r o o m . i d 
+                 ) 
+ 
+                 d b . s e s s i o n . a d d ( m e s s a g e ) 
+                 d b . s e s s i o n . c o m m i t ( ) 
+ 
+                 r e t u r n   j s o n i f y ( { 
+                         " s u c c e s s " :   T r u e , 
+                         " m e s s a g e " :   { 
+                                 " i d " :   m e s s a g e . i d , 
+                                 " c o n t e n t " :   m e s s a g e . c o n t e n t , 
+                                 " c r e a t e d _ a t " :   m e s s a g e . c r e a t e d _ a t . i s o f o r m a t ( ) , 
+                                 " i s _ r e a d " :   m e s s a g e . i s _ r e a d 
+                         } 
+                 } ) 
+ 
+         e x c e p t   E x c e p t i o n   a s   e : 
+                 r e t u r n   j s o n i f y ( { " e r r o r " :   s t r ( e ) } ) ,   5 0 0 
+ 
+ 
+ @ b p . r o u t e ( " / a p i / c h a t / c l e a r " ,   m e t h o d s = [ " P O S T " ] ) 
+ @ c l i e n t _ r e q u i r e d 
+ d e f   c l e a r _ c h a t ( ) : 
+         " " " L i m p a r   h i s t � r i c o   d o   c h a t " " " 
+         t r y : 
+                 c l i e n t   =   C l i e n t . q u e r y . f i l t e r _ b y ( u s e r _ i d = c u r r e n t _ u s e r . i d ) . f i r s t _ o r _ 4 0 4 ( ) 
+                 c h a t _ r o o m   =   C h a t R o o m . q u e r y . f i l t e r _ b y ( c l i e n t _ i d = c l i e n t . i d ) . f i r s t ( ) 
+ 
+                 i f   n o t   c h a t _ r o o m : 
+                         r e t u r n   j s o n i f y ( { " e r r o r " :   " C h a t   n � o   e n c o n t r a d o " } ) ,   4 0 4 
+ 
+                 #   D e l e t a r   t o d a s   a s   m e n s a g e n s   d o   c h a t 
+                 M e s s a g e . q u e r y . f i l t e r _ b y ( c h a t _ r o o m _ i d = c h a t _ r o o m . i d ) . d e l e t e ( ) 
+                 d b . s e s s i o n . c o m m i t ( ) 
+ 
+                 r e t u r n   j s o n i f y ( { " s u c c e s s " :   T r u e ,   " m e s s a g e " :   " C h a t   l i m p o   c o m   s u c e s s o " } ) 
+ 
+         e x c e p t   E x c e p t i o n   a s   e : 
+                 r e t u r n   j s o n i f y ( { " e r r o r " :   s t r ( e ) } ) ,   5 0 0  
+ 

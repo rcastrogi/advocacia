@@ -128,6 +128,7 @@
                     <tr>
                         <th>Usuário</th>
                         <th>Tipo</th>
+                        <th>Plano</th>
                         <th>Status</th>
                         <th class="text-center">Tempo</th>
                         <th class="text-center">Clientes</th>
@@ -167,6 +168,13 @@
                             <span class="badge bg-danger">Admin</span>
                             {% else %}
                             <span class="badge bg-secondary">{{ user.user_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if metrics.plan_name != "Sem plano" %}
+                            <span class="badge bg-success">{{ metrics.plan_name }}</span>
+                            {% else %}
+                            <span class="badge bg-light text-muted">Sem plano</span>
                             {% endif %}
                         </td>
                         <td>
@@ -224,15 +232,46 @@
                             </span>
                         </td>
                         <td class="text-end">
-                            <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" 
-                               class="btn btn-sm btn-outline-primary" title="Ver detalhes">
-                                <i class="fas fa-eye"></i>
-                            </a>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="Ver detalhes">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if user.user_type not in ["master", "admin"] %}
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                            data-bs-toggle="dropdown" aria-expanded="false" title="Mais ações">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <form action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" method="POST" class="d-inline">
+                                                <button type="submit" class="dropdown-item {% if user.is_active %}text-danger{% else %}text-success{% endif %}">
+                                                    <i class="fas fa-{% if user.is_active %}user-slash{% else %}user-check{% endif %} me-2"></i>
+                                                    {% if user.is_active %}Desativar{% else %}Reativar{% endif %} Usuário
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a href="#" class="dropdown-item" onclick="assignPlan({{ user.id }}, '{{ user.full_name or user.username }}', '{{ metrics.plan_name }}')">
+                                                <i class="fas fa-tag me-2"></i>Alterar Plano
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#" class="dropdown-item" onclick="addCredits({{ user.id }}, '{{ user.full_name or user.username }}')">
+                                                <i class="fas fa-plus me-2"></i>Adicionar Créditos
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="10" class="text-center text-muted py-5">
+                        <td colspan="11" class="text-center text-muted py-5">
                             <i class="fas fa-users fa-3x mb-3 d-block opacity-25"></i>
                             Nenhum usuário encontrado
                         </td>
@@ -295,4 +334,127 @@
     flex-shrink: 0;
 }
 </style>
+
+<!-- Modal Atribuir Plano -->
+<div class="modal fade" id="assignPlanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-tag me-2"></i>Atribuir Plano</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="assignPlanForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Usuário</label>
+                        <input type="text" class="form-control" id="planUserName" readonly>
+                        <input type="hidden" name="user_id" id="planUserId">
+                    </div>
+                    <div class="mb-3">
+                        <label for="planSelect" class="form-label">Plano</label>
+                        <select name="plan_id" id="planSelect" class="form-select" required>
+                            <option value="">Selecione um plano...</option>
+                            <!-- Opções serão carregadas via JavaScript -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="planStatus" class="form-label">Status do Plano</label>
+                        <select name="status" id="planStatus" class="form-select">
+                            <option value="active">Ativo</option>
+                            <option value="trial">Em teste</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Atribuir Plano</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Adicionar Créditos -->
+<div class="modal fade" id="addCreditsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Adicionar Créditos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addCreditsForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Usuário</label>
+                        <input type="text" class="form-control" id="creditsUserName" readonly>
+                        <input type="hidden" name="user_id" id="creditsUserId">
+                    </div>
+                    <div class="mb-3">
+                        <label for="creditsAmount" class="form-label">Quantidade de Créditos</label>
+                        <input type="number" name="amount" id="creditsAmount" class="form-control" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="creditsReason" class="form-label">Motivo</label>
+                        <input type="text" name="reason" id="creditsReason" class="form-control" 
+                               placeholder="Bônus administrativo" value="Bônus administrativo">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Adicionar Créditos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Função para abrir modal de plano
+function assignPlan(userId, userName, currentPlan) {
+    document.getElementById('planUserId').value = userId;
+    document.getElementById('planUserName').value = userName;
+    
+    // Carregar opções de plano via AJAX
+    fetch('/api/billing/plans')
+        .then(response => response.json())
+        .then(plans => {
+            const select = document.getElementById('planSelect');
+            select.innerHTML = '<option value="">Selecione um plano...</option>';
+            plans.forEach(plan => {
+                const option = document.createElement('option');
+                option.value = plan.id;
+                option.textContent = `${plan.name} (${plan.plan_type})`;
+                if (plan.name === currentPlan) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Erro ao carregar planos:', error);
+            // Fallback com opções básicas
+            document.getElementById('planSelect').innerHTML = `
+                <option value="">Erro ao carregar planos</option>
+                <option value="1">Plano Básico</option>
+                <option value="2">Plano Profissional</option>
+            `;
+        });
+    
+    // Configurar action do form
+    document.getElementById('assignPlanForm').action = `/billing/users/${userId}/assign-plan`;
+    
+    new bootstrap.Modal(document.getElementById('assignPlanModal')).show();
+}
+
+// Função para abrir modal de créditos
+function addCredits(userId, userName) {
+    document.getElementById('creditsUserId').value = userId;
+    document.getElementById('creditsUserName').value = userName;
+    
+    // Configurar action do form
+    document.getElementById('addCreditsForm').action = `/admin/usuarios/${userId}/add-credits`;
+    
+    new bootstrap.Modal(document.getElementById('addCreditsModal')).show();
+}
+</script>
 {% endblock %}

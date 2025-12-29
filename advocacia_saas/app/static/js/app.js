@@ -1,83 +1,126 @@
 // Main JavaScript file for Petitio
 
+// Use requestAnimationFrame for better performance
+function scheduleTask(callback) {
+    if (window.requestAnimationFrame) {
+        requestAnimationFrame(callback);
+    } else {
+        setTimeout(callback, 16); // Fallback to ~60fps
+    }
+}
+
 $(document).ready(function() {
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+    // Initialize tooltips with debounced initialization
+    scheduleTask(function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
     });
 
-    // Auto-dismiss alerts after 5 seconds (but not error alerts)
+    // Auto-dismiss alerts after 5 seconds (but not error alerts) - use setTimeout instead of jQuery fadeOut for better performance
     setTimeout(function() {
-        $('.alert-dismissible').not('.alert-danger').fadeOut('slow');
+        const alerts = document.querySelectorAll('.alert-dismissible:not(.alert-danger)');
+        alerts.forEach(function(alert) {
+            alert.style.transition = 'opacity 0.3s ease-out';
+            alert.style.opacity = '0';
+            setTimeout(function() {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 300);
+        });
     }, 5000);
 
-    // Add fade-in animation to cards
-    $('.card').addClass('fade-in');
+    // Add fade-in animation to cards - batch DOM operations
+    scheduleTask(function() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(function(card) {
+            card.classList.add('fade-in');
+        });
+    });
 
-    // Smooth scrolling for anchor links
-    $('a[href*="#"]').on('click', function(e) {
-        if (this.hash !== '') {
+    // Smooth scrolling for anchor links - optimized event delegation
+    document.addEventListener('click', function(e) {
+        const target = e.target.closest('a[href*="#"]');
+        if (target && target.hash !== '') {
             e.preventDefault();
-            var hash = this.hash;
-            $('html, body').animate({
-                scrollTop: $(hash).offset().top - 70
-            }, 800);
-        }
-    });
-
-    // Format phone inputs
-    $('input[type="tel"], input[name*="phone"]').on('input', function() {
-        let value = this.value.replace(/\D/g, '');
-        if (value.length <= 11) {
-            if (value.length <= 10) {
-                value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-            } else {
-                value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            const hash = target.hash;
+            const targetElement = document.querySelector(hash);
+            if (targetElement) {
+                const offsetTop = targetElement.offsetTop - 70;
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
             }
-            this.value = value;
         }
     });
 
-    // Format CPF/CNPJ input
-    $('input[name*="cpf"], input[name*="cnpj"]').on('input', function() {
-        let value = this.value.replace(/\D/g, '');
-        if (value.length <= 11) {
-            // CPF format
-            value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-        } else {
-            // CNPJ format
-            value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    // Format phone inputs - use event delegation for better performance
+    document.addEventListener('input', function(e) {
+        const target = e.target;
+        if (target.matches('input[type="tel"], input[name*="phone"]')) {
+            let value = target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                if (value.length <= 10) {
+                    value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+                } else {
+                    value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                }
+                target.value = value;
+            }
         }
-        this.value = value;
     });
 
-    // Format CEP input
-    $('input[name*="cep"]').on('input', function() {
-        let value = this.value.replace(/\D/g, '');
-        if (value.length <= 8) {
-            value = value.replace(/(\d{5})(\d{3})/, '$1-$2');
-            this.value = value;
+    // Format CPF/CNPJ input - use event delegation
+    document.addEventListener('input', function(e) {
+        const target = e.target;
+        if (target.matches('input[name*="cpf"], input[name*="cnpj"]')) {
+            let value = target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                // CPF format
+                value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            } else {
+                // CNPJ format
+                value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+            }
+            target.value = value;
+        }
+    });
+
+    // Format CEP input - use event delegation
+    document.addEventListener('input', function(e) {
+        const target = e.target;
+        if (target.matches('input[name*="cep"]')) {
+            let value = target.value.replace(/\D/g, '');
+            if (value.length <= 8) {
+                value = value.replace(/(\d{5})(\d{3})/, '$1-$2');
+                target.value = value;
+            }
         }
     });
 
     // Auto search CEP when 8 digits are entered (with delay to avoid too many requests)
     let cepTimeout;
-    $('input[name*="cep"]').on('input', function() {
-        const cep = this.value.replace(/\D/g, '');
-        clearTimeout(cepTimeout);
-        if (cep.length === 8) {
-            cepTimeout = setTimeout(() => {
-                searchCEP(cep);
-            }, 500); // Wait 500ms after user stops typing
+    document.addEventListener('input', function(e) {
+        const target = e.target;
+        if (target.matches('input[name*="cep"]')) {
+            const cep = target.value.replace(/\D/g, '');
+            clearTimeout(cepTimeout);
+            if (cep.length === 8) {
+                cepTimeout = setTimeout(() => {
+                    searchCEP(cep);
+                }, 500); // Wait 500ms after user stops typing
+            }
         }
     });
 });
 
-// CEP search function
+// CEP search function - optimized to reduce DOM operations
 function searchCEP(cep) {
     if (cep.length === 8) {
-        // Show loading
+        // Show loading - cache DOM element
         const button = document.getElementById('searchCep');
         if (button) {
             button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
@@ -95,54 +138,56 @@ function searchCEP(cep) {
                         showAlert('warning', 'CEP não encontrado. Verifique se está correto.');
                     }
                 } else {
-                    
-                    // Get field references
-                    const streetField = document.getElementById('street');
-                    const neighborhoodField = document.getElementById('neighborhood');
-                    const ufField = document.getElementById('uf');
-                    const cityField = document.getElementById('city');
-                    
-                    // Fill street and neighborhood
-                    if (streetField && data.street) {
-                        streetField.value = data.street;
-                        $(streetField).addClass('slide-up');
-                    }
-                    if (neighborhoodField && data.neighborhood) {
-                        neighborhoodField.value = data.neighborhood;
-                        $(neighborhoodField).addClass('slide-up');
-                    }
-                    
-                    // Fill UF and City
-                    if (ufField && data.uf) {
-                        ufField.value = data.uf;
-                        $(ufField).addClass('slide-up');
-                    }
-                    
-                    // Fill city field (now a text input)
-                    if (cityField && data.city) {
-                        cityField.value = data.city;
-                        $(cityField).addClass('slide-up');
-                    }
-                    
-                    // Now lock the fields that came from CEP
-                    lockCEPFields(streetField, neighborhoodField, ufField, cityField);
+                    // Batch DOM operations to avoid multiple reflows
+                    scheduleTask(() => {
+                        // Get field references once
+                        const streetField = document.getElementById('street');
+                        const neighborhoodField = document.getElementById('neighborhood');
+                        const ufField = document.getElementById('uf');
+                        const cityField = document.getElementById('city');
 
-                    // TOAST DESABILITADO PARA EVITAR DUPLICAÇÃO
-                    // if (window.showSuccessToast) {
-                    //     window.showSuccessToast('Endereço preenchido automaticamente!');
-                    // } else {
+                        // Prepare all field updates
+                        const updates = [];
+
+                        if (streetField && data.street) {
+                            updates.push(() => {
+                                streetField.value = data.street;
+                                streetField.classList.add('slide-up');
+                            });
+                        }
+                        if (neighborhoodField && data.neighborhood) {
+                            updates.push(() => {
+                                neighborhoodField.value = data.neighborhood;
+                                neighborhoodField.classList.add('slide-up');
+                            });
+                        }
+                        if (ufField && data.uf) {
+                            updates.push(() => {
+                                ufField.value = data.uf;
+                                ufField.classList.add('slide-up');
+                            });
+                        }
+                        if (cityField && data.city) {
+                            updates.push(() => {
+                                cityField.value = data.city;
+                                cityField.classList.add('slide-up');
+                            });
+                        }
+
+                        // Execute all updates in one batch
+                        updates.forEach(update => update());
+
+                        // Lock fields after all updates are complete
+                        lockCEPFields(streetField, neighborhoodField, ufField, cityField);
+
+                        // Show success message
                         showAlert('success', 'Endereço preenchido automaticamente!');
-                    // }
+                    });
                 }
             })
             .catch(error => {
                 console.error('❌ Erro ao buscar CEP:', error);
-                // TOAST DESABILITADO PARA EVITAR DUPLICAÇÃO
-                // if (window.showErrorToast) {
-                //     window.showErrorToast('Erro ao buscar CEP. Verifique sua conexão.');
-                // } else {
-                    showAlert('error', 'Erro ao buscar CEP');
-                // }
+                showAlert('error', 'Erro ao buscar CEP');
             })
             .finally(() => {
                 // Hide loading
@@ -154,17 +199,17 @@ function searchCEP(cep) {
     }
 }
 
-// Lock fields filled by CEP API
+// Lock fields filled by CEP API - optimized to reduce DOM operations
 function lockCEPFields(streetField, neighborhoodField, ufField, cityField) {
-    
+
     const lockedValues = {
         street: streetField ? streetField.value : '',
         neighborhood: neighborhoodField ? neighborhoodField.value : '',
         uf: ufField ? ufField.value : '',
         city: cityField ? cityField.value : ''
     };
-    
-    // Function to prevent changes
+
+    // Single event handler function to reduce memory usage
     const preventChange = function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -172,113 +217,73 @@ function lockCEPFields(streetField, neighborhoodField, ufField, cityField) {
         showAlert('warning', '⛔ Este campo foi preenchido pelo CEP e está bloqueado. Altere o CEP para desbloquear.');
         return false;
     };
-    
-    const restoreValue = function(field, value) {
-        return function() {
-            field.value = value;
-        };
-    };
-    
-    // Lock each field
-    [streetField, neighborhoodField, ufField, cityField].forEach((field, index) => {
-        if (!field) return;
-        
-        const fieldName = ['street', 'neighborhood', 'uf', 'city'][index];
-        const value = lockedValues[fieldName];
-        
-        // Mark as locked
-        field.dataset.cepLocked = 'true';
-        field.dataset.lockedValue = value;
-        
-        // Set readonly/disabled
-        if (field.tagName === 'SELECT') {
-            field.disabled = true;
-        } else {
-            field.readOnly = true;
-        }
-        
-        // Style
-        field.style.pointerEvents = 'none';
-        field.style.cursor = 'not-allowed';
-        field.style.backgroundColor = '#e9ecef';
-        field.classList.add('cep-locked');
-        
-        // Add event blockers
-        field.addEventListener('keydown', preventChange, true);
-        field.addEventListener('keypress', preventChange, true);
-        field.addEventListener('paste', preventChange, true);
-        field.addEventListener('cut', preventChange, true);
-        field.addEventListener('input', restoreValue(field, value), true);
-        field.addEventListener('change', restoreValue(field, value), true);
-        field.addEventListener('focus', preventChange, true);
-        field.addEventListener('mousedown', preventChange, true);
+
+    // Batch all DOM operations
+    scheduleTask(() => {
+        const fields = [streetField, neighborhoodField, ufField, cityField];
+        const fieldNames = ['street', 'neighborhood', 'uf', 'city'];
+
+        fields.forEach((field, index) => {
+            if (!field) return;
+
+            const fieldName = fieldNames[index];
+            const value = lockedValues[fieldName];
+
+            // Mark as locked
+            field.dataset.cepLocked = 'true';
+            field.dataset.lockedValue = value;
+
+            // Set readonly/disabled
+            if (field.tagName === 'SELECT') {
+                field.disabled = true;
+            } else {
+                field.readOnly = true;
+            }
+
+            // Apply styles in one go using CSS custom properties for better performance
+            field.style.cssText += 'pointer-events: none; cursor: not-allowed; background-color: #e9ecef;';
+            field.classList.add('cep-locked');
+
+            // Add single event listener with useCapture for better performance
+            field.addEventListener('keydown', preventChange, true);
+            field.addEventListener('input', function() { this.value = value; }, true);
+            field.addEventListener('change', function() { this.value = value; }, true);
+        });
     });
-    
 }
 
-// Unlock fields when CEP changes
+// Unlock fields when CEP changes - optimized
 $(document).ready(function() {
-    $('input[name*="cep"]').on('input', function() {
-        const cepValue = this.value.replace(/\D/g, '');
-        
-        // If user is typing/changing CEP, unlock fields
-        const streetField = document.getElementById('street');
-        const neighborhoodField = document.getElementById('neighborhood');
-        const ufField = document.getElementById('uf');
-        const cityField = document.getElementById('city');
-        
-        [streetField, neighborhoodField, ufField, cityField].forEach(field => {
-            if (field && field.dataset.cepLocked === 'true') {
-                
-                // Clone to remove all event listeners
-                const newField = field.cloneNode(true);
-                field.parentNode.replaceChild(newField, field);
-                
-                const unlockedField = document.getElementById(newField.id);
-                
-                // Remove locked state
-                delete unlockedField.dataset.cepLocked;
-                delete unlockedField.dataset.lockedValue;
-                
-                // Remove restrictions
-                unlockedField.readOnly = false;
-                unlockedField.disabled = false;
-                unlockedField.style.pointerEvents = '';
-                unlockedField.style.cursor = '';
-                unlockedField.style.backgroundColor = '';
-                unlockedField.classList.remove('cep-locked', 'bg-light');
-                
-                // Re-attach UF change listener if needed
-                if (unlockedField.id === 'uf') {
-                    unlockedField.addEventListener('change', function() {
-                        const ufValue = this.value;
-                        const citySelect = document.getElementById('city');
-                        
-                        if (!ufValue || !citySelect) return;
-                        
-                        citySelect.disabled = true;
-                        citySelect.innerHTML = '<option value="">Carregando...</option>';
-                        
-                        fetch(`/api/estados/${ufValue}/cidades`)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.error) {
-                                    citySelect.innerHTML = '<option value="">Erro</option>';
-                                } else {
-                                    citySelect.innerHTML = '<option value="">Selecione...</option>';
-                                    data.forEach(cidade => {
-                                        const option = document.createElement('option');
-                                        option.value = cidade.nome;
-                                        option.textContent = cidade.nome;
-                                        citySelect.appendChild(option);
-                                    });
-                                    citySelect.disabled = false;
-                                }
-                            });
+    // Use event delegation for better performance
+    document.addEventListener('input', function(e) {
+        const target = e.target;
+        if (target.matches('input[name*="cep"]')) {
+            const cepValue = target.value.replace(/\D/g, '');
+
+            // If user is typing/changing CEP, unlock fields
+            if (cepValue.length > 0 && cepValue.length < 8) {
+                scheduleTask(() => {
+                    const streetField = document.getElementById('street');
+                    const neighborhoodField = document.getElementById('neighborhood');
+                    const ufField = document.getElementById('uf');
+                    const cityField = document.getElementById('city');
+
+                    [streetField, neighborhoodField, ufField, cityField].forEach(field => {
+                        if (field && field.dataset.cepLocked === 'true') {
+                            // Remove locked state
+                            delete field.dataset.cepLocked;
+                            delete field.dataset.lockedValue;
+
+                            // Remove restrictions
+                            field.readOnly = false;
+                            field.disabled = false;
+                            field.style.cssText = field.style.cssText.replace(/pointer-events:[^;]+;?/g, '').replace(/cursor:[^;]+;?/g, '').replace(/background-color:[^;]+;?/g, '');
+                            field.classList.remove('cep-locked', 'bg-light');
+                        }
                     });
-                }
+                });
             }
-        });
+        }
     });
 });
 

@@ -15,6 +15,7 @@
         </h2>
     </div>
     <div>
+        {% if user.user_type not in ["master", "admin"] %}
         <form action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" method="POST" class="d-inline">
             {% if user.is_active %}
             <button type="submit" class="btn btn-outline-danger" 
@@ -27,6 +28,7 @@
             </button>
             {% endif %}
         </form>
+        {% endif %}
     </div>
 </div>
 
@@ -172,8 +174,8 @@
                     <div class="card-body">
                         <h5 class="mb-0">R$ {{ "%.2f"|format(metrics.petitions_value) }}</h5>
                         <small class="text-muted">Valor Total Pet.</small>
-                        {% if metrics.petitions_month > 0 %}
-                        <br><small class="text-success">{{ metrics.petitions_month }} este mês</small>
+                        {% if metrics.petitions_value_month > 0 %}
+                        <br><small class="text-success">R$ {{ "%.2f"|format(metrics.petitions_value_month) }} este mês</small>
                         {% endif %}
                     </div>
                 </div>

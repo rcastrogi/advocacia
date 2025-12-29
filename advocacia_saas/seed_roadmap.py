@@ -40,7 +40,7 @@ def seed_roadmap():
                 "slug": "dashboard-analytics-avancado",
                 "description": "Implementar dashboard completo com gráficos interativos e métricas em tempo real",
                 "detailed_description": "Criar um dashboard moderno com ApexCharts para visualização de dados, incluindo métricas de uso, conversão, retenção e performance do sistema.",
-                "status": "in_progress",
+                "status": "completed",
                 "priority": "high",
                 "estimated_effort": "large",
                 "visible_to_users": True,
@@ -51,6 +51,8 @@ def seed_roadmap():
                 "planned_start_date": datetime.utcnow().date() - timedelta(days=7),
                 "planned_completion_date": datetime.utcnow().date()
                 + timedelta(days=21),
+                "actual_start_date": datetime.utcnow().date() - timedelta(days=7),
+                "actual_completion_date": datetime.utcnow().date(),
             },
             {
                 "category_slug": "interface",
@@ -130,7 +132,7 @@ def seed_roadmap():
                 "slug": "otimizacao-performance",
                 "description": "Melhorar velocidade de carregamento e resposta do sistema",
                 "detailed_description": "Implementar cache, otimização de queries, compressão de assets e CDN para melhorar significativamente a performance geral da plataforma.",
-                "status": "in_progress",
+                "status": "completed",
                 "priority": "high",
                 "estimated_effort": "large",
                 "visible_to_users": False,  # Apenas interno
@@ -142,6 +144,8 @@ def seed_roadmap():
                 "planned_start_date": datetime.utcnow().date() - timedelta(days=3),
                 "planned_completion_date": datetime.utcnow().date()
                 + timedelta(days=30),
+                "actual_start_date": datetime.utcnow().date() - timedelta(days=3),
+                "actual_completion_date": datetime.utcnow().date(),
             },
             {
                 "category_slug": "integracao",
@@ -164,23 +168,22 @@ def seed_roadmap():
             },
             {
                 "category_slug": "funcionalidades",
-                "title": "Sistema de Templates Personalizáveis",
-                "slug": "sistema-templates-personalizaveis",
-                "description": "Permitir que usuários criem e personalizem seus próprios templates",
-                "detailed_description": "Implementar editor visual de templates com drag-and-drop, variáveis dinâmicas e sistema de compartilhamento entre usuários.",
+                "title": "Portal do Cliente Avançado",
+                "slug": "portal-cliente-avancado",
+                "description": "Portal completo para clientes com dashboard, documentos, calendário, chat e notificações",
+                "detailed_description": "Implementar portal do cliente com interface moderna, upload de documentos, calendário integrado, timeline visual, sistema de chat em tempo real e push notifications.",
                 "status": "completed",
-                "priority": "medium",
+                "priority": "high",
                 "estimated_effort": "large",
                 "visible_to_users": True,
-                "business_value": "Aumentar flexibilidade e reduzir dependência de templates padrão",
+                "business_value": "Melhorar experiência do cliente e reduzir suporte administrativo",
                 "technical_complexity": "medium",
                 "user_impact": "high",
-                "tags": "templates, personalização, editor visual",
-                "planned_start_date": datetime.utcnow().date() - timedelta(days=60),
-                "planned_completion_date": datetime.utcnow().date()
-                - timedelta(days=15),
-                "actual_start_date": datetime.utcnow().date() - timedelta(days=55),
-                "actual_completion_date": datetime.utcnow().date() - timedelta(days=15),
+                "tags": "portal, cliente, dashboard, upload, calendário, chat, notificações",
+                "planned_start_date": datetime.utcnow().date() - timedelta(days=14),
+                "planned_completion_date": datetime.utcnow().date(),
+                "actual_start_date": datetime.utcnow().date() - timedelta(days=14),
+                "actual_completion_date": datetime.utcnow().date(),
             },
         ]
 

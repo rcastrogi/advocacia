@@ -10,6 +10,8 @@ import zipfile
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from io import BytesIO, StringIO
+import logging
+import os
 
 from flask import (
     Response,
@@ -48,13 +50,41 @@ from app.models import (
     UserCredits,
     UserPlan,
 )
+
+# Configurar logging específico para admin
+admin_logger = logging.getLogger('admin')
+admin_logger.setLevel(logging.DEBUG)
+
+# Criar handler para arquivo
+admin_log_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs', 'admin.log')
+os.makedirs(os.path.dirname(admin_log_file), exist_ok=True)
+
+admin_file_handler = logging.FileHandler(admin_log_file, encoding='utf-8')
+admin_file_handler.setLevel(logging.DEBUG)
+
+# Criar formatter
+admin_formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s'
+)
+admin_file_handler.setFormatter(admin_formatter)
+
+# Adicionar handler ao logger
+if not admin_logger.handlers:
+    admin_logger.addHandler(admin_file_handler)
 from app.utils import generate_unique_slug
 
 
 def _require_admin():
     """Verifica se o usuário é admin (master)"""
-    if not current_user.is_authenticated or current_user.user_type != "master":
+    if not current_user.is_authenticated:
+        admin_logger.warning("Tentativa de acesso admin sem autenticação")
         abort(403)
+
+    if current_user.user_type != "master":
+        admin_logger.warning(f"Usuário {current_user.email} (tipo: {current_user.user_type}) tentou acessar área admin sem permissões")
+        abort(403)
+
+    admin_logger.info(f"Usuário admin {current_user.email} acessou área administrativa")
 
 
 def _get_dashboard_alerts():
@@ -190,71 +220,84 @@ def _get_dashboard_alerts():
 @login_required
 def users_list():
     """Lista todos os usuários com métricas detalhadas"""
-    _require_admin()
+    try:
+        admin_logger.info(f"Admin {current_user.email} acessando lista de usuários")
 
-    # Parâmetros de filtro e ordenação
-    search = request.args.get("search", "").strip()
-    status_filter = request.args.get("status", "all")
-    user_type_filter = request.args.get("user_type", "all")
-    sort_by = request.args.get("sort", "created_at")
-    sort_order = request.args.get("order", "desc")
-    page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 20, type=int)
+        _require_admin()
 
-    # Query base
-    query = User.query
+        # Parâmetros de filtro e ordenação
+        search = request.args.get("search", "").strip()
+        status_filter = request.args.get("status", "all")
+        user_type_filter = request.args.get("user_type", "all")
+        sort_by = request.args.get("sort", "created_at")
+        sort_order = request.args.get("order", "desc")
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 20, type=int)
 
-    # Filtro de busca
-    if search:
-        search_term = f"%{search}%"
-        query = query.filter(
-            db.or_(
-                User.username.ilike(search_term),
-                User.email.ilike(search_term),
-                User.full_name.ilike(search_term),
-                User.oab_number.ilike(search_term),
+        admin_logger.debug(f"Filtros aplicados - search: '{search}', status: {status_filter}, type: {user_type_filter}")
+
+        # Query base
+        query = User.query
+
+        # Filtro de busca
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                db.or_(
+                    User.username.ilike(search_term),
+                    User.email.ilike(search_term),
+                    User.full_name.ilike(search_term),
+                    User.oab_number.ilike(search_term),
+                )
             )
+
+        # Filtro de status
+        if status_filter == "active":
+            query = query.filter(User.is_active.is_(True))
+        elif status_filter == "inactive":
+            query = query.filter(User.is_active.is_(False))
+        elif status_filter == "delinquent":
+            query = query.filter(User.billing_status == "delinquent")
+        elif status_filter == "trial":
+            query = query.filter(User.billing_status == "trial")
+
+        # Filtro de tipo de usuário
+        if user_type_filter != "all":
+            query = query.filter(User.user_type == user_type_filter)
+
+        # Ordenação
+        sort_column = getattr(User, sort_by, User.created_at)
+        if sort_order == "desc":
+            query = query.order_by(sort_column.desc())
+        else:
+            query = query.order_by(sort_column.asc())
+
+        # Paginação
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        users = pagination.items
+
+        # Calcular métricas em bulk (evita N+1 queries)
+        users_with_metrics = _get_bulk_user_metrics(users)
+
+        admin_logger.info(f"Lista de usuários carregada: {len(users)} usuários encontrados (página {page})")
+
+        return render_template(
+            "admin/users_list.html",
+            title="Gerenciar Usuários",
+            users=users_with_metrics,
+            pagination=pagination,
+            search=search,
+            status_filter=status_filter,
+            user_type_filter=user_type_filter,
+            sort_by=sort_by,
+            sort_order=sort_order,
         )
 
-    # Filtro de status
-    if status_filter == "active":
-        query = query.filter(User.is_active.is_(True))
-    elif status_filter == "inactive":
-        query = query.filter(User.is_active.is_(False))
-    elif status_filter == "delinquent":
-        query = query.filter(User.billing_status == "delinquent")
-    elif status_filter == "trial":
-        query = query.filter(User.billing_status == "trial")
-
-    # Filtro de tipo de usuário
-    if user_type_filter != "all":
-        query = query.filter(User.user_type == user_type_filter)
-
-    # Ordenação
-    sort_column = getattr(User, sort_by, User.created_at)
-    if sort_order == "desc":
-        query = query.order_by(sort_column.desc())
-    else:
-        query = query.order_by(sort_column.asc())
-
-    # Paginação
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    users = pagination.items
-
-    # Calcular métricas em bulk (evita N+1 queries)
-    users_with_metrics = _get_bulk_user_metrics(users)
-
-    return render_template(
-        "admin/users_list.html",
-        title="Gerenciar Usuários",
-        users=users_with_metrics,
-        pagination=pagination,
-        search=search,
-        status_filter=status_filter,
-        user_type_filter=user_type_filter,
-        sort_by=sort_by,
-        sort_order=sort_order,
-    )
+    except Exception as e:
+        admin_logger.error(f"Erro ao carregar lista de usuários para {current_user.email}: {str(e)}")
+        admin_logger.error(f"Traceback: {traceback.format_exc()}")
+        flash("Erro ao carregar lista de usuários. Tente novamente.", "danger")
+        return redirect(url_for("admin.dashboard"))
 
 
 @bp.route("/usuarios/<int:user_id>")
@@ -318,8 +361,8 @@ def toggle_user_status(user_id):
 
     user = User.query.get_or_404(user_id)
 
-    if user.user_type == "master":
-        flash("Não é possível desativar um usuário master.", "danger")
+    if user.user_type in ["master", "admin"]:
+        flash("Não é possível desativar um usuário administrador.", "danger")
         return redirect(url_for("admin.users_list"))
 
     user.is_active = not user.is_active
@@ -1769,13 +1812,11 @@ def _get_bulk_user_metrics(users):
     )
 
     # 4. Créditos de IA
-    credits_data = dict(
-        db.session.query(
-            UserCredits.user_id, UserCredits.balance, UserCredits.total_used
-        )
-        .filter(UserCredits.user_id.in_(user_ids))
-        .all()
-    )
+    credits_data = {}
+    for row in db.session.query(
+        UserCredits.user_id, UserCredits.balance, UserCredits.total_used
+    ).filter(UserCredits.user_id.in_(user_ids)).all():
+        credits_data[row[0]] = (row[1], row[2])
 
     # 5. Gerações de IA totais e mensais
     ai_total = dict(
@@ -1796,16 +1837,13 @@ def _get_bulk_user_metrics(users):
     )
 
     # 6. Tokens e custo de IA
-    ai_stats = dict(
-        db.session.query(
-            AIGeneration.user_id,
-            func.coalesce(func.sum(AIGeneration.tokens_total), 0),
-            func.coalesce(func.sum(AIGeneration.cost_usd), 0),
-        )
-        .filter(AIGeneration.user_id.in_(user_ids))
-        .group_by(AIGeneration.user_id)
-        .all()
-    )
+    ai_stats = {}
+    for row in db.session.query(
+        AIGeneration.user_id,
+        func.coalesce(func.sum(AIGeneration.tokens_total), 0),
+        func.coalesce(func.sum(AIGeneration.cost_usd), 0),
+    ).filter(AIGeneration.user_id.in_(user_ids)).group_by(AIGeneration.user_id).all():
+        ai_stats[row[0]] = (row[1], row[2])
 
     # 7. Plano atual
     current_plans = {}
@@ -1840,7 +1878,13 @@ def _get_bulk_user_metrics(users):
     )
     for user_id, first_paid_at in payments_query:
         if first_paid_at:
-            first_payments[user_id] = (now - first_paid_at).days
+            # Garantir que ambas as datas tenham timezone
+            paid_at = (
+                first_paid_at.replace(tzinfo=timezone.utc)
+                if first_paid_at.tzinfo is None
+                else first_paid_at
+            )
+            first_payments[user_id] = (now - paid_at).days
 
     # Montar resultado
     results = []
@@ -1889,10 +1933,23 @@ def _get_user_metrics(user, detailed=False):
     current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     # Dias na plataforma
-    days_on_platform = (now - user.created_at).days if user.created_at else 0
+    if user.created_at:
+        # Garantir que ambas as datas tenham timezone
+        user_created_at = (
+            user.created_at.replace(tzinfo=timezone.utc)
+            if user.created_at.tzinfo is None
+            else user.created_at
+        )
+        days_on_platform = (now - user_created_at).days
+    else:
+        days_on_platform = 0
 
     # Clientes (Client usa lawyer_id, não user_id)
     clients_count = Client.query.filter_by(lawyer_id=user.id).count()
+    clients_month = Client.query.filter(
+        Client.lawyer_id == user.id,
+        Client.created_at >= current_month_start,
+    ).count()
 
     # Petições
     petitions_total = PetitionUsage.query.filter_by(user_id=user.id).count()
@@ -1905,6 +1962,13 @@ def _get_user_metrics(user, detailed=False):
     petitions_value = db.session.query(
         func.coalesce(func.sum(PetitionUsage.amount), 0)
     ).filter(PetitionUsage.user_id == user.id).scalar() or Decimal("0.00")
+
+    petitions_value_month = db.session.query(
+        func.coalesce(func.sum(PetitionUsage.amount), 0)
+    ).filter(
+        PetitionUsage.user_id == user.id,
+        PetitionUsage.generated_at >= current_month_start,
+    ).scalar() or Decimal("0.00")
 
     # Créditos de IA
     user_credits = UserCredits.query.filter_by(user_id=user.id).first()
@@ -1927,14 +1991,17 @@ def _get_user_metrics(user, detailed=False):
         .first()
     )
 
-    ai_tokens_total = ai_stats.tokens if ai_stats else 0
-    ai_cost_total = ai_stats.cost if ai_stats else Decimal("0.00")
+    ai_tokens_total = ai_stats.tokens if ai_stats and ai_stats.tokens is not None else 0
+    ai_cost_total = ai_stats.cost if ai_stats and ai_stats.cost is not None else Decimal("0.00")
 
     # Plano atual
     current_plan = UserPlan.query.filter_by(user_id=user.id, is_current=True).first()
-    plan_name = (
-        current_plan.plan.name if current_plan and current_plan.plan else "Sem plano"
-    )
+    plan_name = "Sem plano"
+    if current_plan:
+        try:
+            plan_name = current_plan.plan.name if current_plan.plan else "Sem plano"
+        except AttributeError:
+            plan_name = "Plano não encontrado"
 
     # Dias como pagante
     first_payment = (
@@ -1947,7 +2014,13 @@ def _get_user_metrics(user, detailed=False):
 
     days_paying = 0
     if first_payment and first_payment.paid_at:
-        days_paying = (now - first_payment.paid_at).days
+        # Garantir que ambas as datas tenham timezone
+        paid_at = (
+            first_payment.paid_at.replace(tzinfo=timezone.utc)
+            if first_payment.paid_at.tzinfo is None
+            else first_payment.paid_at
+        )
+        days_paying = (now - paid_at).days
 
     # Total pago
     total_paid = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
@@ -1959,9 +2032,11 @@ def _get_user_metrics(user, detailed=False):
         "days_paying": days_paying,
         "plan_name": plan_name,
         "clients_count": clients_count,
+        "clients_month": clients_month,
         "petitions_total": petitions_total,
         "petitions_month": petitions_month,
         "petitions_value": float(petitions_value),
+        "petitions_value_month": float(petitions_value_month),
         "ai_credits_balance": ai_credits_balance,
         "ai_credits_used": ai_credits_used,
         "ai_generations_total": ai_generations_total,

@@ -8,26 +8,33 @@ class NotificationSystem {
     constructor() {
         this.container = null;
         this.notifications = [];
-        this.init();
+        // Defer initialization to avoid blocking DOMContentLoaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.init();
+            });
+        } else {
+            this.init();
+        }
     }
 
     init() {
-        // Criar container único para notificações
-        this.createContainer();
+        // Use requestAnimationFrame for better performance
+        requestAnimationFrame(() => {
+            this.createContainer();
+            this.handleServerMessages();
 
-        // Escutar por mensagens flash do servidor
-        this.handleServerMessages();
+            // API global para uso em JavaScript
+            window.showNotification = (message, type = 'info', duration = 5000) => {
+                this.show(message, type, duration);
+            };
 
-        // API global para uso em JavaScript
-        window.showNotification = (message, type = 'info', duration = 5000) => {
-            this.show(message, type, duration);
-        };
-
-        // Compatibilidade com código existente
-        window.showToast = window.showNotification;
-        window.showAlert = (message, type = 'info') => {
-            this.show(message, type, 0); // 0 = não auto-fechar
-        };
+            // Compatibilidade com código existente
+            window.showToast = window.showNotification;
+            window.showAlert = (message, type = 'info') => {
+                this.show(message, type, 0); // 0 = não auto-fechar
+            };
+        });
     }
 
     createContainer() {
@@ -232,22 +239,26 @@ const notificationStyles = `
 
 // Inicializar sistema quando DOM estiver pronto
 document.addEventListener('DOMContentLoaded', function() {
-    // Injetar estilos
-    document.head.insertAdjacentHTML('beforeend', notificationStyles);
+    // Injetar estilos apenas uma vez
+    if (!document.getElementById('notification-system-styles')) {
+        document.head.insertAdjacentHTML('beforeend', notificationStyles);
+    }
 
-    // Inicializar sistema
-    window.notificationSystem = new NotificationSystem();
-});
-
-// Fallback para navegadores antigos
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        if (!window.notificationSystem) {
-            window.notificationSystem = new NotificationSystem();
-        }
-    });
-} else {
+    // Inicializar sistema apenas se não existir
     if (!window.notificationSystem) {
         window.notificationSystem = new NotificationSystem();
     }
+});
+
+// Fallback para navegadores antigos ou scripts carregados tardiamente
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    // Usar setTimeout para garantir que outros scripts tenham carregado
+    setTimeout(function() {
+        if (!document.getElementById('notification-system-styles')) {
+            document.head.insertAdjacentHTML('beforeend', notificationStyles);
+        }
+        if (!window.notificationSystem) {
+            window.notificationSystem = new NotificationSystem();
+        }
+    }, 100);
 }

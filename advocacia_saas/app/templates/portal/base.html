@@ -286,6 +286,9 @@
         window.showInfoToast = (msg) => showToast(msg, 'info');
     </script>
     
+    <!-- Push Notifications Script -->
+    <script src="{{ url_for('static', filename='js/push-notifications.js') }}"></script>
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html>

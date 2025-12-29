@@ -1,0 +1,145 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Upload de Documentos - Portal do Cliente{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('portal.index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('portal.documents') }}">Documentos</a></li>
+                <li class="breadcrumb-item active">Upload</li>
+            </ol>
+        </nav>
+        <h2><i class="fas fa-cloud-upload-alt me-2"></i>Enviar Documento</h2>
+        <p class="text-muted">Envie documentos importantes para seu processo</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-upload me-2"></i>
+                    Upload de Arquivo
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Título do Documento *</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                        <div class="form-text">Dê um nome descritivo para o documento</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="document_type" class="form-label">Tipo de Documento</label>
+                        <select class="form-select" id="document_type" name="document_type">
+                            <option value="identidade">Documento de Identidade</option>
+                            <option value="comprovante">Comprovante de Residência</option>
+                            <option value="contrato">Contrato</option>
+                            <option value="procuração">Procuração</option>
+                            <option value="peticao">Petição</option>
+                            <option value="outros" selected>Outros</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Arquivo *</label>
+                        <input type="file" class="form-control" id="file" name="file"
+                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
+                        <div class="form-text">
+                            Formatos aceitos: PDF, DOC, DOCX, JPG, PNG<br>
+                            Tamanho máximo: 10MB
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div id="filePreview" class="border rounded p-3 d-none">
+                            <h6>Arquivo Selecionado:</h6>
+                            <p id="fileName" class="mb-1"></p>
+                            <small id="fileSize" class="text-muted"></small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-upload me-2"></i>
+                            Enviar Documento
+                        </button>
+                        <a href="{{ url_for('portal.documents') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Dicas
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6>Documentos Comumente Solicitados:</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i> RG ou CNH</li>
+                    <li><i class="fas fa-check text-success me-2"></i> CPF</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Comprovante de endereço</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Contratos</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Procurações</li>
+                </ul>
+
+                <hr>
+
+                <h6>Requisitos Técnicos:</h6>
+                <ul class="small text-muted">
+                    <li>Formatos: PDF, DOC, DOCX, JPG, PNG</li>
+                    <li>Tamanho máximo: 10MB</li>
+                    <li>Arquivos legíveis e sem cortes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Preview do arquivo selecionado
+document.getElementById('file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+
+    if (file) {
+        fileName.textContent = file.name;
+        fileSize.textContent = `Tamanho: ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+        preview.classList.remove('d-none');
+    } else {
+        preview.classList.add('d-none');
+    }
+});
+
+// Validação do formulário
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const submitBtn = document.getElementById('submitBtn');
+    const originalText = submitBtn.innerHTML;
+
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+    submitBtn.disabled = true;
+
+    // Re-enable after 10 seconds as fallback
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 10000);
+});
+</script>
+{% endblock %}

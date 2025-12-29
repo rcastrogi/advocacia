@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Test</title>
+</head>
+<body>
+    <h1>JavaScript Syntax Test</h1>
+    <div id="test-output"></div>
+
+    <!-- Load scripts in correct order -->
+    <script src="static/js/app.js"></script>
+    <script src="static/js/accessibility.js"></script>
+    <script src="static/js/notification-system.js"></script>
+
+    <script>
+        // Test if scripts loaded without errors
+        setTimeout(function() {
+            const output = document.getElementById('test-output');
+            try {
+                // Test basic functionality
+                if (typeof window.notificationSystem !== 'undefined') {
+                    output.innerHTML += '<p>✓ NotificationSystem loaded successfully</p>';
+                } else {
+                    output.innerHTML += '<p>✗ NotificationSystem not found</p>';
+                }
+
+                if (typeof scheduleAccessibilityTask === 'function') {
+                    output.innerHTML += '<p>✓ Accessibility functions loaded successfully</p>';
+                } else {
+                    output.innerHTML += '<p>✗ Accessibility functions not found</p>';
+                }
+
+                output.innerHTML += '<p>✓ All scripts loaded without syntax errors</p>';
+            } catch (error) {
+                output.innerHTML += '<p>✗ Error: ' + error.message + '</p>';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Cards Automação</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0d1b2a;
+            --secondary-color: #c9a85c;
+            --dark-color: #1a1a1a;
+            --light-color: #f8f9fa;
+            --accent-color: #1b263b;
+            --text-color: #ffffff;
+            --text-muted: #b0b0b0;
+            --border-color: #2d3748;
+            --gold-color: #c9a85c;
+            --gold-light: #d4b76a;
+            --gold-dark: #a8893d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+        }
+
+        .dashboard-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            color: var(--text-color);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.5em;
+            background: var(--secondary-color);
+            color: var(--primary-color);
+        }
+
+        .automation-card-container {
+            width: 40% !important;
+            display: inline-block !important;
+            vertical-align: top !important;
+            margin-right: 1rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .automation-card-container .dashboard-card {
+            width: 100% !important;
+            height: auto !important;
+            font-size: 0.7em !important;
+            padding: 0.5rem !important;
+            min-height: auto !important;
+        }
+
+        .automation-card-container .dashboard-card .card-icon {
+            width: 35px !important;
+            height: 35px !important;
+            font-size: 1em !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .automation-card-container .dashboard-card h4 {
+            font-size: 1em !important;
+            margin-bottom: 0.3rem !important;
+            line-height: 1.2 !important;
+        }
+
+        .automation-card-container .dashboard-card p {
+            font-size: 0.75em !important;
+            margin-bottom: 0.5rem !important;
+            line-height: 1.3 !important;
+        }
+
+        .automation-card-container .dashboard-card .btn {
+            font-size: 0.7em !important;
+            padding: 0.2rem 0.4rem !important;
+            margin-top: 0.5rem !important;
+        }
+    </style>
+</head>
+<body class="bg-dark">
+    <div class="container mt-5">
+        <h2 class="text-white mb-4">Teste - Cards de Automação (40% do tamanho)</h2>
+
+        <div class="automation-card-container">
+            <div class="dashboard-card h-100 position-relative">
+                <div class="card-icon bg-primary">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h4 class="mb-2">Automação de Teste</h4>
+                <p class="text-muted mb-3">Esta é uma automação de teste para verificar o redimensionamento.</p>
+                <div class="mb-3">
+                    <span class="badge bg-primary me-1">Trigger</span>
+                    <span class="badge bg-success">Action</span>
+                </div>
+                <button class="btn btn-primary btn-sm">Testar</button>
+            </div>
+        </div>
+
+        <div class="automation-card-container">
+            <div class="dashboard-card h-100 position-relative">
+                <div class="card-icon bg-success">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <h4 class="mb-2">Lembrete de Prazos</h4>
+                <p class="text-muted mb-3">Envie notificações quando prazos estiverem próximos.</p>
+                <button class="btn btn-success btn-sm">Criar</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

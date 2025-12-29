@@ -652,9 +652,6 @@
                             <li><a class="dropdown-item" href="{{ url_for('billing.plans') }}">
                                 <i class="fas fa-tags"></i> Planos de cobrança
                             </a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('billing.users') }}">
-                                <i class="fas fa-users-cog"></i> Usuários & planos
-                            </a></li>
                             <li><a class="dropdown-item" href="{{ url_for('main.admin_testimonials') }}">
                                 <i class="fas fa-comments"></i> Depoimentos
                             </a></li>
@@ -1003,20 +1000,11 @@
     <!-- Intro.js for guided tours -->
     <script src="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/minified/intro.min.js"></script>
     
-    <!-- Custom JS -->
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    
     <!-- Tour System -->
     <script src="{{ url_for('static', filename='js/tour-system.js') }}"></script>
     
     <!-- Contextual Help System -->
     <script src="{{ url_for('static', filename='js/contextual-help.js') }}"></script>
-    
-    <!-- Notification System -->
-    <script src="{{ url_for('static', filename='js/notification-system.js') }}"></script>
-    
-    <!-- Accessibility JS -->
-    <script src="{{ url_for('static', filename='js/accessibility.js') }}?v={{ range(1, 10000) | random }}"></script>
     
     <!-- Scroll Reveal Animations -->
     <script>
@@ -1174,5 +1162,13 @@
     </script>
 
     {% block scripts %}{% endblock %}
+    
+    <!-- Performance Utilities - Load early for better performance -->
+    <script src="{{ url_for('static', filename='js/performance-utils.js') }}"></script>
+    
+    <!-- Main Application Scripts -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/accessibility.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notification-system.js') }}"></script>
 </body>
 </html>

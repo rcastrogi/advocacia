@@ -1,0 +1,143 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Documentos - Portal do Cliente{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('portal.index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Documentos</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="fas fa-folder-open me-2"></i>Meus Documentos</h2>
+                <p class="text-muted">Visualize e baixe todos os documentos do seu processo</p>
+            </div>
+            <a href="{{ url_for('portal.upload_document') }}" class="btn btn-primary">
+                <i class="fas fa-cloud-upload-alt me-2"></i>
+                Enviar Documento
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="type" class="form-label">Tipo de Documento</label>
+                        <select class="form-select" id="type" name="type">
+                            <option value="">Todos os tipos</option>
+                            <option value="peticao" {{ 'selected' if doc_type == 'peticao' else '' }}>Petição</option>
+                            <option value="decisao" {{ 'selected' if doc_type == 'decisao' else '' }}>Decisão</option>
+                            <option value="contrato" {{ 'selected' if doc_type == 'contrato' else '' }}>Contrato</option>
+                            <option value="procuracao" {{ 'selected' if doc_type == 'procuracao' else '' }}>Procuração</option>
+                            <option value="outros" {{ 'selected' if doc_type == 'outros' else '' }}>Outros</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="search" class="form-label">Buscar</label>
+                        <input type="text" class="form-control" id="search" name="search"
+                               value="{{ search }}" placeholder="Buscar por título...">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-search me-2"></i>
+                            Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Documentos -->
+<div class="row">
+    <div class="col-12">
+        {% if documents %}
+            <div class="row">
+                {% for doc in documents %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="dashboard-card h-100 position-relative">
+                        <div class="card-icon bg-primary">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h4 class="mb-2">{{ doc.title }}</h4>
+                        <p class="text-muted mb-2">{{ doc.document_type|title }}</p>
+                        <small class="text-muted d-block mb-3">
+                            <i class="fas fa-calendar me-1"></i>
+                            {{ doc.created_at.strftime('%d/%m/%Y %H:%M') }}
+                        </small>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('portal.view_document', doc_id=doc.id) }}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>Ver
+                            </a>
+                            <a href="{{ url_for('portal.download_document', doc_id=doc.id) }}"
+                               class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-download me-1"></i>Baixar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5>Nenhum documento encontrado</h5>
+                    <p class="text-muted">Não há documentos disponíveis no momento.</p>
+                    <a href="{{ url_for('portal.upload_document') }}" class="btn btn-primary">
+                        <i class="fas fa-cloud-upload-alt me-2"></i>
+                        Enviar Primeiro Documento
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Estatísticas -->
+{% if documents %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Estatísticas de Documentos
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h4 class="text-primary">{{ documents|length }}</h4>
+                        <small class="text-muted">Total de Documentos</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-success">{{ documents|selectattr('document_type', 'equalto', 'peticao')|list|length }}</h4>
+                        <small class="text-muted">Petições</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-info">{{ documents|selectattr('document_type', 'equalto', 'decisao')|list|length }}</h4>
+                        <small class="text-muted">Decisões</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-warning">{{ documents|selectattr('uploaded_by_client', 'equalto', True)|list|length }}</h4>
+                        <small class="text-muted">Enviados por Você</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

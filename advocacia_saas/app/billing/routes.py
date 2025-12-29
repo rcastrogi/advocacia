@@ -265,56 +265,10 @@ def edit_plan(plan_id):
 @bp.route("/users", methods=["GET", "POST"])
 @login_required
 def users():
+    """Redirecionamento: Gerenciamento de usuários movido para admin/users"""
     _require_admin()
-
-    form = AssignPlanForm()
-    users_qs = User.query.order_by(User.created_at.desc()).all()
-    plans = BillingPlan.query.order_by(BillingPlan.name).all()
-    form.user_id.choices = [
-        (u.id, f"{u.full_name or u.email} ({u.email})") for u in users_qs
-    ]
-    form.plan_id.choices = [(p.id, f"{p.name} ({p.plan_type})") for p in plans]
-
-    usage_map = {
-        u.id: u.petition_usages.order_by(PetitionUsage.generated_at.desc()).first()
-        for u in users_qs
-    }
-
-    if form.validate_on_submit():
-        user = User.query.get_or_404(form.user_id.data)
-        plan = BillingPlan.query.get_or_404(form.plan_id.data)
-        # Mark existing plans as old
-        for user_plan in user.plans.filter_by(is_current=True).all():
-            user_plan.is_current = False
-
-        new_plan = UserPlan(
-            user_id=user.id,
-            plan_id=plan.id,
-            status=form.status.data,
-            started_at=datetime.utcnow(),
-            renewal_date=datetime.utcnow() + timedelta(days=30),
-            is_current=True,
-        )
-        db.session.add(new_plan)
-
-        user.billing_status = (
-            "delinquent" if form.status.data == "delinquent" else "active"
-        )
-        db.session.commit()
-        flash(
-            f"Plano '{plan.name}' atribuído a {user.full_name or user.email}.",
-            "success",
-        )
-        return redirect(url_for("billing.users"))
-
-    return render_template(
-        "billing/users.html",
-        title="Usuários e planos",
-        form=form,
-        users=users_qs,
-        plans=plans,
-        usage_map=usage_map,
-    )
+    flash("Gerenciamento de usuários e planos agora disponível em Admin > Usuários", "info")
+    return redirect(url_for("admin.users_list"))
 
 
 @bp.route("/users/<int:user_id>/billing-status", methods=["POST"])
@@ -359,3 +313,58 @@ def change_plan_status(user_id):
     db.session.commit()
     flash("Status do plano atualizado!", "success")
     return redirect(url_for("billing.users"))
+
+
+@bp.route("/api/plans", methods=["GET"])
+@login_required
+def api_plans():
+    """API para obter lista de planos ativos"""
+    _require_admin()
+    plans = BillingPlan.query.filter_by(active=True).order_by(BillingPlan.name).all()
+    return jsonify([
+        {
+            "id": plan.id,
+            "name": plan.name,
+            "plan_type": plan.plan_type,
+            "monthly_fee": float(plan.monthly_fee) if plan.monthly_fee else 0,
+            "yearly_fee": float(plan.yearly_fee) if plan.yearly_fee else 0,
+        }
+        for plan in plans
+    ])
+
+
+@bp.route("/users/<int:user_id>/assign-plan", methods=["POST"])
+@login_required
+def assign_plan(user_id):
+    """Atribuir plano a um usuário via API"""
+    _require_admin()
+    
+    user = User.query.get_or_404(user_id)
+    plan_id = request.form.get("plan_id")
+    status = request.form.get("status", "active")
+    
+    if not plan_id:
+        flash("Plano não especificado.", "warning")
+        return redirect(url_for("admin.users_list"))
+    
+    plan = BillingPlan.query.get_or_404(plan_id)
+    
+    # Mark existing plans as old
+    for user_plan in user.plans.filter_by(is_current=True).all():
+        user_plan.is_current = False
+
+    new_plan = UserPlan(
+        user_id=user.id,
+        plan_id=plan.id,
+        status=status,
+        started_at=datetime.utcnow(),
+        renewal_date=datetime.utcnow() + timedelta(days=30),
+        is_current=True,
+    )
+    db.session.add(new_plan)
+
+    user.billing_status = "delinquent" if status == "delinquent" else "active"
+    db.session.commit()
+    
+    flash(f"Plano '{plan.name}' atribuído a {user.full_name or user.email}.", "success")
+    return redirect(url_for("admin.users_list"))

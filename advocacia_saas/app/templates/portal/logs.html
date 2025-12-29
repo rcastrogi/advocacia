@@ -1,0 +1,96 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Logs do Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-file-alt"></i> Logs do Portal do Cliente
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Esta página mostra os logs detalhados das operações do portal para debugging.
+                        <strong>Arquivo:</strong> {{ log_file }}
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('portal.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                            </a>
+                            <button type="button" class="btn btn-outline-primary" onclick="refreshLogs()">
+                                <i class="fas fa-sync"></i> Atualizar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="log-container" style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 1rem; max-height: 600px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.875rem; line-height: 1.4;">
+                        {% if log_lines %}
+                            {% for line in log_lines %}
+                                {% if line %}
+                                    <div class="log-line
+                                        {% if 'ERROR' in line %}text-danger{% elif 'WARNING' in line %}text-warning{% elif 'INFO' in line %}text-success{% elif 'DEBUG' in line %}text-primary{% endif %}">
+                                        {{ line }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-muted">
+                                <i class="fas fa-info-circle"></i> Nenhum log encontrado.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i>
+                            Última atualização: <span id="last-update">{{ moment().format('DD/MM/YYYY HH:mm:ss') }}</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.log-line {
+    margin-bottom: 2px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.log-container .text-danger {
+    font-weight: bold;
+}
+
+.log-container .text-warning {
+    font-weight: bold;
+}
+</style>
+
+<script>
+function refreshLogs() {
+    // Recarregar a página para atualizar os logs
+    window.location.reload();
+}
+
+function autoRefresh() {
+    // Atualizar automaticamente a cada 30 segundos
+    setTimeout(function() {
+        refreshLogs();
+    }, 30000);
+}
+
+// Iniciar auto-refresh quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    autoRefresh();
+});
+</script>
+{% endblock %}

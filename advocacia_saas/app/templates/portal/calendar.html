@@ -1,0 +1,204 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Calendário - Portal do Cliente{% endblock %}
+
+{% block head %}
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+
+<style>
+    #calendar {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    .fc-event {
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 0.85em;
+    }
+
+    .fc-event:hover {
+        opacity: 0.8;
+    }
+
+    .urgent-event {
+        border-left: 4px solid #dc3545 !important;
+    }
+
+    .calendar-legend {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9em;
+    }
+
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('portal.index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Calendário</li>
+            </ol>
+        </nav>
+        <h2><i class="fas fa-calendar-alt me-2"></i>Meu Calendário</h2>
+        <p class="text-muted">Acompanhe prazos importantes e datas do seu processo</p>
+    </div>
+</div>
+
+<!-- Legenda -->
+<div class="calendar-legend">
+    <div class="legend-item">
+        <div class="legend-color" style="background-color: #ffc107;"></div>
+        <span>Prazos Normais</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="background-color: #dc3545;"></div>
+        <span>Prazos Urgentes</span>
+    </div>
+</div>
+
+<!-- Calendário -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes do Evento -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventModalTitle">Detalhes do Prazo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="eventModalBody">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/pt-br.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'pt-br',
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: {
+            url: '{{ url_for("portal.get_calendar_events") }}',
+            method: 'GET'
+        },
+        eventClick: function(info) {
+            showEventDetails(info.event);
+        },
+        eventDidMount: function(info) {
+            // Adicionar classe para eventos urgentes
+            if (info.event.extendedProps.urgent) {
+                info.el.classList.add('urgent-event');
+            }
+
+            // Tooltip
+            info.el.title = info.event.title;
+        },
+        height: 'auto',
+        dayMaxEvents: true,
+        moreLinkClick: 'popover',
+        buttonText: {
+            today: 'Hoje',
+            month: 'Mês',
+            week: 'Semana',
+            day: 'Dia'
+        }
+    });
+
+    calendar.render();
+
+    // Função para mostrar detalhes do evento
+    function showEventDetails(event) {
+        const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+        const titleEl = document.getElementById('eventModalTitle');
+        const bodyEl = document.getElementById('eventModalBody');
+
+        titleEl.textContent = event.title;
+
+        const eventDate = event.start.toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        let html = `
+            <div class="mb-3">
+                <strong>Data:</strong> ${eventDate}
+            </div>
+        `;
+
+        if (event.extendedProps.description) {
+            html += `
+                <div class="mb-3">
+                    <strong>Descrição:</strong><br>
+                    ${event.extendedProps.description}
+                </div>
+            `;
+        }
+
+        html += `
+            <div class="mb-3">
+                <strong>Status:</strong>
+                <span class="badge ${event.extendedProps.urgent ? 'bg-danger' : 'bg-warning'} ms-2">
+                    ${event.extendedProps.urgent ? 'Urgente' : 'Normal'}
+                </span>
+            </div>
+        `;
+
+        if (event.extendedProps.urgent) {
+            html += `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Atenção:</strong> Este prazo está próximo do vencimento!
+                </div>
+            `;
+        }
+
+        bodyEl.innerHTML = html;
+        modal.show();
+    }
+});
+</script>
+{% endblock %}
