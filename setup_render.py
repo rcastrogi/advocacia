@@ -11,7 +11,7 @@ import sys
 # Adicionar o diretório raiz ao path
 # No Render, o projeto está em /opt/render/project/src/advocacia_saas/
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.join(current_dir, 'advocacia_saas')
+project_root = os.path.join(current_dir, "advocacia_saas")
 sys.path.insert(0, project_root)
 
 from app import create_app, db
