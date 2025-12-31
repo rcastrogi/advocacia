@@ -25,15 +25,21 @@ def setup_database():
 
 
 def apply_migrations():
-    """Aplica migrações pendentes"""
-    print("📦 Aplicando migrações...")
+    """Aplica estrutura do banco via db.create_all() - mais confiável"""
+    print("📦 Aplicando estrutura do banco...")
     try:
-        from flask_migrate import upgrade
-
-        upgrade()
-        print("✅ Migrações aplicadas")
+        # Usar db.create_all() que é mais confiável que flask db upgrade
+        db.create_all()
+        print("✅ Estrutura do banco aplicada com sucesso")
     except Exception as e:
-        print(f"⚠️ Erro nas migrações (pode ser normal se já aplicadas): {e}")
+        print(f"⚠️ Erro ao aplicar estrutura: {e}")
+        # Tentar novamente
+        try:
+            db.create_all()
+            print("✅ Estrutura aplicada na segunda tentativa")
+        except Exception as e2:
+            print(f"❌ Falha definitiva: {e2}")
+            raise
 
 
 def show_summary():
@@ -66,7 +72,7 @@ def show_summary():
 def main():
     """Função principal de setup básico"""
     print("🚀 Iniciando setup BÁSICO do banco PostgreSQL no Render...")
-    print("📝 Este script SÓ cria tabelas e aplica migrações (sem dados)")
+    print("📝 Este script cria tabelas usando db.create_all() (estrutura atual)")
 
     # Criar app e contexto
     app = create_app()

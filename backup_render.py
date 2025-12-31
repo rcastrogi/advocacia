@@ -50,20 +50,19 @@ def export_users():
     return [
         {
             "id": u.id,
-            "name": u.name,
+            "name": u.full_name,  # Campo correto é full_name
             "email": u.email,
             "user_type": u.user_type,
             "is_active": u.is_active,
             "created_at": u.created_at.isoformat() if u.created_at else None,
-            "last_login": u.last_login.isoformat() if u.last_login else None,
             "phone": u.phone,
-            "company": u.company,
             "oab_number": u.oab_number,
-            "specialization": u.specialization,
-            "trial_ends_at": u.trial_ends_at.isoformat() if u.trial_ends_at else None,
-            "subscription_status": u.subscription_status,
-            "stripe_customer_id": u.stripe_customer_id,
-            "mercadopago_customer_id": u.mercadopago_customer_id,
+            "uf": u.uf,
+            "city": u.city,
+            "billing_status": u.billing_status,
+            "trial_active": u.trial_active,
+            "trial_start_date": u.trial_start_date.isoformat() if u.trial_start_date else None,
+            "trial_days": u.trial_days,
         }
         for u in users
     ]
@@ -77,14 +76,13 @@ def export_billing_plans():
             "id": p.id,
             "name": p.name,
             "slug": p.slug,
-            "price_monthly": float(p.price_monthly),
-            "price_yearly": float(p.price_yearly),
-            "petitions_limit": p.petitions_limit,
-            "ai_credits_limit": p.ai_credits_limit,
-            "features": p.features,
-            "is_active": p.is_active,
-            "is_popular": p.is_popular,
+            "monthly_fee": float(p.monthly_fee),
+            "monthly_petition_limit": p.monthly_petition_limit,
+            "description": p.description,
+            "active": p.active,
             "created_at": p.created_at.isoformat() if p.created_at else None,
+            "supported_periods": p.supported_periods,
+            "discount_percentage": float(p.discount_percentage) if p.discount_percentage else 0,
         }
         for p in plans
     ]
@@ -99,10 +97,13 @@ def export_petition_sections():
             "name": s.name,
             "slug": s.slug,
             "description": s.description,
+            "icon": s.icon,
+            "color": s.color,
             "order": s.order,
-            "is_required": s.is_required,
             "is_active": s.is_active,
+            "fields_schema": s.fields_schema,
             "created_at": s.created_at.isoformat() if s.created_at else None,
+            "updated_at": s.updated_at.isoformat() if s.updated_at else None,
         }
         for s in sections
     ]
