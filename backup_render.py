@@ -265,7 +265,7 @@ def main():
                 json.dump(data, f, indent=2, ensure_ascii=False, cls=DecimalEncoder)
 
             print(f"✅ Backup salvo em: {filename}")
-            print("📊 Estatísticas do backup:"
+            print("📊 Estatísticas do backup:")
             print(f"   Usuários: {len(data['users'])}")
             print(f"   Planos: {len(data['billing_plans'])}")
             print(f"   Seções: {len(data['petition_sections'])}")
