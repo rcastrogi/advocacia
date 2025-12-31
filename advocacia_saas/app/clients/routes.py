@@ -93,16 +93,16 @@ def new():
         # Log de auditoria para criação de cliente
         AuditManager.log_client_change(
             client,
-            'create',
+            "create",
             new_values={
-                'full_name': client.full_name,
-                'email': client.email,
-                'cpf_cnpj': client.cpf_cnpj,
-                'mobile_phone': client.mobile_phone,
-                'profession': client.profession,
-                'city': client.city,
-                'uf': client.uf,
-            }
+                "full_name": client.full_name,
+                "email": client.email,
+                "cpf_cnpj": client.cpf_cnpj,
+                "mobile_phone": client.mobile_phone,
+                "profession": client.profession,
+                "city": client.city,
+                "uf": client.uf,
+            },
         )
 
         return redirect(url_for("clients.index"))
@@ -134,17 +134,17 @@ def edit(id):
     if form.validate_on_submit():
         # Capturar valores antigos para auditoria
         old_values = {
-            'full_name': client.full_name,
-            'email': client.email,
-            'cpf_cnpj': client.cpf_cnpj,
-            'mobile_phone': client.mobile_phone,
-            'profession': client.profession,
-            'civil_status': client.civil_status,
-            'cep': client.cep,
-            'street': client.street,
-            'city': client.city,
-            'uf': client.uf,
-            'neighborhood': client.neighborhood,
+            "full_name": client.full_name,
+            "email": client.email,
+            "cpf_cnpj": client.cpf_cnpj,
+            "mobile_phone": client.mobile_phone,
+            "profession": client.profession,
+            "civil_status": client.civil_status,
+            "cep": client.cep,
+            "street": client.street,
+            "city": client.city,
+            "uf": client.uf,
+            "neighborhood": client.neighborhood,
         }
 
         form.populate_obj(client)
@@ -174,17 +174,17 @@ def edit(id):
 
         # Capturar valores novos para auditoria
         new_values = {
-            'full_name': client.full_name,
-            'email': client.email,
-            'cpf_cnpj': client.cpf_cnpj,
-            'mobile_phone': client.mobile_phone,
-            'profession': client.profession,
-            'civil_status': client.civil_status,
-            'cep': client.cep,
-            'street': client.street,
-            'city': client.city,
-            'uf': client.uf,
-            'neighborhood': client.neighborhood,
+            "full_name": client.full_name,
+            "email": client.email,
+            "cpf_cnpj": client.cpf_cnpj,
+            "mobile_phone": client.mobile_phone,
+            "profession": client.profession,
+            "civil_status": client.civil_status,
+            "cep": client.cep,
+            "street": client.street,
+            "city": client.city,
+            "uf": client.uf,
+            "neighborhood": client.neighborhood,
         }
 
         # Identificar campos alterados
@@ -196,11 +196,7 @@ def edit(id):
         # Log de auditoria
         if changed_fields:
             AuditManager.log_client_change(
-                client,
-                'update',
-                old_values,
-                new_values,
-                changed_fields
+                client, "update", old_values, new_values, changed_fields
             )
 
         return redirect(url_for("clients.view", id=client.id))

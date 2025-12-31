@@ -23,17 +23,17 @@ from werkzeug.utils import secure_filename
 
 from app import db
 from app.models import (
+    CalendarEvent,
     ChatRoom,
     Client,
     Deadline,
     Document,
     Message,
+    Notification,
     Process,
     ProcessCost,
     ProcessMovement,
     User,
-    CalendarEvent,
-    Notification,
 )
 from app.portal import bp
 
@@ -680,10 +680,14 @@ def schedule_meeting():
 
             # Combinar data e hora
             from datetime import datetime
-            start_datetime = datetime.strptime(f"{preferred_date} {preferred_time}", "%Y-%m-%d %H:%M")
+
+            start_datetime = datetime.strptime(
+                f"{preferred_date} {preferred_time}", "%Y-%m-%d %H:%M"
+            )
 
             # Calcular fim baseado na duração
             from datetime import timedelta
+
             end_datetime = start_datetime + timedelta(minutes=int(duration))
 
             # Criar evento como solicitação (status especial)
@@ -697,7 +701,7 @@ def schedule_meeting():
                 client_id=client.id,
                 process_id=process_id if process_id else None,
                 status="requested",  # Status especial para solicitações pendentes
-                priority="normal"
+                priority="normal",
             )
 
             # Na verdade, devemos criar uma notificação para o advogado
@@ -714,11 +718,14 @@ def schedule_meeting():
                     notification_type="meeting_request",
                     title="Nova solicitação de reunião",
                     message=notification_msg,
-                    link=url_for("advanced.calendar")
+                    link=url_for("advanced.calendar"),
                 )
 
             portal_logger.info(f"Cliente {client.full_name} solicitou reunião: {title}")
-            flash("Sua solicitação de reunião foi enviada com sucesso! O advogado entrará em contato em breve.", "success")
+            flash(
+                "Sua solicitação de reunião foi enviada com sucesso! O advogado entrará em contato em breve.",
+                "success",
+            )
 
             return redirect(url_for("portal.calendar"))
 
@@ -730,7 +737,9 @@ def schedule_meeting():
     # Buscar processos do cliente para seleção
     processes = Process.query.filter_by(client_id=client.id).all()
 
-    return render_template("portal/schedule_meeting.html", client=client, processes=processes)
+    return render_template(
+        "portal/schedule_meeting.html", client=client, processes=processes
+    )
 
 
 @bp.route("/api/calendar/events")
@@ -778,9 +787,9 @@ def get_calendar_events():
         else:
             event_color = {
                 "audiencia": "#dc3545",  # vermelho
-                "reuniao": "#007bff",   # azul
-                "prazo": "#ffc107",     # amarelo
-                "compromisso": "#28a745" # verde
+                "reuniao": "#007bff",  # azul
+                "prazo": "#ffc107",  # amarelo
+                "compromisso": "#28a745",  # verde
             }.get(event.event_type, "#6c757d")
 
         # Ajustar título baseado no status

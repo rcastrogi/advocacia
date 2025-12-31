@@ -2482,7 +2482,9 @@ class RoadmapItem(db.Model):
         db.Boolean, default=False
     )  # Aparece para usuários normais?
     internal_only = db.Column(db.Boolean, default=False)  # Apenas para uso interno?
-    show_new_badge = db.Column(db.Boolean, default=False)  # Mostrar badge "Novo" no roadmap público
+    show_new_badge = db.Column(
+        db.Boolean, default=False
+    )  # Mostrar badge "Novo" no roadmap público
 
     # Timeline
     planned_start_date = db.Column(db.Date)
@@ -4184,19 +4186,26 @@ class ProcessReport(db.Model):
 # Modelo para auditoria de alterações
 class AuditLog(db.Model):
     """Log de auditoria para rastrear alterações em entidades importantes"""
+
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    timestamp = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
     # Quem fez a alteração
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     user = db.relationship("User", backref="audit_logs")
 
     # Entidade afetada
-    entity_type = db.Column(db.String(50), nullable=False)  # 'user', 'client', 'petition', etc.
+    entity_type = db.Column(
+        db.String(50), nullable=False
+    )  # 'user', 'client', 'petition', etc.
     entity_id = db.Column(db.Integer, nullable=False)  # ID da entidade
 
     # Tipo de ação
-    action = db.Column(db.String(50), nullable=False)  # 'create', 'update', 'delete', 'login', 'logout'
+    action = db.Column(
+        db.String(50), nullable=False
+    )  # 'create', 'update', 'delete', 'login', 'logout'
 
     # Detalhes da alteração
     old_values = db.Column(db.Text)  # JSON com valores antigos
@@ -4214,10 +4223,21 @@ class AuditLog(db.Model):
     # Metadados adicionais
     additional_metadata = db.Column(db.Text)  # JSON com dados adicionais
 
-    def __init__(self, user_id=None, entity_type=None, entity_id=None, action=None,
-                 old_values=None, new_values=None, changed_fields=None,
-                 ip_address=None, user_agent=None, session_id=None,
-                 description=None, additional_metadata=None):
+    def __init__(
+        self,
+        user_id=None,
+        entity_type=None,
+        entity_id=None,
+        action=None,
+        old_values=None,
+        new_values=None,
+        changed_fields=None,
+        ip_address=None,
+        user_agent=None,
+        session_id=None,
+        description=None,
+        additional_metadata=None,
+    ):
         self.user_id = user_id
         self.entity_type = entity_type
         self.entity_id = entity_id
@@ -4229,7 +4249,9 @@ class AuditLog(db.Model):
         self.user_agent = user_agent
         self.session_id = session_id
         self.description = description
-        self.additional_metadata = json.dumps(additional_metadata) if additional_metadata else None
+        self.additional_metadata = (
+            json.dumps(additional_metadata) if additional_metadata else None
+        )
 
     def to_dict(self):
         return {
@@ -4242,12 +4264,16 @@ class AuditLog(db.Model):
             "action": self.action,
             "old_values": json.loads(self.old_values) if self.old_values else None,
             "new_values": json.loads(self.new_values) if self.new_values else None,
-            "changed_fields": json.loads(self.changed_fields) if self.changed_fields else None,
+            "changed_fields": json.loads(self.changed_fields)
+            if self.changed_fields
+            else None,
             "ip_address": self.ip_address,
             "user_agent": self.user_agent,
             "session_id": self.session_id,
             "description": self.description,
-            "metadata": json.loads(self.additional_metadata) if self.additional_metadata else None,
+            "metadata": json.loads(self.additional_metadata)
+            if self.additional_metadata
+            else None,
         }
 
     def __repr__(self):

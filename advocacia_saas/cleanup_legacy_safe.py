@@ -6,8 +6,8 @@ Remove apenas arquivos confirmadamente obsoletos baseados no log de migração
 
 import os
 import shutil
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def safe_cleanup():
@@ -21,36 +21,32 @@ def safe_cleanup():
     confirmed_obsolete = [
         # Scripts de migração únicos já executados (23/12/2025)
         "add_cancellation_policy.py",  # ✅ Campos adicionados com sucesso
-        "add_columns_manual.py",       # ✅ Colunas billing_plans adicionadas
-        "migrate_remote.py",          # ✅ Migração para Render aplicada
-
+        "add_columns_manual.py",  # ✅ Colunas billing_plans adicionadas
+        "migrate_remote.py",  # ✅ Migração para Render aplicada
         # Scripts de correção únicos (já executados)
-        "fix_column.py",              # Correção de coluna petition_model_id
+        "fix_column.py",  # Correção de coluna petition_model_id
         "fix_nationality_column.py",  # Correção de coluna nationality
-        "fix_fields_schema.py",       # Correção de schema de campos
-        "fix_admin_access.py",        # Correção de acesso admin
-        "fix_petition_models.py",     # Correção de modelos de petição
-        "fix_remaining_models.py",    # Correção de modelos restantes
-
+        "fix_fields_schema.py",  # Correção de schema de campos
+        "fix_admin_access.py",  # Correção de acesso admin
+        "fix_petition_models.py",  # Correção de modelos de petição
+        "fix_remaining_models.py",  # Correção de modelos restantes
         # Scripts de criação únicos (já executados)
-        "create_section_tables.py",   # Tabelas de seções criadas
-        "create_petition_sections.py", # Seções de petição criadas
-        "create_comprehensive_sections.py", # Seções abrangentes criadas
-        "update_billing_plans.py",    # Planos de cobrança atualizados
-        "update_plan_limits.py",      # Limites de planos atualizados
-
+        "create_section_tables.py",  # Tabelas de seções criadas
+        "create_petition_sections.py",  # Seções de petição criadas
+        "create_comprehensive_sections.py",  # Seções abrangentes criadas
+        "update_billing_plans.py",  # Planos de cobrança atualizados
+        "update_plan_limits.py",  # Limites de planos atualizados
         # Scripts de demonstração temporários
-        "demonstrate_roadmap_improvements.py", # Demonstração das melhorias
-        "demonstrate_separation.py",   # Demonstração de separação
-
+        "demonstrate_roadmap_improvements.py",  # Demonstração das melhorias
+        "demonstrate_separation.py",  # Demonstração de separação
         # Scripts de verificação únicos (já utilizados)
-        "check_admin_user.py",        # Verificação de usuário admin
-        "check_migration.py",         # Verificação de migração
-        "check_route.py",             # Verificação de rota
-        "check_sections_page.py",     # Verificação de página de seções
-        "check_tables.py",            # Verificação de tabelas
-        "check_models.py",            # Verificação de modelos
-        "check_process_tables.py",    # Verificação de tabelas de processo
+        "check_admin_user.py",  # Verificação de usuário admin
+        "check_migration.py",  # Verificação de migração
+        "check_route.py",  # Verificação de rota
+        "check_sections_page.py",  # Verificação de página de seções
+        "check_tables.py",  # Verificação de tabelas
+        "check_models.py",  # Verificação de modelos
+        "check_process_tables.py",  # Verificação de tabelas de processo
     ]
 
     # === SCRIPTS DE TESTE TEMPORÁRIOS (mais recentes - avaliar com cuidado) ===

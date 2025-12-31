@@ -183,7 +183,9 @@ def update_roadmap_implementations():
 
             category = categories.get(item_data.pop("category_slug"))
             if not category:
-                print(f"Categoria {item_data['category_slug']} não encontrada. Pulando item.")
+                print(
+                    f"Categoria {item_data['category_slug']} não encontrada. Pulando item."
+                )
                 continue
 
             item = RoadmapItem(

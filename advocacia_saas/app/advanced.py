@@ -42,11 +42,12 @@ def calendar():
 
     if client_ids:
         pending_requests_count = CalendarEvent.query.filter(
-            CalendarEvent.client_id.in_(client_ids),
-            CalendarEvent.status == "requested"
+            CalendarEvent.client_id.in_(client_ids), CalendarEvent.status == "requested"
         ).count()
 
-    return render_template("advanced/calendar.html", pending_requests_count=pending_requests_count)
+    return render_template(
+        "advanced/calendar.html", pending_requests_count=pending_requests_count
+    )
 
 
 @advanced_bp.route("/api/calendar/events")
@@ -61,18 +62,25 @@ def get_calendar_events():
 
     # Eventos relacionados aos clientes do advogado (incluindo solicitações)
     client_ids = [client.id for client in current_user.clients.all()]
-    query2 = CalendarEvent.query.filter(CalendarEvent.client_id.in_(client_ids)) if client_ids else None
+    query2 = (
+        CalendarEvent.query.filter(CalendarEvent.client_id.in_(client_ids))
+        if client_ids
+        else None
+    )
 
     # Combinar queries
     if query2:
         from sqlalchemy import union_all
+
         combined_query = query1.union_all(query2)
     else:
         combined_query = query1
 
     if start:
         start_date = datetime.fromisoformat(start.replace("Z", "+00:00"))
-        combined_query = combined_query.filter(CalendarEvent.start_datetime >= start_date)
+        combined_query = combined_query.filter(
+            CalendarEvent.start_datetime >= start_date
+        )
 
     if end:
         end_date = datetime.fromisoformat(end.replace("Z", "+00:00"))
@@ -634,10 +642,14 @@ def meeting_requests():
     client_ids = [client.id for client in current_user.clients.all()]
 
     if client_ids:
-        requests = CalendarEvent.query.filter(
-            CalendarEvent.client_id.in_(client_ids),
-            CalendarEvent.status == "requested"
-        ).order_by(CalendarEvent.created_at.desc()).all()
+        requests = (
+            CalendarEvent.query.filter(
+                CalendarEvent.client_id.in_(client_ids),
+                CalendarEvent.status == "requested",
+            )
+            .order_by(CalendarEvent.created_at.desc())
+            .all()
+        )
     else:
         requests = []
 
@@ -669,7 +681,7 @@ def handle_meeting_request(event_id, action):
             notification_type="meeting_approved",
             title="Reunião Agendada",
             message=f"Sua solicitação de reunião '{event.title}' foi aprovada para {event.start_datetime.strftime('%d/%m/%Y %H:%M')}.",
-            link=url_for("portal.calendar")
+            link=url_for("portal.calendar"),
         )
 
         flash("Solicitação de reunião aprovada com sucesso!", "success")
@@ -684,7 +696,7 @@ def handle_meeting_request(event_id, action):
             notification_type="meeting_rejected",
             title="Reunião Não Aprovada",
             message=f"Sua solicitação de reunião '{event.title.replace('Solicitação: ', '')}' não pôde ser agendada. Motivo: {reason}",
-            link=url_for("portal.calendar")
+            link=url_for("portal.calendar"),
         )
 
         # Remover o evento solicitado
@@ -738,7 +750,7 @@ def schedule_client_meeting():
                 virtual_link=virtual_link,
                 notes=notes,
                 status="scheduled",
-                priority="normal"
+                priority="normal",
             )
 
             db.session.add(event)
@@ -750,7 +762,7 @@ def schedule_client_meeting():
                 notification_type="meeting_scheduled",
                 title="Nova Reunião Agendada",
                 message=f"Uma reunião foi agendada: '{title}' para {start_datetime.strftime('%d/%m/%Y %H:%M')}.",
-                link=url_for("portal.calendar")
+                link=url_for("portal.calendar"),
             )
 
             flash("Reunião agendada com sucesso! O cliente foi notificado.", "success")
@@ -765,4 +777,6 @@ def schedule_client_meeting():
     clients = current_user.clients.all()
     processes = Process.query.filter_by(user_id=current_user.id).all()
 
-    return render_template("advanced/schedule_client_meeting.html", clients=clients, processes=processes)
+    return render_template(
+        "advanced/schedule_client_meeting.html", clients=clients, processes=processes
+    )

@@ -204,11 +204,11 @@ def login():
         flash("Email ou senha inválidos", "error")
         # Log de auditoria para login falhado
         AuditManager.log_change(
-            entity_type='user',
+            entity_type="user",
             entity_id=0,  # ID genérico para tentativas de login
-            action='login_failed',
+            action="login_failed",
             description=f"Tentativa de login falhada - Email: {form.email.data}",
-            metadata={'email_attempted': form.email.data}
+            metadata={"email_attempted": form.email.data},
         )
     return render_template("auth/login.html", title="Login", form=form)
 
@@ -381,19 +381,19 @@ def profile():
 
         # Capturar valores antigos para auditoria
         old_values = {
-            'full_name': current_user.full_name,
-            'email': current_user.email,
-            'oab_number': current_user.oab_number,
-            'phone': current_user.phone,
-            'cep': current_user.cep,
-            'street': current_user.street,
-            'number': current_user.number,
-            'uf': current_user.uf,
-            'city': current_user.city,
-            'neighborhood': current_user.neighborhood,
-            'complement': current_user.complement,
-            'specialties': current_user.get_specialties(),
-            'quick_actions': current_user.get_quick_actions(),
+            "full_name": current_user.full_name,
+            "email": current_user.email,
+            "oab_number": current_user.oab_number,
+            "phone": current_user.phone,
+            "cep": current_user.cep,
+            "street": current_user.street,
+            "number": current_user.number,
+            "uf": current_user.uf,
+            "city": current_user.city,
+            "neighborhood": current_user.neighborhood,
+            "complement": current_user.complement,
+            "specialties": current_user.get_specialties(),
+            "quick_actions": current_user.get_quick_actions(),
         }
 
         current_user.full_name = form.full_name.data
@@ -414,19 +414,19 @@ def profile():
 
         # Capturar valores novos para auditoria
         new_values = {
-            'full_name': current_user.full_name,
-            'email': current_user.email,
-            'oab_number': current_user.oab_number,
-            'phone': current_user.phone,
-            'cep': current_user.cep,
-            'street': current_user.street,
-            'number': current_user.number,
-            'uf': current_user.uf,
-            'city': current_user.city,
-            'neighborhood': current_user.neighborhood,
-            'complement': current_user.complement,
-            'specialties': current_user.get_specialties(),
-            'quick_actions': current_user.get_quick_actions(),
+            "full_name": current_user.full_name,
+            "email": current_user.email,
+            "oab_number": current_user.oab_number,
+            "phone": current_user.phone,
+            "cep": current_user.cep,
+            "street": current_user.street,
+            "number": current_user.number,
+            "uf": current_user.uf,
+            "city": current_user.city,
+            "neighborhood": current_user.neighborhood,
+            "complement": current_user.complement,
+            "specialties": current_user.get_specialties(),
+            "quick_actions": current_user.get_quick_actions(),
         }
 
         # Identificar campos alterados
@@ -438,11 +438,7 @@ def profile():
         # Log de auditoria
         if changed_fields:
             AuditManager.log_user_change(
-                current_user,
-                'update',
-                old_values,
-                new_values,
-                changed_fields
+                current_user, "update", old_values, new_values, changed_fields
             )
 
         flash("Perfil atualizado com sucesso!", "success")

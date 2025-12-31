@@ -31,6 +31,7 @@ from app import db
 from app.admin import bp
 from app.models import (
     AIGeneration,
+    AuditLog,
     BillingPlan,
     Client,
     CreditPackage,
@@ -49,7 +50,6 @@ from app.models import (
     User,
     UserCredits,
     UserPlan,
-    AuditLog,
 )
 from app.utils.audit import AuditManager
 
@@ -2784,7 +2784,10 @@ def roadmap():
     # Itens pendentes (últimos 10)
     pending_items_list = (
         RoadmapItem.query.filter(RoadmapItem.status.in_(["planned", "in_progress"]))
-        .order_by(RoadmapItem.priority.desc(), RoadmapItem.planned_start_date.asc().nullslast())
+        .order_by(
+            RoadmapItem.priority.desc(),
+            RoadmapItem.planned_start_date.asc().nullslast(),
+        )
         .limit(10)
         .all()
     )
@@ -3988,14 +3991,14 @@ def audit_logs():
     _require_admin()
 
     # Parâmetros de filtro
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
-    entity_type = request.args.get('entity_type')
-    entity_id = request.args.get('entity_id', type=int)
-    user_id = request.args.get('user_id', type=int)
-    action = request.args.get('action')
-    date_from = request.args.get('date_from')
-    date_to = request.args.get('date_to')
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 50, type=int)
+    entity_type = request.args.get("entity_type")
+    entity_id = request.args.get("entity_id", type=int)
+    user_id = request.args.get("user_id", type=int)
+    action = request.args.get("action")
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
 
     # Construir query
     query = AuditLog.query
@@ -4012,9 +4015,11 @@ def audit_logs():
     # Filtro de data
     if date_from:
         from datetime import datetime
+
         query = query.filter(AuditLog.timestamp >= datetime.fromisoformat(date_from))
     if date_to:
         from datetime import datetime
+
         query = query.filter(AuditLog.timestamp <= datetime.fromisoformat(date_to))
 
     # Paginação
@@ -4044,13 +4049,13 @@ def audit_logs():
         entity_types=entity_types,
         actions=actions,
         filters={
-            'entity_type': entity_type,
-            'entity_id': entity_id,
-            'user_id': user_id,
-            'action': action,
-            'date_from': date_from,
-            'date_to': date_to,
-        }
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "user_id": user_id,
+            "action": action,
+            "date_from": date_from,
+            "date_to": date_to,
+        },
     )
 
 
@@ -4063,9 +4068,7 @@ def audit_log_detail(log_id):
     log = AuditLog.query.get_or_404(log_id)
 
     return render_template(
-        "admin/audit_log_detail.html",
-        title=f"Log de Auditoria #{log.id}",
-        log=log
+        "admin/audit_log_detail.html", title=f"Log de Auditoria #{log.id}", log=log
     )
 
 
@@ -4079,11 +4082,11 @@ def audit_logs_entity(entity_type, entity_id):
 
     # Buscar nome da entidade para exibição
     entity_name = f"{entity_type} #{entity_id}"
-    if entity_type == 'user':
+    if entity_type == "user":
         user = User.query.get(entity_id)
         if user:
             entity_name = f"Usuário: {user.email}"
-    elif entity_type == 'client':
+    elif entity_type == "client":
         client = Client.query.get(entity_id)
         if client:
             entity_name = f"Cliente: {client.full_name}"
@@ -4094,5 +4097,5 @@ def audit_logs_entity(entity_type, entity_id):
         logs=logs,
         entity_type=entity_type,
         entity_id=entity_id,
-        entity_name=entity_name
+        entity_name=entity_name,
     )

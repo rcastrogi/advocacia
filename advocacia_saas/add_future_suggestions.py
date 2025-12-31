@@ -46,7 +46,8 @@ def add_future_suggestions():
                 "user_impact": "high",
                 "tags": "calendário, agendamento, prazos, audiências, organização",
                 "planned_start_date": datetime.utcnow().date() + timedelta(days=30),
-                "planned_completion_date": datetime.utcnow().date() + timedelta(days=120),
+                "planned_completion_date": datetime.utcnow().date()
+                + timedelta(days=120),
             },
             # === GESTÃO DE DOCUMENTOS ===
             {
@@ -64,7 +65,8 @@ def add_future_suggestions():
                 "user_impact": "high",
                 "tags": "documentos, GED, OCR, versionamento, organização",
                 "planned_start_date": datetime.utcnow().date() + timedelta(days=45),
-                "planned_completion_date": datetime.utcnow().date() + timedelta(days=150),
+                "planned_completion_date": datetime.utcnow().date()
+                + timedelta(days=150),
             },
             # === COBRANÇA AUTOMÁTICA ===
             {
@@ -83,7 +85,8 @@ def add_future_suggestions():
                 "user_impact": "medium",
                 "tags": "cobrança, faturamento, PIX, boleto, inadimplência",
                 "planned_start_date": datetime.utcnow().date() + timedelta(days=60),
-                "planned_completion_date": datetime.utcnow().date() + timedelta(days=120),
+                "planned_completion_date": datetime.utcnow().date()
+                + timedelta(days=120),
             },
         ]
 
@@ -106,7 +109,8 @@ def add_future_suggestions():
                 "user_impact": "high",
                 "tags": "BI, analytics, previsões, machine learning, dashboards",
                 "planned_start_date": datetime.utcnow().date() + timedelta(days=90),
-                "planned_completion_date": datetime.utcnow().date() + timedelta(days=210),
+                "planned_completion_date": datetime.utcnow().date()
+                + timedelta(days=210),
             },
             # === COMUNICAÇÃO INTERNA ===
             {
@@ -124,7 +128,8 @@ def add_future_suggestions():
                 "user_impact": "high",
                 "tags": "chat, comunicação, colaboração, produtividade, equipe",
                 "planned_start_date": datetime.utcnow().date() + timedelta(days=120),
-                "planned_completion_date": datetime.utcnow().date() + timedelta(days=240),
+                "planned_completion_date": datetime.utcnow().date()
+                + timedelta(days=240),
             },
             # === BACKUP E RECUPERAÇÃO ===
             {
@@ -143,7 +148,8 @@ def add_future_suggestions():
                 "user_impact": "critical",
                 "tags": "backup, recuperação, disponibilidade, LGPD, continuidade",
                 "planned_start_date": datetime.utcnow().date() + timedelta(days=30),
-                "planned_completion_date": datetime.utcnow().date() + timedelta(days=90),
+                "planned_completion_date": datetime.utcnow().date()
+                + timedelta(days=90),
             },
             # === API PÚBLICA ===
             {
@@ -162,7 +168,8 @@ def add_future_suggestions():
                 "user_impact": "medium",
                 "tags": "API, REST, integração, OAuth2, webhooks",
                 "planned_start_date": datetime.utcnow().date() + timedelta(days=150),
-                "planned_completion_date": datetime.utcnow().date() + timedelta(days=300),
+                "planned_completion_date": datetime.utcnow().date()
+                + timedelta(days=300),
             },
         ]
 
@@ -185,7 +192,8 @@ def add_future_suggestions():
                 "user_impact": "critical",
                 "tags": "LGPD, compliance, privacidade, auditoria, DPO",
                 "planned_start_date": datetime.utcnow().date() + timedelta(days=180),
-                "planned_completion_date": datetime.utcnow().date() + timedelta(days=360),
+                "planned_completion_date": datetime.utcnow().date()
+                + timedelta(days=360),
             },
             # === GAMIFICAÇÃO ===
             {
@@ -203,7 +211,8 @@ def add_future_suggestions():
                 "user_impact": "medium",
                 "tags": "gamificação, engajamento, pontos, badges, competição",
                 "planned_start_date": datetime.utcnow().date() + timedelta(days=210),
-                "planned_completion_date": datetime.utcnow().date() + timedelta(days=300),
+                "planned_completion_date": datetime.utcnow().date()
+                + timedelta(days=300),
             },
             # === PORTAL MOBILE ===
             {
@@ -221,7 +230,8 @@ def add_future_suggestions():
                 "user_impact": "high",
                 "tags": "mobile, PWA, notificações, experiência, acessibilidade",
                 "planned_start_date": datetime.utcnow().date() + timedelta(days=240),
-                "planned_completion_date": datetime.utcnow().date() + timedelta(days=360),
+                "planned_completion_date": datetime.utcnow().date()
+                + timedelta(days=360),
             },
         ]
 
@@ -236,7 +246,9 @@ def add_future_suggestions():
 
             category = categories.get(item_data.pop("category_slug"))
             if not category:
-                print(f"Categoria {item_data['category_slug']} não encontrada. Pulando item.")
+                print(
+                    f"Categoria {item_data['category_slug']} não encontrada. Pulando item."
+                )
                 continue
 
             item = RoadmapItem(
@@ -258,7 +270,7 @@ def add_future_suggestions():
         print(f"Total de itens: {total_items}")
         print(f"Itens concluídos: {completed_items}")
         print(f"Itens planejados: {planned_items}")
-        print(f"Progresso: {completed_items/total_items*100:.1f}%")
+        print(f"Progresso: {completed_items / total_items * 100:.1f}%")
 
 
 if __name__ == "__main__":

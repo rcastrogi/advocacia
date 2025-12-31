@@ -785,7 +785,9 @@ def roadmap():
 
     # Separar itens concluídos e pendentes
     completed_items = [item for item in public_items if item.status == "completed"]
-    pending_items = [item for item in public_items if item.status in ["planned", "in_progress"]]
+    pending_items = [
+        item for item in public_items if item.status in ["planned", "in_progress"]
+    ]
 
     # Agrupar concluídos por categoria
     completed_categories = {}
@@ -804,13 +806,19 @@ def roadmap():
         pending_categories[cat_slug]["items"].append(item)
 
     # Ordenar categorias por ordem definida
-    sorted_completed_categories = sorted(completed_categories.values(), key=lambda x: x["category"].order)
-    sorted_pending_categories = sorted(pending_categories.values(), key=lambda x: x["category"].order)
+    sorted_completed_categories = sorted(
+        completed_categories.values(), key=lambda x: x["category"].order
+    )
+    sorted_pending_categories = sorted(
+        pending_categories.values(), key=lambda x: x["category"].order
+    )
 
     # Estatísticas públicas
     total_features = len(public_items)
     completed_features = len(completed_items)
-    in_progress_features = len([item for item in public_items if item.status == "in_progress"])
+    in_progress_features = len(
+        [item for item in public_items if item.status == "in_progress"]
+    )
     planned_features = len([item for item in public_items if item.status == "planned"])
 
     # Calcular progresso geral
