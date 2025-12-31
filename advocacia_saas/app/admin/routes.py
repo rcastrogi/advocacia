@@ -3596,7 +3596,9 @@ def petition_model_edit(model_id):
         petition_model.is_active = request.form.get("is_active") == "on"
         petition_model.use_dynamic_form = request.form.get("use_dynamic_form") == "on"
         template_content = request.form.get("template_content")
-        current_app.logger.info(f"Saving template for model {model_id}, length: {len(template_content or '')}")
+        current_app.logger.info(
+            f"Saving template for model {model_id}, length: {len(template_content or '')}"
+        )
         petition_model.template_content = template_content
 
         # Atualizar seções do modelo
