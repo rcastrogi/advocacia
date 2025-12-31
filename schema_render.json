@@ -1,0 +1,6485 @@
+{
+  "exported_at": "2025-12-31T10:14:26.873162",
+  "database_type": "postgresql_render",
+  "tables": {
+    "client": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('client_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "lawyer_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "full_name",
+          "type": "VARCHAR(200)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "rg",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cpf_cnpj",
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "civil_status",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "birth_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "profession",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "nationality",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "birth_place",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "mother_name",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "father_name",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "address_type",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cep",
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "street",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "number",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "uf",
+          "type": "VARCHAR(2)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "city",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "neighborhood",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "complement",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "landline_phone",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "email",
+          "type": "VARCHAR(120)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "mobile_phone",
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "lgbt_declared",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "has_disability",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "disability_types",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_pregnant_postpartum",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "delivery_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "client_lawyer_id_fkey",
+          "constrained_columns": [
+            "lawyer_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "client_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "estados": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('estados_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "sigla",
+          "type": "VARCHAR(2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "nome",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_estados_sigla",
+          "columns": [
+            "sigla"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": []
+    },
+    "cidades": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('cidades_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "nome",
+          "type": "VARCHAR(100)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "estado_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_cidades_estado_id",
+          "columns": [
+            "estado_id"
+          ],
+          "unique": false
+        },
+        {
+          "name": "ix_cidades_nome",
+          "columns": [
+            "nome"
+          ],
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "cidades_estado_id_fkey",
+          "constrained_columns": [
+            "estado_id"
+          ],
+          "referred_table": "estados",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "plan_petition_types": {
+      "columns": [
+        {
+          "name": "plan_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "petition_type_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "plan_petition_types_petition_type_id_fkey",
+          "constrained_columns": [
+            "petition_type_id"
+          ],
+          "referred_table": "petition_types",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "plan_petition_types_plan_id_fkey",
+          "constrained_columns": [
+            "plan_id"
+          ],
+          "referred_table": "billing_plans",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "billing_plans": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('billing_plans_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "slug",
+          "type": "VARCHAR(80)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(120)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "plan_type",
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "monthly_fee",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "monthly_petition_limit",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "supported_periods",
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "default": "'[\"1m\", \"3m\", \"6m\", \"1y\", \"2y\", \"3y\"]'::json",
+          "primary_key": false
+        },
+        {
+          "name": "discount_percentage",
+          "type": "NUMERIC(5, 2)",
+          "nullable": true,
+          "default": "0.00",
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "billing_plans_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": []
+    },
+    "petition_types": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('petition_types_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "slug",
+          "type": "VARCHAR(80)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(180)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "category",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "icon",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "color",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_implemented",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_billable",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "base_price",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "use_dynamic_form",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "petition_types_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": []
+    },
+    "petition_templates": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('petition_templates_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "slug",
+          "type": "VARCHAR(120)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(180)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "category",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "default_values",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_global",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "owner_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "petition_type_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "petition_templates_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "petition_templates_owner_id_fkey",
+          "constrained_columns": [
+            "owner_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "petition_templates_petition_type_id_fkey",
+          "constrained_columns": [
+            "petition_type_id"
+          ],
+          "referred_table": "petition_types",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "user_plans": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('user_plans_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "plan_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "started_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "renewal_date",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_current",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "uq_user_current_plan",
+          "columns": [
+            "user_id",
+            "is_current"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "user_plans_plan_id_fkey",
+          "constrained_columns": [
+            "plan_id"
+          ],
+          "referred_table": "billing_plans",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "user_plans_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "petition_usage": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('petition_usage_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "petition_type_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "plan_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "generated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "billing_cycle",
+          "type": "VARCHAR(7)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "billable",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "amount",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "extra_data",
+          "type": "JSON",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_petition_usage_billing_cycle",
+          "columns": [
+            "billing_cycle"
+          ],
+          "unique": false
+        },
+        {
+          "name": "ix_petition_usage_generated_at",
+          "columns": [
+            "generated_at"
+          ],
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "petition_usage_petition_type_id_fkey",
+          "constrained_columns": [
+            "petition_type_id"
+          ],
+          "referred_table": "petition_types",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "petition_usage_plan_id_fkey",
+          "constrained_columns": [
+            "plan_id"
+          ],
+          "referred_table": "billing_plans",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "petition_usage_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "testimonials": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('testimonials_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "rating",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "display_name",
+          "type": "VARCHAR(200)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "display_role",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "display_location",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "moderated_by",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "moderated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "rejection_reason",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_featured",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "testimonials_moderated_by_fkey",
+          "constrained_columns": [
+            "moderated_by"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "testimonials_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "petition_type_sections": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('petition_type_sections_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "petition_type_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "section_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "order",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_required",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_expanded",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "field_overrides",
+          "type": "JSON",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "petition_type_sections_petition_type_id_fkey",
+          "constrained_columns": [
+            "petition_type_id"
+          ],
+          "referred_table": "petition_types",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "petition_type_sections_section_id_fkey",
+          "constrained_columns": [
+            "section_id"
+          ],
+          "referred_table": "petition_sections",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "petition_sections": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('petition_sections_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(100)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "slug",
+          "type": "VARCHAR(100)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "icon",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "color",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "order",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "fields_schema",
+          "type": "JSON",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "petition_sections_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": []
+    },
+    "user_credits": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('user_credits_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "balance",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "total_purchased",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "total_used",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "total_bonus",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "user_credits_user_id_key",
+          "columns": [
+            "user_id"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "user_credits_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "ai_generations": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('ai_generations_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "generation_type",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "petition_type_slug",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "section_name",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "credits_used",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "model_used",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "tokens_input",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "tokens_output",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "tokens_total",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cost_usd",
+          "type": "NUMERIC(10, 6)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "prompt_summary",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "input_data",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "output_content",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "error_message",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_rating",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "was_used",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "completed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "response_time_ms",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "ai_generations_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "notifications": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('notifications_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "type",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(200)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "message",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "link",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "read",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "read_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "notifications_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "subscriptions": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('subscriptions_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "plan_type",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "billing_period",
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "amount",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "currency",
+          "type": "VARCHAR(3)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "trial_ends_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "current_period_start",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "current_period_end",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cancel_at_period_end",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "canceled_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "gateway",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "gateway_subscription_id",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "gateway_customer_id",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "refund_policy",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": "'no_refund'::character varying",
+          "primary_key": false
+        },
+        {
+          "name": "refund_amount",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "refund_processed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "subscriptions_gateway_subscription_id_key",
+          "columns": [
+            "gateway_subscription_id"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "subscriptions_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "expenses": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('expenses_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "case_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "VARCHAR(500)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "category",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "amount",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "currency",
+          "type": "VARCHAR(3)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "expense_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "payment_method",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "reimbursable",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "reimbursed",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "reimbursed_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "receipt_filename",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "receipt_url",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "expenses_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "client_lawyers": {
+      "columns": [
+        {
+          "name": "client_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "lawyer_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "specialty",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_primary",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "client_lawyers_client_id_fkey",
+          "constrained_columns": [
+            "client_id"
+          ],
+          "referred_table": "client",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "client_lawyers_lawyer_id_fkey",
+          "constrained_columns": [
+            "lawyer_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "dependent": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('dependent_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "client_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "full_name",
+          "type": "VARCHAR(200)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "relationship",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "birth_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cpf",
+          "type": "VARCHAR(14)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "dependent_client_id_fkey",
+          "constrained_columns": [
+            "client_id"
+          ],
+          "referred_table": "client",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "invoices": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('invoices_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "case_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "billing_cycle",
+          "type": "VARCHAR(7)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "amount_due",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "amount_paid",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "issued_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "invoice_number",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "amount",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "currency",
+          "type": "VARCHAR(3)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "issue_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "due_date",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "paid_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_recurring",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "recurrence_interval",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "next_invoice_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "payment_method",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "boleto_url",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "pix_code",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "invoices_invoice_number_key",
+          "columns": [
+            "invoice_number"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "invoices_client_id_fkey",
+          "constrained_columns": [
+            "client_id"
+          ],
+          "referred_table": "client",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "invoices_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "petition_attachments": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('petition_attachments_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "saved_petition_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "filename",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "stored_filename",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_type",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_size",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "category",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "uploaded_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "uploaded_by_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "petition_attachments_saved_petition_id_fkey",
+          "constrained_columns": [
+            "saved_petition_id"
+          ],
+          "referred_table": "saved_petitions",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "petition_attachments_uploaded_by_id_fkey",
+          "constrained_columns": [
+            "uploaded_by_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "credit_transactions": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('credit_transactions_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "transaction_type",
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "amount",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "balance_after",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "package_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "generation_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "credit_transactions_generation_id_fkey",
+          "constrained_columns": [
+            "generation_id"
+          ],
+          "referred_table": "ai_generations",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "credit_transactions_package_id_fkey",
+          "constrained_columns": [
+            "package_id"
+          ],
+          "referred_table": "credit_packages",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "credit_transactions_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "credit_packages": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('credit_packages_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(100)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "slug",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "credits",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "bonus_credits",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "price",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "original_price",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "currency",
+          "type": "VARCHAR(3)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_featured",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "sort_order",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "credit_packages_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": []
+    },
+    "deadlines": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('deadlines_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "case_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(200)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "deadline_type",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "deadline_date",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "alert_days_before",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "alert_sent",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "alert_sent_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "completed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "completion_notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_recurring",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "recurrence_pattern",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "recurrence_end_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "count_business_days",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "deadlines_client_id_fkey",
+          "constrained_columns": [
+            "client_id"
+          ],
+          "referred_table": "client",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "deadlines_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "messages": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('messages_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "sender_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "recipient_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "message_type",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "attachment_filename",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "attachment_path",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "attachment_size",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "attachment_type",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_read",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "read_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_deleted_by_sender",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_deleted_by_recipient",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_messages_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "messages_client_id_fkey",
+          "constrained_columns": [
+            "client_id"
+          ],
+          "referred_table": "client",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "messages_recipient_id_fkey",
+          "constrained_columns": [
+            "recipient_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "messages_sender_id_fkey",
+          "constrained_columns": [
+            "sender_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "chat_rooms": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('chat_rooms_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "lawyer_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "last_message_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "last_message_preview",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "unread_count_lawyer",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "unread_count_client",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "unique_chat_room",
+          "columns": [
+            "lawyer_id",
+            "client_id"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "chat_rooms_client_id_fkey",
+          "constrained_columns": [
+            "client_id"
+          ],
+          "referred_table": "client",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "chat_rooms_lawyer_id_fkey",
+          "constrained_columns": [
+            "lawyer_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "documents": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('documents_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(200)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "document_type",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "category",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "filename",
+          "type": "VARCHAR(500)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_path",
+          "type": "VARCHAR(500)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_size",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_type",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_extension",
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "version",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "parent_document_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_latest_version",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_visible_to_client",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_confidential",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "tags",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "last_accessed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_documents_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "documents_client_id_fkey",
+          "constrained_columns": [
+            "client_id"
+          ],
+          "referred_table": "client",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "documents_parent_document_id_fkey",
+          "constrained_columns": [
+            "parent_document_id"
+          ],
+          "referred_table": "documents",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "documents_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "payments": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('payments_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "invoice_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "subscription_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "amount",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "currency",
+          "type": "VARCHAR(3)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "payment_type",
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "payment_method",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "method",
+          "type": "VARCHAR(30)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "reference",
+          "type": "VARCHAR(120)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "payment_status",
+          "type": "VARCHAR(30)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "paid_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "failed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "refunded_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "webhook_received_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "gateway",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "gateway_payment_id",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "gateway_charge_id",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "pix_code",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "pix_qr_code",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "pix_expires_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "extra_data",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "extra_metadata",
+          "type": "JSON",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_payments_gateway_payment_id",
+          "columns": [
+            "gateway_payment_id"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "payments_invoice_id_fkey",
+          "constrained_columns": [
+            "invoice_id"
+          ],
+          "referred_table": "invoices",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "payments_subscription_id_fkey",
+          "constrained_columns": [
+            "subscription_id"
+          ],
+          "referred_table": "subscriptions",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "payments_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "alembic_version": {
+      "columns": [
+        {
+          "name": "version_num",
+          "type": "VARCHAR(32)",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": []
+    },
+    "roadmap_categories": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('roadmap_categories_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(100)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "slug",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "icon",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "color",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "order",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "roadmap_categories_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": []
+    },
+    "roadmap_items": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('roadmap_items_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "category_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(200)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "slug",
+          "type": "VARCHAR(100)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "detailed_description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "priority",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "estimated_effort",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "visible_to_users",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "internal_only",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "planned_start_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "planned_completion_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "actual_start_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "actual_completion_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "business_value",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "technical_complexity",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_impact",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "dependencies",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "blockers",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "tags",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_by",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "assigned_to",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "last_updated_by",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "implemented_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "roadmap_items_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "roadmap_items_assigned_to_fkey",
+          "constrained_columns": [
+            "assigned_to"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "roadmap_items_category_id_fkey",
+          "constrained_columns": [
+            "category_id"
+          ],
+          "referred_table": "roadmap_categories",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "roadmap_items_created_by_fkey",
+          "constrained_columns": [
+            "created_by"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "roadmap_items_last_updated_by_fkey",
+          "constrained_columns": [
+            "last_updated_by"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "roadmap_feedback": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "roadmap_item_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "rating",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "rating_category",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "comment",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "pros",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cons",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "suggestions",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "usage_frequency",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "ease_of_use",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_agent",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "ip_address",
+          "type": "VARCHAR(45)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "session_id",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_anonymous",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false",
+          "primary_key": false
+        },
+        {
+          "name": "is_featured",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false",
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": "'pending'::character varying",
+          "primary_key": false
+        },
+        {
+          "name": "admin_response",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "responded_by",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "responded_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "roadmap_feedback_responded_by_fkey",
+          "constrained_columns": [
+            "responded_by"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "roadmap_feedback_roadmap_item_id_fkey",
+          "constrained_columns": [
+            "roadmap_item_id"
+          ],
+          "referred_table": "roadmap_items",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "roadmap_feedback_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "anonymization_requests": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('anonymization_requests_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "request_reason",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "data_categories",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "anonymization_method",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "requested_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "processed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "processed_by",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "anonymized_data",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "anonymization_requests_processed_by_fkey",
+          "constrained_columns": [
+            "processed_by"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "anonymization_requests_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "data_consents": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('data_consents_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "consent_type",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "consent_purpose",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "consented",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "consent_version",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "consented_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "withdrawn_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "expires_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "ip_address",
+          "type": "VARCHAR(45)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_agent",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "consent_method",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "data_consents_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "deletion_requests": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('deletion_requests_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "request_reason",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "deletion_scope",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "retention_reason",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "legal_basis",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "appeal_deadline",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "requested_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "processed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "processed_by",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "deletion_summary",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "rejection_reason",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "deletion_requests_processed_by_fkey",
+          "constrained_columns": [
+            "processed_by"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "deletion_requests_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "data_processing_logs": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('data_processing_logs_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "action",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "data_category",
+          "type": "VARCHAR(100)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "data_fields",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "purpose",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "ip_address",
+          "type": "VARCHAR(45)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_agent",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "endpoint",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "request_id",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "legal_basis",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "consent_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "processed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "data_processing_logs_consent_id_fkey",
+          "constrained_columns": [
+            "consent_id"
+          ],
+          "referred_table": "data_consents",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "data_processing_logs_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "user": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('user_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "username",
+          "type": "VARCHAR(80)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "email",
+          "type": "VARCHAR(120)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "password_hash",
+          "type": "VARCHAR(200)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_type",
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "full_name",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "oab_number",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "phone",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "nationality",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cep",
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "street",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "number",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "uf",
+          "type": "VARCHAR(2)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "city",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "neighborhood",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "complement",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "logo_filename",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "billing_status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "quick_actions",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "password_changed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "password_expires_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "password_history",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "force_password_change",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "specialties",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "trial_start_date",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "trial_days",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "trial_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "timezone",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "two_factor_enabled",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "two_factor_method",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "totp_secret",
+          "type": "VARCHAR(32)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "two_factor_backup_codes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "two_factor_last_used",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "user_email_key",
+          "columns": [
+            "email"
+          ],
+          "unique": true
+        },
+        {
+          "name": "user_username_key",
+          "columns": [
+            "username"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": []
+    },
+    "petition_models": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('petition_models_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(180)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "slug",
+          "type": "VARCHAR(80)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "petition_type_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "true",
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        },
+        {
+          "name": "use_dynamic_form",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "true",
+          "primary_key": false
+        },
+        {
+          "name": "default_template_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_by",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        },
+        {
+          "name": "template_content",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_petition_models_active",
+          "columns": [
+            "is_active"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_petition_models_petition_type_id",
+          "columns": [
+            "petition_type_id"
+          ],
+          "unique": false
+        },
+        {
+          "name": "petition_models_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "petition_models_created_by_fkey",
+          "constrained_columns": [
+            "created_by"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "petition_models_default_template_id_fkey",
+          "constrained_columns": [
+            "default_template_id"
+          ],
+          "referred_table": "petition_templates",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "petition_models_petition_type_id_fkey",
+          "constrained_columns": [
+            "petition_type_id"
+          ],
+          "referred_table": "petition_types",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "petition_model_sections": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('petition_model_sections_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "petition_model_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "section_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "order",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "is_required",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false",
+          "primary_key": false
+        },
+        {
+          "name": "is_expanded",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "true",
+          "primary_key": false
+        },
+        {
+          "name": "field_overrides",
+          "type": "JSON",
+          "nullable": true,
+          "default": "'{}'::json",
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_petition_model_sections_model_id",
+          "columns": [
+            "petition_model_id"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_petition_model_sections_order",
+          "columns": [
+            "petition_model_id",
+            "order"
+          ],
+          "unique": false
+        },
+        {
+          "name": "petition_model_sections_petition_model_id_section_id_key",
+          "columns": [
+            "petition_model_id",
+            "section_id"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "petition_model_sections_petition_model_id_fkey",
+          "constrained_columns": [
+            "petition_model_id"
+          ],
+          "referred_table": "petition_models",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "petition_model_sections_section_id_fkey",
+          "constrained_columns": [
+            "section_id"
+          ],
+          "referred_table": "petition_sections",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "saved_petitions": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('saved_petitions_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "petition_type_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(300)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "process_number",
+          "type": "VARCHAR(30)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "form_data",
+          "type": "JSON",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "completed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cancelled_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "petition_model_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_saved_petitions_process_number",
+          "columns": [
+            "process_number"
+          ],
+          "unique": false
+        },
+        {
+          "name": "ix_saved_petitions_status",
+          "columns": [
+            "status"
+          ],
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "saved_petitions_petition_model_id_fkey",
+          "constrained_columns": [
+            "petition_model_id"
+          ],
+          "referred_table": "petition_models",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "saved_petitions_petition_type_id_fkey",
+          "constrained_columns": [
+            "petition_type_id"
+          ],
+          "referred_table": "petition_types",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "saved_petitions_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "processes": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('processes_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "process_number",
+          "type": "VARCHAR(30)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(300)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "court",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "court_instance",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "jurisdiction",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "district",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "judge",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "plaintiff",
+          "type": "VARCHAR(300)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "defendant",
+          "type": "VARCHAR(300)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "distribution_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "next_deadline",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "deadline_description",
+          "type": "VARCHAR(300)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "priority",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_processes_process_number",
+          "columns": [
+            "process_number"
+          ],
+          "unique": true
+        },
+        {
+          "name": "ix_processes_status",
+          "columns": [
+            "status"
+          ],
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "processes_client_id_fkey",
+          "constrained_columns": [
+            "client_id"
+          ],
+          "referred_table": "client",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "processes_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "process_notifications": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('process_notifications_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "process_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notification_type",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(200)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "message",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "read",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "read_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "sent_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "extra_data",
+          "type": "JSON",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "process_notifications_process_id_fkey",
+          "constrained_columns": [
+            "process_id"
+          ],
+          "referred_table": "processes",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "process_notifications_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "process_petitions": {
+      "columns": [
+        {
+          "name": "process_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "petition_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "relation_type",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "process_petitions_petition_id_fkey",
+          "constrained_columns": [
+            "petition_id"
+          ],
+          "referred_table": "saved_petitions",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "process_petitions_process_id_fkey",
+          "constrained_columns": [
+            "process_id"
+          ],
+          "referred_table": "processes",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "process_movements": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('process_movements_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "process_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "movement_date",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "movement_type",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "court_decision",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "deadline_extension",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "responsible_party",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "document_url",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "internal_notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_important",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "requires_action",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "process_movements_process_id_fkey",
+          "constrained_columns": [
+            "process_id"
+          ],
+          "referred_table": "processes",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "process_costs": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('process_costs_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "process_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cost_type",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "VARCHAR(300)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "amount",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "currency",
+          "type": "VARCHAR(3)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "payment_status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "due_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "payment_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "court_fee_type",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "attorney_fee_type",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "receipt_url",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "invoice_number",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "process_costs_process_id_fkey",
+          "constrained_columns": [
+            "process_id"
+          ],
+          "referred_table": "processes",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "process_costs_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "process_attachments": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('process_attachments_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "process_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "filename",
+          "type": "VARCHAR(500)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_path",
+          "type": "VARCHAR(500)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_size",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_type",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_extension",
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(300)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "document_type",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "movement_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "version",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "parent_attachment_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_latest_version",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_confidential",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_visible_to_client",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "tags",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "last_accessed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "process_attachments_movement_id_fkey",
+          "constrained_columns": [
+            "movement_id"
+          ],
+          "referred_table": "process_movements",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "process_attachments_parent_attachment_id_fkey",
+          "constrained_columns": [
+            "parent_attachment_id"
+          ],
+          "referred_table": "process_attachments",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "process_attachments_process_id_fkey",
+          "constrained_columns": [
+            "process_id"
+          ],
+          "referred_table": "processes",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "process_attachments_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "calendar_events": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('calendar_events_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(300)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "start_datetime",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "end_datetime",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "all_day",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false",
+          "primary_key": false
+        },
+        {
+          "name": "location",
+          "type": "VARCHAR(300)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "virtual_link",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "event_type",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "priority",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": "'normal'::character varying",
+          "primary_key": false
+        },
+        {
+          "name": "process_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": "'scheduled'::character varying",
+          "primary_key": false
+        },
+        {
+          "name": "reminder_sent",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false",
+          "primary_key": false
+        },
+        {
+          "name": "reminder_minutes_before",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "60",
+          "primary_key": false
+        },
+        {
+          "name": "is_recurring",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false",
+          "primary_key": false
+        },
+        {
+          "name": "recurrence_rule",
+          "type": "VARCHAR(200)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "recurrence_end_date",
+          "type": "DATE",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "participants",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "attendees",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "outcome",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_calendar_events_client_id",
+          "columns": [
+            "client_id"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_calendar_events_process_id",
+          "columns": [
+            "process_id"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_calendar_events_start_datetime",
+          "columns": [
+            "start_datetime"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_calendar_events_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "calendar_events_client_id_fkey",
+          "constrained_columns": [
+            "client_id"
+          ],
+          "referred_table": "client",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "calendar_events_process_id_fkey",
+          "constrained_columns": [
+            "process_id"
+          ],
+          "referred_table": "processes",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "calendar_events_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "process_automations": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('process_automations_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(200)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "true",
+          "primary_key": false
+        },
+        {
+          "name": "trigger_type",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "trigger_condition",
+          "type": "JSON",
+          "nullable": true,
+          "default": "'{}'::json",
+          "primary_key": false
+        },
+        {
+          "name": "action_type",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "action_config",
+          "type": "JSON",
+          "nullable": true,
+          "default": "'{}'::json",
+          "primary_key": false
+        },
+        {
+          "name": "applies_to_all_processes",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false",
+          "primary_key": false
+        },
+        {
+          "name": "specific_processes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "process_types",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "execution_count",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "last_executed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "success_count",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "failure_count",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_process_automations_active",
+          "columns": [
+            "is_active"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_process_automations_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "process_automations_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "process_reports": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('process_reports_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "report_type",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(200)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "start_date",
+          "type": "DATE",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "end_date",
+          "type": "DATE",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "filters",
+          "type": "JSON",
+          "nullable": true,
+          "default": "'{}'::json",
+          "primary_key": false
+        },
+        {
+          "name": "report_data",
+          "type": "JSON",
+          "nullable": true,
+          "default": "'{}'::json",
+          "primary_key": false
+        },
+        {
+          "name": "total_processes",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "active_processes",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "completed_processes",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "total_costs",
+          "type": "NUMERIC(12, 2)",
+          "nullable": true,
+          "default": "0.00",
+          "primary_key": false
+        },
+        {
+          "name": "average_resolution_time",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": "'generating'::character varying",
+          "primary_key": false
+        },
+        {
+          "name": "error_message",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_path",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "file_size",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        },
+        {
+          "name": "completed_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_process_reports_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_process_reports_status",
+          "columns": [
+            "status"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_process_reports_type",
+          "columns": [
+            "report_type"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_process_reports_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "process_reports_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "audit_log": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('audit_log_id_seq'::regclass)",
+          "primary_key": true
+        },
+        {
+          "name": "timestamp",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "entity_type",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "entity_id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "action",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "old_values",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "new_values",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "changed_fields",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "ip_address",
+          "type": "VARCHAR(45)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_agent",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "session_id",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "additional_metadata",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "name": "audit_log_user_id_fkey",
+          "constrained_columns": [
+            "user_id"
+          ],
+          "referred_table": "user",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ]
+    }
+  }
+}
