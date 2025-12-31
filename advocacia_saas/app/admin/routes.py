@@ -3593,10 +3593,17 @@ def petition_model_edit(model_id):
     # Log page load with current template info to help trace missing saves
     try:
         from datetime import datetime
-        user_repr = getattr(current_user, 'username', None) or getattr(current_user, 'email', None) or current_user.get_id()
-        with open('debug_capture.log', 'a', encoding='utf-8') as f:
-            preview = (petition_model.template_content or '')[:200]
-            f.write(f"{datetime.utcnow().isoformat()} GET model={model_id} user={user_repr} template_len={len(petition_model.template_content or '')} preview={preview}\n")
+
+        user_repr = (
+            getattr(current_user, "username", None)
+            or getattr(current_user, "email", None)
+            or current_user.get_id()
+        )
+        with open("debug_capture.log", "a", encoding="utf-8") as f:
+            preview = (petition_model.template_content or "")[:200]
+            f.write(
+                f"{datetime.utcnow().isoformat()} GET model={model_id} user={user_repr} template_len={len(petition_model.template_content or '')} preview={preview}\n"
+            )
     except Exception as _e:
         current_app.logger.info(f"Failed writing GET capture: {_e}")
 
@@ -3604,14 +3611,21 @@ def petition_model_edit(model_id):
         # Temporary capture for failing submissions
         try:
             from datetime import datetime
-            user_repr = getattr(current_user, 'username', None) or getattr(current_user, 'email', None) or current_user.get_id()
-            with open("debug_capture.log","a", encoding="utf-8") as f:
+
+            user_repr = (
+                getattr(current_user, "username", None)
+                or getattr(current_user, "email", None)
+                or current_user.get_id()
+            )
+            with open("debug_capture.log", "a", encoding="utf-8") as f:
                 try:
                     raw = request.get_data(as_text=True)
                 except Exception:
-                    raw = ''
+                    raw = ""
                 preview = raw[:200]
-                f.write(f"{datetime.utcnow().isoformat()} POST model={model_id} user={user_repr} keys={list(request.form.keys())} template_len={len(request.form.get('template_content') or '')} capture_len={len(request.form.get('template_content_capture') or '')} raw_preview={preview}\n")
+                f.write(
+                    f"{datetime.utcnow().isoformat()} POST model={model_id} user={user_repr} keys={list(request.form.keys())} template_len={len(request.form.get('template_content') or '')} capture_len={len(request.form.get('template_content_capture') or '')} raw_preview={preview}\n"
+                )
         except Exception as _ex:
             current_app.logger.info(f"Capture write failed: {_ex}")
 
@@ -3620,7 +3634,9 @@ def petition_model_edit(model_id):
             petition_model.description = request.form.get("description")
             petition_model.petition_type_id = request.form.get("petition_type_id")
             petition_model.is_active = request.form.get("is_active") == "on"
-            petition_model.use_dynamic_form = request.form.get("use_dynamic_form") == "on"
+            petition_model.use_dynamic_form = (
+                request.form.get("use_dynamic_form") == "on"
+            )
             template_content = request.form.get("template_content")
             # If main content is empty, use the captured hidden value (client-side hook)
             if not template_content:
@@ -3656,9 +3672,13 @@ def petition_model_edit(model_id):
                 # Remover todas as seções atuais (uso seguro da API)
                 try:
                     # Prefer explicit query delete para evitar problemas quando a relação não for dinâmica
-                    PetitionModelSection.query.filter_by(petition_model_id=model_id).delete(synchronize_session=False)
+                    PetitionModelSection.query.filter_by(
+                        petition_model_id=model_id
+                    ).delete(synchronize_session=False)
                 except Exception as ex_del:
-                    current_app.logger.error(f"Erro ao limpar seções antigas do modelo {model_id}: {ex_del}")
+                    current_app.logger.error(
+                        f"Erro ao limpar seções antigas do modelo {model_id}: {ex_del}"
+                    )
 
                 # Adicionar seções na nova ordem
                 for order, section_id in enumerate(section_ids, 1):
