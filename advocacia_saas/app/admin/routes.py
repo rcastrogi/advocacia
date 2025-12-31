@@ -3828,7 +3828,7 @@ def petition_model_generate_template(model_id):
         for model_section in sections:
             section = model_section.section
             if section:
-                section_name = section.name.upper()
+                section_name = section.name.upper().replace(" ", "_").replace("/", "_")
                 template_parts.append(f"{{{{ {section_name} }}}}")
                 template_parts.append("")
 
