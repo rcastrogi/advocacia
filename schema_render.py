@@ -39,7 +39,11 @@ def export_schema():
 
         # Get primary key constraint
         pk_constraint = inspector.get_pk_constraint(table_name)
-        pk_columns = set(pk_constraint.get("constrained_columns", [])) if pk_constraint else set()
+        pk_columns = (
+            set(pk_constraint.get("constrained_columns", []))
+            if pk_constraint
+            else set()
+        )
 
         # Colunas
         columns = []
