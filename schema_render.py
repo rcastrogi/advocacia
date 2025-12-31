@@ -160,8 +160,8 @@ def main():
             # Tentar gerar SQL dump
             sql_file = generate_sql_dump()
 
-            print("
-📊 Estatísticas do schema:"            print(f"   Tabelas encontradas: {len(schema_info['tables'])}")
+            print("\n📊 Estatísticas do schema:")
+            print(f"   Tabelas encontradas: {len(schema_info['tables'])}")
 
             print(f"\n📁 Arquivos gerados:")
             print(f"   JSON: {json_file}")
