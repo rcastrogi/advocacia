@@ -10,6 +10,20 @@ import os
 from app import create_app, db
 from sqlalchemy import inspect, text
 
+# PostgreSQL reserved words that might conflict
+RESERVED_WORDS = {
+    'order', 'group', 'user', 'table', 'column', 'select', 'insert', 'update', 'delete',
+    'create', 'drop', 'alter', 'index', 'primary', 'foreign', 'key', 'null', 'not',
+    'and', 'or', 'like', 'in', 'exists', 'between', 'case', 'when', 'then', 'else',
+    'end', 'from', 'where', 'join', 'on', 'having', 'limit', 'offset'
+}
+
+def quote_identifier(name):
+    """Quote identifier if it's a reserved word"""
+    if name.lower() in RESERVED_WORDS:
+        return f'"{name}"'
+    return name
+
 
 def apply_incremental_migration():
     """Aplica migração incremental: adiciona colunas faltantes"""
@@ -51,9 +65,9 @@ def apply_incremental_migration():
                     default = f" DEFAULT {col['default']}" if col["default"] else ""
                     primary_key = " PRIMARY KEY" if col["primary_key"] else ""
 
-                    alter_sql = f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type} {nullable}{default}{primary_key}"
+                    alter_sql = f"ALTER TABLE {table_name} ADD COLUMN {quote_identifier(col_name)} {col_type} {nullable}{default}{primary_key}"
                     try:
-                        print(f"Adicionando coluna {col_name} à tabela {table_name}...")
+                        print(f"Adicionando coluna {quote_identifier(col_name)} à tabela {table_name}...")
                         db.session.execute(text(alter_sql))
                         changes_made += 1
                     except Exception as e:

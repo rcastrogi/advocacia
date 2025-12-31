@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS petition_type_sections (
     id INTEGER NOT NULL DEFAULT nextval('petition_type_sections_id_seq'::regclass) PRIMARY KEY,
     petition_type_id INTEGER NOT NULL,
     section_id INTEGER NOT NULL,
-    order INTEGER NULL,
+    "order" INTEGER NULL,
     is_required BOOLEAN NULL,
     is_expanded BOOLEAN NULL,
     field_overrides JSON NULL
@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS petition_sections (
     description VARCHAR(255) NULL,
     icon VARCHAR(50) NULL,
     color VARCHAR(20) NULL,
-    order INTEGER NULL,
+    "order" INTEGER NULL,
     is_active BOOLEAN NULL,
     fields_schema JSON NULL,
     created_at TIMESTAMP NULL,
@@ -462,7 +462,7 @@ CREATE TABLE IF NOT EXISTS roadmap_categories (
     description TEXT NULL,
     icon VARCHAR(50) NULL,
     color VARCHAR(20) NULL,
-    order INTEGER NULL,
+    "order" INTEGER NULL,
     is_active BOOLEAN NULL,
     created_at TIMESTAMP NULL
 );
@@ -643,7 +643,7 @@ CREATE TABLE IF NOT EXISTS petition_model_sections (
     id INTEGER NOT NULL DEFAULT nextval('petition_model_sections_id_seq'::regclass) PRIMARY KEY,
     petition_model_id INTEGER NOT NULL,
     section_id INTEGER NOT NULL,
-    order INTEGER NULL DEFAULT 0,
+    "order" INTEGER NULL DEFAULT 0,
     is_required BOOLEAN NULL DEFAULT false,
     is_expanded BOOLEAN NULL DEFAULT true,
     field_overrides JSON NULL DEFAULT '{}'::json
