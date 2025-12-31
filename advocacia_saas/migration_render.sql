@@ -586,7 +586,7 @@ CREATE TABLE IF NOT EXISTS data_processing_logs (
     processed_at TIMESTAMP NULL
 );
 
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE IF NOT EXISTS "user" (
     id INTEGER NOT NULL DEFAULT nextval('user_id_seq'::regclass) PRIMARY KEY,
     username VARCHAR(80) NOT NULL,
     email VARCHAR(120) NOT NULL,

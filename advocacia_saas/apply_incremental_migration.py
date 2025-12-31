@@ -80,6 +80,7 @@ def apply_incremental_migration():
         changes_made = 0
 
         for table_name, table_info in tables.items():
+            quoted_table = quote_identifier(table_name)
             if not inspector.has_table(table_name):
                 print(f"Tabela {table_name} não existe - pulando (use CREATE primeiro)")
                 continue
@@ -98,10 +99,10 @@ def apply_incremental_migration():
                     default = f" DEFAULT {col['default']}" if col["default"] else ""
                     primary_key = " PRIMARY KEY" if col["primary_key"] else ""
 
-                    alter_sql = f"ALTER TABLE {table_name} ADD COLUMN {quote_identifier(col_name)} {col_type} {nullable}{default}{primary_key}"
+                    alter_sql = f"ALTER TABLE {quoted_table} ADD COLUMN {quote_identifier(col_name)} {col_type} {nullable}{default}{primary_key}"
                     try:
                         print(
-                            f"Adicionando coluna {quote_identifier(col_name)} à tabela {table_name}..."
+                            f"Adicionando coluna {quote_identifier(col_name)} à tabela {quoted_table}..."
                         )
                         db.session.execute(text(alter_sql))
                         changes_made += 1
