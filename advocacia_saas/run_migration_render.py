@@ -15,7 +15,7 @@ def run_migration():
 
     with app.app_context():
         # Ler o arquivo SQL
-        sql_file = os.path.join(os.path.dirname(__file__), 'migration_render.sql')
+        sql_file = os.path.join(os.path.dirname(__file__), "migration_render.sql")
         if not os.path.exists(sql_file):
             print(f"Arquivo {sql_file} não encontrado!")
             return

@@ -4,10 +4,12 @@ Script para aplicar migração incremental no Render
 Adiciona colunas faltantes às tabelas existentes
 """
 
-from app import create_app, db
-from sqlalchemy import text, inspect
-import os
 import json
+import os
+
+from app import create_app, db
+from sqlalchemy import inspect, text
+
 
 def apply_incremental_migration():
     """Aplica migração incremental: adiciona colunas faltantes"""
@@ -15,17 +17,19 @@ def apply_incremental_migration():
 
     with app.app_context():
         # Carregar schema target
-        schema_file = os.path.join(os.path.dirname(__file__), '..', 'schema_render.json')
+        schema_file = os.path.join(
+            os.path.dirname(__file__), "..", "schema_render.json"
+        )
         if not os.path.exists(schema_file):
             print(f"Arquivo {schema_file} não encontrado!")
             return
 
-        with open(schema_file, 'r', encoding='utf-8') as f:
+        with open(schema_file, "r", encoding="utf-8") as f:
             schema = json.load(f)
 
         inspector = inspect(db.engine)
 
-        tables = schema['tables']
+        tables = schema["tables"]
         changes_made = 0
 
         for table_name, table_info in tables.items():
@@ -34,16 +38,18 @@ def apply_incremental_migration():
                 continue
 
             # Verificar colunas existentes
-            existing_columns = {col['name']: col for col in inspector.get_columns(table_name)}
+            existing_columns = {
+                col["name"]: col for col in inspector.get_columns(table_name)
+            }
 
-            for col in table_info['columns']:
-                col_name = col['name']
+            for col in table_info["columns"]:
+                col_name = col["name"]
                 if col_name not in existing_columns:
                     # Coluna faltando - adicionar
-                    col_type = col['type']
-                    nullable = "NULL" if col['nullable'] else "NOT NULL"
-                    default = f" DEFAULT {col['default']}" if col['default'] else ""
-                    primary_key = " PRIMARY KEY" if col['primary_key'] else ""
+                    col_type = col["type"]
+                    nullable = "NULL" if col["nullable"] else "NOT NULL"
+                    default = f" DEFAULT {col['default']}" if col["default"] else ""
+                    primary_key = " PRIMARY KEY" if col["primary_key"] else ""
 
                     alter_sql = f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type} {nullable}{default}{primary_key}"
                     try:
@@ -62,6 +68,7 @@ def apply_incremental_migration():
 
         db.session.commit()
         print(f"Migração incremental concluída. {changes_made} alterações aplicadas.")
+
 
 if __name__ == "__main__":
     apply_incremental_migration()
