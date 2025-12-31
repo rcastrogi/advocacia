@@ -36,7 +36,7 @@ em face de {{ reu_nome }}, {{ reu_qualificacao }}
 {{ advogado_nome }}
 {{ advogado_oab }}"""
 
-lines = template.split('\n')
+lines = template.split("\n")
 for i, line in enumerate(lines, 1):
     print(f"{i}: {repr(line)}")
 
