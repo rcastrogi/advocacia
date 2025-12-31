@@ -1,0 +1,7 @@
+schema_local.json
+schema_render.json
+validate_sql.py
+generate_migration.py
+extract_local_schema.py
+decode_schema.py
+compare_schemas.py
