@@ -5,6 +5,27 @@
 {% block meta_description %}Veja o roadmap de desenvolvimento da Petitio SaaS - novas funcionalidades, melhorias e inovações que estão por vir.{% endblock %}
 
 {% block content %}
+<style>
+    .nav-tabs .nav-link {
+        color: var(--primary-color) !important; /* Site standard blue text for inactive tabs */
+        background-color: transparent !important;
+        border: none !important;
+    }
+    .nav-tabs .nav-link.active {
+        color: var(--gold-color) !important; /* Site standard golden text for active tab */
+        background-color: transparent !important;
+        border-bottom: 3px solid var(--gold-color) !important; /* Site standard golden border for active tab */
+    }
+    .tab-content .tab-pane {
+        color: #333 !important; /* Dark text for readability in tab content */
+    }
+    .tab-content .tab-pane .text-muted {
+        color: #6c757d !important; /* Keep muted text gray */
+    }
+    .tab-content .tab-pane .badge {
+        color: white; /* Keep badge text white */
+    }
+</style>
 <!-- Hero Section -->
 <section class="hero-section bg-gradient-primary text-white py-5">
     <div class="container">
@@ -32,7 +53,7 @@
                     <div>
                         <div class="d-flex align-items-center">
                             <i class="fas fa-clock text-warning me-2"></i>
-                            <span class="fw-bold">{{ total_features - completed_features - in_progress_features }}</span>
+                            <span class="fw-bold">{{ planned_features }}</span>
                             <span class="ms-1">planejadas</span>
                         </div>
                     </div>
@@ -63,136 +84,287 @@
 <!-- Roadmap Content -->
 <section class="py-5">
     <div class="container">
-        {% if categories %}
-            {% for category_data in categories %}
-            <div class="row mb-5">
-                <div class="col-12">
-                    <!-- Category Header -->
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="category-icon me-3">
-                                    <i class="fas {{ category_data.category.icon }} fa-2x text-{{ category_data.category.color }}"></i>
-                                </div>
-                                <div>
-                                    <h3 class="h4 mb-1">{{ category_data.category.name }}</h3>
-                                    <p class="text-muted mb-0">{{ category_data.category.description }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs justify-content-center mb-5" id="roadmapTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab" aria-controls="completed" aria-selected="true">
+                    <i class="fas fa-check-circle text-success me-2"></i>Já Implantado ({{ completed_features }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="false">
+                    <i class="fas fa-clock text-warning me-2"></i>A Implantar ({{ in_progress_features + planned_features }})
+                </button>
+            </li>
+        </ul>
 
-                    <!-- Category Items -->
-                    <div class="row">
-                        {% for item in category_data["items"] %}
-                        <div class="col-lg-6 col-xl-4 mb-4">
-                            <div class="card h-100 border-0 shadow-sm hover-lift">
+        <!-- Tab content -->
+        <div class="tab-content" id="roadmapTabsContent">
+            <!-- Tab Concluídos -->
+            <div class="tab-pane fade show active" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+                {% if completed_categories %}
+                    {% for category_data in completed_categories %}
+                    <div class="row mb-5">
+                        <div class="col-12">
+                            <!-- Category Header -->
+                            <div class="card border-0 shadow-sm mb-4">
                                 <div class="card-body">
-                                    <!-- Status Badge -->
-                                    <div class="d-flex justify-content-between align-items-start mb-3">
-                                        {% set status_display = item.get_status_display() %}
-                                        <span class="badge badge-{{ status_display[1] }} fs-6">
-                                            {{ status_display[0] }}
-                                        </span>
-                                        {% if item.is_overdue() %}
-                                        <span class="badge badge-danger">
-                                            <i class="fas fa-exclamation-triangle"></i> Atrasado
-                                        </span>
-                                        {% endif %}
-                                    </div>
-
-                                    <!-- Title -->
-                                    <h5 class="card-title mb-2">
-                                        <a href="{{ url_for('main.roadmap_item', slug=item.slug) }}" class="text-decoration-none text-dark">
-                                            {{ item.title }}
-                                        </a>
-                                    </h5>
-
-                                    <!-- Description -->
-                                    <p class="card-text text-muted small mb-3">
-                                        {{ item.description }}
-                                    </p>
-
-                                    <!-- Priority and Effort -->
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        {% set priority_display = item.get_priority_display() %}
-                                        <small class="text-muted">
-                                            <i class="fas fa-flag text-{{ priority_display[1] }}"></i>
-                                            {{ priority_display[0] }}
-                                        </small>
-                                        {% set effort_display = item.get_effort_display() %}
-                                        <small class="text-muted">
-                                            <i class="fas fa-clock"></i>
-                                            {{ effort_display[1] }}
-                                        </small>
-                                    </div>
-
-                                    <!-- Progress Bar -->
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <small class="text-muted">Progresso</small>
-                                            <small class="text-muted">{{ item.get_progress_percentage() }}%</small>
+                                    <div class="d-flex align-items-center">
+                                        <div class="category-icon me-3">
+                                            <i class="fas {{ category_data.category.icon }} fa-2x text-{{ category_data.category.color }}"></i>
                                         </div>
-                                        <div class="progress" style="height: 6px;">
-                                            <div class="progress-bar bg-{{ status_display[1] }}"
-                                                 style="width: {{ item.get_progress_percentage() }}%"></div>
+                                        <div>
+                                            <h3 class="h4 mb-1">{{ category_data.category.name }}</h3>
+                                            <p class="text-muted mb-0">{{ category_data.category.description }}</p>
                                         </div>
                                     </div>
-
-                                    <!-- Dates -->
-                                    {% if item.planned_completion_date %}
-                                    <div class="mb-3">
-                                        <small class="text-muted">
-                                            <i class="fas fa-calendar"></i>
-                                            Previsão: {{ item.planned_completion_date.strftime('%d/%m/%Y') }}
-                                        </small>
-                                    </div>
-                                    {% endif %}
-
-                                    <!-- Tags -->
-                                    {% if item.get_tags_list() %}
-                                    <div class="mb-3">
-                                        {% for tag in item.get_tags_list()[:3] %}
-                                        <span class="badge badge-outline-secondary me-1">{{ tag }}</span>
-                                        {% endfor %}
-                                        {% if item.get_tags_list()|length > 3 %}
-                                        <span class="badge badge-outline-secondary">+{{ item.get_tags_list()|length - 3 }}</span>
-                                        {% endif %}
-                                    </div>
-                                    {% endif %}
-
-                                    <!-- Action Button -->
-                                    <a href="{{ url_for('main.roadmap_item', slug=item.slug) }}"
-                                       class="btn btn-outline-primary btn-sm w-100">
-                                        <i class="fas fa-eye"></i> Ver Detalhes
-                                    </a>
                                 </div>
                             </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <!-- Empty State -->
-            <div class="text-center py-5">
-                <div class="empty-state">
-                    <i class="fas fa-road fa-4x text-muted mb-4"></i>
-                    <h3 class="text-muted">Roadmap em Construção</h3>
-                    <p class="text-muted mb-4">
-                        Estamos trabalhando duro para trazer novas funcionalidades incríveis.
-                        Em breve compartilharemos nossas próximas inovações!
-                    </p>
-                    <a href="{{ url_for('main.index') }}" class="btn btn-primary">
-                        <i class="fas fa-home"></i> Voltar ao Início
-                    </a>
-                </div>
-            </div>
-        {% endif %}
-    </div>
-</section>
 
+                            <!-- Category Items -->
+                            <div class="row">
+                                {% for item in category_data["items"] %}
+                                <div class="col-lg-6 col-xl-4 mb-4">
+                                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                                        <div class="card-body">
+                                            <!-- Status Badge -->
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                {% set status_display = item.get_status_display() %}
+                                                <span class="badge badge-{{ status_display[1] }} fs-6">
+                                                    {{ status_display[0] }}
+                                                </span>
+                                                {% if item.is_overdue() %}
+                                                <span class="badge badge-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i> Atrasado
+                                                </span>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Title -->
+                                            <h5 class="card-title mb-2">
+                                                <a href="{{ url_for('main.roadmap_item', slug=item.slug) }}" class="text-decoration-none text-dark">
+                                                    {{ item.title }}
+                                                </a>
+                                                {% if item.show_new_badge %}
+                                                <span class="badge bg-success ms-2">
+                                                    <i class="fas fa-star"></i> Novo
+                                                </span>
+                                                {% endif %}
+                                            </h5>
+
+                                            <!-- Description -->
+                                            <p class="card-text text-muted small mb-3">
+                                                {{ item.description }}
+                                            </p>
+
+                                            <!-- Priority and Effort -->
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                {% set priority_display = item.get_priority_display() %}
+                                                <small class="text-muted">
+                                                    <i class="fas fa-flag text-{{ priority_display[1] }}"></i>
+                                                    {{ priority_display[0] }}
+                                                </small>
+                                                {% set effort_display = item.get_effort_display() %}
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock"></i>
+                                                    {{ effort_display[1] }}
+                                                </small>
+                                            </div>
+
+                                            <!-- Progress Bar -->
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <small class="text-muted">Progresso</small>
+                                                    <small class="text-muted">{{ item.get_progress_percentage() }}%</small>
+                                                </div>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar bg-{{ status_display[1] }}"
+                                                         style="width: {{ item.get_progress_percentage() }}%"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Dates -->
+                                            {% if item.actual_completion_date %}
+                                            <div class="mb-3">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-calendar-check"></i>
+                                                    Concluído em: {{ item.actual_completion_date.strftime('%d/%m/%Y') }}
+                                                </small>
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- Tags -->
+                                            {% if item.get_tags_list() %}
+                                            <div class="mb-3">
+                                                {% for tag in item.get_tags_list()[:3] %}
+                                                <span class="badge badge-outline-secondary me-1">{{ tag }}</span>
+                                                {% endfor %}
+                                                {% if item.get_tags_list()|length > 3 %}
+                                                <span class="badge badge-outline-secondary">+{{ item.get_tags_list()|length - 3 }}</span>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- Action Button -->
+                                            <a href="{{ url_for('main.roadmap_item', slug=item.slug) }}"
+                                               class="btn btn-outline-primary btn-sm w-100">
+                                                <i class="fas fa-eye"></i> Ver Detalhes
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Empty State -->
+                    <div class="text-center py-5">
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle fa-4x text-success mb-4"></i>
+                            <h3 class="text-muted">Nenhuma funcionalidade concluída ainda</h3>
+                            <p class="text-muted mb-4">
+                                Estamos trabalhando duro para implementar as primeiras funcionalidades.
+                                Em breve teremos novidades!
+                            </p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Tab Pendentes -->
+            <div class="tab-pane fade" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+                {% if pending_categories %}
+                    {% for category_data in pending_categories %}
+                    <div class="row mb-5">
+                        <div class="col-12">
+                            <!-- Category Header -->
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="category-icon me-3">
+                                            <i class="fas {{ category_data.category.icon }} fa-2x text-{{ category_data.category.color }}"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="h4 mb-1">{{ category_data.category.name }}</h3>
+                                            <p class="text-muted mb-0">{{ category_data.category.description }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Category Items -->
+                            <div class="row">
+                                {% for item in category_data["items"] %}
+                                <div class="col-lg-6 col-xl-4 mb-4">
+                                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                                        <div class="card-body">
+                                            <!-- Status Badge -->
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                {% set status_display = item.get_status_display() %}
+                                                <span class="badge badge-{{ status_display[1] }} fs-6">
+                                                    {{ status_display[0] }}
+                                                </span>
+                                                {% if item.is_overdue() %}
+                                                <span class="badge badge-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i> Atrasado
+                                                </span>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Title -->
+                                            <h5 class="card-title mb-2">
+                                                <a href="{{ url_for('main.roadmap_item', slug=item.slug) }}" class="text-decoration-none text-dark">
+                                                    {{ item.title }}
+                                                </a>
+                                                {% if item.show_new_badge %}
+                                                <span class="badge bg-success ms-2">
+                                                    <i class="fas fa-star"></i> Novo
+                                                </span>
+                                                {% endif %}
+                                            </h5>
+
+                                            <!-- Description -->
+                                            <p class="card-text text-muted small mb-3">
+                                                {{ item.description }}
+                                            </p>
+
+                                            <!-- Priority and Effort -->
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                {% set priority_display = item.get_priority_display() %}
+                                                <small class="text-muted">
+                                                    <i class="fas fa-flag text-{{ priority_display[1] }}"></i>
+                                                    {{ priority_display[0] }}
+                                                </small>
+                                                {% set effort_display = item.get_effort_display() %}
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock"></i>
+                                                    {{ effort_display[1] }}
+                                                </small>
+                                            </div>
+
+                                            <!-- Progress Bar -->
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <small class="text-muted">Progresso</small>
+                                                    <small class="text-muted">{{ item.get_progress_percentage() }}%</small>
+                                                </div>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar bg-{{ status_display[1] }}"
+                                                         style="width: {{ item.get_progress_percentage() }}%"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Dates -->
+                                            {% if item.planned_completion_date %}
+                                            <div class="mb-3">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-calendar"></i>
+                                                    Previsão: {{ item.planned_completion_date.strftime('%d/%m/%Y') }}
+                                                </small>
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- Tags -->
+                                            {% if item.get_tags_list() %}
+                                            <div class="mb-3">
+                                                {% for tag in item.get_tags_list()[:3] %}
+                                                <span class="badge badge-outline-secondary me-1">{{ tag }}</span>
+                                                {% endfor %}
+                                                {% if item.get_tags_list()|length > 3 %}
+                                                <span class="badge badge-outline-secondary">+{{ item.get_tags_list()|length - 3 }}</span>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- Action Button -->
+                                            <a href="{{ url_for('main.roadmap_item', slug=item.slug) }}"
+                                               class="btn btn-outline-primary btn-sm w-100">
+                                                <i class="fas fa-eye"></i> Ver Detalhes
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Empty State -->
+                    <div class="text-center py-5">
+                        <div class="empty-state">
+                            <i class="fas fa-clock fa-4x text-muted mb-4"></i>
+                            <h3 class="text-muted">Nenhuma funcionalidade pendente</h3>
+                            <p class="text-muted mb-4">
+                                Todas as funcionalidades foram implementadas! Estamos sempre trabalhando em melhorias.
+                            </p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
 <!-- Call to Action -->
 <section class="bg-light py-5">
     <div class="container text-center">
@@ -206,6 +378,9 @@
     </div>
 </section>
 {% endblock %}
+
+<!-- Bootstrap JS for tabs functionality -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <style>
 .hover-lift {

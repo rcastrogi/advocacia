@@ -1,0 +1,217 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-history"></i> Logs de Auditoria
+                    </h3>
+                    <div class="card-tools">
+                        <span class="badge badge-info">{{ total_logs }} logs totais</span>
+                        <span class="badge badge-success">{{ today_logs }} hoje</span>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="card-body border-bottom">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-2">
+                            <label for="entity_type" class="form-label">Tipo de Entidade</label>
+                            <select name="entity_type" id="entity_type" class="form-select">
+                                <option value="">Todos</option>
+                                {% for et in entity_types %}
+                                <option value="{{ et }}" {% if filters.entity_type == et %}selected{% endif %}>
+                                    {{ et.title() }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="action" class="form-label">Ação</label>
+                            <select name="action" id="action" class="form-select">
+                                <option value="">Todas</option>
+                                {% for a in actions %}
+                                <option value="{{ a }}" {% if filters.action == a %}selected{% endif %}>
+                                    {{ a.replace('_', ' ').title() }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="user_id" class="form-label">ID do Usuário</label>
+                            <input type="number" name="user_id" id="user_id" class="form-control"
+                                   value="{{ filters.user_id or '' }}" placeholder="Ex: 1">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="entity_id" class="form-label">ID da Entidade</label>
+                            <input type="number" name="entity_id" id="entity_id" class="form-control"
+                                   value="{{ filters.entity_id or '' }}" placeholder="Ex: 123">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="date_from" class="form-label">Data Inicial</label>
+                            <input type="date" name="date_from" id="date_from" class="form-control"
+                                   value="{{ filters.date_from or '' }}">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="date_to" class="form-label">Data Final</label>
+                            <input type="date" name="date_to" id="date_to" class="form-control"
+                                   value="{{ filters.date_to or '' }}">
+                        </div>
+
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Filtrar
+                            </button>
+                            <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Limpar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tabela de Logs -->
+                <div class="card-body table-responsive p-0">
+                    <table class="table table-hover text-nowrap">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Usuário</th>
+                                <th>Entidade</th>
+                                <th>Ação</th>
+                                <th>IP</th>
+                                <th>Descrição</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs.items %}
+                            <tr>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ log.timestamp|local_datetime }}
+                                    </small>
+                                </td>
+                                <td>
+                                    {% if log.user %}
+                                        <strong>{{ log.user.email }}</strong><br>
+                                        <small class="text-muted">ID: {{ log.user.id }}</small>
+                                    {% else %}
+                                        <span class="text-muted">Sistema</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge badge-primary">{{ log.entity_type.title() }}</span><br>
+                                    <small class="text-muted">ID: {{ log.entity_id }}</small>
+                                </td>
+                                <td>
+                                    {% if log.action == 'create' %}
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-plus"></i> Criado
+                                        </span>
+                                    {% elif log.action == 'update' %}
+                                        <span class="badge badge-warning">
+                                            <i class="fas fa-edit"></i> Atualizado
+                                        </span>
+                                    {% elif log.action == 'delete' %}
+                                        <span class="badge badge-danger">
+                                            <i class="fas fa-trash"></i> Removido
+                                        </span>
+                                    {% elif 'login' in log.action %}
+                                        <span class="badge badge-info">
+                                            <i class="fas fa-sign-in-alt"></i> {{ log.action.replace('_', ' ').title() }}
+                                        </span>
+                                    {% elif log.action == 'logout' %}
+                                        <span class="badge badge-secondary">
+                                            <i class="fas fa-sign-out-alt"></i> Logout
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-light">{{ log.action.title() }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <code>{{ log.ip_address or 'N/A' }}</code>
+                                </td>
+                                <td>
+                                    <small>{{ log.description or 'N/A' }}</small>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin.audit_log_detail', log_id=log.id) }}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> Detalhes
+                                    </a>
+                                    <a href="{{ url_for('admin.audit_logs_entity', entity_type=log.entity_type, entity_id=log.entity_id) }}"
+                                       class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-history"></i> Histórico
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                {% if logs.has_pages %}
+                <div class="card-footer">
+                    <nav aria-label="Navegação de logs">
+                        <ul class="pagination pagination-sm m-0">
+                            {% if logs.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.audit_logs', page=logs.prev_num, **filters) }}">
+                                    Anterior
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">Anterior</a>
+                            </li>
+                            {% endif %}
+
+                            {% for page_num in logs.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num == logs.page %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">{{ page_num }}</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin.audit_logs', page=page_num, **filters) }}">
+                                            {{ page_num }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#">...</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if logs.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.audit_logs', page=logs.next_num, **filters) }}">
+                                    Próximo
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">Próximo</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

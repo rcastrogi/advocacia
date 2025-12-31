@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Agendar Reunião com Cliente - Sistema{% endblock %}
+
+{% block head %}
+<style>
+    .meeting-form {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .time-slots {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .time-slot {
+        padding: 8px 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .time-slot:hover {
+        background-color: #f8f9fa;
+        border-color: #007bff;
+    }
+
+    .time-slot.selected {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('advanced.calendar') }}">Calendário</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('advanced.meeting_requests') }}">Solicitações</a></li>
+                <li class="breadcrumb-item active">Agendar Reunião</li>
+            </ol>
+        </nav>
+        <h2><i class="fas fa-calendar-plus me-2"></i>Agendar Reunião com Cliente</h2>
+        <p class="text-muted">Agende uma reunião diretamente com seu cliente</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="POST" class="meeting-form">
+                    {{ csrf_token() if csrf_token }}
+
+                    <div class="mb-3">
+                        <label for="client_id" class="form-label">Cliente <span class="text-danger">*</span></label>
+                        <select class="form-select" id="client_id" name="client_id" required>
+                            <option value="">Selecione um cliente...</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.full_name }} ({{ client.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Assunto da Reunião <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title"
+                               placeholder="Ex: Discussão sobre andamento do processo" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="process_id" class="form-label">Processo Relacionado (opcional)</label>
+                        <select class="form-select" id="process_id" name="process_id">
+                            <option value="">Selecione um processo...</option>
+                            {% for process in processes %}
+                            <option value="{{ process.id }}">{{ process.title }} ({{ process.process_number or 'Sem número' }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_datetime" class="form-label">Data e Horário de Início <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="start_datetime" name="start_datetime"
+                                   min="{{ (current_date | strftime('%Y-%m-%dT%H:%M')) if current_date else '' }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end_datetime" class="form-label">Data e Horário de Fim <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="end_datetime" name="end_datetime" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Localização (opcional)</label>
+                        <input type="text" class="form-control" id="location" name="location"
+                               placeholder="Ex: Escritório, Rua das Flores, 123">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="virtual_link" class="form-label">Link para Reunião Virtual (opcional)</label>
+                        <input type="url" class="form-control" id="virtual_link" name="virtual_link"
+                               placeholder="Ex: https://meet.google.com/abc-defg-hij">
+                        <div class="form-text">Para reuniões online (Google Meet, Zoom, Teams, etc.)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição/Observações</label>
+                        <textarea class="form-control" id="description" name="description" rows="4"
+                                  placeholder="Detalhes da reunião, pontos a serem discutidos..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Anotações Internas (apenas para você)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"
+                                  placeholder="Lembretes pessoais, preparativos necessários..."></textarea>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Importante:</strong> O cliente será notificado automaticamente sobre esta reunião agendada.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('advanced.meeting_requests') }}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-1"></i> Voltar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus me-1"></i> Agendar Reunião
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-preencher horário de fim baseado no início
+document.getElementById('start_datetime').addEventListener('change', function() {
+    const startTime = new Date(this.value);
+    if (startTime && !document.getElementById('end_datetime').value) {
+        // Adicionar 1 hora por padrão
+        const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+        document.getElementById('end_datetime').value = endTime.toISOString().slice(0, 16);
+    }
+});
+
+// Definir data mínima como hoje
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const minDateTime = now.toISOString().slice(0, 16);
+    document.getElementById('start_datetime').min = minDateTime;
+});
+</script>
+
+{% endblock %}

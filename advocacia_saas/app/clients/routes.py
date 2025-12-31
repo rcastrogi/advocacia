@@ -9,6 +9,7 @@ from app.clients import bp
 from app.clients.forms import ClientForm
 from app.decorators import lawyer_required
 from app.models import Client, Dependent, Estado, User
+from app.utils.audit import AuditManager
 
 
 @bp.route("/")
@@ -88,6 +89,22 @@ def new():
 
         db.session.commit()
         flash("Cliente cadastrado com sucesso!", "success")
+
+        # Log de auditoria para criação de cliente
+        AuditManager.log_client_change(
+            client,
+            'create',
+            new_values={
+                'full_name': client.full_name,
+                'email': client.email,
+                'cpf_cnpj': client.cpf_cnpj,
+                'mobile_phone': client.mobile_phone,
+                'profession': client.profession,
+                'city': client.city,
+                'uf': client.uf,
+            }
+        )
+
         return redirect(url_for("clients.index"))
 
     return render_template("clients/form.html", title="Novo cliente", form=form)
@@ -115,6 +132,21 @@ def edit(id):
     form.uf.choices = [("", "Selecione...")] + [(e.sigla, e.nome) for e in estados]
 
     if form.validate_on_submit():
+        # Capturar valores antigos para auditoria
+        old_values = {
+            'full_name': client.full_name,
+            'email': client.email,
+            'cpf_cnpj': client.cpf_cnpj,
+            'mobile_phone': client.mobile_phone,
+            'profession': client.profession,
+            'civil_status': client.civil_status,
+            'cep': client.cep,
+            'street': client.street,
+            'city': client.city,
+            'uf': client.uf,
+            'neighborhood': client.neighborhood,
+        }
+
         form.populate_obj(client)
         client.disability_types = (
             ",".join(form.disability_types.data) if form.disability_types.data else None
@@ -139,6 +171,38 @@ def edit(id):
 
         db.session.commit()
         flash("Cliente atualizado com sucesso!", "success")
+
+        # Capturar valores novos para auditoria
+        new_values = {
+            'full_name': client.full_name,
+            'email': client.email,
+            'cpf_cnpj': client.cpf_cnpj,
+            'mobile_phone': client.mobile_phone,
+            'profession': client.profession,
+            'civil_status': client.civil_status,
+            'cep': client.cep,
+            'street': client.street,
+            'city': client.city,
+            'uf': client.uf,
+            'neighborhood': client.neighborhood,
+        }
+
+        # Identificar campos alterados
+        changed_fields = []
+        for key in old_values:
+            if old_values[key] != new_values[key]:
+                changed_fields.append(key)
+
+        # Log de auditoria
+        if changed_fields:
+            AuditManager.log_client_change(
+                client,
+                'update',
+                old_values,
+                new_values,
+                changed_fields
+            )
+
         return redirect(url_for("clients.view", id=client.id))
 
     elif request.method == "GET":

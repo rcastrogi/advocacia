@@ -32,6 +32,8 @@ from app.models import (
     ProcessCost,
     ProcessMovement,
     User,
+    CalendarEvent,
+    Notification,
 )
 from app.portal import bp
 
@@ -341,39 +343,6 @@ def calendar():
     client = Client.query.filter_by(user_id=current_user.id).first_or_404()
 
     return render_template("portal/calendar.html", client=client)
-
-
-@bp.route("/api/calendar/events")
-@client_required
-def get_calendar_events():
-    """API para eventos do calendário"""
-    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
-
-    deadlines = Deadline.query.filter_by(client_id=client.id).all()
-
-    events = []
-    for deadline in deadlines:
-        events.append(
-            {
-                "id": deadline.id,
-                "title": deadline.title,
-                "start": deadline.deadline_date.isoformat(),
-                "description": deadline.description,
-                "status": deadline.status,
-                "backgroundColor": "#dc3545"
-                if deadline.status == "overdue"
-                else "#ffc107"
-                if deadline.status == "pending"
-                else "#28a745",
-                "borderColor": "#dc3545"
-                if deadline.status == "overdue"
-                else "#ffc107"
-                if deadline.status == "pending"
-                else "#28a745",
-            }
-        )
-
-    return jsonify(events)
 
 
 @bp.route("/timeline")
@@ -687,3 +656,154 @@ def view_logs():
         portal_logger.error(f"Traceback: {traceback.format_exc()}")
         flash("Erro ao carregar os logs.", "danger")
         return redirect(url_for("portal.index"))
+
+
+@bp.route("/schedule-meeting", methods=["GET", "POST"])
+@client_required
+def schedule_meeting():
+    """Página para solicitar agendamento de reunião"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    if request.method == "POST":
+        try:
+            title = request.form.get("title")
+            description = request.form.get("description")
+            preferred_date = request.form.get("preferred_date")
+            preferred_time = request.form.get("preferred_time")
+            duration = request.form.get("duration", 60)  # minutos
+            meeting_type = request.form.get("meeting_type", "reuniao")
+            process_id = request.form.get("process_id")
+
+            if not title or not preferred_date or not preferred_time:
+                flash("Por favor, preencha todos os campos obrigatórios.", "warning")
+                return redirect(request.url)
+
+            # Combinar data e hora
+            from datetime import datetime
+            start_datetime = datetime.strptime(f"{preferred_date} {preferred_time}", "%Y-%m-%d %H:%M")
+
+            # Calcular fim baseado na duração
+            from datetime import timedelta
+            end_datetime = start_datetime + timedelta(minutes=int(duration))
+
+            # Criar evento como solicitação (status especial)
+            event = CalendarEvent(
+                user_id=current_user.id,  # O cliente solicita, mas o evento pertence ao advogado
+                title=f"Solicitação: {title}",
+                description=f"Solicitado por {client.full_name}: {description}",
+                start_datetime=start_datetime,
+                end_datetime=end_datetime,
+                event_type=meeting_type,
+                client_id=client.id,
+                process_id=process_id if process_id else None,
+                status="requested",  # Status especial para solicitações pendentes
+                priority="normal"
+            )
+
+            # Na verdade, devemos criar uma notificação para o advogado
+            # e talvez um evento temporário até ser aprovado
+            db.session.add(event)
+            db.session.commit()
+
+            # Criar notificação para o advogado
+            lawyer = client.get_primary_lawyer()
+            if lawyer:
+                notification_msg = f"Cliente {client.full_name} solicitou agendamento: {title} para {start_datetime.strftime('%d/%m/%Y %H:%M')}"
+                Notification.create_notification(
+                    user_id=lawyer.id,
+                    notification_type="meeting_request",
+                    title="Nova solicitação de reunião",
+                    message=notification_msg,
+                    link=url_for("advanced.calendar")
+                )
+
+            portal_logger.info(f"Cliente {client.full_name} solicitou reunião: {title}")
+            flash("Sua solicitação de reunião foi enviada com sucesso! O advogado entrará em contato em breve.", "success")
+
+            return redirect(url_for("portal.calendar"))
+
+        except Exception as e:
+            portal_logger.error(f"Erro ao solicitar reunião: {str(e)}")
+            flash("Erro ao enviar solicitação. Tente novamente.", "danger")
+            return redirect(request.url)
+
+    # Buscar processos do cliente para seleção
+    processes = Process.query.filter_by(client_id=client.id).all()
+
+    return render_template("portal/schedule_meeting.html", client=client, processes=processes)
+
+
+@bp.route("/api/calendar/events")
+@client_required
+def get_calendar_events():
+    """API para eventos do calendário - incluindo reuniões"""
+    client = Client.query.filter_by(user_id=current_user.id).first_or_404()
+
+    events = []
+
+    # Prazos existentes
+    deadlines = Deadline.query.filter_by(client_id=client.id).all()
+    for deadline in deadlines:
+        events.append(
+            {
+                "id": f"deadline_{deadline.id}",
+                "title": deadline.title,
+                "start": deadline.deadline_date.isoformat(),
+                "description": deadline.description,
+                "status": deadline.status,
+                "type": "deadline",
+                "backgroundColor": "#dc3545"
+                if deadline.is_overdue()
+                else "#ffc107"
+                if deadline.status == "pending"
+                else "#28a745",
+                "borderColor": "#dc3545"
+                if deadline.is_overdue()
+                else "#ffc107"
+                if deadline.status == "pending"
+                else "#28a745",
+                "urgent": deadline.is_overdue(),
+            }
+        )
+
+    # Eventos de calendário (reuniões, audiências) relacionados ao cliente
+    calendar_events = CalendarEvent.query.filter(
+        CalendarEvent.client_id == client.id
+    ).all()
+
+    for event in calendar_events:
+        # Determinar cor baseada no status
+        if event.status == "requested":
+            event_color = "#fd7e14"  # Laranja para solicitações pendentes
+        else:
+            event_color = {
+                "audiencia": "#dc3545",  # vermelho
+                "reuniao": "#007bff",   # azul
+                "prazo": "#ffc107",     # amarelo
+                "compromisso": "#28a745" # verde
+            }.get(event.event_type, "#6c757d")
+
+        # Ajustar título baseado no status
+        title = event.title
+        if event.status == "requested":
+            title = f"⏳ {title.replace('Solicitação: ', '')}"  # Emoji de relógio para pendente
+
+        events.append(
+            {
+                "id": f"event_{event.id}",
+                "title": title,
+                "start": event.start_datetime.isoformat(),
+                "end": event.end_datetime.isoformat(),
+                "description": event.description,
+                "location": event.location,
+                "virtual_link": event.virtual_link,
+                "status": event.status,
+                "type": "meeting",
+                "event_type": event.event_type,
+                "backgroundColor": event_color,
+                "borderColor": event_color,
+                "allDay": event.all_day,
+            }
+        )
+
+    return jsonify(events)

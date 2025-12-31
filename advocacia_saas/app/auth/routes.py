@@ -25,6 +25,7 @@ from app.auth.forms import (
     TwoFactorVerifyForm,
 )
 from app.models import User
+from app.utils.audit import AuditManager
 
 
 @bp.before_app_request
@@ -126,6 +127,8 @@ def login():
             flash(
                 "Login realizado com usuário demo (dados não salvos no banco)", "info"
             )
+            # Log de auditoria para login demo
+            AuditManager.log_login(demo_user, success=True)
             next_page = request.args.get("next")
             if not next_page or urlparse(next_page).netloc != "":
                 next_page = url_for("main.dashboard")
@@ -140,6 +143,8 @@ def login():
                 # Master bypassa todas as verificações de segurança
                 login_user(user, remember=form.remember_me.data)
                 flash("Login realizado com sucesso (usuário master)", "success")
+                # Log de auditoria para login master
+                AuditManager.log_login(user, success=True)
                 next_page = request.args.get("next")
                 if not next_page or urlparse(next_page).netloc != "":
                     next_page = url_for("main.dashboard")
@@ -189,11 +194,22 @@ def login():
                 flash("Sua senha expirou. Por favor, defina uma nova senha.", "warning")
                 return redirect(url_for("auth.change_password"))
 
+            # Log de auditoria para login bem-sucedido
+            AuditManager.log_login(user, success=True)
+
             next_page = request.args.get("next")
             if not next_page or urlparse(next_page).netloc != "":
                 next_page = url_for("main.dashboard")
             return redirect(next_page)
         flash("Email ou senha inválidos", "error")
+        # Log de auditoria para login falhado
+        AuditManager.log_change(
+            entity_type='user',
+            entity_id=0,  # ID genérico para tentativas de login
+            action='login_failed',
+            description=f"Tentativa de login falhada - Email: {form.email.data}",
+            metadata={'email_attempted': form.email.data}
+        )
     return render_template("auth/login.html", title="Login", form=form)
 
 
@@ -342,6 +358,8 @@ def register():
 @bp.route("/logout")
 @login_required
 def logout():
+    # Log de auditoria para logout
+    AuditManager.log_logout(current_user)
     logout_user()
     return redirect(url_for("main.index"))
 
@@ -361,6 +379,23 @@ def profile():
             )
             return redirect(url_for("auth.profile"))
 
+        # Capturar valores antigos para auditoria
+        old_values = {
+            'full_name': current_user.full_name,
+            'email': current_user.email,
+            'oab_number': current_user.oab_number,
+            'phone': current_user.phone,
+            'cep': current_user.cep,
+            'street': current_user.street,
+            'number': current_user.number,
+            'uf': current_user.uf,
+            'city': current_user.city,
+            'neighborhood': current_user.neighborhood,
+            'complement': current_user.complement,
+            'specialties': current_user.get_specialties(),
+            'quick_actions': current_user.get_quick_actions(),
+        }
+
         current_user.full_name = form.full_name.data
         current_user.email = form.email.data
         current_user.oab_number = form.oab_number.data
@@ -376,6 +411,40 @@ def profile():
         current_user.set_specialties(form.specialties.data)
         current_user.set_quick_actions(form.quick_actions.data)
         db.session.commit()
+
+        # Capturar valores novos para auditoria
+        new_values = {
+            'full_name': current_user.full_name,
+            'email': current_user.email,
+            'oab_number': current_user.oab_number,
+            'phone': current_user.phone,
+            'cep': current_user.cep,
+            'street': current_user.street,
+            'number': current_user.number,
+            'uf': current_user.uf,
+            'city': current_user.city,
+            'neighborhood': current_user.neighborhood,
+            'complement': current_user.complement,
+            'specialties': current_user.get_specialties(),
+            'quick_actions': current_user.get_quick_actions(),
+        }
+
+        # Identificar campos alterados
+        changed_fields = []
+        for key in old_values:
+            if old_values[key] != new_values[key]:
+                changed_fields.append(key)
+
+        # Log de auditoria
+        if changed_fields:
+            AuditManager.log_user_change(
+                current_user,
+                'update',
+                old_values,
+                new_values,
+                changed_fields
+            )
+
         flash("Perfil atualizado com sucesso!", "success")
         return redirect(url_for("auth.profile"))
     elif request.method == "GET":

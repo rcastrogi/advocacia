@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitações de Reunião - Sistema{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('advanced.calendar') }}">Calendário</a></li>
+                <li class="breadcrumb-item active">Solicitações de Reunião</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="fas fa-calendar-check me-2"></i>Solicitações de Reunião</h2>
+            <a href="{{ url_for('advanced.schedule_client_meeting') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Agendar Reunião
+            </a>
+        </div>
+        <p class="text-muted">Gerencie solicitações de reunião enviadas pelos seus clientes</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                {% if requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Assunto</th>
+                                    <th>Data/Hora Solicitada</th>
+                                    <th>Tipo</th>
+                                    <th>Processo</th>
+                                    <th>Solicitado em</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in requests %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ request.client.full_name }}</strong><br>
+                                        <small class="text-muted">{{ request.client.email }}</small>
+                                    </td>
+                                    <td>{{ request.title.replace("Solicitação: ", "") }}</td>
+                                    <td>
+                                        {{ request.start_datetime.strftime('%d/%m/%Y') }}<br>
+                                        <small class="text-muted">{{ request.start_datetime.strftime('%H:%M') }} - {{ request.end_datetime.strftime('%H:%M') }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ request.get_event_type_display()[0] }}</span>
+                                    </td>
+                                    <td>
+                                        {% if request.process %}
+                                            {{ request.process.title }}<br>
+                                            <small class="text-muted">{{ request.process.process_number or 'Sem número' }}</small>
+                                        {% else %}
+                                            <span class="text-muted">Nenhum</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ request.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-success"
+                                                    onclick="handleRequest({{ request.id }}, 'approve')">
+                                                <i class="fas fa-check me-1"></i> Aprovar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger"
+                                                    onclick="handleRequest({{ request.id }}, 'reject')">
+                                                <i class="fas fa-times me-1"></i> Rejeitar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-warning"
+                                                    onclick="handleRequest({{ request.id }}, 'reschedule')">
+                                                <i class="fas fa-clock me-1"></i> Reagendar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhuma solicitação pendente</h5>
+                        <p class="text-muted">Não há solicitações de reunião aguardando aprovação no momento.</p>
+                        <a href="{{ url_for('advanced.schedule_client_meeting') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> Agendar Nova Reunião
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para rejeitar solicitação -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rejeitar Solicitação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="rejectForm" method="post">
+                <div class="modal-body">
+                    <p>Informe o motivo da rejeição (opcional):</p>
+                    <textarea class="form-control" name="reason" rows="3"
+                              placeholder="Ex: Conflito de horário, aguarde contato para reagendamento, etc."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Rejeitar Solicitação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function handleRequest(eventId, action) {
+    if (action === 'approve') {
+        if (confirm('Tem certeza que deseja aprovar esta solicitação de reunião?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `{{ url_for('advanced.handle_meeting_request', event_id=0, action='approve') }}`.replace('0', eventId);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    } else if (action === 'reject') {
+        const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+        const form = document.getElementById('rejectForm');
+        form.action = `{{ url_for('advanced.handle_meeting_request', event_id=0, action='reject') }}`.replace('0', eventId);
+        modal.show();
+    } else if (action === 'reschedule') {
+        window.location.href = `{{ url_for('advanced.handle_meeting_request', event_id=0, action='reschedule') }}`.replace('0', eventId);
+    }
+}
+</script>
+
+{% endblock %}

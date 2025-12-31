@@ -4,6 +4,27 @@
 
 {% block admin_content %}
 <div class="container-fluid">
+    <style>
+        .nav-tabs .nav-link {
+            color: var(--primary-color) !important; /* Site standard blue text for inactive tabs */
+            background-color: transparent !important;
+            border: none !important;
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--gold-color) !important; /* Site standard golden text for active tab */
+            background-color: transparent !important;
+            border-bottom: 3px solid var(--gold-color) !important; /* Site standard golden border for active tab */
+        }
+        .tab-content .tab-pane {
+            color: #333 !important; /* Dark text for readability in tab content */
+        }
+        .tab-content .tab-pane .text-muted {
+            color: #6c757d !important; /* Keep muted text gray */
+        }
+        .tab-content .tab-pane .badge {
+            color: white; /* Keep badge text white */
+        }
+    </style>
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -173,96 +194,206 @@
         </div>
     </div>
 
-    <!-- Itens Recentes -->
+    <!-- Itens do Roadmap por Status -->
     <div class="row">
         <div class="col-12">
             <div class="card shadow">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-clock"></i> Itens Recentes
+                        <i class="fas fa-tasks"></i> Itens do Roadmap
                     </h6>
-                    <a href="{{ url_for('admin.roadmap_items') }}" class="btn btn-sm btn-outline-primary">
-                        Ver Todos
-                    </a>
                 </div>
                 <div class="card-body">
-                    {% if recent_items %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Título</th>
-                                    <th>Categoria</th>
-                                    <th>Status</th>
-                                    <th>Prioridade</th>
-                                    <th>Visibilidade</th>
-                                    <th>Última Atualização</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in recent_items %}
-                                <tr>
-                                    <td>
-                                        <strong>{{ item.title }}</strong>
-                                        <br>
-                                        <small class="text-muted">{{ item.description[:50] }}...</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-{{ item.category.color }}">
-                                            <i class="fas {{ item.category.icon }}"></i> {{ item.category.name }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {% set status_display = item.get_status_display() %}
-                                        <span class="badge badge-{{ status_display[1] }}">
-                                            {{ status_display[0] }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {% set priority_display = item.get_priority_display() %}
-                                        <span class="badge badge-{{ priority_display[1] }}">
-                                            {{ priority_display[0] }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {% if item.visible_to_users %}
-                                            <i class="fas fa-eye text-success" title="Visível aos usuários"></i>
-                                        {% else %}
-                                            <i class="fas fa-eye-slash text-muted" title="Oculto aos usuários"></i>
-                                        {% endif %}
-                                        {% if item.internal_only %}
-                                            <i class="fas fa-lock text-warning ml-1" title="Uso interno"></i>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ item.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                                    <td>
-                                        <a href="{{ url_for('admin.edit_roadmap_item', item_id=item.id) }}"
-                                           class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form method="POST" action="{{ url_for('admin.toggle_roadmap_item_visibility', item_id=item.id) }}"
-                                              class="d-inline" onsubmit="return confirm('Alterar visibilidade?')">
-                                            <button type="submit" class="btn btn-sm btn-outline-warning">
-                                                <i class="fas fa-eye{% if not item.visible_to_users %}-slash{% endif %}"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs" id="roadmapTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab" aria-controls="completed" aria-selected="true">
+                                <i class="fas fa-check-circle text-success"></i> Já Implantado ({{ completed_items }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="false">
+                                <i class="fas fa-clock text-warning"></i> A Implantar ({{ in_progress_items + planned_items }})
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab content -->
+                    <div class="tab-content mt-3" id="roadmapTabsContent">
+                        <!-- Tab Concluídos -->
+                        <div class="tab-pane fade show active" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+                            {% if completed_items_list %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Título</th>
+                                            <th>Categoria</th>
+                                            <th>Prioridade</th>
+                                            <th>Data de Conclusão</th>
+                                            <th>Visibilidade</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in completed_items_list %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ item.title }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ item.description[:50] }}...</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-{{ item.category.color }}">
+                                                    <i class="fas {{ item.category.icon }}"></i> {{ item.category.name }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% set priority_display = item.get_priority_display() %}
+                                                <span class="badge badge-{{ priority_display[1] }}">
+                                                    {{ priority_display[0] }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if item.actual_completion_date %}
+                                                    {{ item.actual_completion_date.strftime('%d/%m/%Y') }}
+                                                {% else %}
+                                                    <span class="text-muted">N/A</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if item.visible_to_users %}
+                                                    <i class="fas fa-eye text-success" title="Visível aos usuários"></i>
+                                                {% else %}
+                                                    <i class="fas fa-eye-slash text-muted" title="Oculto aos usuários"></i>
+                                                {% endif %}
+                                                {% if item.internal_only %}
+                                                    <i class="fas fa-lock text-warning ml-1" title="Uso interno"></i>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('admin.edit_roadmap_item', item_id=item.id) }}"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form method="POST" action="{{ url_for('admin.toggle_roadmap_item_visibility', item_id=item.id) }}"
+                                                      class="d-inline" onsubmit="return confirm('Alterar visibilidade?')">
+                                                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                        <i class="fas fa-eye{% if not item.visible_to_users %}-slash{% endif %}"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('admin.roadmap_items') }}?status=completed" class="btn btn-sm btn-outline-success">
+                                    Ver Todos os Concluídos
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                                <h5 class="text-muted">Nenhum item concluído ainda</h5>
+                                <p class="text-muted">Os itens implementados aparecerão aqui.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Tab Pendentes -->
+                        <div class="tab-pane fade" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+                            {% if pending_items_list %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Título</th>
+                                            <th>Categoria</th>
+                                            <th>Status</th>
+                                            <th>Prioridade</th>
+                                            <th>Data Planejada</th>
+                                            <th>Visibilidade</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in pending_items_list %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ item.title }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ item.description[:50] }}...</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-{{ item.category.color }}">
+                                                    <i class="fas {{ item.category.icon }}"></i> {{ item.category.name }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% set status_display = item.get_status_display() %}
+                                                <span class="badge badge-{{ status_display[1] }}">
+                                                    {{ status_display[0] }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% set priority_display = item.get_priority_display() %}
+                                                <span class="badge badge-{{ priority_display[1] }}">
+                                                    {{ priority_display[0] }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if item.planned_start_date %}
+                                                    {{ item.planned_start_date.strftime('%d/%m/%Y') }}
+                                                {% else %}
+                                                    <span class="text-muted">N/A</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if item.visible_to_users %}
+                                                    <i class="fas fa-eye text-success" title="Visível aos usuários"></i>
+                                                {% else %}
+                                                    <i class="fas fa-eye-slash text-muted" title="Oculto aos usuários"></i>
+                                                {% endif %}
+                                                {% if item.internal_only %}
+                                                    <i class="fas fa-lock text-warning ml-1" title="Uso interno"></i>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('admin.edit_roadmap_item', item_id=item.id) }}"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form method="POST" action="{{ url_for('admin.toggle_roadmap_item_visibility', item_id=item.id) }}"
+                                                      class="d-inline" onsubmit="return confirm('Alterar visibilidade?')">
+                                                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                        <i class="fas fa-eye{% if not item.visible_to_users %}-slash{% endif %}"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('admin.roadmap_items') }}?status=planned" class="btn btn-sm btn-outline-warning">
+                                    Ver Todos os Planejados
+                                </a>
+                                <a href="{{ url_for('admin.roadmap_items') }}?status=in_progress" class="btn btn-sm btn-outline-info ml-2">
+                                    Ver Todos em Andamento
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">Nenhum item pendente</h5>
+                                <p class="text-muted">Todos os itens foram concluídos!</p>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">Nenhum item encontrado</h5>
-                        <p class="text-muted">Comece criando seu primeiro item do roadmap.</p>
-                        <a href="{{ url_for('admin.new_roadmap_item') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Criar Primeiro Item
-                        </a>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -275,4 +406,7 @@ function exportRoadmap() {
     alert('Funcionalidade de exportação será implementada em breve.');
 }
 </script>
+
+<!-- Bootstrap JS for tabs functionality -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

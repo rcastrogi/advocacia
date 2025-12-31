@@ -36,7 +36,17 @@ advanced_bp = Blueprint("advanced", __name__, url_prefix="/advanced")
 @login_required
 def calendar():
     """Página principal do calendário."""
-    return render_template("advanced/calendar.html")
+    # Contar solicitações pendentes
+    client_ids = [client.id for client in current_user.clients.all()]
+    pending_requests_count = 0
+
+    if client_ids:
+        pending_requests_count = CalendarEvent.query.filter(
+            CalendarEvent.client_id.in_(client_ids),
+            CalendarEvent.status == "requested"
+        ).count()
+
+    return render_template("advanced/calendar.html", pending_requests_count=pending_requests_count)
 
 
 @advanced_bp.route("/api/calendar/events")
@@ -46,25 +56,45 @@ def get_calendar_events():
     start = request.args.get("start")
     end = request.args.get("end")
 
-    query = CalendarEvent.query.filter_by(user_id=current_user.id)
+    # Eventos criados pelo advogado
+    query1 = CalendarEvent.query.filter_by(user_id=current_user.id)
+
+    # Eventos relacionados aos clientes do advogado (incluindo solicitações)
+    client_ids = [client.id for client in current_user.clients.all()]
+    query2 = CalendarEvent.query.filter(CalendarEvent.client_id.in_(client_ids)) if client_ids else None
+
+    # Combinar queries
+    if query2:
+        from sqlalchemy import union_all
+        combined_query = query1.union_all(query2)
+    else:
+        combined_query = query1
 
     if start:
         start_date = datetime.fromisoformat(start.replace("Z", "+00:00"))
-        query = query.filter(CalendarEvent.start_datetime >= start_date)
+        combined_query = combined_query.filter(CalendarEvent.start_datetime >= start_date)
 
     if end:
         end_date = datetime.fromisoformat(end.replace("Z", "+00:00"))
-        query = query.filter(CalendarEvent.start_datetime <= end_date)
+        combined_query = combined_query.filter(CalendarEvent.start_datetime <= end_date)
 
-    events = query.all()
+    events = combined_query.all()
 
     # Formatar para FullCalendar
     calendar_events = []
     for event in events:
+        # Determinar se é evento próprio ou de cliente
+        is_own_event = event.user_id == current_user.id
+        is_request = event.status == "requested"
+
+        title = event.title
+        if is_request and not is_own_event:
+            title = f"📋 {title}"  # Adicionar ícone para solicitações
+
         calendar_events.append(
             {
                 "id": event.id,
-                "title": event.title,
+                "title": title,
                 "start": event.start_datetime.isoformat(),
                 "end": event.end_datetime.isoformat(),
                 "allDay": event.all_day,
@@ -79,6 +109,9 @@ def get_calendar_events():
                     "description": event.description,
                     "process_id": event.process_id,
                     "client_id": event.client_id,
+                    "client_name": event.client.full_name if event.client else None,
+                    "is_own_event": is_own_event,
+                    "is_request": is_request,
                 },
             }
         )
@@ -88,6 +121,10 @@ def get_calendar_events():
 
 def get_event_color(event):
     """Retorna cor baseada no tipo e prioridade do evento."""
+    # Solicitações pendentes têm cor especial
+    if event.status == "requested":
+        return "#fd7e14"  # Laranja para solicitações pendentes
+
     colors = {
         "audiencia": "#dc3545",  # Vermelho
         "prazo": "#ffc107",  # Amarelo
@@ -582,3 +619,150 @@ def get_processes_metrics():
     }
 
     return jsonify(metrics)
+
+
+# =============================================================================
+# GESTÃO DE SOLICITAÇÕES DE REUNIÃO
+# =============================================================================
+
+
+@advanced_bp.route("/meeting-requests")
+@login_required
+def meeting_requests():
+    """Página para gerenciar solicitações de reunião dos clientes."""
+    # Buscar eventos com status "requested" relacionados aos clientes do advogado
+    client_ids = [client.id for client in current_user.clients.all()]
+
+    if client_ids:
+        requests = CalendarEvent.query.filter(
+            CalendarEvent.client_id.in_(client_ids),
+            CalendarEvent.status == "requested"
+        ).order_by(CalendarEvent.created_at.desc()).all()
+    else:
+        requests = []
+
+    return render_template("advanced/meeting_requests.html", requests=requests)
+
+
+@advanced_bp.route("/meeting-request/<int:event_id>/<action>", methods=["POST"])
+@login_required
+def handle_meeting_request(event_id, action):
+    """Aprovar ou rejeitar solicitação de reunião."""
+
+    # Verificar se o evento pertence a um cliente do advogado
+    event = CalendarEvent.query.filter_by(id=event_id).first_or_404()
+    client_ids = [client.id for client in current_user.clients.all()]
+
+    if event.client_id not in client_ids:
+        flash("Acesso negado. Este evento não pertence aos seus clientes.", "danger")
+        return redirect(url_for("advanced.meeting_requests"))
+
+    if action == "approve":
+        # Aprovar solicitação - alterar status para "scheduled"
+        event.status = "scheduled"
+        event.title = event.title.replace("Solicitação: ", "")  # Remover prefixo
+        event.user_id = current_user.id  # Transferir propriedade para o advogado
+
+        # Criar notificação para o cliente
+        Notification.create_notification(
+            user_id=event.client.user_id,
+            notification_type="meeting_approved",
+            title="Reunião Agendada",
+            message=f"Sua solicitação de reunião '{event.title}' foi aprovada para {event.start_datetime.strftime('%d/%m/%Y %H:%M')}.",
+            link=url_for("portal.calendar")
+        )
+
+        flash("Solicitação de reunião aprovada com sucesso!", "success")
+
+    elif action == "reject":
+        # Rejeitar solicitação
+        reason = request.form.get("reason", "Sem motivo especificado")
+
+        # Criar notificação para o cliente
+        Notification.create_notification(
+            user_id=event.client.user_id,
+            notification_type="meeting_rejected",
+            title="Reunião Não Aprovada",
+            message=f"Sua solicitação de reunião '{event.title.replace('Solicitação: ', '')}' não pôde ser agendada. Motivo: {reason}",
+            link=url_for("portal.calendar")
+        )
+
+        # Remover o evento solicitado
+        db.session.delete(event)
+
+        flash("Solicitação de reunião rejeitada.", "info")
+
+    elif action == "reschedule":
+        # Reagendar - redirecionar para edição
+        return redirect(url_for("advanced.edit_calendar_event", event_id=event.id))
+
+    db.session.commit()
+
+    return redirect(url_for("advanced.meeting_requests"))
+
+
+@advanced_bp.route("/schedule-client-meeting", methods=["GET", "POST"])
+@login_required
+def schedule_client_meeting():
+    """Agendar reunião diretamente com cliente (iniciativa do advogado)."""
+
+    if request.method == "POST":
+        try:
+            title = request.form.get("title")
+            description = request.form.get("description")
+            start_datetime = datetime.fromisoformat(request.form.get("start_datetime"))
+            end_datetime = datetime.fromisoformat(request.form.get("end_datetime"))
+            client_id = request.form.get("client_id")
+            process_id = request.form.get("process_id")
+            location = request.form.get("location")
+            virtual_link = request.form.get("virtual_link")
+            notes = request.form.get("notes")
+
+            # Verificar se o cliente pertence ao advogado
+            client = current_user.clients.filter_by(id=client_id).first()
+            if not client:
+                flash("Cliente não encontrado ou não autorizado.", "danger")
+                return redirect(request.url)
+
+            # Criar evento diretamente (não é solicitação)
+            event = CalendarEvent(
+                user_id=current_user.id,
+                title=title,
+                description=description,
+                start_datetime=start_datetime,
+                end_datetime=end_datetime,
+                event_type="reuniao",
+                client_id=int(client_id),
+                process_id=int(process_id) if process_id else None,
+                location=location,
+                virtual_link=virtual_link,
+                notes=notes,
+                status="scheduled",
+                priority="normal"
+            )
+
+            db.session.add(event)
+            db.session.commit()
+
+            # Criar notificação para o cliente
+            Notification.create_notification(
+                user_id=client.user_id,
+                notification_type="meeting_scheduled",
+                title="Nova Reunião Agendada",
+                message=f"Uma reunião foi agendada: '{title}' para {start_datetime.strftime('%d/%m/%Y %H:%M')}.",
+                link=url_for("portal.calendar")
+            )
+
+            flash("Reunião agendada com sucesso! O cliente foi notificado.", "success")
+            return redirect(url_for("advanced.calendar"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao agendar reunião: {str(e)}", "danger")
+            return redirect(request.url)
+
+    # GET: mostrar formulário
+    clients = current_user.clients.all()
+    processes = Process.query.filter_by(user_id=current_user.id).all()
+
+    return render_template("advanced/schedule_client_meeting.html", clients=clients, processes=processes)

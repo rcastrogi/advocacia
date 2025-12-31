@@ -1,0 +1,178 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Agendar Reunião - Portal do Cliente{% endblock %}
+
+{% block head %}
+<style>
+    .meeting-form {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .time-slots {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .time-slot {
+        padding: 8px 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .time-slot:hover {
+        background-color: #f8f9fa;
+        border-color: #007bff;
+    }
+
+    .time-slot.selected {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    .duration-options {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .duration-option {
+        padding: 8px 16px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .duration-option:hover {
+        background-color: #f8f9fa;
+        border-color: #007bff;
+    }
+
+    .duration-option.selected {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('portal.index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('portal.calendar') }}">Calendário</a></li>
+                <li class="breadcrumb-item active">Agendar Reunião</li>
+            </ol>
+        </nav>
+        <h2><i class="fas fa-calendar-plus me-2"></i>Agendar Reunião</h2>
+        <p class="text-muted">Solicite um horário para reunião com seu advogado</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="POST" class="meeting-form">
+                    {{ csrf_token() if csrf_token }}
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Assunto da Reunião <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title"
+                               placeholder="Ex: Discussão sobre andamento do processo" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="process_id" class="form-label">Processo Relacionado (opcional)</label>
+                        <select class="form-select" id="process_id" name="process_id">
+                            <option value="">Selecione um processo...</option>
+                            {% for process in processes %}
+                            <option value="{{ process.id }}">{{ process.title }} ({{ process.process_number or 'Sem número' }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="meeting_type" class="form-label">Tipo de Reunião</label>
+                        <select class="form-select" id="meeting_type" name="meeting_type">
+                            <option value="reuniao">Reunião Geral</option>
+                            <option value="audiencia">Audiência</option>
+                            <option value="compromisso">Compromisso</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="preferred_date" class="form-label">Data Preferida <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="preferred_date" name="preferred_date"
+                                   min="{{ (current_date | strftime('%Y-%m-%d')) if current_date else '' }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="preferred_time" class="form-label">Horário Preferido <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="preferred_time" name="preferred_time" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Duração Estimada</label>
+                        <div class="duration-options">
+                            <div class="duration-option selected" data-duration="30">30 min</div>
+                            <div class="duration-option" data-duration="60">1 hora</div>
+                            <div class="duration-option" data-duration="90">1h 30min</div>
+                            <div class="duration-option" data-duration="120">2 horas</div>
+                        </div>
+                        <input type="hidden" id="duration" name="duration" value="60">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição/Observações</label>
+                        <textarea class="form-control" id="description" name="description" rows="4"
+                                  placeholder="Descreva o que deseja discutir na reunião..."></textarea>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Importante:</strong> Esta é uma solicitação de agendamento. Seu advogado será notificado e entrará em contato para confirmar o horário ou sugerir alternativas.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('portal.calendar') }}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-1"></i> Voltar ao Calendário
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i> Enviar Solicitação
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Seleção de duração
+document.querySelectorAll('.duration-option').forEach(option => {
+    option.addEventListener('click', function() {
+        document.querySelectorAll('.duration-option').forEach(opt => opt.classList.remove('selected'));
+        this.classList.add('selected');
+        document.getElementById('duration').value = this.dataset.duration;
+    });
+});
+
+// Definir data mínima como hoje
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('preferred_date').min = today;
+});
+</script>
+
+{% endblock %}

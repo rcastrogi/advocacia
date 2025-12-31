@@ -60,6 +60,11 @@
                        title="Feedback Roadmap">
                         <i class="fas fa-comments me-2"></i><span>Feedback Roadmap</span>
                     </a>
+                    <a href="{{ url_for('admin.audit_logs') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'audit_logs' in request.endpoint else '' }}"
+                       title="Logs de Auditoria">
+                        <i class="fas fa-history me-2"></i><span>Logs de Auditoria</span>
+                    </a>
                 </div>
             </div>
         </div>

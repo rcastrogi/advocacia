@@ -49,7 +49,9 @@ from app.models import (
     User,
     UserCredits,
     UserPlan,
+    AuditLog,
 )
+from app.utils.audit import AuditManager
 
 # Configurar logging específico para admin
 admin_logger = logging.getLogger("admin")
@@ -2771,9 +2773,20 @@ def roadmap():
     # Itens por categoria
     categories = RoadmapCategory.query.filter_by(is_active=True).all()
 
-    # Itens recentes (últimos 10)
-    recent_items = (
-        RoadmapItem.query.order_by(RoadmapItem.updated_at.desc()).limit(10).all()
+    # Itens concluídos (últimos 10)
+    completed_items_list = (
+        RoadmapItem.query.filter_by(status="completed")
+        .order_by(RoadmapItem.actual_completion_date.desc().nullslast())
+        .limit(10)
+        .all()
+    )
+
+    # Itens pendentes (últimos 10)
+    pending_items_list = (
+        RoadmapItem.query.filter(RoadmapItem.status.in_(["planned", "in_progress"]))
+        .order_by(RoadmapItem.priority.desc(), RoadmapItem.planned_start_date.asc().nullslast())
+        .limit(10)
+        .all()
     )
 
     return render_template(
@@ -2785,7 +2798,8 @@ def roadmap():
         planned_items=planned_items,
         public_items=public_items,
         categories=categories,
-        recent_items=recent_items,
+        completed_items_list=completed_items_list,
+        pending_items_list=pending_items_list,
     )
 
 
@@ -2988,6 +3002,7 @@ def new_roadmap_item():
         # Visibilidade
         visible_to_users = "visible_to_users" in request.form
         internal_only = "internal_only" in request.form
+        show_new_badge = "show_new_badge" in request.form
 
         # Datas
         planned_start_date = (
@@ -3032,6 +3047,7 @@ def new_roadmap_item():
             estimated_effort=estimated_effort,
             visible_to_users=visible_to_users,
             internal_only=internal_only,
+            show_new_badge=show_new_badge,
             planned_start_date=planned_start_date,
             planned_completion_date=planned_completion_date,
             business_value=business_value,
@@ -3084,6 +3100,7 @@ def edit_roadmap_item(item_id):
         # Visibilidade
         item.visible_to_users = "visible_to_users" in request.form
         item.internal_only = "internal_only" in request.form
+        item.show_new_badge = "show_new_badge" in request.form
 
         # Datas
         item.planned_start_date = (
@@ -3962,3 +3979,120 @@ def petition_model_generate_with_ai(model_id):
     except Exception as e:
         current_app.logger.error(f"Erro ao gerar com IA: {str(e)}")
         return jsonify({"success": False, "error": "Erro interno do servidor"}), 500
+
+
+@bp.route("/audit-logs")
+@login_required
+def audit_logs():
+    """Visualizar logs de auditoria do sistema"""
+    _require_admin()
+
+    # Parâmetros de filtro
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+    entity_type = request.args.get('entity_type')
+    entity_id = request.args.get('entity_id', type=int)
+    user_id = request.args.get('user_id', type=int)
+    action = request.args.get('action')
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+
+    # Construir query
+    query = AuditLog.query
+
+    if entity_type:
+        query = query.filter_by(entity_type=entity_type)
+    if entity_id:
+        query = query.filter_by(entity_id=entity_id)
+    if user_id:
+        query = query.filter_by(user_id=user_id)
+    if action:
+        query = query.filter_by(action=action)
+
+    # Filtro de data
+    if date_from:
+        from datetime import datetime
+        query = query.filter(AuditLog.timestamp >= datetime.fromisoformat(date_from))
+    if date_to:
+        from datetime import datetime
+        query = query.filter(AuditLog.timestamp <= datetime.fromisoformat(date_to))
+
+    # Paginação
+    logs = query.order_by(AuditLog.timestamp.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+
+    # Estatísticas
+    total_logs = AuditLog.query.count()
+    today_logs = AuditLog.query.filter(
+        func.date(AuditLog.timestamp) == func.date(func.now())
+    ).count()
+
+    # Opções para filtros
+    entity_types = db.session.query(AuditLog.entity_type).distinct().all()
+    entity_types = [et[0] for et in entity_types]
+
+    actions = db.session.query(AuditLog.action).distinct().all()
+    actions = [a[0] for a in actions]
+
+    return render_template(
+        "admin/audit_logs.html",
+        title="Logs de Auditoria",
+        logs=logs,
+        total_logs=total_logs,
+        today_logs=today_logs,
+        entity_types=entity_types,
+        actions=actions,
+        filters={
+            'entity_type': entity_type,
+            'entity_id': entity_id,
+            'user_id': user_id,
+            'action': action,
+            'date_from': date_from,
+            'date_to': date_to,
+        }
+    )
+
+
+@bp.route("/audit-logs/<int:log_id>")
+@login_required
+def audit_log_detail(log_id):
+    """Visualizar detalhes de um log de auditoria específico"""
+    _require_admin()
+
+    log = AuditLog.query.get_or_404(log_id)
+
+    return render_template(
+        "admin/audit_log_detail.html",
+        title=f"Log de Auditoria #{log.id}",
+        log=log
+    )
+
+
+@bp.route("/audit-logs/entity/<entity_type>/<int:entity_id>")
+@login_required
+def audit_logs_entity(entity_type, entity_id):
+    """Visualizar histórico completo de uma entidade específica"""
+    _require_admin()
+
+    logs = AuditManager.get_entity_history(entity_type, entity_id)
+
+    # Buscar nome da entidade para exibição
+    entity_name = f"{entity_type} #{entity_id}"
+    if entity_type == 'user':
+        user = User.query.get(entity_id)
+        if user:
+            entity_name = f"Usuário: {user.email}"
+    elif entity_type == 'client':
+        client = Client.query.get(entity_id)
+        if client:
+            entity_name = f"Cliente: {client.full_name}"
+
+    return render_template(
+        "admin/audit_logs_entity.html",
+        title=f"Histórico: {entity_name}",
+        logs=logs,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        entity_name=entity_name
+    )

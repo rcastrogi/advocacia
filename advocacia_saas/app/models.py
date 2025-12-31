@@ -2482,6 +2482,7 @@ class RoadmapItem(db.Model):
         db.Boolean, default=False
     )  # Aparece para usuários normais?
     internal_only = db.Column(db.Boolean, default=False)  # Apenas para uso interno?
+    show_new_badge = db.Column(db.Boolean, default=False)  # Mostrar badge "Novo" no roadmap público
 
     # Timeline
     planned_start_date = db.Column(db.Date)
@@ -2602,6 +2603,7 @@ class RoadmapItem(db.Model):
             "effort_display": self.get_effort_display(),
             "visible_to_users": self.visible_to_users,
             "internal_only": self.internal_only,
+            "show_new_badge": self.show_new_badge,
             "planned_start_date": self.planned_start_date.isoformat()
             if self.planned_start_date
             else None,
@@ -4177,3 +4179,76 @@ class ProcessReport(db.Model):
 
     def __repr__(self):
         return f"<ProcessReport {self.title} - {self.report_type}>"
+
+
+# Modelo para auditoria de alterações
+class AuditLog(db.Model):
+    """Log de auditoria para rastrear alterações em entidades importantes"""
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # Quem fez a alteração
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    user = db.relationship("User", backref="audit_logs")
+
+    # Entidade afetada
+    entity_type = db.Column(db.String(50), nullable=False)  # 'user', 'client', 'petition', etc.
+    entity_id = db.Column(db.Integer, nullable=False)  # ID da entidade
+
+    # Tipo de ação
+    action = db.Column(db.String(50), nullable=False)  # 'create', 'update', 'delete', 'login', 'logout'
+
+    # Detalhes da alteração
+    old_values = db.Column(db.Text)  # JSON com valores antigos
+    new_values = db.Column(db.Text)  # JSON com valores novos
+    changed_fields = db.Column(db.Text)  # JSON com campos alterados
+
+    # Contexto da requisição
+    ip_address = db.Column(db.String(45), nullable=True)  # IPv4/IPv6
+    user_agent = db.Column(db.Text, nullable=True)
+    session_id = db.Column(db.String(255), nullable=True)
+
+    # Descrição da alteração
+    description = db.Column(db.Text, nullable=True)
+
+    # Metadados adicionais
+    additional_metadata = db.Column(db.Text)  # JSON com dados adicionais
+
+    def __init__(self, user_id=None, entity_type=None, entity_id=None, action=None,
+                 old_values=None, new_values=None, changed_fields=None,
+                 ip_address=None, user_agent=None, session_id=None,
+                 description=None, additional_metadata=None):
+        self.user_id = user_id
+        self.entity_type = entity_type
+        self.entity_id = entity_id
+        self.action = action
+        self.old_values = json.dumps(old_values) if old_values else None
+        self.new_values = json.dumps(new_values) if new_values else None
+        self.changed_fields = json.dumps(changed_fields) if changed_fields else None
+        self.ip_address = ip_address
+        self.user_agent = user_agent
+        self.session_id = session_id
+        self.description = description
+        self.additional_metadata = json.dumps(additional_metadata) if additional_metadata else None
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "timestamp": self.timestamp.isoformat(),
+            "user_id": self.user_id,
+            "user_email": self.user.email if self.user else None,
+            "entity_type": self.entity_type,
+            "entity_id": self.entity_id,
+            "action": self.action,
+            "old_values": json.loads(self.old_values) if self.old_values else None,
+            "new_values": json.loads(self.new_values) if self.new_values else None,
+            "changed_fields": json.loads(self.changed_fields) if self.changed_fields else None,
+            "ip_address": self.ip_address,
+            "user_agent": self.user_agent,
+            "session_id": self.session_id,
+            "description": self.description,
+            "metadata": json.loads(self.additional_metadata) if self.additional_metadata else None,
+        }
+
+    def __repr__(self):
+        return f"<AuditLog {self.entity_type}:{self.entity_id} - {self.action} by {self.user_id}>"
