@@ -12,11 +12,44 @@ from sqlalchemy import inspect, text
 
 # PostgreSQL reserved words that might conflict
 RESERVED_WORDS = {
-    'order', 'group', 'user', 'table', 'column', 'select', 'insert', 'update', 'delete',
-    'create', 'drop', 'alter', 'index', 'primary', 'foreign', 'key', 'null', 'not',
-    'and', 'or', 'like', 'in', 'exists', 'between', 'case', 'when', 'then', 'else',
-    'end', 'from', 'where', 'join', 'on', 'having', 'limit', 'offset'
+    "order",
+    "group",
+    "user",
+    "table",
+    "column",
+    "select",
+    "insert",
+    "update",
+    "delete",
+    "create",
+    "drop",
+    "alter",
+    "index",
+    "primary",
+    "foreign",
+    "key",
+    "null",
+    "not",
+    "and",
+    "or",
+    "like",
+    "in",
+    "exists",
+    "between",
+    "case",
+    "when",
+    "then",
+    "else",
+    "end",
+    "from",
+    "where",
+    "join",
+    "on",
+    "having",
+    "limit",
+    "offset",
 }
+
 
 def quote_identifier(name):
     """Quote identifier if it's a reserved word"""
@@ -67,7 +100,9 @@ def apply_incremental_migration():
 
                     alter_sql = f"ALTER TABLE {table_name} ADD COLUMN {quote_identifier(col_name)} {col_type} {nullable}{default}{primary_key}"
                     try:
-                        print(f"Adicionando coluna {quote_identifier(col_name)} à tabela {table_name}...")
+                        print(
+                            f"Adicionando coluna {quote_identifier(col_name)} à tabela {table_name}..."
+                        )
                         db.session.execute(text(alter_sql))
                         changes_made += 1
                     except Exception as e:
