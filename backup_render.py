@@ -61,7 +61,9 @@ def export_users():
             "city": u.city,
             "billing_status": u.billing_status,
             "trial_active": u.trial_active,
-            "trial_start_date": u.trial_start_date.isoformat() if u.trial_start_date else None,
+            "trial_start_date": u.trial_start_date.isoformat()
+            if u.trial_start_date
+            else None,
             "trial_days": u.trial_days,
         }
         for u in users
@@ -82,7 +84,9 @@ def export_billing_plans():
             "active": p.active,
             "created_at": p.created_at.isoformat() if p.created_at else None,
             "supported_periods": p.supported_periods,
-            "discount_percentage": float(p.discount_percentage) if p.discount_percentage else 0,
+            "discount_percentage": float(p.discount_percentage)
+            if p.discount_percentage
+            else 0,
         }
         for p in plans
     ]
