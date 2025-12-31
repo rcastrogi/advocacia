@@ -3595,7 +3595,9 @@ def petition_model_edit(model_id):
         petition_model.petition_type_id = request.form.get("petition_type_id")
         petition_model.is_active = request.form.get("is_active") == "on"
         petition_model.use_dynamic_form = request.form.get("use_dynamic_form") == "on"
-        petition_model.template_content = request.form.get("template_content")
+        template_content = request.form.get("template_content")
+        current_app.logger.info(f"Saving template for model {model_id}, length: {len(template_content or '')}")
+        petition_model.template_content = template_content
 
         # Atualizar seções do modelo
         section_order_str = request.form.get("section_order", "")
@@ -3626,9 +3628,15 @@ def petition_model_edit(model_id):
                     )
                     db.session.add(model_section)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+            flash("Modelo de petição atualizado com sucesso!", "success")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Erro ao salvar modelo {model_id}: {str(e)}")
+            flash(f"Erro ao salvar: {str(e)}", "error")
+            return redirect(request.url)
 
-        flash("Modelo de petição atualizado com sucesso!", "success")
         return redirect(url_for("admin.petition_models_list"))
 
     return render_template(
