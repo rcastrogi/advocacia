@@ -37,6 +37,10 @@ def export_schema():
     for table_name in tables:
         print(f"  📋 Analisando tabela: {table_name}")
 
+        # Get primary key constraint
+        pk_constraint = inspector.get_pk_constraint(table_name)
+        pk_columns = set(pk_constraint.get("constrained_columns", [])) if pk_constraint else set()
+
         # Colunas
         columns = []
         for col in inspector.get_columns(table_name):
@@ -46,7 +50,7 @@ def export_schema():
                     "type": str(col["type"]),
                     "nullable": col["nullable"],
                     "default": str(col["default"]) if col["default"] else None,
-                    "primary_key": col["primary_key"],
+                    "primary_key": col["name"] in pk_columns,
                 }
             )
 
