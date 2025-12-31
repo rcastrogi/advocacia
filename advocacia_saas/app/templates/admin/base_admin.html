@@ -58,7 +58,7 @@
                     <a href="{{ url_for('admin.roadmap_feedback') }}" 
                        class="list-group-item list-group-item-action {{ 'active' if 'roadmap_feedback' in request.endpoint else '' }}"
                        title="Feedback Roadmap">
-                        <i class="fas fa-comments me-2"></i><span>Feedback Roadmap</span>
+                        <i class="fas fa-people-arrows me-2"></i><span>Feedback Roadmap</span>
                     </a>
                     <a href="{{ url_for('admin.audit_logs') }}" 
                        class="list-group-item list-group-item-action {{ 'active' if 'audit_logs' in request.endpoint else '' }}"
@@ -122,6 +122,55 @@
         width: 50px;
     }
 }
+
+/* Reduce gap when menu is minimized for better space efficiency */
+body.admin-sidebar-min .admin-sidebar-col {
+    padding-right: 2px !important;
+}
+body.admin-sidebar-min .admin-content {
+    padding-left: 4px !important;
+}
+.admin-sidebar.minimized {
+    width: 58px !important; /* increased by 10px when minimized */
+}
+/* Force smaller gutters and tighter spacing when minimized */
+@media (min-width: 992px) {
+    body.admin-sidebar-min .row {
+        --bs-gutter-x: 0.25rem !important;
+    }
+    body.admin-sidebar-min .admin-sidebar-col {
+        max-width: 68px !important; /* increased to match sidebar */
+        width: 68px !important;
+    }
+    body.admin-sidebar-min .admin-content {
+        margin-left: 0 !important;
+    }
+}
+/* Small tweak for header alignment */
+.admin-sidebar.minimized .card-header {
+    padding-left: 8px !important;
+}
+
+/* Keep the toggle button compact and fully inside the minimized header */
+.admin-sidebar.minimized #sidebar-toggle {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 4px !important;
+    line-height: 1 !important;
+    font-size: 12px !important;
+    box-sizing: border-box !important;
+    border-radius: 4px !important;
+}
+
+.admin-sidebar.minimized #sidebar-toggle i {
+    font-size: 12px !important;
+}
+
+/* Ensure header doesn't overflow when minimized */
+.admin-sidebar.minimized .card-header {
+    overflow: hidden;
+    padding-right: 4px !important;
+}
 </style>
 
 <script>
@@ -138,6 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (isMinimized) {
         sidebar.classList.add('minimized');
+        document.body.classList.add('admin-sidebar-min');
         toggleIcon.className = 'fas fa-angle-right';
         toggleBtn.title = 'Expandir menu';
         // Ajustar largura das colunas
@@ -159,6 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleIcon.className = 'fas fa-angle-right';
             toggleBtn.title = 'Expandir menu';
             localStorage.setItem('adminSidebarMinimized', 'true');
+            document.body.classList.add('admin-sidebar-min');
             // Ajustar largura das colunas
             if (sidebarCol && contentDiv) {
                 sidebarCol.classList.remove('col-lg-2');
@@ -170,6 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleIcon.className = 'fas fa-bars';
             toggleBtn.title = 'Minimizar menu';
             localStorage.setItem('adminSidebarMinimized', 'false');
+            document.body.classList.remove('admin-sidebar-min');
             // Restaurar largura das colunas
             if (sidebarCol && contentDiv) {
                 sidebarCol.classList.remove('col-lg-1');

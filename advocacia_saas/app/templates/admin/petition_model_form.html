@@ -220,6 +220,7 @@
                                 <textarea class="form-control font-monospace" id="template_content" name="template_content"
                                           rows="20" placeholder="Digite o template Jinja2 aqui..."
                                           style="font-size: 0.9rem; line-height: 1.4;">{{ petition_model.template_content or '' }}</textarea>
+                                <div id="template_length_indicator" class="small text-muted mt-1">Tamanho: 0</div>
                                 <div class="form-text">
                                     Use variáveis Jinja2 como <code>{{ nome_variavel }}</code> para inserir dados dinâmicos.
                                     Se vazio, o sistema gera automaticamente baseado nas seções.
@@ -572,6 +573,9 @@ Valor da causa: R$ {{ valor_causa }}
                 document.getElementById('available-fields').innerHTML =
                     '<div class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Erro ao carregar campos</div>';
             });
+
+    // Exportar para o escopo global para que outras funções (p.ex. saveOrder) possam chamar
+    window.loadAvailableFields = loadAvailableFields;
     }
 
     // Exibir campos disponíveis
@@ -850,6 +854,49 @@ Valor da causa: R$ {{ valor_causa }}
             toast.remove();
         });
     }
+
+
+
+
+    // Template length indicator and silent submit copy
+    try {
+        const textarea = document.getElementById('template_content');
+        const indicator = document.getElementById('template_length_indicator');
+        function updateIndicator() {
+            const len = textarea ? textarea.value.length : 0;
+            if (indicator) indicator.textContent = `Tamanho: ${len}`;
+        }
+        if (textarea) {
+            textarea.addEventListener('input', updateIndicator);
+            // set initial value
+            updateIndicator();
+        }
+
+        const modelForm = document.getElementById('model-form');
+        if (modelForm) {
+            modelForm.addEventListener('submit', function (e) {
+                try {
+                    const ta = document.getElementById('template_content');
+                    const val = ta ? ta.value : '';
+                    // silent hidden copy (no console logging)
+                    let hidden = document.getElementById('template_content_capture');
+                    if (!hidden) {
+                        hidden = document.createElement('input');
+                        hidden.type = 'hidden';
+                        hidden.name = 'template_content_capture';
+                        hidden.id = 'template_content_capture';
+                        modelForm.appendChild(hidden);
+                    }
+                    hidden.value = val;
+                    // briefly highlight indicator to show submit happened
+                    if (indicator) {
+                        indicator.classList.add('text-success');
+                        setTimeout(() => indicator.classList.remove('text-success'), 1000);
+                    }
+                } catch (err) { console.error('submit hook error', err); }
+            });
+        }
+    } catch (err) { console.error('binding submit listener failed', err); }
 
 })();
 </script>

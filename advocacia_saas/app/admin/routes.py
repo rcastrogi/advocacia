@@ -3590,48 +3590,89 @@ def petition_model_edit(model_id):
         f"Carregando página de edição do modelo {model_id}: {petition_model.name if petition_model else 'None'}"
     )
 
+    # Log page load with current template info to help trace missing saves
+    try:
+        from datetime import datetime
+        user_repr = getattr(current_user, 'username', None) or getattr(current_user, 'email', None) or current_user.get_id()
+        with open('debug_capture.log', 'a', encoding='utf-8') as f:
+            preview = (petition_model.template_content or '')[:200]
+            f.write(f"{datetime.utcnow().isoformat()} GET model={model_id} user={user_repr} template_len={len(petition_model.template_content or '')} preview={preview}\n")
+    except Exception as _e:
+        current_app.logger.info(f"Failed writing GET capture: {_e}")
+
     if request.method == "POST":
-        petition_model.description = request.form.get("description")
-        petition_model.petition_type_id = request.form.get("petition_type_id")
-        petition_model.is_active = request.form.get("is_active") == "on"
-        petition_model.use_dynamic_form = request.form.get("use_dynamic_form") == "on"
-        template_content = request.form.get("template_content")
-        current_app.logger.info(
-            f"Saving template for model {model_id}, length: {len(template_content or '')}"
-        )
-        petition_model.template_content = template_content
-
-        # Atualizar seções do modelo
-        section_order_str = request.form.get("section_order", "")
-        if section_order_str:
-            # Parse da string de ordem: "order-1,order-2,order-3"
-            section_ids = []
-            for order_item in section_order_str.split(","):
-                if order_item.startswith("order-"):
-                    try:
-                        section_id = int(order_item.replace("order-", ""))
-                        section_ids.append(section_id)
-                    except ValueError:
-                        continue
-
-            current_app.logger.info(
-                f"Atualizando seções do modelo {model_id}: {section_ids}"
-            )
-
-            # Remover todas as seções atuais
-            petition_model.model_sections.delete()
-
-            # Adicionar seções na nova ordem
-            for order, section_id in enumerate(section_ids, 1):
-                section = PetitionSection.query.get(section_id)
-                if section:
-                    model_section = PetitionModelSection(
-                        petition_model=petition_model, section=section, order=order
-                    )
-                    db.session.add(model_section)
-
+        # Temporary capture for failing submissions
         try:
+            from datetime import datetime
+            user_repr = getattr(current_user, 'username', None) or getattr(current_user, 'email', None) or current_user.get_id()
+            with open("debug_capture.log","a", encoding="utf-8") as f:
+                try:
+                    raw = request.get_data(as_text=True)
+                except Exception:
+                    raw = ''
+                preview = raw[:200]
+                f.write(f"{datetime.utcnow().isoformat()} POST model={model_id} user={user_repr} keys={list(request.form.keys())} template_len={len(request.form.get('template_content') or '')} capture_len={len(request.form.get('template_content_capture') or '')} raw_preview={preview}\n")
+        except Exception as _ex:
+            current_app.logger.info(f"Capture write failed: {_ex}")
+
+        flash("Iniciando salvamento do modelo...", "info")
+        try:
+            petition_model.description = request.form.get("description")
+            petition_model.petition_type_id = request.form.get("petition_type_id")
+            petition_model.is_active = request.form.get("is_active") == "on"
+            petition_model.use_dynamic_form = request.form.get("use_dynamic_form") == "on"
+            template_content = request.form.get("template_content")
+            # If main content is empty, use the captured hidden value (client-side hook)
+            if not template_content:
+                captured = request.form.get("template_content_capture")
+                if captured:
+                    current_app.logger.info(
+                        f"Fallback: using captured template for model {model_id}, length: {len(captured)}"
+                    )
+                    template_content = captured
+            current_app.logger.info(
+                f"Saving template for model {model_id}, length: {len(template_content or '')}"
+            )
+            petition_model.template_content = template_content
+            current_app.logger.info(f"Template set to model {model_id}")
+
+            # Atualizar seções do modelo
+            section_order_str = request.form.get("section_order", "")
+            if section_order_str:
+                # Parse da string de ordem: "order-1,order-2,order-3"
+                section_ids = []
+                for order_item in section_order_str.split(","):
+                    if order_item.startswith("order-"):
+                        try:
+                            section_id = int(order_item.replace("order-", ""))
+                            section_ids.append(section_id)
+                        except ValueError:
+                            continue
+
+                current_app.logger.info(
+                    f"Atualizando seções do modelo {model_id}: {section_ids}"
+                )
+
+                # Remover todas as seções atuais (uso seguro da API)
+                try:
+                    # Prefer explicit query delete para evitar problemas quando a relação não for dinâmica
+                    PetitionModelSection.query.filter_by(petition_model_id=model_id).delete(synchronize_session=False)
+                except Exception as ex_del:
+                    current_app.logger.error(f"Erro ao limpar seções antigas do modelo {model_id}: {ex_del}")
+
+                # Adicionar seções na nova ordem
+                for order, section_id in enumerate(section_ids, 1):
+                    section = PetitionSection.query.get(section_id)
+                    if section:
+                        model_section = PetitionModelSection(
+                            petition_model=petition_model, section=section, order=order
+                        )
+                        db.session.add(model_section)
+
+            db.session.add(petition_model)  # Garantir que o modelo esteja na sessão
+            current_app.logger.info(f"Committing changes for model {model_id}")
             db.session.commit()
+            current_app.logger.info(f"Commit successful for model {model_id}")
             flash("Modelo de petição atualizado com sucesso!", "success")
         except Exception as e:
             db.session.rollback()

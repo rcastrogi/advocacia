@@ -4,3 +4,6 @@ generate_migration.py
 extract_local_schema.py
 decode_schema.py
 compare_schemas.py
+
+# Local debug log
+advocacia_saas/debug.log
