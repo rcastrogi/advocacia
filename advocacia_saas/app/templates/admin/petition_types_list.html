@@ -15,13 +15,16 @@
         <a href="{{ url_for('admin.petition_type_new') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Novo Tipo
         </a>
+        <button class="btn btn-outline-secondary ms-2" data-reset-view="admin.petition_types" title="Resetar preferências de tabela">
+            <i class="fas fa-undo"></i>
+        </button>
     </div>
 </div>
 
 <div class="card shadow">
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered" id="petitionTypesTable">
+            <table class="table table-bordered" id="petitionTypesTable" data-table-view="admin.petition_types" data-page-length="25" data-language="//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json">
                 <thead>
                     <tr>
                         <th>Nome</th>
@@ -43,29 +46,39 @@
                         </td>
                         <td><code>{{ petition_type.slug }}</code></td>
                         <td>
-                            <span class="badge badge-secondary">{{ petition_type.category.title() }}</span>
+                            <span class="badge bg-primary text-white">{{ petition_type.category.title() }}</span>
                         </td>
                         <td>
                             {% if petition_type.use_dynamic_form %}
-                            <span class="badge badge-success">Sim</span>
+                            <span class="badge bg-success text-white">
+                                <i class="fas fa-check-circle me-1"></i>Sim
+                            </span>
                             {% else %}
-                            <span class="badge badge-secondary">Não</span>
+                            <span class="badge bg-secondary text-white">
+                                <i class="fas fa-times-circle me-1"></i>Não
+                            </span>
                             {% endif %}
                         </td>
                         <td>
                             {% if petition_type.is_active %}
-                            <span class="badge badge-success">Ativo</span>
+                            <span class="badge bg-success text-white">
+                                <i class="fas fa-check-circle me-1"></i>Ativo
+                            </span>
                             {% else %}
-                            <span class="badge badge-danger">Inativo</span>
+                            <span class="badge bg-danger text-white">
+                                <i class="fas fa-times-circle me-1"></i>Inativo
+                            </span>
                             {% endif %}
                         </td>
                         <td>
                             {% if petition_type.is_billable %}
-                            <span class="badge badge-warning">
-                                R$ {{ "%.2f"|format(petition_type.base_price) }}
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-dollar-sign me-1"></i>R$ {{ "%.2f"|format(petition_type.base_price) }}
                             </span>
                             {% else %}
-                            <span class="badge badge-info">Grátis</span>
+                            <span class="badge bg-info text-white">
+                                <i class="fas fa-check me-1"></i>Grátis
+                            </span>
                             {% endif %}
                         </td>
                         <td>
@@ -98,15 +111,5 @@
     </div>
 </div>
 
-<script>
-$(document).ready(function() {
-    $('#petitionTypesTable').DataTable({
-        "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
-        },
-        "order": [[0, "asc"]],
-        "pageLength": 25
-    });
-});
-</script>
+
 {% endblock %}

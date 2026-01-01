@@ -10,6 +10,9 @@
     <a href="{{ url_for('admin.petition_model_new') }}" class="btn btn-primary">
         <i class="fas fa-plus me-2"></i>Novo Modelo
     </a>
+    <button class="btn btn-outline-secondary ms-2" data-reset-view="admin.petition_models" title="Resetar preferências de tabela">
+        <i class="fas fa-undo"></i>
+    </button>
 </div>
 
 <!-- Cards de estatísticas -->
@@ -100,7 +103,7 @@
                 <div class="card-body">
                     {% if petition_models %}
                     <div class="table-responsive">
-                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <table id="petitionModelsTable" class="table table-bordered" width="100%" cellspacing="0" data-table-view="admin.petition_models" data-page-length="25">
                             <thead>
                                 <tr>
                                     <th>Nome</th>

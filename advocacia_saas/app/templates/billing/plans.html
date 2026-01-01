@@ -95,27 +95,43 @@
                                 </td>
                                 <td>
                                     {% if plan.plan_type == 'per_usage' %}
-                                        <span class="badge bg-info text-dark">Por uso</span>
+                                        <span class="badge bg-warning text-dark" title="Plano por uso">
+                                            <i class="fas fa-chart-line me-1"></i>Por uso
+                                        </span>
                                     {% else %}
-                                        <span class="badge bg-secondary">Mensal</span>
+                                        <span class="badge bg-info text-white" title="Plano mensal">
+                                            <i class="fas fa-calendar me-1"></i>Mensal
+                                        </span>
                                     {% endif %}
                                     {% if plan.monthly_petition_limit %}
                                     <br><small class="text-muted">{{ plan.monthly_petition_limit }} petições/mês</small>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <span class="badge bg-light text-dark">{{ plan.get_period_label(plan.supported_periods) }}</span>
+                                    <span class="badge bg-secondary">{{ plan.get_period_label(plan.supported_periods) }}</span>
                                 </td>
                                 <td>R$ {{ '%.2f'|format(plan.monthly_fee or 0) }}</td>
-                                <td>{{ '%.1f'|format(plan.discount_percentage or 0) }}%</td>
                                 <td>
-                                    <strong class="text-primary">R$ {{ '%.2f'|format(plan.get_price_for_period() or 0) }}</strong>
+                                    {% if plan.discount_percentage > 0 %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-tag me-1"></i>{{ '%.1f'|format(plan.discount_percentage) }}%
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong class="text-success">R$ {{ '%.2f'|format(plan.get_price_for_period() or 0) }}</strong>
                                 </td>
                                 <td>
                                     {% if plan.active %}
-                                        <span class="badge bg-success">Ativo</span>
+                                        <span class="badge bg-success" title="Plano ativo">
+                                            <i class="fas fa-check-circle me-1"></i>Ativo
+                                        </span>
                                     {% else %}
-                                        <span class="badge bg-danger">Inativo</span>
+                                        <span class="badge bg-danger" title="Plano inativo">
+                                            <i class="fas fa-times-circle me-1"></i>Inativo
+                                        </span>
                                     {% endif %}
                                 </td>
                                 <td>

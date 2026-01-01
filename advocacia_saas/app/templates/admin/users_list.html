@@ -15,6 +15,9 @@
         <a href="{{ url_for('admin.export_users') }}" class="btn btn-outline-success" target="_blank">
             <i class="fas fa-download me-2"></i>Exportar JSON
         </a>
+        <button class="btn btn-outline-secondary ms-2" data-reset-view="admin.users" title="Resetar preferências de tabela">
+            <i class="fas fa-undo"></i>
+        </button>
     </div>
 </div>
 
@@ -123,7 +126,7 @@
 <div class="card shadow-sm">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table id="usersTable" class="table table-hover mb-0" data-table-view="admin.users" data-page-length="25">
                 <thead class="table-light">
                     <tr>
                         <th>Usuário</th>

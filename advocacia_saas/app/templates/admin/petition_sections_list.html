@@ -15,13 +15,16 @@
         <a href="{{ url_for('admin.petition_section_new') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Nova Seção
         </a>
+        <button class="btn btn-outline-secondary ms-2" data-reset-view="admin.petition_sections" title="Resetar preferências de tabela">
+            <i class="fas fa-undo"></i>
+        </button>
     </div>
 </div>
 
 <div class="card shadow">
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered" id="petitionSectionsTable">
+            <table class="table table-bordered" id="petitionSectionsTable" data-table-view="admin.petition_sections" data-page-length="25" data-language="//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json">
                 <thead>
                     <tr>
                         <th>Nome</th>
@@ -49,17 +52,25 @@
                             <code class="ml-1">{{ section.icon }}</code>
                         </td>
                         <td>
-                            <span class="badge badge-info">{{ (section.get_fields() or [])|length }} campos</span>
+                            <span class="badge bg-info text-white">
+                                <i class="fas fa-bars me-1"></i>{{ (section.get_fields() or [])|length }} campos
+                            </span>
                         </td>
                         <td>
                             {% if section.is_active %}
-                            <span class="badge badge-success">Ativo</span>
+                            <span class="badge bg-success text-white">
+                                <i class="fas fa-check-circle me-1"></i>Ativo
+                            </span>
                             {% else %}
-                            <span class="badge badge-danger">Inativo</span>
+                            <span class="badge bg-danger text-white">
+                                <i class="fas fa-times-circle me-1"></i>Inativo
+                            </span>
                             {% endif %}
                         </td>
                         <td>
-                            {{ section.type_sections.count() }} tipos
+                            <span class="badge bg-primary text-white">
+                                <i class="fas fa-file-alt me-1"></i>{{ section.type_sections.count() }} tipos
+                            </span>
                         </td>
                         <td>
                             <div class="btn-group" role="group">
@@ -85,27 +96,5 @@
     </div>
 </div>
 
-<script>
 
-$(document).ready(function() {
-
-    try {
-        $('#petitionSectionsTable').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
-            },
-            "order": [[0, "asc"]],
-            "pageLength": 25
-        });
-    } catch (error) {
-        console.error('❌ [SECTIONS] Erro ao inicializar DataTable:', error);
-    }
-});
-
-// Verificar se a tabela existe
-if ($('#petitionSectionsTable').length === 0) {
-    console.error('❌ [SECTIONS] Tabela petitionSectionsTable não encontrada no DOM');
-}
-
-</script>
 {% endblock %}

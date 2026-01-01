@@ -13,6 +13,9 @@
             <a href="{{ url_for('admin.new_roadmap_category') }}" class="btn btn-success">
                 <i class="fas fa-plus"></i> Nova Categoria
             </a>
+            <button class="btn btn-outline-secondary ms-2" data-reset-view="admin.roadmap_categories" title="Resetar preferências de tabela">
+                <i class="fas fa-undo"></i> Resetar Preferências
+            </button>
         </div>
     </div>
 
@@ -20,7 +23,7 @@
         <div class="card-body">
             {% if categories %}
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table id="roadmapCategoriesTable" class="table table-hover" width="100%" data-table-view="admin.roadmap_categories">
                     <thead>
                         <tr>
                             <th>Nome</th>
@@ -66,4 +69,9 @@
         </div>
     </div>
 </div>
+
+{% block scripts %}{{ super() }}
+<!-- Initialization is handled by table_prefs.js automatically for tables with data-table-view -->
+{% endblock %}
+
 {% endblock %}

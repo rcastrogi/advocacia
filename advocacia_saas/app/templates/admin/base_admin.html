@@ -1,5 +1,12 @@
 {% extends "base.html" %}
 
+{% block styles %}
+    <!-- DataTables CSS (admin only) -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/colreorder/1.6.2/css/colReorder.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <div class="row">
@@ -242,5 +249,59 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+{% block scripts %}
+    <!-- Load jQuery first (blocking) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Load DataTables and extensions (blocking, sequentially) -->
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/colreorder/1.6.2/js/dataTables.colReorder.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    
+    <!-- Load our table prefs component -->
+    <script src="{{ url_for('static', filename='js/table_prefs.js') }}?v={{ range(1,10000) | random }}"></script>
+    
+    <!-- Initialize tables after all libraries loaded -->
+    <script>
+    (function(){
+        // Simple check - wait for $ to be defined
+        var maxRetries = 50;
+        var retries = 0;
+        
+        function init(){
+            retries++;
+            
+            // Check if jQuery and DataTable are available
+            if(typeof jQuery === 'undefined' || typeof jQuery.fn.DataTable === 'undefined'){
+                console.log('[admin-init] jQuery or DataTable not ready, retry', retries);
+                if(retries < maxRetries){
+                    setTimeout(init, 100);
+                }
+                return;
+            }
+            
+            console.log('[admin-init] jQuery and DataTable ready, initializing tables');
+            
+            // Call the table prefs component
+            if(typeof window.initAdminTables === 'function'){
+                console.log('[admin-init] Calling initAdminTables');
+                window.initAdminTables();
+            } else {
+                console.warn('[admin-init] initAdminTables not found');
+            }
+        }
+        
+        // Start initialization after DOM is ready
+        if(document.readyState === 'loading'){
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
+    </script>
+{% endblock %}
 
 {% endblock %}

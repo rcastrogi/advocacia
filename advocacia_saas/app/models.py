@@ -2816,6 +2816,59 @@ class RoadmapFeedback(db.Model):
 
 
 # =============================================================================
+# Table Preferences - Per-user table configuration persistence
+# =============================================================================
+
+class TablePreference(db.Model):
+    """Preferences for table views stored per-user and per-view.
+
+    Example preferences JSON structure:
+    {
+        "columns": ["id", "title", "category"],
+        "order": [[0, "asc"]],
+        "length": 25,
+        "search": {"value": "", "regex": false}
+    }
+    """
+
+    __tablename__ = "table_preferences"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    view_key = db.Column(db.String(200), nullable=False)
+    preferences = db.Column(db.JSON, nullable=False, default=dict)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    __table_args__ = (db.UniqueConstraint("user_id", "view_key", name="uq_user_view"),)
+
+    # Relationship
+    user = db.relationship("User", backref=db.backref("table_preferences", lazy="dynamic"))
+
+    def __repr__(self):
+        return f"<TablePreference user={self.user_id} view={self.view_key}>"
+
+    @classmethod
+    def get_for_user(cls, user_id, view_key):
+        pref = cls.query.filter_by(user_id=user_id, view_key=view_key).first()
+        return pref.preferences if pref else None
+
+    @classmethod
+    def set_for_user(cls, user_id, view_key, preferences):
+        pref = cls.query.filter_by(user_id=user_id, view_key=view_key).first()
+        if not pref:
+            pref = cls(user_id=user_id, view_key=view_key, preferences=preferences)
+            db.session.add(pref)
+        else:
+            pref.preferences = preferences
+        db.session.commit()
+
+
+# =============================================================================
 # LGPD COMPLIANCE MODELS
 # =============================================================================
 
