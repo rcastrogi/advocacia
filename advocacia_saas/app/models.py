@@ -2819,6 +2819,7 @@ class RoadmapFeedback(db.Model):
 # Table Preferences - Per-user table configuration persistence
 # =============================================================================
 
+
 class TablePreference(db.Model):
     """Preferences for table views stored per-user and per-view.
 
@@ -2834,7 +2835,9 @@ class TablePreference(db.Model):
     __tablename__ = "table_preferences"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=False, index=True
+    )
     view_key = db.Column(db.String(200), nullable=False)
     preferences = db.Column(db.JSON, nullable=False, default=dict)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
@@ -2847,7 +2850,9 @@ class TablePreference(db.Model):
     __table_args__ = (db.UniqueConstraint("user_id", "view_key", name="uq_user_view"),)
 
     # Relationship
-    user = db.relationship("User", backref=db.backref("table_preferences", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("table_preferences", lazy="dynamic")
+    )
 
     def __repr__(self):
         return f"<TablePreference user={self.user_id} view={self.view_key}>"

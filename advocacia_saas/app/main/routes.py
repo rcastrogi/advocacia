@@ -37,8 +37,8 @@ from app.models import (
     RoadmapCategory,
     RoadmapFeedback,
     RoadmapItem,
-    Testimonial,
     TablePreference,
+    Testimonial,
 )
 from app.quick_actions import build_dashboard_actions
 
@@ -973,42 +973,44 @@ def roadmap_feedback_thanks(slug):
 
 
 # ===== User Preferences API =====
-@bp.route('/api/user/preferences', methods=['GET'])
+@bp.route("/api/user/preferences", methods=["GET"])
 @login_required
 def api_get_user_preferences():
     """Retorna preferências de tabela salvas para o usuário e view_key fornecido"""
-    view_key = request.args.get('view')
+    view_key = request.args.get("view")
     if not view_key:
         return jsonify({})
 
-    pref = TablePreference.query.filter_by(user_id=current_user.id, view_key=view_key).first()
+    pref = TablePreference.query.filter_by(
+        user_id=current_user.id, view_key=view_key
+    ).first()
     if not pref:
         return jsonify({})
     return jsonify(pref.preferences or {})
 
 
-@bp.route('/api/user/preferences', methods=['POST'])
+@bp.route("/api/user/preferences", methods=["POST"])
 @login_required
 def api_save_user_preferences():
     """Salva as preferências de tabela para o usuário na view especificada"""
     data = request.get_json() or {}
-    view_key = data.get('view_key') or data.get('view')
-    preferences = data.get('preferences')
+    view_key = data.get("view_key") or data.get("view")
+    preferences = data.get("preferences")
 
     if not view_key or preferences is None:
-        return jsonify({'error': 'view_key and preferences are required'}), 400
+        return jsonify({"error": "view_key and preferences are required"}), 400
 
     # Basic validation: preferences should be a dict and not too large
     if not isinstance(preferences, dict):
-        return jsonify({'error': 'preferences must be an object'}), 400
+        return jsonify({"error": "preferences must be an object"}), 400
 
     # Limit size (approx) to avoid abuse
     import json
 
     prefs_str = json.dumps(preferences)
     if len(prefs_str) > 10000:  # ~10KB arbitrary limit
-        return jsonify({'error': 'preferences payload too large'}), 400
+        return jsonify({"error": "preferences payload too large"}), 400
 
     TablePreference.set_for_user(current_user.id, view_key, preferences)
 
-    return jsonify({'success': True})
+    return jsonify({"success": True})
