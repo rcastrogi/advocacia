@@ -133,19 +133,22 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="badge badge-{{ item.category.color }}">
+                                {% set cat_text_color = 'text-dark' if item.category.color in ['light','warning','info'] else 'text-white' %}
+                                <span class="badge bg-{{ item.category.color }} {{ cat_text_color }}">
                                     <i class="fas {{ item.category.icon }}"></i> {{ item.category.name }}
                                 </span>
                             </td>
                             <td>
                                 {% set status_display = item.get_status_display() %}
-                                <span class="badge badge-{{ status_display[1] }}">
+                                {% set status_text_color = 'text-dark' if status_display[1] in ['light','warning','info'] else 'text-white' %}
+                                <span class="badge bg-{{ status_display[1] }} {{ status_text_color }}">
                                     {{ status_display[0] }}
                                 </span>
                             </td>
                             <td>
                                 {% set priority_display = item.get_priority_display() %}
-                                <span class="badge badge-{{ priority_display[1] }}">
+                                {% set pri_text_color = 'text-dark' if priority_display[1] in ['light','warning','info'] else 'text-white' %}
+                                <span class="badge bg-{{ priority_display[1] }} {{ pri_text_color }}">
                                     {{ priority_display[0] }}
                                 </span>
                             </td>

@@ -1,0 +1,86 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-chart-bar text-primary"></i> {{ title }}</h1>
+            <p class="text-muted mt-1">Resumo de métricas do roadmap</p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.roadmap') }}" class="btn btn-outline-primary"><i class="fas fa-arrow-left"></i> Voltar</a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card shadow h-100">
+                <div class="card-body">
+                    <div class="text-uppercase text-muted small">Itens Atrasados</div>
+                    <div class="h4 font-weight-bold">{{ overdue_items }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow h-100">
+                <div class="card-body">
+                    <div class="text-uppercase text-muted small">Progresso Médio</div>
+                    <div class="h4 font-weight-bold">{{ avg_progress }}%</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow h-100">
+                <div class="card-body">
+                    <div class="text-uppercase text-muted small">Status</div>
+                    {% for s, count in status_counts.items() %}
+                        <div class="d-flex justify-content-between">
+                            <div class="text-capitalize">{{ s.replace('_',' ') }}</div>
+                            <div class="font-weight-bold">{{ count }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow h-100">
+                <div class="card-body">
+                    <div class="text-uppercase text-muted small">Prioridade</div>
+                    {% for p, count in priority_counts.items() %}
+                        <div class="d-flex justify-content-between">
+                            <div class="text-capitalize">{{ p }}</div>
+                            <div class="font-weight-bold">{{ count }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <h6 class="mb-3">Itens por Categoria</h6>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Categoria</th>
+                            <th>Itens</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for name, count in category_counts.items() %}
+                        <tr>
+                            <td>{{ name }}</td>
+                            <td>{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

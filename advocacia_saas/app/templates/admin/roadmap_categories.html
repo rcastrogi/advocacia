@@ -1,0 +1,69 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-tags text-primary"></i> {{ title }}</h1>
+            <p class="text-muted mt-1">Gerencie as categorias do roadmap</p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.new_roadmap_category') }}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nova Categoria
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            {% if categories %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Slug</th>
+                            <th>Cor</th>
+                            <th>Ícone</th>
+                            <th>Ordem</th>
+                            <th>Itens</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in categories %}
+                        <tr>
+                            <td>{{ category.name }}</td>
+                            <td>{{ category.slug }}</td>
+                            <td>
+                                <span class="category-swatch bg-{{ category.color }}" aria-hidden="true"></span>
+                                <span class="badge bg-{{ category.color }} {{ 'text-dark' if category.color in ['light','warning','info'] else 'text-white' }} ms-2 py-1 px-2">{{ category.color }}</span>
+                            </td>
+                            <td><i class="fas {{ category.icon }}"></i></td>
+                            <td>{{ category.order }}</td>
+                            <td>{{ category.items.count() }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.edit_roadmap_category', category_id=category.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="fas fa-edit"></i></a>
+                                <form method="POST" action="{{ url_for('admin.delete_roadmap_category', category_id=category.id) }}" class="d-inline" onsubmit="return confirm('Deseja realmente excluir esta categoria?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Nenhuma categoria encontrada</h5>
+                <p class="text-muted">Crie sua primeira categoria para organizar o roadmap.</p>
+                <a href="{{ url_for('admin.new_roadmap_category') }}" class="btn btn-primary">Criar Categoria</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

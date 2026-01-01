@@ -21,9 +21,7 @@
         .tab-content .tab-pane .text-muted {
             color: #6c757d !important; /* Keep muted text gray */
         }
-        .tab-content .tab-pane .badge {
-            color: white; /* Keep badge text white */
-        }
+
     </style>
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -174,7 +172,8 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="mr-3">
-                                            <i class="fas {{ category.icon }} fa-2x text-{{ category.color }}"></i>
+                                            {% set icon_text_color = 'text-dark' if category.color in ['light','warning','info'] else 'text-' ~ category.color %}
+                                            <i class="fas {{ category.icon }} fa-2x {{ icon_text_color }}"></i>
                                         </div>
                                         <div>
                                             <h6 class="card-title mb-1">{{ category.name }}</h6>
@@ -244,13 +243,15 @@
                                                 <small class="text-muted">{{ item.description[:50] }}...</small>
                                             </td>
                                             <td>
-                                                <span class="badge badge-{{ item.category.color }}">
+                                            {% set cat_text_color = 'text-dark' if item.category.color in ['light','warning','info'] else 'text-white' %}
+                                            <span class="badge bg-{{ item.category.color }} {{ cat_text_color }}">
                                                     <i class="fas {{ item.category.icon }}"></i> {{ item.category.name }}
                                                 </span>
                                             </td>
                                             <td>
                                                 {% set priority_display = item.get_priority_display() %}
-                                                <span class="badge badge-{{ priority_display[1] }}">
+                                                {% set pri_text_color = 'text-dark' if priority_display[1] in ['light','warning','info'] else 'text-white' %}
+                                                <span class="badge bg-{{ priority_display[1] }} {{ pri_text_color }}">
                                                     {{ priority_display[0] }}
                                                 </span>
                                             </td>
@@ -327,19 +328,22 @@
                                                 <small class="text-muted">{{ item.description[:50] }}...</small>
                                             </td>
                                             <td>
-                                                <span class="badge badge-{{ item.category.color }}">
+                                                {% set cat_text_color = 'text-dark' if item.category.color in ['light','warning','info'] else 'text-white' %}
+                                                <span class="badge bg-{{ item.category.color }} {{ cat_text_color }}">
                                                     <i class="fas {{ item.category.icon }}"></i> {{ item.category.name }}
                                                 </span>
                                             </td>
                                             <td>
                                                 {% set status_display = item.get_status_display() %}
-                                                <span class="badge badge-{{ status_display[1] }}">
+                                                {% set status_text_color = 'text-dark' if status_display[1] in ['light','warning','info'] else 'text-white' %}
+                                                <span class="badge bg-{{ status_display[1] }} {{ status_text_color }}">
                                                     {{ status_display[0] }}
                                                 </span>
                                             </td>
                                             <td>
                                                 {% set priority_display = item.get_priority_display() %}
-                                                <span class="badge badge-{{ priority_display[1] }}">
+                                                {% set pri_text_color = 'text-dark' if priority_display[1] in ['light','warning','info'] else 'text-white' %}
+                                                <span class="badge bg-{{ priority_display[1] }} {{ pri_text_color }}">
                                                     {{ priority_display[0] }}
                                                 </span>
                                             </td>
