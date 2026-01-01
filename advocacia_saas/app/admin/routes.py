@@ -2808,8 +2808,24 @@ def roadmap():
 
 # Expanded palette of distinct colors used for roadmap categories (keeps Bootstrap core names + additional distinct hues)
 ROADMAP_COLOR_PALETTE = [
-    'primary', 'indigo', 'purple', 'info', 'cyan', 'teal', 'success', 'lime', 'warning', 'orange', 'danger', 'pink', 'secondary', 'olive', 'dark', 'light'
+    "primary",
+    "indigo",
+    "purple",
+    "info",
+    "cyan",
+    "teal",
+    "success",
+    "lime",
+    "warning",
+    "orange",
+    "danger",
+    "pink",
+    "secondary",
+    "olive",
+    "dark",
+    "light",
 ]
+
 
 @bp.route("/roadmap/categories")
 @login_required
@@ -2824,7 +2840,6 @@ def roadmap_categories():
         title="Categorias do Roadmap",
         categories=categories,
     )
-
 
 
 @bp.route("/roadmap/categories/new", methods=["GET", "POST"])
@@ -2847,7 +2862,7 @@ def new_roadmap_category():
             return redirect(request.url)
 
         # If color is 'auto' or blank, pick a palette color not currently used (to avoid duplicates)
-        if not color or color == 'auto':
+        if not color or color == "auto":
             used = [c.color for c in RoadmapCategory.query.all()]
             selected = None
             for c in ROADMAP_COLOR_PALETTE:
@@ -2878,7 +2893,11 @@ def new_roadmap_category():
         flash("Categoria criada com sucesso!", "success")
         return redirect(url_for("admin.roadmap_categories"))
 
-    return render_template("admin/roadmap_category_form.html", title="Nova Categoria", colors=ROADMAP_COLOR_PALETTE)
+    return render_template(
+        "admin/roadmap_category_form.html",
+        title="Nova Categoria",
+        colors=ROADMAP_COLOR_PALETTE,
+    )
 
 
 @bp.route("/roadmap/categories/<int:category_id>/edit", methods=["GET", "POST"])
@@ -2897,8 +2916,13 @@ def edit_roadmap_category(category_id):
         submitted_color = request.form.get("color", "auto")
 
         # If 'auto' selected, try to pick a distinct palette color (excluding this category)
-        if not submitted_color or submitted_color == 'auto':
-            used = [c.color for c in RoadmapCategory.query.filter(RoadmapCategory.id != category_id).all()]
+        if not submitted_color or submitted_color == "auto":
+            used = [
+                c.color
+                for c in RoadmapCategory.query.filter(
+                    RoadmapCategory.id != category_id
+                ).all()
+            ]
             selected = None
             for c in ROADMAP_COLOR_PALETTE:
                 if c not in used:
