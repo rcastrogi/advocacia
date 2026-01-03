@@ -156,7 +156,7 @@ def create_app(config_class=Config):
         UserCredits,
         UserPlan,
     )
-    
+
     # Import roadmap voting models
     from app.models_roadmap_votes import (  # noqa: F401, E402
         RoadmapVote,
@@ -241,10 +241,10 @@ def create_app(config_class=Config):
     from app.advanced import advanced_bp
 
     app.register_blueprint(advanced_bp)
-    
+
     # Register roadmap voting API
     from app.api_roadmap_votes import roadmap_votes_bp
-    
+
     app.register_blueprint(roadmap_votes_bp)
 
     # Register error handlers

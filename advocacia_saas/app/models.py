@@ -931,7 +931,7 @@ class BillingPlan(db.Model):
     discount_percentage = db.Column(
         db.Numeric(5, 2), default=Decimal("0.00")
     )  # Desconto único para o período
-    
+
     # Votação em features
     votes_per_period = db.Column(db.Integer, default=0)  # 0 = sem direito a votar
 
