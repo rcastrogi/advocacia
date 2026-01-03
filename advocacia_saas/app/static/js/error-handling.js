@@ -7,21 +7,34 @@
 if (typeof fetch !== 'undefined') {
     const originalFetch = window.fetch;
     window.fetch = function(...args) {
+        const [url, options] = args;
+        console.log(`[FETCH] ${options?.method || 'GET'} ${url}`);
+        
         return originalFetch.apply(this, args)
             .then(response => {
+                console.log(`[FETCH-RESPONSE] ${response.status} ${url}`);
+                
                 // Se a resposta não for ok, mostrar erro
                 if (!response.ok && response.status >= 400) {
                     response.clone().text().then(text => {
+                        console.error(`[FETCH-ERROR] Status ${response.status}:`, text.substring(0, 200));
                         try {
                             const errorData = JSON.parse(text);
                             if (errorData.message) {
+                                console.error('[FETCH-ERROR-MSG]:', errorData.message);
                                 window.showNotification(errorData.message, 'error');
+                            } else if (errorData.error) {
+                                console.error('[FETCH-ERROR-MSG]:', errorData.error);
+                                window.showNotification(errorData.error, 'error');
                             }
                         } catch (e) {
                             // Se não for JSON, mostrar mensagem genérica
-                            window.showNotification(`Erro ${response.status}: ${response.statusText}`, 'error');
+                            const errorMsg = `Erro ${response.status}: ${response.statusText}`;
+                            console.error('[FETCH-ERROR-GENERIC]:', errorMsg);
+                            window.showNotification(errorMsg, 'error');
                         }
-                    }).catch(() => {
+                    }).catch(err => {
+                        console.error('[FETCH-ERROR-PARSE]:', err);
                         window.showNotification(`Erro ${response.status}: ${response.statusText}`, 'error');
                     });
                 }
@@ -29,6 +42,7 @@ if (typeof fetch !== 'undefined') {
             })
             .catch(error => {
                 // Erro de rede
+                console.error('[FETCH-NETWORK-ERROR]:', error.message || error);
                 window.showNotification('Erro de conexão. Verifique sua internet.', 'error');
                 throw error;
             });
@@ -122,7 +136,18 @@ function showSuccessToast(message, title = 'Sucesso', duration = 3000) {
 
 // Listener para erros JavaScript não capturados
 window.addEventListener('error', function(event) {
-    console.error('Erro não capturado:', event.error || event.message || 'Erro desconhecido');
+    const errorInfo = {
+        message: event.message || 'Erro desconhecido',
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error
+    };
+    
+    console.error('[ERROR-HANDLER] Erro não capturado:', errorInfo);
+    if (event.error && event.error.stack) {
+        console.error('[ERROR-HANDLER] Stack:', event.error.stack);
+    }
     
     // Não mostrar toast para erros de script externos (ads, analytics, etc)
     if (event.filename && !event.filename.includes(window.location.hostname)) {
@@ -141,7 +166,20 @@ window.addEventListener('error', function(event) {
 
 // Listener para promessas rejeitadas não tratadas
 window.addEventListener('unhandledrejection', function(event) {
-    console.error('Promise rejeitada não tratada:', event.reason);
+    console.error('[UNHANDLED-REJECTION] Promise rejeitada:', {
+        reason: event.reason,
+        promise: event.promise
+    });
+    
+    // Log detalhado
+    if (event.reason) {
+        if (event.reason.message) {
+            console.error('[UNHANDLED-REJECTION] Message:', event.reason.message);
+        }
+        if (event.reason.stack) {
+            console.error('[UNHANDLED-REJECTION] Stack:', event.reason.stack);
+        }
+    }
     
     // Em produção, mostrar mensagem genérica
     if (!window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {

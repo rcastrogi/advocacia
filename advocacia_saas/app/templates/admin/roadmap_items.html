@@ -4,31 +4,32 @@
 
 {% block admin_content %}
 <div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0 text-gray-800">
-                <i class="fas fa-list text-primary"></i> {{ title }}
-            </h1>
-            <p class="text-muted mt-1">Gerencie todos os itens do roadmap</p>
+    {% include 'components/list_header.html' with context %}
+
+    {# Statistics #}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-list', 'color': 'primary', 'label': 'Total de Itens', 'value': roadmap_items|length} %}
+            {% include 'components/stat_card.html' %}
         </div>
-        <div>
-            <a href="{{ url_for('admin.roadmap') }}" class="btn btn-outline-primary">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
-            </a>
-            <a href="{{ url_for('admin.new_roadmap_item') }}" class="btn btn-success">
-                <i class="fas fa-plus"></i> Novo Item
-            </a>
-            <button class="btn btn-outline-secondary ms-2" data-reset-view="admin.roadmap_items" title="Resetar preferências de tabela">
-                <i class="fas fa-undo"></i>
-            </button>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-check-circle', 'color': 'success', 'label': 'Concluídos', 'value': roadmap_items|selectattr('status', 'equalto', 'completed')|list|length} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-clock', 'color': 'warning', 'label': 'Em Andamento', 'value': roadmap_items|selectattr('status', 'equalto', 'in_progress')|list|length} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-tasks', 'color': 'info', 'label': 'Planejados', 'value': roadmap_items|selectattr('status', 'equalto', 'planned')|list|length} %}
+            {% include 'components/stat_card.html' %}
         </div>
     </div>
 
     <!-- Alertas serão mostradas como toasts pelo sistema unificado -->
 
     <!-- Filtros -->
-    <div class="card shadow mb-4">
+    <div class="card shadow-sm mb-4">
         <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">
                 <i class="fas fa-filter"></i> Filtros

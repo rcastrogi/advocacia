@@ -21,13 +21,16 @@ def register_error_handlers(app):
             request.is_json
             or request.headers.get("X-Requested-With") == "XMLHttpRequest"
         ):
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "Requisição inválida. Verifique os dados enviados.",
-                    "code": 400,
-                }
-            ), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Requisição inválida. Verifique os dados enviados.",
+                        "code": 400,
+                    }
+                ),
+                400,
+            )
 
         flash(
             "Requisição inválida. Por favor, verifique os dados e tente novamente.",
@@ -42,13 +45,16 @@ def register_error_handlers(app):
             request.is_json
             or request.headers.get("X-Requested-With") == "XMLHttpRequest"
         ):
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "Você não tem permissão para acessar este recurso.",
-                    "code": 403,
-                }
-            ), 403
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Você não tem permissão para acessar este recurso.",
+                        "code": 403,
+                    }
+                ),
+                403,
+            )
 
         flash("Você não tem permissão para acessar esta página.", "danger")
         return render_template("errors/403.html", error=error), 403
@@ -73,13 +79,16 @@ def register_error_handlers(app):
             request.is_json
             or request.headers.get("X-Requested-With") == "XMLHttpRequest"
         ):
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "Muitas tentativas. Por favor, aguarde alguns minutos e tente novamente.",
-                    "code": 429,
-                }
-            ), 429
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Muitas tentativas. Por favor, aguarde alguns minutos e tente novamente.",
+                        "code": 429,
+                    }
+                ),
+                429,
+            )
 
         flash(
             "Muitas tentativas em um curto período. Por favor, aguarde alguns minutos.",
@@ -91,18 +100,33 @@ def register_error_handlers(app):
     def internal_server_error(error):
         """Erro 500 - Erro interno do servidor"""
         logger.error(f"Erro 500: {str(error)}", exc_info=True)
+        logger.error(f"Request URL: {request.url}")
+        logger.error(f"Request Method: {request.method}")
+        logger.error(f"Request Args: {request.args}")
+        logger.error(f"Request Form: {request.form}")
+        if hasattr(error, "__traceback__"):
+            import traceback
+
+            logger.error("Full traceback:")
+            for line in traceback.format_exception(
+                type(error), error, error.__traceback__
+            ):
+                logger.error(line)
 
         if (
             request.is_json
             or request.headers.get("X-Requested-With") == "XMLHttpRequest"
         ):
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "Ocorreu um erro interno. Nossa equipe foi notificada.",
-                    "code": 500,
-                }
-            ), 500
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Ocorreu um erro interno. Nossa equipe foi notificada.",
+                        "code": 500,
+                    }
+                ),
+                500,
+            )
 
         flash(
             "Ocorreu um erro inesperado. Nossa equipe foi notificada e está trabalhando para resolver.",
@@ -117,13 +141,16 @@ def register_error_handlers(app):
             request.is_json
             or request.headers.get("X-Requested-With") == "XMLHttpRequest"
         ):
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "Serviço temporariamente indisponível. Tente novamente em instantes.",
-                    "code": 503,
-                }
-            ), 503
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Serviço temporariamente indisponível. Tente novamente em instantes.",
+                        "code": 503,
+                    }
+                ),
+                503,
+            )
 
         flash(
             "Serviço temporariamente indisponível. Por favor, tente novamente em alguns instantes.",
@@ -135,6 +162,18 @@ def register_error_handlers(app):
     def handle_unexpected_error(error):
         """Captura qualquer erro não tratado"""
         logger.error(f"Erro não tratado: {str(error)}", exc_info=True)
+        logger.error(f"Request URL: {request.url}")
+        logger.error(f"Request Method: {request.method}")
+        logger.error(f"Error Type: {type(error).__name__}")
+
+        if hasattr(error, "__traceback__"):
+            import traceback
+
+            logger.error("Full traceback:")
+            for line in traceback.format_exception(
+                type(error), error, error.__traceback__
+            ):
+                logger.error(line)
 
         # Se for um HTTPException, usar o código correto
         if isinstance(error, HTTPException):
@@ -146,13 +185,16 @@ def register_error_handlers(app):
             request.is_json
             or request.headers.get("X-Requested-With") == "XMLHttpRequest"
         ):
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "Ocorreu um erro inesperado. Tente novamente ou entre em contato com o suporte.",
-                    "code": code,
-                }
-            ), code
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Ocorreu um erro inesperado. Tente novamente ou entre em contato com o suporte.",
+                        "code": code,
+                    }
+                ),
+                code,
+            )
 
         flash("Ocorreu um erro inesperado. Por favor, tente novamente.", "danger")
 

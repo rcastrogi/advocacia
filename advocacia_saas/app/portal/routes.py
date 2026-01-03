@@ -21,7 +21,8 @@ from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
-from app import db
+from app import db, limiter
+from app.decorators import validate_with_schema
 from app.models import (
     CalendarEvent,
     ChatRoom,
@@ -36,6 +37,8 @@ from app.models import (
     User,
 )
 from app.portal import bp
+from app.schemas import ChatMessageSchema, PushSubscriptionSchema, UserPreferencesSchema
+from app.utils.error_messages import format_error_for_user
 
 # Configurar logging específico para o portal
 portal_logger = logging.getLogger("portal")
@@ -482,22 +485,14 @@ def get_chat_messages():
 
 @bp.route("/api/chat/send", methods=["POST"])
 @client_required
+@limiter.limit("20 per minute")
+@validate_with_schema(ChatMessageSchema, location="json")
 def send_chat_message():
     """API para enviar mensagem no chat"""
     try:
-        portal_logger.debug(f"Enviando mensagem no chat para {current_user.email}")
-
-        data = request.get_json()
-        content = data.get("content", "").strip()
-        message_type = data.get("message_type", "text")
-
-        portal_logger.debug(
-            f"Conteúdo da mensagem: '{content[:50]}...', tipo: {message_type}"
-        )
-
-        if not content:
-            portal_logger.warning(f"Mensagem vazia rejeitada para {current_user.email}")
-            return jsonify({"error": "Conteúdo da mensagem é obrigatório"}), 400
+        data = request.validated_data
+        content = data.get("message", "").strip()
+        ai_mode = data.get("ai_mode", False)
 
         client = Client.query.filter_by(user_id=current_user.id).first_or_404()
         chat_room = ChatRoom.query.filter_by(client_id=client.id).first()
@@ -549,6 +544,7 @@ def send_chat_message():
 
 @bp.route("/api/chat/clear", methods=["POST"])
 @client_required
+@limiter.limit("5 per hour")
 def clear_chat():
     """Limpar histórico do chat"""
     try:
@@ -587,14 +583,15 @@ def get_vapid_key():
 
 @bp.route("/api/push/subscribe", methods=["POST"])
 @client_required
+@limiter.limit("5 per minute")
+@validate_with_schema(PushSubscriptionSchema, location="json")
 def subscribe_push():
     """Inscrever para push notifications"""
     try:
-        data = request.get_json()
-        subscription = data.get("subscription")
-
-        if not subscription:
-            return jsonify({"error": "Subscription data required"}), 400
+        data = request.validated_data
+        endpoint = data.get("endpoint")
+        auth_key = data.get("auth_key")
+        p256dh_key = data.get("p256dh_key")
 
         client = Client.query.filter_by(user_id=current_user.id).first_or_404()
 
@@ -761,16 +758,20 @@ def get_calendar_events():
                 "description": deadline.description,
                 "status": deadline.status,
                 "type": "deadline",
-                "backgroundColor": "#dc3545"
-                if deadline.is_overdue()
-                else "#ffc107"
-                if deadline.status == "pending"
-                else "#28a745",
-                "borderColor": "#dc3545"
-                if deadline.is_overdue()
-                else "#ffc107"
-                if deadline.status == "pending"
-                else "#28a745",
+                "backgroundColor": (
+                    "#dc3545"
+                    if deadline.is_overdue()
+                    else "#ffc107"
+                    if deadline.status == "pending"
+                    else "#28a745"
+                ),
+                "borderColor": (
+                    "#dc3545"
+                    if deadline.is_overdue()
+                    else "#ffc107"
+                    if deadline.status == "pending"
+                    else "#28a745"
+                ),
                 "urgent": deadline.is_overdue(),
             }
         )

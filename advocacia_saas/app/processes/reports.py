@@ -34,9 +34,7 @@ def get_status_distribution_report(user_id, start_date, end_date):
 
     status_counts = (
         db.session.query(Process.status, func.count(Process.id).label("count"))
-        .filter(
-            Process.user_id == user_id, Process.created_at.between(start_date, end_date)
-        )
+        .filter(Process.user_id == user_id, Process.created_at.between(start_date, end_date))
         .group_by(Process.status)
         .all()
     )
@@ -71,15 +69,9 @@ def get_monthly_creation_report(user_id, start_date, end_date):
             extract("month", Process.created_at).label("month"),
             func.count(Process.id).label("count"),
         )
-        .filter(
-            Process.user_id == user_id, Process.created_at.between(start_date, end_date)
-        )
-        .group_by(
-            extract("year", Process.created_at), extract("month", Process.created_at)
-        )
-        .order_by(
-            extract("year", Process.created_at), extract("month", Process.created_at)
-        )
+        .filter(Process.user_id == user_id, Process.created_at.between(start_date, end_date))
+        .group_by(extract("year", Process.created_at), extract("month", Process.created_at))
+        .order_by(extract("year", Process.created_at), extract("month", Process.created_at))
         .all()
     )
 
@@ -261,17 +253,21 @@ def get_petition_process_link_report(user_id, start_date, end_date):
             "completed_petitions": completed_petitions,
             "petitions_with_number": petitions_with_number,
             "linked_petitions": linked_petitions,
-            "completion_rate": round((completed_petitions / total_petitions * 100), 2)
-            if total_petitions > 0
-            else 0,
-            "number_assignment_rate": round(
-                (petitions_with_number / completed_petitions * 100), 2
-            )
-            if completed_petitions > 0
-            else 0,
-            "linking_rate": round((linked_petitions / completed_petitions * 100), 2)
-            if completed_petitions > 0
-            else 0,
+            "completion_rate": (
+                round((completed_petitions / total_petitions * 100), 2)
+                if total_petitions > 0
+                else 0
+            ),
+            "number_assignment_rate": (
+                round((petitions_with_number / completed_petitions * 100), 2)
+                if completed_petitions > 0
+                else 0
+            ),
+            "linking_rate": (
+                round((linked_petitions / completed_petitions * 100), 2)
+                if completed_petitions > 0
+                else 0
+            ),
         },
     }
 
@@ -284,9 +280,7 @@ def get_dashboard_analytics(user_id):
 
     # Métricas básicas
     total_processes = Process.query.filter_by(user_id=user_id).count()
-    active_processes = Process.query.filter_by(
-        user_id=user_id, status="ongoing"
-    ).count()
+    active_processes = Process.query.filter_by(user_id=user_id, status="ongoing").count()
     recent_processes = Process.query.filter(
         Process.user_id == user_id, Process.created_at >= thirty_days_ago
     ).count()

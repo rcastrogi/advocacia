@@ -1,7 +1,7 @@
 """add quick action preferences to user
 
 Revision ID: 5d4c0b8d1bb6
-Revises: ea80d501bf0e
+Revises: 7605f8df8a9f
 Create Date: 2025-11-23 00:00:00.000000
 """
 
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "5d4c0b8d1bb6"
-down_revision = "ea80d501bf0e"
+down_revision = "7605f8df8a9f"
 branch_labels = None
 depends_on = None
 

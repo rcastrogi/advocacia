@@ -24,8 +24,12 @@ from flask import (
 from flask_login import current_user, login_required
 
 from app import db, limiter
+from app.decorators import validate_with_schema
 from app.models import BillingPlan, Payment, Subscription, User
 from app.payments import bp
+from app.rate_limits import ADMIN_API_LIMIT
+from app.schemas import PaymentSchema, SubscriptionSchema, WebhookSchema
+from app.utils.error_messages import format_error_for_user
 
 # Configurar Mercado Pago
 mp_access_token = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
@@ -105,29 +109,25 @@ def subscribe(plan_slug, billing_period):
 
 @bp.route("/create-pix-payment", methods=["POST"])
 @login_required
-@limiter.limit("10 per hour")  # Limite restritivo para operações financeiras
+@limiter.limit("10 per hour")
+@validate_with_schema(PaymentSchema, location="json")
 def create_pix_payment():
     """Criar pagamento PIX via Mercado Pago (apenas para pay-per-use)"""
     try:
-        data = request.get_json()
-        plan_slug = data.get("plan_slug")
-        billing_period = data.get("billing_period")
+        data = request.validated_data
+        amount = float(data.get("amount"))
+        plan_id = data.get("plan_id")
+        description = data.get("description", "Pagamento via PIX")
 
-        plan = BillingPlan.query.filter_by(slug=plan_slug, active=True).first()
-        if not plan:
-            return jsonify({"error": "Plano inválido"}), 400
-
-        # Validar que é pay-per-use (não subscription)
-        if plan.plan_type != "per_usage":
-            return jsonify(
-                {"error": "PIX disponível apenas para planos pay-per-use"}
-            ), 400
-
-        # Para planos mensais, usar monthly_fee; para yearly, calcular baseado no monthly_fee
-        if billing_period in ["monthly", "1m"]:
-            amount = float(plan.monthly_fee)
-        else:  # yearly
-            amount = float(plan.monthly_fee) * 12
+        if plan_id:
+            plan = BillingPlan.query.get_or_404(plan_id)
+            if not plan.active:
+                return jsonify({"error": "Plano inválido ou inativo"}), 400
+            if plan.plan_type != "per_usage":
+                return jsonify(
+                    {"error": "PIX disponível apenas para planos pay-per-use"}
+                ), 400
+            amount = max(amount, float(plan.monthly_fee))
 
         # Criar pagamento no Mercado Pago
         payment_data = {
@@ -185,17 +185,19 @@ def create_pix_payment():
 
 @bp.route("/create-mercadopago-subscription", methods=["POST"])
 @login_required
-@limiter.limit("5 per hour")  # Limite muito restritivo para assinaturas
+@limiter.limit("5 per hour")
+@validate_with_schema(SubscriptionSchema, location="json")
 def create_mercadopago_subscription():
     """Criar assinatura recorrente (preapproval) no Mercado Pago"""
     try:
-        data = request.get_json()
-        plan_slug = data.get("plan_slug")
-        billing_period = data.get("billing_period")
+        data = request.validated_data
+        plan_id = data.get("plan_id")
+        card_token = data.get("card_token")
+        auto_recurring = data.get("auto_recurring", True)
 
-        plan = BillingPlan.query.filter_by(slug=plan_slug, active=True).first()
-        if not plan:
-            return jsonify({"error": "Plano inválido"}), 400
+        plan = BillingPlan.query.get_or_404(plan_id)
+        if not plan.active:
+            return jsonify({"error": "Plano inválido ou inativo"}), 400
 
         # Validar que é subscription (não pay-per-use)
         if plan.plan_type == "per_usage":
@@ -203,21 +205,17 @@ def create_mercadopago_subscription():
                 {"error": "Preapproval disponível apenas para assinaturas"}
             ), 400
 
-        # Para planos mensais, usar monthly_fee; para yearly, calcular baseado no monthly_fee
-        if billing_period == "monthly":
-            amount = float(plan.monthly_fee)
-        else:  # yearly
-            amount = float(plan.monthly_fee) * 12
+        amount = float(plan.monthly_fee)
 
         # Criar preapproval (assinatura recorrente)
         preapproval_data = {
             "payer_email": current_user.email,
             "back_url": url_for("payments.success", _external=True),
-            "reason": f"Petitio - {plan.name} ({billing_period})",
-            "external_reference": f"sub_{current_user.id}_{plan.id}_{billing_period}",
+            "reason": f"Petitio - {plan.name}",
+            "external_reference": f"sub_{current_user.id}_{plan.id}",
             "auto_recurring": {
                 "frequency": 1,
-                "frequency_type": "months" if billing_period == "monthly" else "years",
+                "frequency_type": "months",
                 "transaction_amount": amount,
                 "currency_id": "BRL",
             },
@@ -318,11 +316,14 @@ def _validate_mercadopago_webhook_signature(request_data, headers):
 
 
 @bp.route("/webhook/mercadopago", methods=["POST"])
+@limiter.limit("100 per minute")
+@validate_with_schema(WebhookSchema, location="json")
 def mercadopago_webhook():
     """Webhook do Mercado Pago (pagamentos únicos e recorrentes)"""
     try:
-        # Validar assinatura do webhook
-        data = request.get_json()
+        data = request.validated_data
+
+        # Validar assinatura do webhook (camada adicional de segurança)
         if not _validate_mercadopago_webhook_signature(data, request.headers):
             current_app.logger.warning("Webhook Mercado Pago com assinatura inválida")
             return jsonify({"error": "Invalid signature"}), 401
@@ -331,19 +332,22 @@ def mercadopago_webhook():
 
         if event_type == "payment":
             # Pagamento único (PIX ou cartão)
-            payment_id = data["data"]["id"]
-            _handle_payment_webhook(payment_id)
+            payment_id = data.get("data", {}).get("id")
+            if payment_id:
+                _handle_payment_webhook(payment_id)
 
         elif event_type == "preapproval":
             # Assinatura recorrente (preapproval)
-            preapproval_id = data["data"]["id"]
-            _handle_preapproval_webhook(preapproval_id)
+            preapproval_id = data.get("data", {}).get("id")
+            if preapproval_id:
+                _handle_preapproval_webhook(preapproval_id)
 
         return jsonify({"received": True}), 200
 
     except Exception as e:
         current_app.logger.error(f"Erro no webhook Mercado Pago: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        error_msg = format_error_for_user(e, "Erro ao processar webhook")
+        return jsonify({"error": error_msg}), 500
 
 
 def _handle_payment_webhook(payment_id):
@@ -476,21 +480,25 @@ def my_subscription():
 
 @bp.route("/cancel-subscription", methods=["POST"])
 @login_required
-@limiter.limit("3 per hour")  # Limite muito restritivo para cancelamentos
+@limiter.limit("3 per hour")
 def cancel_subscription():
     """Cancelar assinatura"""
-    subscription = Subscription.query.filter_by(
-        user_id=current_user.id, status="active"
-    ).first()
+    try:
+        subscription = Subscription.query.filter_by(
+            user_id=current_user.id, status="active"
+        ).first()
 
-    if not subscription:
-        return jsonify({"error": "Assinatura não encontrada"}), 404
+        if not subscription:
+            return jsonify({"error": "Assinatura não encontrada"}), 404
 
-    immediate = request.json.get("immediate", False)
-    subscription.cancel(immediate=immediate)
+        immediate = request.json.get("immediate", False) if request.is_json else False
+        subscription.cancel(immediate=immediate)
 
-    flash("Assinatura cancelada com sucesso", "success")
-    return jsonify({"success": True})
+        flash("Assinatura cancelada com sucesso", "success")
+        return jsonify({"success": True})
+    except Exception as e:
+        error_msg = format_error_for_user(e, "Erro ao cancelar assinatura")
+        return jsonify({"error": error_msg}), 400
 
 
 @bp.route("/success")

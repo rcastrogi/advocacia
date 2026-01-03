@@ -94,9 +94,7 @@ def new():
             title = request.form.get("title")
             description = request.form.get("description")
             deadline_type = request.form.get("deadline_type")
-            deadline_date = datetime.strptime(
-                request.form.get("deadline_date"), "%Y-%m-%dT%H:%M"
-            )
+            deadline_date = datetime.strptime(request.form.get("deadline_date"), "%Y-%m-%dT%H:%M")
             alert_days_before = int(request.form.get("alert_days_before", 7))
             count_business_days = request.form.get("count_business_days") == "on"
             client_id = request.form.get("client_id")
@@ -124,9 +122,7 @@ def new():
             flash(f"Erro ao criar prazo: {str(e)}", "error")
 
     # GET
-    clients = (
-        Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
-    )
+    clients = Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
     return render_template("deadlines/new.html", clients=clients)
 
 
@@ -162,9 +158,7 @@ def edit(deadline_id):
                 request.form.get("deadline_date"), "%Y-%m-%dT%H:%M"
             )
             deadline.alert_days_before = int(request.form.get("alert_days_before", 7))
-            deadline.count_business_days = (
-                request.form.get("count_business_days") == "on"
-            )
+            deadline.count_business_days = request.form.get("count_business_days") == "on"
 
             db.session.commit()
             flash("Prazo atualizado com sucesso!", "success")
@@ -174,9 +168,7 @@ def edit(deadline_id):
             db.session.rollback()
             flash(f"Erro ao atualizar prazo: {str(e)}", "error")
 
-    clients = (
-        Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
-    )
+    clients = Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
     return render_template("deadlines/edit.html", deadline=deadline, clients=clients)
 
 

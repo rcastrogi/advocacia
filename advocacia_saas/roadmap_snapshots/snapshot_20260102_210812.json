@@ -1,0 +1,1877 @@
+{
+  "timestamp": "2026-01-03T00:08:12.182732+00:00",
+  "environment": "local",
+  "total_items": 39,
+  "categories": [
+    {
+      "id": 1,
+      "name": "Funcionalidades",
+      "items_count": 20
+    },
+    {
+      "id": 2,
+      "name": "Interface",
+      "items_count": 1
+    },
+    {
+      "id": 3,
+      "name": "Performance",
+      "items_count": 3
+    },
+    {
+      "id": 4,
+      "name": "Segurança",
+      "items_count": 6
+    },
+    {
+      "id": 5,
+      "name": "Integração",
+      "items_count": 5
+    },
+    {
+      "id": 6,
+      "name": "Mobile",
+      "items_count": 2
+    },
+    {
+      "id": 7,
+      "name": "IA e Automação",
+      "items_count": 2
+    },
+    {
+      "id": 8,
+      "name": "Outros",
+      "items_count": 0
+    }
+  ],
+  "items": [
+    {
+      "id": 1,
+      "title": "Dashboard de Analytics Avançado",
+      "description": "Implementar dashboard completo com gráficos interativos e métricas em tempo real",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Melhorar a tomada de decisão com dados visuais e insights acionáveis",
+      "technical_complexity": "medium",
+      "user_impact": "high",
+      "tags": [
+        "dashboard",
+        "analytics",
+        "gráficos",
+        "métricas"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Modo Escuro Completo",
+      "description": "Implementar modo escuro em toda a aplicação com alternância automática",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "medium",
+      "effort_display": [
+        "Médio",
+        "1-2 semanas"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Melhorar a experiência do usuário e reduzir fadiga visual",
+      "technical_complexity": "low",
+      "user_impact": "medium",
+      "tags": [
+        "interface",
+        "ux",
+        "acessibilidade",
+        "tema"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 2,
+        "name": "Interface",
+        "slug": "interface",
+        "color": "orange",
+        "icon": "fa-palette"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Autenticação de Dois Fatores",
+      "description": "Implementar 2FA com SMS e aplicativo autenticador",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": null,
+      "actual_completion_date": null,
+      "implemented_at": null,
+      "business_value": "Aumentar significativamente a segurança das contas dos usuários",
+      "technical_complexity": "high",
+      "user_impact": "medium",
+      "tags": [
+        "segurança",
+        "2fa",
+        "autenticação",
+        "privacidade"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 4,
+        "name": "Segurança",
+        "slug": "seguranca",
+        "color": "danger",
+        "icon": "fa-shield-alt"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Assistente IA para Revisão de Petições",
+      "description": "IA que analisa e sugere melhorias nas petições geradas",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "critical",
+      "priority_display": [
+        "Crítica",
+        "danger"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Revolucionar a qualidade das petições geradas e reduzir retrabalho",
+      "technical_complexity": "high",
+      "user_impact": "high",
+      "tags": [
+        "ia",
+        "machine learning",
+        "qualidade",
+        "automação"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 7,
+        "name": "IA e Automação",
+        "slug": "ia-automacao",
+        "color": "lime",
+        "icon": "fa-robot"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Aplicativo Mobile Nativo",
+      "description": "Desenvolver app mobile nativo para iOS e Android",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Expandir o alcance e melhorar a acessibilidade móvel",
+      "technical_complexity": "high",
+      "user_impact": "high",
+      "tags": [
+        "mobile",
+        "ios",
+        "android",
+        "react native"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 6,
+        "name": "Mobile",
+        "slug": "mobile",
+        "color": "cyan",
+        "icon": "fa-mobile-alt"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Otimização de Performance",
+      "description": "Melhorar velocidade de carregamento e resposta do sistema",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": "2025-12-28",
+      "actual_completion_date": "2025-12-31",
+      "implemented_at": null,
+      "business_value": "Melhorar satisfação do usuário e reduzir custos de infraestrutura",
+      "technical_complexity": "medium",
+      "user_impact": "medium",
+      "tags": [
+        "performance",
+        "cache",
+        "cdn",
+        "otimização"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 3,
+        "name": "Performance",
+        "slug": "performance",
+        "color": "olive",
+        "icon": "fa-tachometer-alt"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Integração com Tribunais",
+      "description": "API para envio direto de petições aos tribunais",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "critical",
+      "priority_display": [
+        "Crítica",
+        "danger"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Eliminar intermediários e agilizar todo o processo judicial",
+      "technical_complexity": "high",
+      "user_impact": "high",
+      "tags": [
+        "integração",
+        "api",
+        "tribunais",
+        "automação"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 5,
+        "name": "Integração",
+        "slug": "integracao",
+        "color": "warning",
+        "icon": "fa-plug"
+      }
+    },
+    {
+      "id": 8,
+      "title": "Portal do Cliente Avançado",
+      "description": "Portal completo para clientes com dashboard, documentos, calendário, chat e notificações",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Melhorar experiência do cliente e reduzir suporte administrativo",
+      "technical_complexity": "medium",
+      "user_impact": "high",
+      "tags": [
+        "portal",
+        "cliente",
+        "dashboard",
+        "upload",
+        "calendário",
+        "chat",
+        "notificações"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 9,
+      "title": "Sistema de Notificações Inteligentes",
+      "description": "Notificações contextuais e lembretes automáticos baseados no comportamento do usuário",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": null,
+      "actual_completion_date": null,
+      "implemented_at": null,
+      "business_value": "Aumentar engajamento e retenção de usuários através de comunicação personalizada",
+      "technical_complexity": "medium",
+      "user_impact": "high",
+      "tags": [
+        "notificações",
+        "inteligência",
+        "engajamento",
+        "personalização"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 10,
+      "title": "Sistema de Feedback e Avaliações",
+      "description": "Sistema completo de avaliação de petições e coleta de feedback",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "medium",
+      "effort_display": [
+        "Médio",
+        "1-2 semanas"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Melhorar continuamente a qualidade das petições através do feedback dos usuários",
+      "technical_complexity": "low",
+      "user_impact": "medium",
+      "tags": [
+        "feedback",
+        "qualidade",
+        "avaliações",
+        "melhoria contínua"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 11,
+      "title": "Marketplace de Templates",
+      "description": "Plataforma para usuários compartilharem e venderem templates personalizados",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Criar nova fonte de receita e comunidade de compartilhamento",
+      "technical_complexity": "high",
+      "user_impact": "high",
+      "tags": [
+        "marketplace",
+        "monetização",
+        "comunidade",
+        "templates"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 12,
+      "title": "Sistema de Gamificação",
+      "description": "Pontos, conquistas e níveis para engajar usuários",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": null,
+      "actual_completion_date": null,
+      "implemented_at": null,
+      "business_value": "Aumentar retenção e engajamento através de mecânicas de jogo",
+      "technical_complexity": "medium",
+      "user_impact": "medium",
+      "tags": [
+        "gamificação",
+        "engajamento",
+        "pontos",
+        "conquistas"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 13,
+      "title": "Programa de Indicação",
+      "description": "Sistema de referências com recompensas para usuários",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "medium",
+      "effort_display": [
+        "Médio",
+        "1-2 semanas"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Reduzir custos de aquisição de clientes através do marketing boca-a-boca",
+      "technical_complexity": "low",
+      "user_impact": "medium",
+      "tags": [
+        "indicação",
+        "marketing",
+        "recompensas",
+        "crescimento"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 14,
+      "title": "Integração com Google Drive",
+      "description": "Sincronização automática com Google Drive para backup e compartilhamento",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "medium",
+      "effort_display": [
+        "Médio",
+        "1-2 semanas"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Melhorar workflow e segurança dos documentos",
+      "technical_complexity": "medium",
+      "user_impact": "high",
+      "tags": [
+        "integração",
+        "google drive",
+        "backup",
+        "sincronização"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 5,
+        "name": "Integração",
+        "slug": "integracao",
+        "color": "warning",
+        "icon": "fa-plug"
+      }
+    },
+    {
+      "id": 15,
+      "title": "Integração com Outlook e Gmail",
+      "description": "Sincronização de contatos e calendário com email providers",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": null,
+      "actual_completion_date": null,
+      "implemented_at": null,
+      "business_value": "Simplificar o workflow diário do advogado",
+      "technical_complexity": "medium",
+      "user_impact": "high",
+      "tags": [
+        "integração",
+        "email",
+        "calendário",
+        "produtividade"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 5,
+        "name": "Integração",
+        "slug": "integracao",
+        "color": "warning",
+        "icon": "fa-plug"
+      }
+    },
+    {
+      "id": 16,
+      "title": "API Pública REST",
+      "description": "API para integrações de terceiros e automação",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "low",
+      "priority_display": [
+        "Baixa",
+        "secondary"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Habilitar integrações avançadas e expandir o ecossistema",
+      "technical_complexity": "high",
+      "user_impact": "low",
+      "tags": [
+        "api",
+        "integração",
+        "automação",
+        "ecossistema"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 5,
+        "name": "Integração",
+        "slug": "integracao",
+        "color": "warning",
+        "icon": "fa-plug"
+      }
+    },
+    {
+      "id": 17,
+      "title": "Sistema White-label",
+      "description": "Possibilidade de customização completa da marca e identidade visual",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "low",
+      "priority_display": [
+        "Baixa",
+        "secondary"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Possibilitar vendas para grandes escritórios com identidade própria",
+      "technical_complexity": "medium",
+      "user_impact": "low",
+      "tags": [
+        "white-label",
+        "customização",
+        "marca",
+        "identidade"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 18,
+      "title": "Relatórios Avançados e Exportação",
+      "description": "Sistema completo de relatórios com exportação em múltiplos formatos",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": null,
+      "actual_completion_date": null,
+      "implemented_at": null,
+      "business_value": "Melhorar análise de dados e compliance com requisitos legais",
+      "technical_complexity": "medium",
+      "user_impact": "medium",
+      "tags": [
+        "relatórios",
+        "exportação",
+        "analytics",
+        "compliance"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 19,
+      "title": "Sistema de Backup Automático",
+      "description": "Backups incrementais automáticos com restauração point-in-time",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Garantir continuidade dos negócios e conformidade com LGPD",
+      "technical_complexity": "high",
+      "user_impact": "low",
+      "tags": [
+        "backup",
+        "segurança",
+        "continuidade",
+        "lgpd"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 4,
+        "name": "Segurança",
+        "slug": "seguranca",
+        "color": "danger",
+        "icon": "fa-shield-alt"
+      }
+    },
+    {
+      "id": 20,
+      "title": "Sistema de Auditoria Completo",
+      "description": "Logs detalhados de todas as ações para compliance e segurança",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "medium",
+      "effort_display": [
+        "Médio",
+        "1-2 semanas"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Garantir compliance legal e rastreabilidade de ações",
+      "technical_complexity": "medium",
+      "user_impact": "low",
+      "tags": [
+        "auditoria",
+        "compliance",
+        "segurança",
+        "logs"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 4,
+        "name": "Segurança",
+        "slug": "seguranca",
+        "color": "danger",
+        "icon": "fa-shield-alt"
+      }
+    },
+    {
+      "id": 21,
+      "title": "Arquitetura de Microserviços",
+      "description": "Migrar para arquitetura de microserviços para melhor escalabilidade",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "low",
+      "priority_display": [
+        "Baixa",
+        "secondary"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": null,
+      "actual_completion_date": null,
+      "implemented_at": null,
+      "business_value": "Melhorar manutenibilidade e permitir escalabilidade horizontal",
+      "technical_complexity": "high",
+      "user_impact": "low",
+      "tags": [
+        "microserviços",
+        "arquitetura",
+        "escalabilidade",
+        "manutenção"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 3,
+        "name": "Performance",
+        "slug": "performance",
+        "color": "olive",
+        "icon": "fa-tachometer-alt"
+      }
+    },
+    {
+      "id": 22,
+      "title": "CDN Global e Load Balancing",
+      "description": "Implementar CDN global e balanceamento de carga automático",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Melhorar performance global e reduzir latência",
+      "technical_complexity": "medium",
+      "user_impact": "medium",
+      "tags": [
+        "cdn",
+        "performance",
+        "global",
+        "latência"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 3,
+        "name": "Performance",
+        "slug": "performance",
+        "color": "olive",
+        "icon": "fa-tachometer-alt"
+      }
+    },
+    {
+      "id": 23,
+      "title": "Sistema de Logs de Auditoria Completo",
+      "description": "Implementação completa de sistema de auditoria para rastrear ações de usuários e advogados",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Garantir conformidade, segurança e rastreabilidade de todas as operações no sistema",
+      "technical_complexity": "medium",
+      "user_impact": "medium",
+      "tags": [
+        "auditoria",
+        "logs",
+        "segurança",
+        "compliance",
+        "rastreabilidade"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 4,
+        "name": "Segurança",
+        "slug": "seguranca",
+        "color": "danger",
+        "icon": "fa-shield-alt"
+      }
+    },
+    {
+      "id": 24,
+      "title": "Dashboard Financeiro Avançado",
+      "description": "Dashboard completo para análise financeira com métricas de receita, custos e projeções",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": "2025-12-01",
+      "actual_completion_date": "2025-12-31",
+      "implemented_at": null,
+      "business_value": "Melhorar análise financeira e tomada de decisões estratégicas",
+      "technical_complexity": "medium",
+      "user_impact": "high",
+      "tags": [
+        "dashboard",
+        "financeiro",
+        "analytics",
+        "receita",
+        "custos"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 25,
+      "title": "Sistema de Planos e Preços Dinâmico",
+      "description": "Sistema completo de gestão de planos de assinatura com preços dinâmicos e limites configuráveis",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "critical",
+      "priority_display": [
+        "Crítica",
+        "danger"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Otimizar monetização e oferecer flexibilidade aos usuários",
+      "technical_complexity": "high",
+      "user_impact": "high",
+      "tags": [
+        "planos",
+        "preços",
+        "monetização",
+        "limites",
+        "upgrade"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 26,
+      "title": "Sistema de Petições Dinâmicas",
+      "description": "Sistema avançado de geração de petições com formulários dinâmicos e seções configuráveis",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "critical",
+      "priority_display": [
+        "Crítica",
+        "danger"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Revolucionar a geração de petições com flexibilidade e qualidade",
+      "technical_complexity": "high",
+      "user_impact": "high",
+      "tags": [
+        "petições",
+        "dinâmico",
+        "templates",
+        "jurídico",
+        "automação"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 27,
+      "title": "Integração Completa com IA",
+      "description": "Sistema completo de IA para geração de conteúdo, análise jurídica e automação",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "critical",
+      "priority_display": [
+        "Crítica",
+        "danger"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": "2025-11-16",
+      "actual_completion_date": "2025-12-31",
+      "implemented_at": null,
+      "business_value": "Aumentar produtividade e qualidade através da automação inteligente",
+      "technical_complexity": "high",
+      "user_impact": "high",
+      "tags": [
+        "ia",
+        "machine learning",
+        "automação",
+        "produtividade",
+        "qualidade"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 7,
+        "name": "IA e Automação",
+        "slug": "ia-automacao",
+        "color": "lime",
+        "icon": "fa-robot"
+      }
+    },
+    {
+      "id": 28,
+      "title": "Sistema de Notificações e Alertas",
+      "description": "Sistema completo de notificações push, email e in-app para usuários",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Melhorar engajamento e retenção através de comunicação efetiva",
+      "technical_complexity": "medium",
+      "user_impact": "high",
+      "tags": [
+        "notificações",
+        "engajamento",
+        "comunicação",
+        "alertas"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 29,
+      "title": "Sistema de Gerenciamento de Roadmap",
+      "description": "Plataforma completa para gestão de roadmap de desenvolvimento com feedback dos usuários",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Melhorar transparência e engajamento através do compartilhamento do roadmap",
+      "technical_complexity": "medium",
+      "user_impact": "medium",
+      "tags": [
+        "roadmap",
+        "desenvolvimento",
+        "transparência",
+        "feedback"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 30,
+      "title": "Sistema de Agendamento e Calendário Jurídico",
+      "description": "Calendário integrado com agendamentos de audiências, prazos processuais e reuniões",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "critical",
+      "priority_display": [
+        "Crítica",
+        "danger"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": null,
+      "actual_completion_date": null,
+      "implemented_at": null,
+      "business_value": "Eliminação de perda de prazos e melhor organização jurídica",
+      "technical_complexity": "high",
+      "user_impact": "high",
+      "tags": [
+        "calendário",
+        "agendamento",
+        "prazos",
+        "audiências",
+        "organização"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 31,
+      "title": "Gestão Avançada de Documentos",
+      "description": "Sistema completo de upload, versionamento e organização de documentos",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "critical",
+      "priority_display": [
+        "Crítica",
+        "danger"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Centralização e organização completa da documentação jurídica",
+      "technical_complexity": "high",
+      "user_impact": "high",
+      "tags": [
+        "documentos",
+        "GED",
+        "OCR",
+        "versionamento",
+        "organização"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 32,
+      "title": "Sistema de Cobrança Automática",
+      "description": "Faturamento automático, lembretes de cobrança e integração PIX/Boleto",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "critical",
+      "priority_display": [
+        "Crítica",
+        "danger"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Redução significativa de inadimplência e automação financeira",
+      "technical_complexity": "high",
+      "user_impact": "medium",
+      "tags": [
+        "cobrança",
+        "faturamento",
+        "PIX",
+        "boleto",
+        "inadimplência"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 33,
+      "title": "Análise de Dados e Business Intelligence",
+      "description": "Dashboards executivos com previsões e análise avançada de dados",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": null,
+      "actual_completion_date": null,
+      "implemented_at": null,
+      "business_value": "Tomada de decisão baseada em dados precisos e previsões",
+      "technical_complexity": "high",
+      "user_impact": "high",
+      "tags": [
+        "BI",
+        "analytics",
+        "previsões",
+        "machine learning",
+        "dashboards"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 34,
+      "title": "Sistema de Comunicação Interna",
+      "description": "Chat e colaboração em tempo real entre membros da equipe",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Melhoria significativa na colaboração e produtividade da equipe",
+      "technical_complexity": "medium",
+      "user_impact": "high",
+      "tags": [
+        "chat",
+        "comunicação",
+        "colaboração",
+        "produtividade",
+        "equipe"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 35,
+      "title": "Sistema de Backup e Recuperação Avançado",
+      "description": "Backups automáticos, recuperação point-in-time e alta disponibilidade",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Garantia de continuidade de negócio e proteção de dados",
+      "technical_complexity": "high",
+      "user_impact": "critical",
+      "tags": [
+        "backup",
+        "recuperação",
+        "disponibilidade",
+        "LGPD",
+        "continuidade"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 4,
+        "name": "Segurança",
+        "slug": "seguranca",
+        "color": "danger",
+        "icon": "fa-shield-alt"
+      }
+    },
+    {
+      "id": 36,
+      "title": "API Pública RESTful Completa",
+      "description": "API completa para integração com sistemas externos",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "high",
+      "priority_display": [
+        "Alta",
+        "warning"
+      ],
+      "estimated_effort": "xlarge",
+      "effort_display": [
+        "Muito Grande",
+        "3+ meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": null,
+      "actual_completion_date": null,
+      "implemented_at": null,
+      "business_value": "Criação de ecossistema de integrações e valor agregado",
+      "technical_complexity": "high",
+      "user_impact": "medium",
+      "tags": [
+        "API",
+        "REST",
+        "integração",
+        "OAuth2",
+        "webhooks"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 5,
+        "name": "Integração",
+        "slug": "integracao",
+        "color": "warning",
+        "icon": "fa-plug"
+      }
+    },
+    {
+      "id": 37,
+      "title": "Sistema de Compliance LGPD Avançado",
+      "description": "Controle completo de consentimento, auditoria e relatórios de compliance",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": false,
+      "internal_only": true,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-03",
+      "planned_completion_date": "2025-12-18",
+      "actual_start_date": "2026-01-02",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:42:17.962707",
+      "business_value": "Conformidade legal completa e redução de riscos",
+      "technical_complexity": "high",
+      "user_impact": "critical",
+      "tags": [
+        "LGPD",
+        "compliance",
+        "privacidade",
+        "auditoria",
+        "DPO"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 4,
+        "name": "Segurança",
+        "slug": "seguranca",
+        "color": "danger",
+        "icon": "fa-shield-alt"
+      }
+    },
+    {
+      "id": 38,
+      "title": "Sistema de Gamificação para Engajamento",
+      "description": "Pontuação, conquistas e leaderboards para aumentar engajamento",
+      "status": "completed",
+      "status_display": [
+        "Concluído",
+        "success"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "medium",
+      "effort_display": [
+        "Médio",
+        "1-2 semanas"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": false,
+      "planned_start_date": "2025-12-13",
+      "planned_completion_date": "2025-12-28",
+      "actual_start_date": "2025-12-13",
+      "actual_completion_date": "2026-01-02",
+      "implemented_at": "2026-01-02T22:40:41.320571",
+      "business_value": "Aumento significativo de engajamento e retenção de usuários",
+      "technical_complexity": "low",
+      "user_impact": "medium",
+      "tags": [
+        "gamificação",
+        "engajamento",
+        "pontos",
+        "badges",
+        "competição"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 100,
+      "category": {
+        "id": 1,
+        "name": "Funcionalidades",
+        "slug": "funcionalidades",
+        "color": "primary",
+        "icon": "fa-lightbulb"
+      }
+    },
+    {
+      "id": 39,
+      "title": "Portal do Cliente Mobile-First",
+      "description": "Otimização completa para mobile com PWA e notificações push",
+      "status": "planned",
+      "status_display": [
+        "Planejado",
+        "secondary"
+      ],
+      "priority": "medium",
+      "priority_display": [
+        "Média",
+        "primary"
+      ],
+      "estimated_effort": "large",
+      "effort_display": [
+        "Grande",
+        "1-2 meses"
+      ],
+      "visible_to_users": true,
+      "internal_only": false,
+      "show_new_badge": true,
+      "planned_start_date": "2026-01-07",
+      "planned_completion_date": "2026-01-22",
+      "actual_start_date": null,
+      "actual_completion_date": null,
+      "implemented_at": null,
+      "business_value": "Melhoria significativa da experiência móvel e acessibilidade",
+      "technical_complexity": "medium",
+      "user_impact": "high",
+      "tags": [
+        "mobile",
+        "PWA",
+        "notificações",
+        "experiência",
+        "acessibilidade"
+      ],
+      "is_overdue": false,
+      "progress_percentage": 0,
+      "category": {
+        "id": 6,
+        "name": "Mobile",
+        "slug": "mobile",
+        "color": "cyan",
+        "icon": "fa-mobile-alt"
+      }
+    }
+  ],
+  "statistics": {
+    "by_status": {
+      "completed": 26,
+      "planned": 13
+    },
+    "by_category": {
+      "Funcionalidades": 20,
+      "Interface": 1,
+      "Segurança": 6,
+      "IA e Automação": 2,
+      "Mobile": 2,
+      "Performance": 3,
+      "Integração": 5
+    },
+    "total_progress": 66.67
+  }
+}

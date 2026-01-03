@@ -127,7 +127,7 @@ class AuditManager:
             entity_id=user.id,
             action=action,
             description=description,
-            metadata={"login_success": success},
+            additional_metadata={"login_success": success},
         )
 
     @staticmethod

@@ -149,9 +149,7 @@ def record_petition_usage(user, petition_type: PetitionType) -> PetitionUsage:
         raise BillingAccessError("Assinatura inadimplente.")
 
     # Determinar se esta petição será billable
-    will_be_billable = bool(
-        petition_type.is_billable and plan.plan.plan_type == "per_usage"
-    )
+    will_be_billable = bool(petition_type.is_billable and plan.plan.plan_type == "per_usage")
 
     # Verificar limites APENAS para petições billable em planos mensais
     if (
@@ -235,9 +233,7 @@ def get_user_petition_usage(user) -> dict:
         "total_used": total_used,  # Total incluindo gratuitas
         "free_used": total_used - billable_used,  # Petições gratuitas
         "remaining": None if is_unlimited else max(0, limit - billable_used),
-        "percentage_used": 0
-        if is_unlimited
-        else min(100, int((billable_used / limit) * 100)),
+        "percentage_used": 0 if is_unlimited else min(100, int((billable_used / limit) * 100)),
         "is_unlimited": is_unlimited,
         "is_near_limit": False if is_unlimited else (billable_used >= limit * 0.8),
         "is_over_limit": False if is_unlimited else (billable_used >= limit),
@@ -274,8 +270,7 @@ def _create_limit_warning_notification(user, plan, used_count):
             type="ai_limit",
         )
         .filter(
-            Notification.created_at
-            >= datetime.utcnow().replace(day=1, hour=0, minute=0, second=0)
+            Notification.created_at >= datetime.utcnow().replace(day=1, hour=0, minute=0, second=0)
         )
         .first()
     )
@@ -311,9 +306,7 @@ def get_unread_notifications(user):
 
 def mark_notification_as_read(notification_id, user):
     """Marca uma notificação como lida."""
-    notification = Notification.query.filter_by(
-        id=notification_id, user_id=user.id
-    ).first()
+    notification = Notification.query.filter_by(id=notification_id, user_id=user.id).first()
 
     if notification:
         notification.read = True

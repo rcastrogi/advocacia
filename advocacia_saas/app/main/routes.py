@@ -14,7 +14,7 @@ from flask import (
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
-from app import db
+from app import db, limiter
 from app.billing.analytics import (
     get_monthly_usage_history,
     get_usage_insights,
@@ -26,7 +26,7 @@ from app.billing.utils import (
     get_unread_notifications,
     get_user_petition_usage,
 )
-from app.decorators import lawyer_required
+from app.decorators import lawyer_required, validate_with_schema
 from app.main import bp
 from app.main.forms import TestimonialForm
 from app.models import (
@@ -41,6 +41,14 @@ from app.models import (
     Testimonial,
 )
 from app.quick_actions import build_dashboard_actions
+from app.rate_limits import ADMIN_API_LIMIT
+from app.schemas import (
+    OABValidationSchema,
+    RoadmapFeedbackSchema,
+    TestimonialSchema,
+    UserPreferencesSchema,
+)
+from app.utils.error_messages import format_error_for_user
 
 # Ícones para categorias de petições
 CATEGORY_ICONS = {
@@ -433,6 +441,7 @@ def testimonials():
 
 @bp.route("/depoimentos/novo", methods=["GET", "POST"])
 @login_required
+@limiter.limit("5 per hour")
 def new_testimonial():
     """Formulário para enviar um novo depoimento."""
     form = TestimonialForm()
@@ -450,9 +459,11 @@ def new_testimonial():
             display_role=form.display_role.data.strip()
             if form.display_role.data
             else None,
-            display_location=form.display_location.data.strip()
-            if form.display_location.data
-            else None,
+            display_location=(
+                form.display_location.data.strip()
+                if form.display_location.data
+                else None
+            ),
             status="pending",
         )
         db.session.add(testimonial)
@@ -472,6 +483,7 @@ def new_testimonial():
 
 @bp.route("/depoimentos/<int:testimonial_id>/editar", methods=["GET", "POST"])
 @login_required
+@limiter.limit("5 per hour")
 def edit_testimonial(testimonial_id):
     """Edita um depoimento existente (apenas se pendente)."""
     testimonial = Testimonial.query.get_or_404(testimonial_id)
@@ -511,6 +523,7 @@ def edit_testimonial(testimonial_id):
 
 @bp.route("/depoimentos/<int:testimonial_id>/excluir", methods=["POST"])
 @login_required
+@limiter.limit("5 per hour")
 def delete_testimonial(testimonial_id):
     """Exclui um depoimento do usuário."""
     testimonial = Testimonial.query.get_or_404(testimonial_id)
@@ -562,6 +575,7 @@ def admin_testimonials():
 
 @bp.route("/admin/depoimentos/<int:testimonial_id>/moderar", methods=["POST"])
 @login_required
+@limiter.limit(ADMIN_API_LIMIT)
 def moderate_testimonial(testimonial_id):
     """Aprova ou rejeita um depoimento."""
     if current_user.user_type != "master":
@@ -625,6 +639,7 @@ def notifications():
 
 @bp.route("/notifications/mark-read/<int:notification_id>", methods=["POST"])
 @login_required
+@limiter.limit("30 per minute")
 def mark_notification_read(notification_id):
     """Marca uma notificação como lida via AJAX."""
     from flask import jsonify
@@ -645,6 +660,7 @@ def mark_notification_read(notification_id):
 
 @bp.route("/notifications/mark-all-read", methods=["POST"])
 @login_required
+@limiter.limit("10 per minute")
 def mark_all_notifications_read():
     """Marca todas as notificações como lidas."""
     from flask import jsonify
@@ -661,12 +677,15 @@ def mark_all_notifications_read():
 
     db.session.commit()
 
-    return jsonify(
-        {
-            "status": "success",
-            "message": f"{len(notifications)} notificações marcadas como lidas",
-        }
-    ), 200
+    return (
+        jsonify(
+            {
+                "status": "success",
+                "message": f"{len(notifications)} notificações marcadas como lidas",
+            }
+        ),
+        200,
+    )
 
 
 @bp.route("/sitemap.xml")
@@ -874,6 +893,7 @@ def roadmap_item(slug):
 
 @bp.route("/roadmap/<slug>/feedback", methods=["GET", "POST"])
 @login_required
+@limiter.limit("10 per hour")
 def roadmap_item_feedback(slug):
     """Página para usuários darem feedback sobre uma funcionalidade implementada"""
 
@@ -991,26 +1011,31 @@ def api_get_user_preferences():
 
 @bp.route("/api/user/preferences", methods=["POST"])
 @login_required
+@limiter.limit("10 per minute")
 def api_save_user_preferences():
     """Salva as preferências de tabela para o usuário na view especificada"""
-    data = request.get_json() or {}
-    view_key = data.get("view_key") or data.get("view")
-    preferences = data.get("preferences")
+    try:
+        data = request.get_json() or {}
+        view_key = data.get("view_key") or data.get("view")
+        preferences = data.get("preferences")
 
-    if not view_key or preferences is None:
-        return jsonify({"error": "view_key and preferences are required"}), 400
+        if not view_key or preferences is None:
+            return jsonify({"error": "view_key and preferences are required"}), 400
 
-    # Basic validation: preferences should be a dict and not too large
-    if not isinstance(preferences, dict):
-        return jsonify({"error": "preferences must be an object"}), 400
+        # Basic validation: preferences should be a dict and not too large
+        if not isinstance(preferences, dict):
+            return jsonify({"error": "preferences must be an object"}), 400
 
-    # Limit size (approx) to avoid abuse
-    import json
+        # Limit size (approx) to avoid abuse
+        import json
 
-    prefs_str = json.dumps(preferences)
-    if len(prefs_str) > 10000:  # ~10KB arbitrary limit
-        return jsonify({"error": "preferences payload too large"}), 400
+        prefs_str = json.dumps(preferences)
+        if len(prefs_str) > 10000:  # ~10KB arbitrary limit
+            return jsonify({"error": "preferences payload too large"}), 400
 
-    TablePreference.set_for_user(current_user.id, view_key, preferences)
+        TablePreference.set_for_user(current_user.id, view_key, preferences)
 
-    return jsonify({"success": True})
+        return jsonify({"success": True})
+    except Exception as e:
+        error_msg = format_error_for_user(e, "erro ao salvar preferências")
+        return jsonify({"error": error_msg}), 400

@@ -19,6 +19,8 @@ openai>=1.0.0
 Flask-Limiter==3.5.0
 Flask-Talisman==1.1.0
 Flask-Caching==2.3.1
+marshmallow==3.20.1
+marshmallow-sqlalchemy==0.29.0
 sentry-sdk[flask]==1.40.0
 redis==5.0.1
 pytest==7.4.3

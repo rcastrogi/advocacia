@@ -1,0 +1,37 @@
+<!-- Componente: Entity ID Badge com opção de copiar -->
+<span class="badge bg-secondary d-inline-flex align-items-center gap-2" id="entity-id-badge-{{ entity_id or 'generic' }}" 
+      title="Clique para copiar o ID para auditoria">
+    <i class="fas fa-key"></i>
+    ID: {{ entity_id }}
+    <a href="#" onclick="copyEntityIdToAudit('{{ entity_type }}', {{ entity_id }}); return false;" 
+       class="text-white text-decoration-none ms-1" title="Copiar para filtro de auditoria">
+        <i class="fas fa-copy"></i>
+    </a>
+</span>
+
+<script>
+function copyEntityIdToAudit(entityType, entityId) {
+    // Copia para clipboard
+    const text = `${entityType}:${entityId}`;
+    navigator.clipboard.writeText(text).then(() => {
+        // Mostrar toast de confirmação
+        const badge = document.getElementById(`entity-id-badge-${entityId}`);
+        badge.classList.add('bg-success');
+        setTimeout(() => {
+            badge.classList.remove('bg-success');
+        }, 2000);
+    });
+    
+    // Sugerir abrir auditoria com filtro pré-preenchido
+    const auditUrl = `/admin/audit-logs?entity_type=${encodeURIComponent(entityType)}&entity_id=${entityId}`;
+    const notification = {
+        title: 'ID Copiado!',
+        message: `${entityType}:${entityId} foi copiado. <a href="${auditUrl}" class="text-decoration-none">Ver no audit? →</a>`
+    };
+    
+    // Mostrar notificação com link para auditoria
+    if (typeof showNotification === 'function') {
+        showNotification(notification.message, 'info');
+    }
+}
+</script>

@@ -430,27 +430,6 @@
                         <!-- Área de Texto -->
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
 
-                        <!-- Toolbar de IA (se disponível) -->
-                        <div class="ai-toolbar d-flex justify-content-between align-items-center"
-                             x-show="field.ai_enabled">
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-success"
-                                        @click="generateAIContent('{{ section_config.section.slug }}_{{ field.name }}')">
-                                    <i class="fas fa-magic me-1"></i> Gerar com IA
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-primary"
-                                        @click="improveContent('{{ section_config.section.slug }}_{{ field.name }}')">
-                                    <i class="fas fa-edit me-1"></i> Melhorar
-                                </button>
-                            </div>
-                            <div class="ai-credits-indicator">
-                                <small class="text-muted">
-                                    <i class="fas fa-coins me-1"></i>
-                                    Créditos: <span x-text="aiCredits"></span>
-                                </small>
-                            </div>
-                        </div>
-
                         <textarea class="form-control"
                                   name="{{ section_config.section.slug }}_{{ field.name }}"
                                   x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
@@ -517,6 +496,46 @@
                             <option value="SE">Sergipe</option>
                             <option value="TO">Tocantins</option>
                         </select>
+                        
+                        {% elif field.type == 'file' %}
+                        <!-- Campo de Upload de Arquivos -->
+                        <label class="form-label {% if field.required %}required{% endif %}">
+                            {{ field.label }}
+                            {% if field.hint %}<small class="text-muted d-block">{{ field.hint }}</small>{% endif %}
+                        </label>
+                        <div class="file-upload-area border-2 border-dashed rounded p-4 text-center" 
+                             @drop.prevent="handleFileDrop($event, '{{ section_config.section.slug }}_{{ field.name }}')"
+                             @dragover.prevent="dragover = true"
+                             @dragleave.prevent="dragover = false"
+                             :class="{'bg-light': dragover}">
+                            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-2">Arraste arquivos aqui ou clique para selecionar</p>
+                            <input type="file" 
+                                   class="form-control d-none"
+                                   id="file_{{ section_config.section.slug }}_{{ field.name }}"
+                                   @change="handleFileSelect($event, '{{ section_config.section.slug }}_{{ field.name }}')"
+                                   accept="{{ field.accept or '.pdf,.doc,.docx,.png,.jpg,.jpeg' }}"
+                                   {% if field.multiple %}multiple{% endif %}
+                                   {% if field.required %}required{% endif %}>
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                    @click="$el.closest('.file-upload-area').querySelector('input[type=file]').click()">
+                                Selecionar Arquivo
+                            </button>
+                        </div>
+                        <!-- Lista de arquivos selecionados -->
+                        <div class="mt-2" x-show="selectedFiles['{{ section_config.section.slug }}_{{ field.name }}'] && selectedFiles['{{ section_config.section.slug }}_{{ field.name }}'].length > 0">
+                            <small class="text-muted">Arquivos selecionados:
+                            <span x-text="'(' + (selectedFiles['{{ section_config.section.slug }}_{{ field.name }}'].reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(1) + 'MB / 50MB)'"></span>
+                            </small>
+                            <ul class="list-sm">
+                                <template x-for="(file, index) in (selectedFiles['{{ section_config.section.slug }}_{{ field.name }}'] || [])" :key="file.name + index">
+                                    <li class="small text-success d-flex justify-content-between">
+                                        <span>✓ <span x-text="file.name"></span> (<span x-text="(file.size / 1024 / 1024).toFixed(2) + ' MB'"></span>)</span>
+                                        <button type="button" class="btn btn-sm btn-link p-0 text-danger" @click="removeFile('{{ section_config.section.slug }}_{{ field.name }}', index)">×</button>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
                         
                         {% endif %}
                     </div>
@@ -702,12 +721,14 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('dynamicPetitionForm', () => ({
         sections: window.PETITION_SECTIONS || [],
         formData: {},
+        selectedFiles: {},  // Arquivos selecionados por campo
         sectionExpanded: {},
         autoSaveStatus: 'idle',
         isGenerating: false,
         isSaving: false,
         isUploading: false,
         isDragging: false,
+        dragover: false,
         cepLoading: null,  // Campo CEP que está carregando
         petitionId: null,  // ID da petição se estiver editando
         attachments: [],  // Lista de anexos da petição
@@ -933,18 +954,26 @@ document.addEventListener('alpine:init', () => {
         createAIToolbarForField(fieldName, container, fieldType = 'editor') {
             // Verificar se já existe uma toolbar
             let element = container;
+            let toolbarContainer = null;
+            
             if (fieldType === 'editor') {
                 const wrapper = container.closest('.quill-wrapper');
-                if (wrapper && wrapper.previousElementSibling && wrapper.previousElementSibling.classList.contains('ai-toolbar')) {
-                    return; // Já existe
+                if (wrapper) {
+                    // Verificar se a toolbar já existe
+                    if (wrapper.previousElementSibling && wrapper.previousElementSibling.classList.contains('ai-toolbar')) {
+                        return; // Já existe
+                    }
+                    toolbarContainer = wrapper;
                 }
-                element = wrapper;
             } else if (fieldType === 'textarea') {
+                // Para textarea, verificar se toolbar já existe antes
                 if (container.previousElementSibling && container.previousElementSibling.classList.contains('ai-toolbar')) {
                     return; // Já existe
                 }
-                element = container;
+                toolbarContainer = container;
             }
+
+            if (!toolbarContainer) return; // Nenhum container válido
 
             // Criar toolbar de IA
             const toolbar = document.createElement('div');
@@ -952,25 +981,25 @@ document.addEventListener('alpine:init', () => {
             toolbar.innerHTML = `
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-sm btn-outline-success"
-                            @click="generateAIContent('${fieldName}')">
+                            onclick="window.PetitionForm?.generateAIContent('${fieldName}')">
                         <i class="fas fa-magic me-1"></i> Gerar com IA
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-primary"
-                            @click="improveContent('${fieldName}')">
+                            onclick="window.PetitionForm?.improveContent('${fieldName}')">
                         <i class="fas fa-edit me-1"></i> Melhorar
                     </button>
                 </div>
                 <div class="ai-credits-indicator">
                     <small class="text-muted">
                         <i class="fas fa-coins me-1"></i>
-                        Créditos: <span x-text="aiCredits"></span>
+                        Créditos: <span id="credits-${fieldName}">--</span>
                     </small>
                 </div>
             `;
 
             // Inserir antes do elemento
-            if (element) {
-                element.parentNode.insertBefore(toolbar, element);
+            if (toolbarContainer) {
+                toolbarContainer.parentNode.insertBefore(toolbar, toolbarContainer);
             }
         },
 
@@ -1571,6 +1600,67 @@ document.addEventListener('alpine:init', () => {
             } catch (error) {
                 console.error('Erro ao melhorar conteúdo com IA:', error);
                 this.showToast('Erro ao melhorar conteúdo com IA', 'error');
+            }
+        },
+        
+        handleFileSelect(event, fieldName) {
+            const files = Array.from(event.target.files);
+            this.processFiles(files, fieldName);
+        },
+        
+        handleFileDrop(event, fieldName) {
+            this.dragover = false;
+            const files = Array.from(event.dataTransfer.files);
+            this.processFiles(files, fieldName);
+        },
+        
+        processFiles(files, fieldName) {
+            if (!this.selectedFiles[fieldName]) {
+                this.selectedFiles[fieldName] = [];
+            }
+            
+            // Limite total de 50MB para todos os arquivos do campo
+            const maxTotalSize = 50 * 1024 * 1024; // 50MB total
+            const maxIndividualSize = 20 * 1024 * 1024; // 20MB por arquivo individual
+            const allowedTypes = ['application/pdf', 'application/msword', 
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'image/jpeg', 'image/png', 'image/gif', 'text/plain'];
+            
+            // Calcular tamanho total atual
+            let currentTotalSize = this.selectedFiles[fieldName].reduce((sum, f) => sum + f.size, 0);
+            
+            for (const file of files) {
+                // Validar tamanho individual
+                if (file.size > maxIndividualSize) {
+                    this.showToast(`Arquivo ${file.name} excede o tamanho máximo de 20MB.`, 'error');
+                    continue;
+                }
+                
+                // Validar tamanho total
+                if (currentTotalSize + file.size > maxTotalSize) {
+                    this.showToast(`Total de arquivos excede o limite de 50MB. Remova alguns arquivos e tente novamente.`, 'error');
+                    break;
+                }
+                
+                // Validar tipo
+                if (!allowedTypes.includes(file.type)) {
+                    this.showToast(`Tipo de arquivo não permitido: ${file.name}`, 'error');
+                    continue;
+                }
+                
+                // Adicionar à lista
+                this.selectedFiles[fieldName].push(file);
+                currentTotalSize += file.size;
+            }
+            
+            // Armazenar referência nos formData
+            this.formData[fieldName] = this.selectedFiles[fieldName].map(f => f.name).join(', ');
+        },
+        
+        removeFile(fieldName, index) {
+            if (this.selectedFiles[fieldName]) {
+                this.selectedFiles[fieldName].splice(index, 1);
+                this.formData[fieldName] = this.selectedFiles[fieldName].map(f => f.name).join(', ');
             }
         },
         

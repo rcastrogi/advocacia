@@ -332,6 +332,55 @@ class User(UserMixin, db.Model):
             "anonymized_at": datetime.now(timezone.utc).isoformat(),
         }
 
+    def restore_from_anonymization(self, anonymization_request):
+        """Restaura dados originais após anonimização (LGPD Art. 18)"""
+        import json
+
+        if self.billing_status != "anonymized":
+            raise ValueError("Usuário não está anonimizado")
+
+        if not anonymization_request or anonymization_request.status != "completed":
+            raise ValueError("Solicitação de anonimização inválida ou não processada")
+
+        try:
+            # Obter dados originais
+            original_data = json.loads(
+                anonymization_request.anonymized_data or "{}"
+            ).get("original_data", {})
+
+            if not original_data:
+                raise ValueError(
+                    "Dados originais não encontrados na solicitação de anonimização"
+                )
+
+            # Restaurar dados pessoais
+            self.full_name = original_data.get("full_name", self.full_name)
+            self.email = original_data.get("email", self.email)
+            self.phone = original_data.get("phone")
+            self.cpf_cnpj = original_data.get("cpf_cnpj")
+
+            # Restaurar endereço
+            address = original_data.get("address", {})
+            self.street = address.get("street")
+            self.city = address.get("city")
+            self.state = address.get("state")
+            self.zip_code = address.get("zip_code")
+
+            # Marcar como ativo novamente
+            self.billing_status = "active"
+
+            db.session.commit()
+
+            return {
+                "user_id": self.id,
+                "restored_fields": list(original_data.keys()),
+                "restored_at": datetime.now(timezone.utc).isoformat(),
+            }
+
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Erro ao restaurar dados: {str(e)}")
+
     def delete_user_data(self):
         """Exclui permanentemente os dados do usuário (LGPD - Direito ao Esquecimento)"""
         if self.is_master:
@@ -858,10 +907,6 @@ class PetitionType(db.Model):
         cascade="all, delete-orphan",
     )
 
-    def get_sections_ordered(self):
-        """Retorna as seções deste tipo de petição ordenadas."""
-        return self.type_sections.order_by(PetitionTypeSection.order).all()
-
     def __repr__(self):
         return f"<PetitionType {self.slug}>"
 
@@ -886,6 +931,9 @@ class BillingPlan(db.Model):
     discount_percentage = db.Column(
         db.Numeric(5, 2), default=Decimal("0.00")
     )  # Desconto único para o período
+    
+    # Votação em features
+    votes_per_period = db.Column(db.Integer, default=0)  # 0 = sem direito a votar
 
     petition_types = db.relationship(
         "PetitionType",
@@ -1110,9 +1158,11 @@ class Invoice(db.Model):
             user_id=self.user_id,
             client_id=self.client_id,
             case_id=self.case_id,
-            invoice_number=f"{self.invoice_number.split('-')[0]}-{datetime.now(timezone.utc).strftime('%Y%m')}"
-            if self.invoice_number
-            else None,
+            invoice_number=(
+                f"{self.invoice_number.split('-')[0]}-{datetime.now(timezone.utc).strftime('%Y%m')}"
+                if self.invoice_number
+                else None
+            ),
             amount=self.amount,
             currency=self.currency,
             description=self.description,
@@ -1313,56 +1363,8 @@ class PetitionSection(db.Model):
         return f"<PetitionSection {self.slug}>"
 
 
-class PetitionTypeSection(db.Model):
-    """
-    Relaciona tipos de petição com suas seções (muitos para muitos com metadados).
-    Permite definir quais seções aparecem em cada tipo de petição e em qual ordem.
-    """
-
-    __tablename__ = "petition_type_sections"
-
-    id = db.Column(db.Integer, primary_key=True)
-    petition_type_id = db.Column(
-        db.Integer, db.ForeignKey("petition_types.id"), nullable=False
-    )
-    section_id = db.Column(
-        db.Integer, db.ForeignKey("petition_sections.id"), nullable=False
-    )
-    order = db.Column(db.Integer, default=0)  # Ordem desta seção neste tipo de petição
-    is_required = db.Column(db.Boolean, default=False)  # Seção obrigatória?
-    is_expanded = db.Column(db.Boolean, default=True)  # Começa expandida?
-
-    # Sobrescrever campos específicos para este tipo (opcional)
-    # Ex: {"author_name": {"label": "Nome do Requerente"}} - muda apenas o label
-    field_overrides = db.Column(db.JSON, default=dict)
-
-    # Relacionamentos
-    petition_type = db.relationship(
-        "PetitionType",
-        backref=db.backref(
-            "type_sections", lazy="dynamic", order_by="PetitionTypeSection.order"
-        ),
-    )
-    section = db.relationship(
-        "PetitionSection", backref=db.backref("type_sections", lazy="dynamic")
-    )
-
-    def get_fields(self):
-        """Retorna os campos da seção com overrides aplicados para este tipo de petição."""
-        import copy
-
-        fields = copy.deepcopy(self.section.get_fields()) if self.section else []
-        overrides = self.field_overrides or {}
-
-        for field in fields:
-            field_name = field.get("name")
-            if field_name in overrides:
-                field.update(overrides[field_name])
-
-        return fields
-
-    def __repr__(self):
-        return f"<PetitionTypeSection type={self.petition_type_id} section={self.section_id}>"
+# PetitionTypeSection removed - using only PetitionModelSection
+# Kept table in DB for backward compatibility, but no longer used in code
 
 
 class SavedPetition(db.Model):
@@ -2165,13 +2167,15 @@ class Message(db.Model):
             "client_id": self.client_id,
             "content": self.content,
             "message_type": self.message_type,
-            "attachment": {
-                "filename": self.attachment_filename,
-                "size": self.attachment_size,
-                "type": self.attachment_type,
-            }
-            if self.attachment_filename
-            else None,
+            "attachment": (
+                {
+                    "filename": self.attachment_filename,
+                    "size": self.attachment_size,
+                    "type": self.attachment_type,
+                }
+                if self.attachment_filename
+                else None
+            ),
             "is_read": self.is_read,
             "read_at": self.read_at.isoformat() if self.read_at else None,
             "created_at": self.created_at.isoformat(),
@@ -2410,9 +2414,9 @@ class Document(db.Model):
             "tags": self.tags.split(",") if self.tags else [],
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
-            "last_accessed_at": self.last_accessed_at.isoformat()
-            if self.last_accessed_at
-            else None,
+            "last_accessed_at": (
+                self.last_accessed_at.isoformat() if self.last_accessed_at else None
+            ),
             "client": {"id": self.client.id, "name": self.client.name}
             if self.client
             else None,
@@ -2606,18 +2610,22 @@ class RoadmapItem(db.Model):
             "visible_to_users": self.visible_to_users,
             "internal_only": self.internal_only,
             "show_new_badge": self.show_new_badge,
-            "planned_start_date": self.planned_start_date.isoformat()
-            if self.planned_start_date
-            else None,
-            "planned_completion_date": self.planned_completion_date.isoformat()
-            if self.planned_completion_date
-            else None,
-            "actual_start_date": self.actual_start_date.isoformat()
-            if self.actual_start_date
-            else None,
-            "actual_completion_date": self.actual_completion_date.isoformat()
-            if self.actual_completion_date
-            else None,
+            "planned_start_date": (
+                self.planned_start_date.isoformat() if self.planned_start_date else None
+            ),
+            "planned_completion_date": (
+                self.planned_completion_date.isoformat()
+                if self.planned_completion_date
+                else None
+            ),
+            "actual_start_date": (
+                self.actual_start_date.isoformat() if self.actual_start_date else None
+            ),
+            "actual_completion_date": (
+                self.actual_completion_date.isoformat()
+                if self.actual_completion_date
+                else None
+            ),
             "implemented_at": self.implemented_at.isoformat()
             if self.implemented_at
             else None,
@@ -2627,15 +2635,17 @@ class RoadmapItem(db.Model):
             "tags": self.get_tags_list(),
             "is_overdue": self.is_overdue(),
             "progress_percentage": self.get_progress_percentage(),
-            "category": {
-                "id": self.category.id,
-                "name": self.category.name,
-                "slug": self.category.slug,
-                "color": self.category.color,
-                "icon": self.category.icon,
-            }
-            if self.category
-            else None,
+            "category": (
+                {
+                    "id": self.category.id,
+                    "name": self.category.name,
+                    "slug": self.category.slug,
+                    "color": self.category.color,
+                    "icon": self.category.icon,
+                }
+                if self.category
+                else None
+            ),
         }
 
 
@@ -2799,19 +2809,23 @@ class RoadmapFeedback(db.Model):
             if self.responded_at
             else None,
             "created_at": self.created_at.isoformat(),
-            "user": {
-                "id": self.user.id,
-                "name": self.user.name,
-                "email": self.user.email,
-            }
-            if not self.is_anonymous and self.user
-            else None,
-            "responder": {
-                "id": self.responder.id,
-                "name": self.responder.name,
-            }
-            if self.responder
-            else None,
+            "user": (
+                {
+                    "id": self.user.id,
+                    "name": self.user.name,
+                    "email": self.user.email,
+                }
+                if not self.is_anonymous and self.user
+                else None
+            ),
+            "responder": (
+                {
+                    "id": self.responder.id,
+                    "name": self.responder.name,
+                }
+                if self.responder
+                else None
+            ),
         }
 
 
@@ -3161,7 +3175,7 @@ class PetitionModel(db.Model):
 class PetitionModelSection(db.Model):
     """
     Relaciona modelos de petição com suas seções (muitos para muitos com metadados).
-    Similar ao PetitionTypeSection, mas para modelos.
+    This is the PRIMARY way to manage sections for petitions.
     """
 
     __tablename__ = "petition_model_sections"
@@ -4092,17 +4106,20 @@ class ProcessReport(db.Model):
             "cost_breakdown": self._get_cost_breakdown(),
             "performance_metrics": {
                 "completion_rate": (
-                    self.completed_processes / self.total_processes * 100
-                )
-                if self.total_processes > 0
-                else 0,
-                "active_rate": (self.active_processes / self.total_processes * 100)
-                if self.total_processes > 0
-                else 0,
-                "average_cost_per_process": float(self.total_costs)
-                / self.total_processes
-                if self.total_processes > 0
-                else 0,
+                    (self.completed_processes / self.total_processes * 100)
+                    if self.total_processes > 0
+                    else 0
+                ),
+                "active_rate": (
+                    (self.active_processes / self.total_processes * 100)
+                    if self.total_processes > 0
+                    else 0
+                ),
+                "average_cost_per_process": (
+                    float(self.total_costs) / self.total_processes
+                    if self.total_processes > 0
+                    else 0
+                ),
             },
         }
 
@@ -4182,9 +4199,9 @@ class ProcessReport(db.Model):
             "movements_by_type": movements_by_type,
             "movements_by_month": movements_by_month,
             "total_movements": len(movements),
-            "average_movements_per_process": len(movements) / self.total_processes
-            if self.total_processes > 0
-            else 0,
+            "average_movements_per_process": (
+                len(movements) / self.total_processes if self.total_processes > 0 else 0
+            ),
         }
 
     def _generate_custom_report(self):
@@ -4336,3 +4353,69 @@ class AuditLog(db.Model):
 
     def __repr__(self):
         return f"<AuditLog {self.entity_type}:{self.entity_id} - {self.action} by {self.user_id}>"
+
+
+# =============================================================================
+# LGPD - DEANONYMIZATION REQUESTS (Reversão de Anonimização)
+# =============================================================================
+
+
+class DeanonymizationRequest(db.Model):
+    """Solicitações de reversão de anonimização de dados (LGPD Art. 18)"""
+
+    __tablename__ = "deanonymization_requests"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    anonymization_request_id = db.Column(
+        db.Integer, db.ForeignKey("anonymization_requests.id"), nullable=False
+    )
+
+    # Status
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # 'pending', 'approved', 'rejected'
+    request_reason = db.Column(db.Text, nullable=False)
+
+    # Datas
+    requested_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    processed_at = db.Column(db.DateTime, nullable=True)
+    processed_by_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+
+    # Admin notes e resultado
+    admin_notes = db.Column(db.Text)
+    rejection_reason = db.Column(db.Text)
+    restored_data = db.Column(db.Text)  # JSON com dados restaurados
+
+    # Relacionamentos
+    user = db.relationship(
+        "User",
+        foreign_keys=[user_id],
+        backref=db.backref("deanonymization_requests", lazy="dynamic"),
+    )
+    anonymization_request = db.relationship(
+        "AnonymizationRequest",
+        foreign_keys=[anonymization_request_id],
+        backref=db.backref("deanonymization_requests", lazy="dynamic"),
+    )
+    processor = db.relationship(
+        "User",
+        foreign_keys=[processed_by_id],
+        backref=db.backref("processed_deanonymizations", lazy="dynamic"),
+    )
+
+    def __repr__(self):
+        return f"<DeanonymizationRequest user={self.user_id} status={self.status}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "status": self.status,
+            "request_reason": self.request_reason,
+            "requested_at": self.requested_at.isoformat(),
+            "processed_at": self.processed_at.isoformat()
+            if self.processed_at
+            else None,
+            "admin_notes": self.admin_notes,
+            "rejection_reason": self.rejection_reason,
+        }

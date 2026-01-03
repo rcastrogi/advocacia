@@ -188,7 +188,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <span class="badge badge-info">{{ petition_type.type_sections.count() }} seções</span>
+                                    <span class="badge badge-info">{{ petition_type.models|length }} modelos</span>
                                 </td>
                                 <td>{{ petition_type.created_at.strftime('%d/%m/%Y') }}</td>
                                 <td>

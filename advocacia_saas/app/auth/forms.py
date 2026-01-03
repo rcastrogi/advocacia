@@ -69,13 +69,9 @@ class TwoFactorVerifyForm(FlaskForm):
 
 
 class RegistrationForm(FlaskForm):
-    username = StringField(
-        "Nome de usuário", validators=[DataRequired(), Length(min=4, max=20)]
-    )
+    username = StringField("Nome de usuário", validators=[DataRequired(), Length(min=4, max=20)])
     email = StringField("Email", validators=[DataRequired(), Email()])
-    full_name = StringField(
-        "Nome completo", validators=[DataRequired(), Length(min=2, max=100)]
-    )
+    full_name = StringField("Nome completo", validators=[DataRequired(), Length(min=2, max=100)])
     oab_number = StringField("Número da OAB")
     phone = StringField("Telefone")
     # Address fields
@@ -135,9 +131,7 @@ class RegistrationForm(FlaskForm):
         coerce=str,
     )
     password = PasswordField("Senha", validators=[DataRequired(), Length(min=8)])
-    password2 = PasswordField(
-        "Confirmar senha", validators=[DataRequired(), EqualTo("password")]
-    )
+    password2 = PasswordField("Confirmar senha", validators=[DataRequired(), EqualTo("password")])
     user_type = SelectField(
         "Tipo de usuário",
         choices=[("advogado", "Advogado"), ("escritorio", "Escritório")],
@@ -148,9 +142,7 @@ class RegistrationForm(FlaskForm):
     consent_personal_data = BooleanField(
         "Concordo com o tratamento dos meus dados pessoais para prestação do serviço",
         validators=[
-            DataRequired(
-                message="O consentimento para tratamento de dados pessoais é obrigatório."
-            )
+            DataRequired(message="O consentimento para tratamento de dados pessoais é obrigatório.")
         ],
     )
     consent_marketing = BooleanField(
@@ -187,9 +179,7 @@ class RegistrationForm(FlaskForm):
 
 
 class ProfileForm(FlaskForm):
-    full_name = StringField(
-        "Nome completo", validators=[DataRequired(), Length(min=2, max=100)]
-    )
+    full_name = StringField("Nome completo", validators=[DataRequired(), Length(min=2, max=100)])
     email = StringField("Email", validators=[DataRequired(), Email()])
     oab_number = StringField("Número da OAB")
     phone = StringField("Telefone")
@@ -287,9 +277,7 @@ class ChangePasswordForm(FlaskForm):
             DataRequired(),
             Length(min=8, message="A senha deve ter no mínimo 8 caracteres"),
         ],
-        render_kw={
-            "placeholder": "Mínimo 8 caracteres, maiúsculas, números e símbolos"
-        },
+        render_kw={"placeholder": "Mínimo 8 caracteres, maiúsculas, números e símbolos"},
     )
     confirm_password = PasswordField(
         "Confirmar nova senha",

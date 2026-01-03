@@ -82,7 +82,9 @@ class NotificationSystem {
             if (response.ok) {
                 const messages = await response.json();
                 messages.forEach(msg => {
-                    this.show(msg.message, msg.type);
+                    // Erros não fecham automaticamente, apenas sucesso/info/warning
+                    const duration = msg.type === 'error' ? 0 : 5000;
+                    this.show(msg.message, msg.type, duration);
                 });
             }
         } catch (error) {
@@ -102,6 +104,11 @@ class NotificationSystem {
         }
 
         return notification.id;
+    }
+
+    // Método para mostrar mensagem persistente (não fecha automaticamente)
+    showPersistent(message, type = 'info') {
+        return this.show(message, type, 0);
     }
 
     createNotification(message, type, duration) {
@@ -166,11 +173,16 @@ class NotificationSystem {
         `;
 
         // Event listeners
-        element.addEventListener('click', () => this.remove(id));
+        // Apenas fechar ao clicar no botão X (não em toda a notificação)
         element.querySelector('.notification-close').addEventListener('click', (e) => {
             e.stopPropagation();
             this.remove(id);
         });
+        
+        // Para mensagens de sucesso/info, fechar ao clicar na notificação
+        if (type !== 'error' && type !== 'warning') {
+            element.addEventListener('click', () => this.remove(id));
+        }
 
         return { id, element, type, message, duration };
     }

@@ -1,67 +1,37 @@
 {% extends "admin/base_admin.html" %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}Feedback do Roadmap{% endblock %}
 
 {% block admin_content %}
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-people-arrows mr-2"></i>
-                        Feedback do Roadmap
-                    </h3>
-                    <div class="card-tools">
-                        <a href="{{ url_for('admin.roadmap_feedback_export') }}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-download"></i> Exportar CSV
-                        </a>
-                    </div>
-                </div>
+    {% set page_title = 'Feedback do Roadmap' %}
+    {% set page_icon = 'comments' %}
+    {% set page_description = 'Visualize e gerencie feedback dos usuários sobre o roadmap' %}
+    {% set new_btn_url = url_for('admin.roadmap_feedback_export') %}
+    {% set new_btn_label = 'Exportar CSV' %}
+    {% include 'components/list_header.html' %}
 
-                <!-- Estatísticas -->
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="info-box">
-                                <span class="info-box-icon bg-info"><i class="fas fa-comments"></i></span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text">Total de Feedback</span>
-                                    <span class="info-box-number">{{ total_feedback }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="info-box">
-                                <span class="info-box-icon bg-warning"><i class="fas fa-star"></i></span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text">Avaliação Média</span>
-                                    <span class="info-box-number">{{ avg_rating }}/5</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="info-box">
-                                <span class="info-box-icon bg-success"><i class="fas fa-check-circle"></i></span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text">Tratados</span>
-                                    <span class="info-box-number">{{ status_counts.get('addressed', 0) }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="info-box">
-                                <span class="info-box-icon bg-danger"><i class="fas fa-clock"></i></span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text">Pendentes</span>
-                                    <span class="info-box-number">{{ status_counts.get('pending', 0) }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    {# Statistics #}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-comments', 'color': 'info', 'label': 'Total de Feedback', 'value': total_feedback} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-star', 'color': 'warning', 'label': 'Avaliação Média', 'value': (avg_rating|round(1))|string + '/5'} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-check-circle', 'color': 'success', 'label': 'Tratados', 'value': status_counts.get('addressed', 0)} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-clock', 'color': 'danger', 'label': 'Pendentes', 'value': status_counts.get('pending', 0)} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+    </div>
 
-                    <!-- Filtros -->
-                    <form method="GET" class="mb-4">
+    <div class="card shadow-sm">
                         <div class="row">
                             <div class="col-md-3">
                                 <select name="status" class="form-control">

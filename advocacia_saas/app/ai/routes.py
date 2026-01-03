@@ -133,9 +133,7 @@ def credits_dashboard():
     """Dashboard de créditos do usuário"""
     user_credits = get_user_credits()
     packages = (
-        CreditPackage.query.filter_by(is_active=True)
-        .order_by(CreditPackage.sort_order)
-        .all()
+        CreditPackage.query.filter_by(is_active=True).order_by(CreditPackage.sort_order).all()
     )
 
     # Últimas transações
@@ -168,9 +166,7 @@ def buy_credits(slug):
     # Buscar chave pública do Mercado Pago para pagamentos únicos
     mp_public_key = current_app.config.get("MERCADOPAGO_PUBLIC_KEY")
 
-    return render_template(
-        "ai/buy_credits.html", package=package, mp_public_key=mp_public_key
-    )
+    return render_template("ai/buy_credits.html", package=package, mp_public_key=mp_public_key)
 
 
 @ai_bp.route("/credits/history")
@@ -274,12 +270,15 @@ def api_add_credits():
 def api_generate_section():
     """Gera uma seção de petição usando IA"""
     if not ai_service.is_configured():
-        return jsonify(
-            {
-                "success": False,
-                "error": "Serviço de IA não configurado. Entre em contato com o suporte.",
-            }
-        ), 503
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Serviço de IA não configurado. Entre em contato com o suporte.",
+                }
+            ),
+            503,
+        )
 
     data = request.get_json()
 
@@ -296,14 +295,17 @@ def api_generate_section():
     # Verifica créditos (master não precisa)
     if not has_sufficient_credits(credit_cost):
         user_credits = get_user_credits()
-        return jsonify(
-            {
-                "success": False,
-                "error": "Créditos insuficientes",
-                "credits_required": credit_cost,
-                "credits_available": user_credits.balance,
-            }
-        ), 402
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Créditos insuficientes",
+                    "credits_required": credit_cost,
+                    "credits_available": user_credits.balance,
+                }
+            ),
+            402,
+        )
 
     try:
         # Adiciona tipo de petição ao contexto
@@ -353,9 +355,7 @@ def api_generate_section():
                 "success": True,
                 "content": content,
                 "credits_used": actual_cost,
-                "credits_remaining": user_credits.balance
-                if not is_master_user()
-                else "∞",
+                "credits_remaining": user_credits.balance if not is_master_user() else "∞",
                 "metadata": {
                     "model": metadata.get("model"),
                     "tokens_used": metadata.get("tokens_total"),
@@ -380,9 +380,7 @@ def api_generate_section():
         )
         db.session.commit()
 
-        return jsonify(
-            {"success": False, "error": f"Erro ao gerar conteúdo: {str(e)}"}
-        ), 500
+        return jsonify({"success": False, "error": f"Erro ao gerar conteúdo: {str(e)}"}), 500
 
 
 @ai_bp.route("/api/generate/full-petition", methods=["POST"])
@@ -391,12 +389,15 @@ def api_generate_section():
 def api_generate_full_petition():
     """Gera uma petição completa usando IA"""
     if not ai_service.is_configured():
-        return jsonify(
-            {
-                "success": False,
-                "error": "Serviço de IA não configurado. Entre em contato com o suporte.",
-            }
-        ), 503
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Serviço de IA não configurado. Entre em contato com o suporte.",
+                }
+            ),
+            503,
+        )
 
     data = request.get_json()
 
@@ -411,14 +412,17 @@ def api_generate_full_petition():
     # Verifica créditos (master não precisa)
     if not has_sufficient_credits(credit_cost):
         user_credits = get_user_credits()
-        return jsonify(
-            {
-                "success": False,
-                "error": "Créditos insuficientes",
-                "credits_required": credit_cost,
-                "credits_available": user_credits.balance,
-            }
-        ), 402
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Créditos insuficientes",
+                    "credits_required": credit_cost,
+                    "credits_available": user_credits.balance,
+                }
+            ),
+            402,
+        )
 
     try:
         # Gera a petição
@@ -461,9 +465,7 @@ def api_generate_full_petition():
                 "success": True,
                 "content": content,
                 "credits_used": actual_cost,
-                "credits_remaining": user_credits.balance
-                if not is_master_user()
-                else "∞",
+                "credits_remaining": user_credits.balance if not is_master_user() else "∞",
                 "metadata": {
                     "model": metadata.get("model"),
                     "tokens_used": metadata.get("tokens_total"),
@@ -486,9 +488,7 @@ def api_generate_full_petition():
         )
         db.session.commit()
 
-        return jsonify(
-            {"success": False, "error": f"Erro ao gerar petição: {str(e)}"}
-        ), 500
+        return jsonify({"success": False, "error": f"Erro ao gerar petição: {str(e)}"}), 500
 
 
 @ai_bp.route("/api/generate/improve", methods=["POST"])
@@ -497,9 +497,7 @@ def api_generate_full_petition():
 def api_improve_text():
     """Melhora um texto existente usando IA"""
     if not ai_service.is_configured():
-        return jsonify(
-            {"success": False, "error": "Serviço de IA não configurado."}
-        ), 503
+        return jsonify({"success": False, "error": "Serviço de IA não configurado."}), 503
 
     data = request.get_json()
 
@@ -508,9 +506,7 @@ def api_improve_text():
     premium = data.get("premium", False)
 
     if not text or len(text.strip()) < 10:
-        return jsonify(
-            {"success": False, "error": "Texto muito curto para melhorar"}
-        ), 400
+        return jsonify({"success": False, "error": "Texto muito curto para melhorar"}), 400
 
     # Determina o custo
     generation_type = "improve"
@@ -519,19 +515,20 @@ def api_improve_text():
     # Verifica créditos (master não precisa)
     if not has_sufficient_credits(credit_cost):
         user_credits = get_user_credits()
-        return jsonify(
-            {
-                "success": False,
-                "error": "Créditos insuficientes",
-                "credits_required": credit_cost,
-                "credits_available": user_credits.balance,
-            }
-        ), 402
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Créditos insuficientes",
+                    "credits_required": credit_cost,
+                    "credits_available": user_credits.balance,
+                }
+            ),
+            402,
+        )
 
     try:
-        content, metadata = ai_service.improve_text(
-            text=text, context=context, premium=premium
-        )
+        content, metadata = ai_service.improve_text(text=text, context=context, premium=premium)
 
         # Debita créditos (master não paga)
         actual_cost = 0 if is_master_user() else credit_cost
@@ -565,17 +562,13 @@ def api_improve_text():
                 "success": True,
                 "content": content,
                 "credits_used": actual_cost,
-                "credits_remaining": user_credits.balance
-                if not is_master_user()
-                else "∞",
+                "credits_remaining": user_credits.balance if not is_master_user() else "∞",
             }
         )
 
     except Exception as e:
         db.session.rollback()
-        return jsonify(
-            {"success": False, "error": f"Erro ao melhorar texto: {str(e)}"}
-        ), 500
+        return jsonify({"success": False, "error": f"Erro ao melhorar texto: {str(e)}"}), 500
 
 
 @ai_bp.route("/api/credit-costs")
@@ -728,9 +721,7 @@ def credits_success():
 
         db.session.commit()
 
-    return render_template(
-        "ai/credits_success.html", package=package, payment_id=payment_id
-    )
+    return render_template("ai/credits_success.html", package=package, payment_id=payment_id)
 
 
 @ai_bp.route("/credits/failure")
@@ -774,9 +765,7 @@ def mercadopago_webhook_credits():
                         # Adicionar créditos
                         user_credits.add_credits(package.credits, source="purchase")
                         if package.bonus_credits:
-                            user_credits.add_credits(
-                                package.bonus_credits, source="bonus"
-                            )
+                            user_credits.add_credits(package.bonus_credits, source="bonus")
 
                         # Registrar transação
                         transaction = CreditTransaction(
@@ -791,9 +780,7 @@ def mercadopago_webhook_credits():
                         db.session.add(transaction)
                         db.session.commit()
 
-                        current_app.logger.info(
-                            f"Créditos adicionados via MP: {package.credits}"
-                        )
+                        current_app.logger.info(f"Créditos adicionados via MP: {package.credits}")
 
         except Exception as e:
             current_app.logger.error(f"Erro no webhook MP: {str(e)}")

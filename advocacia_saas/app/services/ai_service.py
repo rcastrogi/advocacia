@@ -132,9 +132,7 @@ class AIService:
             Tuple[str, Dict]: (conteúdo gerado, metadados com tokens e tempo)
         """
         if not self.client:
-            raise Exception(
-                "API OpenAI não configurada. Configure OPENAI_API_KEY no .env"
-            )
+            raise Exception("API OpenAI não configurada. Configure OPENAI_API_KEY no .env")
 
         start_time = time.time()
 
@@ -184,9 +182,7 @@ class AIService:
         system_prompt = SYSTEM_PROMPTS.get(system_prompt_key, SYSTEM_PROMPTS["default"])
 
         # Monta o prompt do usuário com o contexto
-        user_prompt = self._build_section_prompt(
-            section_type, context, existing_content
-        )
+        user_prompt = self._build_section_prompt(section_type, context, existing_content)
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -242,9 +238,7 @@ class AIService:
 
         # Conteúdo existente para referência
         if existing_content:
-            prompt_parts.append(
-                f"CONTEÚDO ATUAL (para referência): {existing_content[:500]}..."
-            )
+            prompt_parts.append(f"CONTEÚDO ATUAL (para referência): {existing_content[:500]}...")
 
         # Instrução final
         prompt_parts.append(
@@ -283,9 +277,7 @@ class AIService:
 
         return self._call_openai(messages, model=model, max_tokens=4000)
 
-    def _build_full_petition_prompt(
-        self, petition_type: str, context: Dict[str, Any]
-    ) -> str:
+    def _build_full_petition_prompt(self, petition_type: str, context: Dict[str, Any]) -> str:
         """Constrói o prompt para petição completa"""
 
         prompt_parts = [f"TIPO DE PETIÇÃO: {petition_type}"]
@@ -293,7 +285,8 @@ class AIService:
         # Dados do autor
         if context.get("autor"):
             autor = context["autor"]
-            prompt_parts.append(f"""
+            prompt_parts.append(
+                f"""
 DADOS DO AUTOR:
 - Nome: {autor.get("nome", "Não informado")}
 - CPF: {autor.get("cpf", "Não informado")}
@@ -301,17 +294,20 @@ DADOS DO AUTOR:
 - Estado Civil: {autor.get("estado_civil", "Não informado")}
 - Profissão: {autor.get("profissao", "Não informado")}
 - Endereço: {autor.get("endereco", "Não informado")}
-- Cidade/UF: {autor.get("cidade", "")}/{autor.get("estado", "")}""")
+- Cidade/UF: {autor.get("cidade", "")}/{autor.get("estado", "")}"""
+            )
 
         # Dados do réu
         if context.get("reu"):
             reu = context["reu"]
-            prompt_parts.append(f"""
+            prompt_parts.append(
+                f"""
 DADOS DO RÉU:
 - Nome: {reu.get("nome", "Não informado")}
 - CPF/CNPJ: {reu.get("cpf", reu.get("cnpj", "Não informado"))}
 - Endereço: {reu.get("endereco", "Não informado")}
-- Cidade/UF: {reu.get("cidade", "")}/{reu.get("estado", "")}""")
+- Cidade/UF: {reu.get("cidade", "")}/{reu.get("estado", "")}"""
+            )
 
         # Fatos
         if context.get("fatos"):
@@ -333,9 +329,7 @@ DADOS DO RÉU:
         if context.get("instrucoes"):
             prompt_parts.append(f"INSTRUÇÕES ADICIONAIS:\n{context['instrucoes']}")
 
-        prompt_parts.append(
-            "\nRedija a petição completa com todos os elementos obrigatórios."
-        )
+        prompt_parts.append("\nRedija a petição completa com todos os elementos obrigatórios.")
 
         return "\n\n".join(prompt_parts)
 

@@ -1,22 +1,37 @@
 {% extends "admin/base_admin.html" %}
 
+{% block title %}Logs de Auditoria{% endblock %}
+
 {% block admin_content %}
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-history"></i> Logs de Auditoria
-                    </h3>
-                    <div class="card-tools">
-                        <span class="badge badge-info">{{ total_logs }} logs totais</span>
-                        <span class="badge badge-success">{{ today_logs }} hoje</span>
-                    </div>
-                </div>
+    {% set page_title = 'Logs de Auditoria' %}
+    {% set page_icon = 'history' %}
+    {% set page_description = 'Monitore todas as ações realizadas no sistema' %}
+    {% set show_reset_btn = true %}
+    {% set table_view_key = 'admin.audit_logs' %}
+    {% include 'components/list_header.html' %}
 
-                <!-- Filtros -->
-                <div class="card-body border-bottom">
+    {# Statistics #}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-history', 'color': 'info', 'label': 'Total de Logs', 'value': total_logs} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-calendar-day', 'color': 'success', 'label': 'Logs Hoje', 'value': today_logs} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-cube', 'color': 'warning', 'label': 'Tipos de Entidade', 'value': entity_types|length} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-tasks', 'color': 'primary', 'label': 'Ações', 'value': actions|length} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
                     <form method="GET" class="row g-3">
                         <div class="col-md-2">
                             <label for="entity_type" class="form-label">Tipo de Entidade</label>
@@ -43,13 +58,43 @@
                         </div>
 
                         <div class="col-md-2">
-                            <label for="user_id" class="form-label">ID do Usuário</label>
+                            <label for="user_id" class="form-label">
+                                ID do Usuário
+                                {% if recent_user_ids %}
+                                <small class="d-block text-muted">
+                                    Recentes: 
+                                    {% for uid in recent_user_ids[:5] %}
+                                        <a href="#" onclick="document.getElementById('user_id').value='{{ uid }}'; return false;" 
+                                           class="badge bg-light text-dark me-1" title="Clique para selecionar">
+                                            {{ uid }}
+                                        </a>
+                                    {% endfor %}
+                                </small>
+                                {% endif %}
+                            </label>
                             <input type="number" name="user_id" id="user_id" class="form-control"
                                    value="{{ filters.user_id or '' }}" placeholder="Ex: 1">
                         </div>
 
                         <div class="col-md-2">
-                            <label for="entity_id" class="form-label">ID da Entidade</label>
+                            <label for="entity_id" class="form-label">
+                                ID da Entidade
+                                {% if entity_type and recent_entity_ids.get(entity_type) %}
+                                <small class="d-block text-muted">
+                                    Recentes: 
+                                    {% for eid in recent_entity_ids.get(entity_type, [])[:5] %}
+                                        <a href="#" onclick="document.getElementById('entity_id').value='{{ eid }}'; return false;" 
+                                           class="badge bg-light text-dark me-1" title="Clique para selecionar">
+                                            {{ eid }}
+                                        </a>
+                                    {% endfor %}
+                                </small>
+                                {% elif entity_type %}
+                                <small class="d-block text-muted">Nenhum ID recente para este tipo</small>
+                                {% else %}
+                                <small class="d-block text-muted">Selecione um tipo de entidade acima</small>
+                                {% endif %}
+                            </label>
                             <input type="number" name="entity_id" id="entity_id" class="form-control"
                                    value="{{ filters.entity_id or '' }}" placeholder="Ex: 123">
                         </div>
@@ -108,33 +153,11 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <span class="badge badge-primary">{{ log.entity_type.title() }}</span><br>
-                                    <small class="text-muted">ID: {{ log.entity_id }}</small>
+                                    {{ log.entity_type|entity_badge|safe }}<br>
+                                    <small class="text-muted mt-1 d-block">ID: {{ log.entity_id }}</small>
                                 </td>
                                 <td>
-                                    {% if log.action == 'create' %}
-                                        <span class="badge badge-success">
-                                            <i class="fas fa-plus"></i> Criado
-                                        </span>
-                                    {% elif log.action == 'update' %}
-                                        <span class="badge badge-warning">
-                                            <i class="fas fa-edit"></i> Atualizado
-                                        </span>
-                                    {% elif log.action == 'delete' %}
-                                        <span class="badge badge-danger">
-                                            <i class="fas fa-trash"></i> Removido
-                                        </span>
-                                    {% elif 'login' in log.action %}
-                                        <span class="badge badge-info">
-                                            <i class="fas fa-sign-in-alt"></i> {{ log.action.replace('_', ' ').title() }}
-                                        </span>
-                                    {% elif log.action == 'logout' %}
-                                        <span class="badge badge-secondary">
-                                            <i class="fas fa-sign-out-alt"></i> Logout
-                                        </span>
-                                    {% else %}
-                                        <span class="badge badge-light">{{ log.action.title() }}</span>
-                                    {% endif %}
+                                    {{ log.action|action_badge|safe }}
                                 </td>
                                 <td>
                                     <code>{{ log.ip_address or 'N/A' }}</code>

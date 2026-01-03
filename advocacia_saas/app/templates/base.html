@@ -11,6 +11,9 @@
     <!-- Canonical URL -->
     <link rel="canonical" href="{{ request.url_root[:-1] }}{{ request.path }}">
 
+    <!-- Debug Console (FIRST SCRIPT - antes de tudo) -->
+    <script src="{{ url_for('static', filename='js/debug-console.js') }}?v={{ range(1, 10000) | random }}"></script>
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request.url_root[:-1] }}{{ request.path }}">

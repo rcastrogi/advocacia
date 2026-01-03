@@ -1,0 +1,50 @@
+{# 
+Componente de Card de Estatísticas
+Uso: 
+  1. Formato 1 (variables diretas):
+     {% include 'components/stat_card.html' %}
+     Requer: stat_icon, stat_color, stat_label, stat_value
+  
+  2. Formato 2 (via dicionário stat_data):
+     {% set stat_data = {'icon': '...', 'color': '...', 'label': '...', 'value': ...} %}
+     {% include 'components/stat_card.html' %}
+#}
+
+{# Aceitar tanto formato direto quanto via stat_data #}
+{% if stat_data is defined %}
+    {% set icon = stat_data.icon %}
+    {% set color = stat_data.color %}
+    {% set label = stat_data.label %}
+    {% set value = stat_data.value %}
+    {% set description = stat_data.description if stat_data.description is defined else None %}
+    {% set url = stat_data.url if stat_data.url is defined else None %}
+{% else %}
+    {% set icon = stat_icon if stat_icon is defined else 'chart' %}
+    {% set color = stat_color if stat_color is defined else 'primary' %}
+    {% set label = stat_label if stat_label is defined else 'Label' %}
+    {% set value = stat_value if stat_value is defined else '0' %}
+    {% set description = stat_description if stat_description is defined else None %}
+    {% set url = stat_url if stat_url is defined else None %}
+{% endif %}
+
+<div class="card border-left-{{ color }} shadow h-100 py-2 {% if url %}cursor-pointer hover-shadow{% endif %}" 
+     {% if url %}onclick="window.location='{{ url }}';"{% endif %}>
+    <div class="card-body">
+        <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-{{ color }} text-uppercase mb-1">
+                    {{ label }}
+                </div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                    {{ value }}
+                </div>
+                {% if description %}
+                <small class="text-muted d-block mt-1">{{ description }}</small>
+                {% endif %}
+            </div>
+            <div class="col-auto">
+                <i class="{{ icon }} fa-2x text-gray-300"></i>
+            </div>
+        </div>
+    </div>
+</div>

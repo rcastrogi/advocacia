@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: petitio
+    runtime: python
+    pythonVersion: 3.11
+    
+    # Build
+    buildCommand: |
+      pip install -r requirements.txt
+      flask db upgrade || echo "Migrations not needed"
+    
+    # Start
+    startCommand: bash start.sh gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+    
+    # Environment
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 8080
+    
+    # Healthcheck
+    healthCheckPath: /
+    
+    # Resources
+    plan: standard
+    numInstances: 1

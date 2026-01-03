@@ -29,10 +29,9 @@ CATEGORY_ICONS = {
     "tributario": "fas fa-building-columns",
 }
 
-PETITION_ROUTE_OVERRIDES = {
-    "peticao-inicial-civel": "petitions.civil_petitions",
-    "peticao-familia-divorcio": "petitions.family_petitions",
-}
+# Todas as petições agora usam o sistema dinâmico
+# Route overrides for specific petition types (if needed for special handling)
+PETITION_ROUTE_OVERRIDES = {}
 
 
 def normalize_action_keys(keys: list[str]) -> list[str]:
@@ -82,10 +81,24 @@ def _build_action_entry(key: str) -> dict | None:
         if not petition_type:
             return None
 
+        # Verificar se há endpoint específico
         endpoint = PETITION_ROUTE_OVERRIDES.get(slug)
+
+        # Uma petição é considerada implementada se:
+        # 1. is_implemented=True no banco, OU
+        # 2. há um endpoint específico
         implemented_flag = getattr(petition_type, "is_implemented", True)
-        implemented = bool(implemented_flag and endpoint)
-        url = url_for(endpoint) if implemented and endpoint else "#"
+        has_endpoint = bool(endpoint)
+        implemented = bool(implemented_flag or has_endpoint)
+
+        # Se tem endpoint específico, usa ele; senão usa o formulário dinâmico
+        if has_endpoint:
+            url = url_for(endpoint)
+        elif implemented_flag:
+            # Redireciona para o formulário dinâmico
+            url = url_for("petitions.dynamic_form", slug=slug)
+        else:
+            url = "#"
 
         category = (petition_type.category or "outros").lower()
         icon = CATEGORY_ICONS.get(category, "fas fa-file-signature")

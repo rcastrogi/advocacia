@@ -20,9 +20,7 @@ def dashboard():
     pending_processes = Process.query.filter_by(
         user_id=current_user.id, status="pending_distribution"
     ).count()
-    ongoing_processes = Process.query.filter_by(
-        user_id=current_user.id, status="ongoing"
-    ).count()
+    ongoing_processes = Process.query.filter_by(user_id=current_user.id, status="ongoing").count()
 
     # Processos recentes
     recent_processes = (
@@ -35,10 +33,7 @@ def dashboard():
     # Petições sem número de processo
     petitions_without_number = (
         SavedPetition.query.filter_by(user_id=current_user.id)
-        .filter(
-            (SavedPetition.process_number.is_(None))
-            | (SavedPetition.process_number == "")
-        )
+        .filter((SavedPetition.process_number.is_(None)) | (SavedPetition.process_number == ""))
         .filter(SavedPetition.status == "completed")
         .order_by(SavedPetition.completed_at.desc())
         .limit(10)
@@ -137,10 +132,7 @@ def pending_petitions():
 
     petitions = (
         SavedPetition.query.filter_by(user_id=current_user.id)
-        .filter(
-            (SavedPetition.process_number.is_(None))
-            | (SavedPetition.process_number == "")
-        )
+        .filter((SavedPetition.process_number.is_(None)) | (SavedPetition.process_number == ""))
         .filter(SavedPetition.status == "completed")
         .order_by(SavedPetition.completed_at.desc())
         .paginate(page=page, per_page=per_page, error_out=False)

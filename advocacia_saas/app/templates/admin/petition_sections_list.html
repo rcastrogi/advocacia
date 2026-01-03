@@ -1,27 +1,42 @@
 {% extends "admin/base_admin.html" %}
 
 {% block admin_content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-1">
-            <i class="fas fa-puzzle-piece me-2 text-primary"></i>Seções de Petição
-        </h1>
-        <p class="text-muted mb-0">Gerencie as seções disponíveis para criação de petições dinâmicas</p>
+
+{# Page Header #}
+{% set page_title = 'Seções de Petição' %}
+{% set page_icon = 'fas fa-puzzle-piece' %}
+{% set page_description = 'Gerencie as seções disponíveis para criação de petições dinâmicas' %}
+{% set page_actions = [
+    {
+        'label': 'Nova Seção',
+        'url': url_for('admin.petition_section_new'),
+        'icon': 'fas fa-plus',
+        'class': 'btn-primary'
+    }
+] %}
+{% include 'components/list_header.html' %}
+
+{# Statistics #}
+<div class="row g-3 mb-4">
+    <div class="col-md-3 mb-3">
+        {% set stat_data = {'icon': 'fas fa-puzzle-piece', 'color': 'primary', 'label': 'Total de Seções', 'value': sections|length} %}
+        {% include 'components/stat_card.html' %}
     </div>
-    <div>
-        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Voltar
-        </a>
-        <a href="{{ url_for('admin.petition_section_new') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nova Seção
-        </a>
-        <button class="btn btn-outline-secondary ms-2" data-reset-view="admin.petition_sections" title="Resetar preferências de tabela">
-            <i class="fas fa-undo"></i>
-        </button>
+    <div class="col-md-3 mb-3">
+        {% set stat_data = {'icon': 'fas fa-check-circle', 'color': 'success', 'label': 'Seções Ativas', 'value': sections|selectattr('is_active')|list|length} %}
+        {% include 'components/stat_card.html' %}
+    </div>
+    <div class="col-md-3 mb-3">
+        {% set stat_data = {'icon': 'fas fa-list', 'color': 'info', 'label': 'Total de Campos', 'value': 0} %}
+        {% include 'components/stat_card.html' %}
+    </div>
+    <div class="col-md-3 mb-3">
+        {% set stat_data = {'icon': 'fas fa-file-alt', 'color': 'warning', 'label': 'Usada em Tipos', 'value': sections|length if sections else 0} %}
+        {% include 'components/stat_card.html' %}
     </div>
 </div>
 
-<div class="card shadow">
+<div class="card shadow-sm">
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-bordered" id="petitionSectionsTable" data-table-view="admin.petition_sections" data-page-length="25" data-language="//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json">
@@ -69,7 +84,7 @@
                         </td>
                         <td>
                             <span class="badge bg-primary text-white">
-                                <i class="fas fa-file-alt me-1"></i>{{ section.type_sections.count() }} tipos
+                                <i class="fas fa-cube me-1"></i>{{ section.model_sections.count() }} modelos
                             </span>
                         </td>
                         <td>

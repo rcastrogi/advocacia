@@ -1,0 +1,50 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin_content %}
+
+{# Page Header with Standardized Layout #}
+{% set page_title = page_title or 'Página' %}
+{% set page_icon = page_icon or 'fas fa-list' %}
+{% set page_description = page_description or '' %}
+{% set page_actions = page_actions or [] %}
+
+{% include 'components/list_header.html' %}
+
+{# Statistics Cards (if provided) #}
+{% if stats_cards %}
+<div class="row g-3 mb-4">
+    {% for stat in stats_cards %}
+    <div class="col-md-3 col-sm-6 mb-3">
+        {% set stat_data = {
+            'icon': stat.icon,
+            'color': stat.color,
+            'label': stat.label,
+            'value': stat.value
+        } %}
+        {% include 'components/stat_card.html' %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# Filters Section (if provided) #}
+{% if show_filters %}
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            {% block filter_form %}
+            {# Override in child templates #}
+            {% endblock %}
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{# Main Content Area #}
+<div class="card shadow-sm">
+    {% block list_content %}
+    {# Override in child templates #}
+    {% endblock %}
+</div>
+
+{% endblock %}

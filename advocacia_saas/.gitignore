@@ -33,5 +33,53 @@ venv/
 env/
 ENV/
 
+# Documentação temporária (não essencial para produção)
+SEMANA*.md
+RESUMO_*.md
+PLANO_*.md
+GUIA_*.md
+STATUS_*.md
+CHECKLIST_*.md
+PROJETO_*.md
+INDEX_*.md
+IMPLEMENTACAO_*.md
+*_RESULTADO.md
+*_QUICKSTART.md
+EXEMPLOS_*.md
+SECOES_*.md
+ACCESSIBILITY_*.md
+DEPLOY.md
+MIGRATE_*.md
+MIGRATION_*.md
+INSTALAR_*.md
+*_EXEMPLO_*.py
+
+# Scripts temporários (para testes/desenvolvimento)
+test_*.py
+run_tests.py
+check_*.py
+inspect_*.py
+show_*.py
+list_*.py
+demo_*.py
+example_*.py
+temp_*.py
+migrate_*.py
+seed_*.py
+init_*.py
+update_*.py
+add_*.py
+fix_*.py
+cleanup_*.py
+demonstrate_*.py
+create_comprehensive_*.py
+
+# Arquivos build
+build/
+dist/
+*.egg-info/
+
 # Migrations (opcional - descomente se não quiser versionar)
 # migrations/
+
+```

@@ -38,7 +38,7 @@
                         <i class="fas fa-comments me-2"></i><span>Depoimentos</span>
                     </a>
                     <a href="{{ url_for('billing.plans') }}" 
-                       class="list-group-item list-group-item-action"
+                       class="list-group-item list-group-item-action {{ 'active' if 'billing' in request.endpoint else '' }}"
                        title="Gerenciar Planos">
                         <i class="fas fa-tags me-2"></i><span>Planos</span>
                     </a>

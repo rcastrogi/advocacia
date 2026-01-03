@@ -3,6 +3,7 @@ import os
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
+from functools import wraps
 from io import BytesIO
 from zipfile import ZipFile
 
@@ -24,7 +25,7 @@ from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from xhtml2pdf import pisa
 
-from app import db
+from app import db, limiter
 from app.billing.decorators import subscription_required
 from app.billing.utils import (
     BillingAccessError,
@@ -32,13 +33,13 @@ from app.billing.utils import (
     record_petition_usage,
     slugify,
 )
+from app.decorators import validate_with_schema
 from app.models import (
     PetitionAttachment,
     PetitionModel,
     PetitionModelSection,
     PetitionSection,
     PetitionType,
-    PetitionTypeSection,
     SavedPetition,
 )
 from app.petitions import bp
@@ -47,10 +48,68 @@ from app.petitions.forms import (
     FamilyPetitionForm,
     SimplePetitionForm,
 )
+from app.rate_limits import ADMIN_API_LIMIT
+from app.schemas import (
+    AttachmentUploadSchema,
+    GenerateDynamicSchema,
+    GenerateModelSchema,
+    PetitionSaveSchema,
+)
+from app.utils.error_messages import format_error_for_user
 
 ATTACHMENT_EXTENSIONS = {"pdf", "doc", "docx", "png", "jpg", "jpeg"}
-MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024  # 5 MB
-MAX_ATTACHMENT_COUNT = 5
+MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024  # 20 MB por arquivo
+MAX_ATTACHMENT_COUNT = None  # Ilimitado
+MAX_TOTAL_SIZE_PER_PETITION = 50 * 1024 * 1024  # 50 MB total por petição
+
+
+def require_active_user(f):
+    """Decorator para validar se usuário não foi anonimizado ou deletado"""
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.billing_status == "anonymized":
+            # Verificar se tem uma solicitação de deanonimização em andamento
+            from app.models import DeanonymizationRequest
+
+            pending_deanon = DeanonymizationRequest.query.filter_by(
+                user_id=current_user.id, status="pending"
+            ).first()
+
+            if pending_deanon:
+                return (
+                    jsonify(
+                        {
+                            "error": "Sua solicitação de deanonimização está em análise. "
+                            "Assim que for aprovada, poderá gerar petições novamente."
+                        }
+                    ),
+                    403,
+                )
+            else:
+                return (
+                    jsonify(
+                        {
+                            "error": "Usuários anonimizados não podem gerar petições. "
+                            "Os dados originais foram substituídos por identificadores anônimos. "
+                            "Solicite a restauração da conta antes de continuar."
+                        }
+                    ),
+                    403,
+                )
+        elif current_user.billing_status == "deleted" or not current_user.is_active:
+            return (
+                jsonify(
+                    {
+                        "error": "Sua conta foi desativada ou deletada. "
+                        "Não é possível gerar petições com esta conta."
+                    }
+                ),
+                403,
+            )
+        return f(*args, **kwargs)
+
+    return decorated_function
 
 
 def _render_pdf(text: str, title: str) -> BytesIO:
@@ -428,6 +487,7 @@ def _extract_attachments(files):
     if not files:
         return attachments
 
+    total_size = 0
     for file_storage in files:
         if not file_storage or not getattr(file_storage, "filename", ""):
             continue
@@ -443,13 +503,17 @@ def _extract_attachments(files):
         file_storage.stream.seek(0, 2)
         size = file_storage.stream.tell()
         file_storage.stream.seek(0)
+
         if size > MAX_ATTACHMENT_SIZE:
-            raise ValueError(f"{filename} excede o limite de 5 MB.")
+            raise ValueError(
+                f"{filename} excede o limite de {MAX_ATTACHMENT_SIZE // (1024 * 1024)} MB por arquivo."
+            )
+
+        if total_size + size > MAX_TOTAL_SIZE_PER_PETITION:
+            raise ValueError(f"Total de arquivos excede o limite de 50 MB por petição.")
 
         attachments.append({"filename": filename, "data": file_storage.read()})
-
-        if len(attachments) >= MAX_ATTACHMENT_COUNT:
-            break
+        total_size += size
 
     return attachments
 
@@ -563,32 +627,33 @@ def dynamic_form(slug):
 @bp.route("/generate-dynamic", methods=["POST"])
 @login_required
 @subscription_required
+@limiter.limit("10 per minute")
+@validate_with_schema(GenerateDynamicSchema, location="json")
+@require_active_user
 def generate_dynamic():
     """Gera a petição a partir dos dados do formulário dinâmico."""
+    try:
+        data = request.validated_data
+        petition_model_id = data.get("petition_model_id")
+        form_data = data.get("form_data", {})
+        with_ai = data.get("with_ai", False)
 
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Dados não fornecidos"}), 400
+        # Buscar modelo de petição
+        petition_model = PetitionModel.query.get_or_404(petition_model_id)
+        petition_type = petition_model.petition_type
 
-    petition_model_id = data.get("petition_model_id")
-    form_data = data.get("form_data", {})
+        # Verificar se há template Jinja2 definido
+        if petition_model.template_content and petition_model.template_content.strip():
+            # Usar template Jinja2
+            try:
+                from jinja2 import Template
 
-    # Buscar modelo de petição
-    petition_model = PetitionModel.query.get_or_404(petition_model_id)
-    petition_type = petition_model.petition_type
+                template = Template(petition_model.template_content)
+                rendered_content = template.render(**form_data)
 
-    # Verificar se há template Jinja2 definido
-    if petition_model.template_content and petition_model.template_content.strip():
-        # Usar template Jinja2
-        try:
-            from jinja2 import Template
-
-            template = Template(petition_model.template_content)
-            rendered_content = template.render(**form_data)
-
-            # Gerar PDF com o conteúdo renderizado
-            pdf_buffer = BytesIO()
-            html_content = f"""
+                # Gerar PDF com o conteúdo renderizado
+                pdf_buffer = BytesIO()
+                html_content = f"""
             <!DOCTYPE html>
             <html>
             <head>
@@ -610,38 +675,44 @@ def generate_dynamic():
             </html>
             """
 
-            pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
+                pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
 
-            if pisa_status.err:
-                return jsonify({"error": "Erro ao gerar PDF"}), 500
+                if pisa_status.err:
+                    return jsonify({"error": "Erro ao gerar PDF"}), 500
 
-            pdf_buffer.seek(0)
+                pdf_buffer.seek(0)
 
-            # Registrar uso
-            try:
-                record_petition_usage(current_user, petition_type)
-            except BillingAccessError as e:
-                return jsonify({"error": str(e)}), 403
+                # Registrar uso
+                try:
+                    record_petition_usage(current_user, petition_type)
+                except BillingAccessError as e:
+                    return jsonify({"error": str(e)}), 403
 
-            filename = (
-                f"{petition_type.slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-            )
+                filename = f"{petition_type.slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
 
-            return send_file(
-                pdf_buffer,
-                mimetype="application/pdf",
-                as_attachment=True,
-                download_name=filename,
-            )
+                return send_file(
+                    pdf_buffer,
+                    mimetype="application/pdf",
+                    as_attachment=True,
+                    download_name=filename,
+                )
 
-        except Exception as e:
-            current_app.logger.error(f"Erro ao renderizar template Jinja2: {str(e)}")
-            # Fallback para geração dinâmica
+            except Exception as e:
+                current_app.logger.error(
+                    f"Erro ao renderizar template Jinja2: {str(e)}"
+                )
+                # Fallback para geração dinâmica
+                return _generate_dynamic_fallback(
+                    petition_model, petition_type, form_data
+                )
+
+        else:
+            # Usar geração dinâmica tradicional
             return _generate_dynamic_fallback(petition_model, petition_type, form_data)
 
-    else:
-        # Usar geração dinâmica tradicional
-        return _generate_dynamic_fallback(petition_model, petition_type, form_data)
+    except Exception as e:
+        error_msg = format_error_for_user(e, "Erro ao gerar petição dinâmica")
+        return jsonify({"error": error_msg}), 400
 
 
 def _generate_dynamic_fallback(petition_model, petition_type, form_data):
@@ -826,37 +897,37 @@ def model_form(slug):
 @bp.route("/generate-model", methods=["POST"])
 @login_required
 @subscription_required
+@limiter.limit("10 per minute")
+@validate_with_schema(GenerateModelSchema, location="json")
+@require_active_user
 def generate_model():
     """Gera a petição a partir dos dados do formulário baseado em modelo."""
-
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Dados não fornecidos"}), 400
-
-    petition_model_id = data.get("petition_model_id")
-    form_data = data.get("form_data", {})
-
-    # Buscar modelo de petição
-    petition_model = PetitionModel.query.get_or_404(petition_model_id)
-
-    # Verificar se o modelo tem template
-    if not petition_model.template_content:
-        return jsonify({"error": "Modelo não possui template configurado"}), 400
-
-    # Renderizar template do modelo
     try:
-        template_content = render_template_string(
-            petition_model.template_content, **form_data
-        )
-    except Exception as e:
-        return jsonify(
-            {"error": f"Erro ao renderizar template do modelo: {str(e)}"}
-        ), 500
+        data = request.validated_data
+        petition_model_id = data.get("petition_model_id")
+        form_data = data.get("form_data", {})
 
-    # Gerar PDF
-    try:
-        pdf_buffer = BytesIO()
-        html_content = f"""
+        # Buscar modelo de petição
+        petition_model = PetitionModel.query.get_or_404(petition_model_id)
+
+        # Verificar se o modelo tem template
+        if not petition_model.template_content:
+            return jsonify({"error": "Modelo não possui template configurado"}), 400
+
+        # Renderizar template do modelo
+        try:
+            template_content = render_template_string(
+                petition_model.template_content, **form_data
+            )
+        except Exception as e:
+            return jsonify(
+                {"error": f"Erro ao renderizar template do modelo: {str(e)}"}
+            ), 500
+
+        # Gerar PDF
+        try:
+            pdf_buffer = BytesIO()
+            html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
@@ -878,33 +949,37 @@ def generate_model():
         </html>
         """
 
-        pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
+            pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
 
-        if pisa_status.err:
-            return jsonify({"error": "Erro ao gerar PDF"}), 500
+            if pisa_status.err:
+                return jsonify({"error": "Erro ao gerar PDF"}), 500
 
-        pdf_buffer.seek(0)
+            pdf_buffer.seek(0)
 
-        # Registrar uso (usando o petition_type associado ao modelo)
-        try:
-            if petition_model.petition_type:
-                record_petition_usage(current_user, petition_model.petition_type)
-        except BillingAccessError as e:
-            return jsonify({"error": str(e)}), 403
+            # Registrar uso (usando o petition_type associado ao modelo)
+            try:
+                if petition_model.petition_type:
+                    record_petition_usage(current_user, petition_model.petition_type)
+            except BillingAccessError as e:
+                return jsonify({"error": str(e)}), 403
 
-        filename = (
-            f"{petition_model.slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        )
+            filename = (
+                f"{petition_model.slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            )
 
-        return send_file(
-            pdf_buffer,
-            mimetype="application/pdf",
-            as_attachment=True,
-            download_name=filename,
-        )
+            return send_file(
+                pdf_buffer,
+                mimetype="application/pdf",
+                as_attachment=True,
+                download_name=filename,
+            )
+
+        except Exception as e:
+            return jsonify({"error": f"Erro ao gerar PDF: {str(e)}"}), 500
 
     except Exception as e:
-        return jsonify({"error": f"Erro ao gerar PDF: {str(e)}"}), 500
+        error_msg = format_error_for_user(e, "Erro ao gerar petição a partir de modelo")
+        return jsonify({"error": error_msg}), 400
 
 
 # ============================================================================
@@ -1015,105 +1090,113 @@ def saved_edit(petition_id):
 
 @bp.route("/api/save", methods=["POST"])
 @login_required
+@limiter.limit("20 per minute")
+@validate_with_schema(PetitionSaveSchema, location="json")
+@require_active_user
 def api_save_petition():
     """API para salvar uma petição (novo ou atualização)."""
-
-    data = request.get_json()
-
-    if not data:
-        return jsonify({"success": False, "error": "Dados inválidos"}), 400
-
-    petition_type_id = data.get("petition_type_id")
-    petition_model_id = data.get("petition_model_id")
-    form_data = data.get("form_data", {})
-    petition_id = data.get("petition_id")  # Se for edição
-    action = data.get("action", "save")  # save, complete, cancel
-
-    if not petition_type_id and not petition_model_id:
-        return jsonify(
-            {"success": False, "error": "Tipo ou modelo de petição não informado"}
-        ), 400
-
-    # Verificar se é edição ou novo
-    if petition_id:
-        petition = SavedPetition.query.filter_by(
-            id=petition_id, user_id=current_user.id
-        ).first()
-
-        if not petition:
-            return jsonify({"success": False, "error": "Petição não encontrada"}), 404
-
-        if petition.status == "cancelled":
-            return jsonify(
-                {"success": False, "error": "Petição cancelada não pode ser editada"}
-            ), 400
-    else:
-        # Criar nova petição
-        petition = SavedPetition(
-            user_id=current_user.id,
-            petition_type_id=petition_type_id,
-            petition_model_id=petition_model_id,
-        )
-        db.session.add(petition)
-
-    # Atualizar dados
-    petition.form_data = form_data
-    petition.process_number = form_data.get("processo_numero") or form_data.get(
-        "processo_number"
-    )
-
-    # Ações
-    if action == "complete":
-        petition.status = "completed"
-        petition.completed_at = datetime.now(timezone.utc)
-    elif action == "cancel":
-        petition.status = "cancelled"
-        petition.cancelled_at = datetime.now(timezone.utc)
-    else:
-        if petition.status != "completed":
-            petition.status = "draft"
-
     try:
-        db.session.commit()
+        data = request.validated_data
 
-        # Gerar título automático após commit (para ter o ID)
-        if not petition.title:  # Só gerar se não tiver título
-            autor = form_data.get("autor_nome", "").strip()
-            reu = form_data.get("reu_nome", "").strip()
+        petition_type_id = data.get("petition_type_id")
+        petition_model_id = data.get("petition_model_id")
+        form_data = data.get("data", {})
+        title = data.get("title")
+        notes = data.get("notes")
 
-            if petition_model_id:
-                petition_model = db.session.get(PetitionModel, petition_model_id)
-                base_name = (
-                    petition_model.name if petition_model else "Modelo de Petição"
+        # Verificar se é edição ou novo
+        if petition_id:
+            petition = SavedPetition.query.filter_by(
+                id=petition_id, user_id=current_user.id
+            ).first()
+
+            if not petition:
+                return jsonify(
+                    {"success": False, "error": "Petição não encontrada"}
+                ), 404
+
+            if petition.status == "cancelled":
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": "Petição cancelada não pode ser editada",
+                        }
+                    ),
+                    400,
                 )
-            else:
-                petition_type = db.session.get(PetitionType, petition_type_id)
-                base_name = petition_type.name if petition_type else "Petição"
+        else:
+            # Criar nova petição
+            petition = SavedPetition(
+                user_id=current_user.id,
+                petition_type_id=petition_type_id,
+                petition_model_id=petition_model_id,
+            )
+            db.session.add(petition)
 
-            if autor and reu:
-                petition.title = f"{base_name} - {autor} x {reu}"
-            elif autor:
-                petition.title = f"{base_name} - {autor}"
-            else:
-                petition.title = f"{base_name} - #{petition.id}"
-
-        db.session.commit()
-
-        return jsonify(
-            {
-                "success": True,
-                "petition_id": petition.id,
-                "message": "Petição salva com sucesso!",
-                "status": petition.status,
-            }
+        # Atualizar dados
+        petition.form_data = form_data
+        petition.process_number = form_data.get("processo_numero") or form_data.get(
+            "processo_number"
         )
+
+        # Ações
+        if action == "complete":
+            petition.status = "completed"
+            petition.completed_at = datetime.now(timezone.utc)
+        elif action == "cancel":
+            petition.status = "cancelled"
+            petition.cancelled_at = datetime.now(timezone.utc)
+        else:
+            if petition.status != "completed":
+                petition.status = "draft"
+
+        try:
+            db.session.commit()
+
+            # Gerar título automático após commit (para ter o ID)
+            if not petition.title:  # Só gerar se não tiver título
+                autor = form_data.get("autor_nome", "").strip()
+                reu = form_data.get("reu_nome", "").strip()
+
+                if petition_model_id:
+                    petition_model = db.session.get(PetitionModel, petition_model_id)
+                    base_name = (
+                        petition_model.name if petition_model else "Modelo de Petição"
+                    )
+                else:
+                    petition_type = db.session.get(PetitionType, petition_type_id)
+                    base_name = petition_type.name if petition_type else "Petição"
+
+                if autor and reu:
+                    petition.title = f"{base_name} - {autor} x {reu}"
+                elif autor:
+                    petition.title = f"{base_name} - {autor}"
+                else:
+                    petition.title = f"{base_name} - #{petition.id}"
+
+            db.session.commit()
+
+            return jsonify(
+                {
+                    "success": True,
+                    "petition_id": petition.id,
+                    "message": "Petição salva com sucesso!",
+                    "status": petition.status,
+                }
+            )
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"success": False, "error": str(e)}), 500
+
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 500
+        error_msg = format_error_for_user(e, "Erro ao salvar petição")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 
 @bp.route("/api/saved/<int:petition_id>/cancel", methods=["POST"])
 @login_required
+@limiter.limit("10 per minute")
 def api_cancel_petition(petition_id):
     """API para cancelar uma petição."""
 
@@ -1137,6 +1220,7 @@ def api_cancel_petition(petition_id):
 
 @bp.route("/api/saved/<int:petition_id>/restore", methods=["POST"])
 @login_required
+@limiter.limit("10 per minute")
 def api_restore_petition(petition_id):
     """API para restaurar uma petição cancelada."""
 
@@ -1145,12 +1229,15 @@ def api_restore_petition(petition_id):
     ).first_or_404()
 
     if petition.status != "cancelled":
-        return jsonify(
-            {
-                "success": False,
-                "error": "Apenas petições canceladas podem ser restauradas",
-            }
-        ), 400
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Apenas petições canceladas podem ser restauradas",
+                }
+            ),
+            400,
+        )
 
     petition.status = "draft"
     petition.cancelled_at = None
@@ -1258,12 +1345,15 @@ def api_upload_attachment(petition_id):
     ).first_or_404()
 
     if petition.status == "cancelled":
-        return jsonify(
-            {
-                "success": False,
-                "error": "Não é possível anexar arquivos a petições canceladas",
-            }
-        ), 400
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Não é possível anexar arquivos a petições canceladas",
+                }
+            ),
+            400,
+        )
 
     if "file" not in request.files:
         return jsonify({"success": False, "error": "Nenhum arquivo enviado"}), 400
@@ -1274,21 +1364,38 @@ def api_upload_attachment(petition_id):
         return jsonify({"success": False, "error": "Arquivo sem nome"}), 400
 
     if not allowed_file(file.filename):
-        return jsonify(
-            {
-                "success": False,
-                "error": f"Tipo de arquivo não permitido. Permitidos: {', '.join(ALLOWED_EXTENSIONS)}",
-            }
-        ), 400
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"Tipo de arquivo não permitido. Permitidos: {', '.join(ALLOWED_EXTENSIONS)}",
+                }
+            ),
+            400,
+        )
 
     # Verificar tamanho
     file.seek(0, 2)
     file_size = file.tell()
     file.seek(0)
 
-    if file_size > 10 * 1024 * 1024:  # 10MB
+    if file_size > MAX_ATTACHMENT_SIZE:  # 20MB
         return jsonify(
-            {"success": False, "error": "Arquivo muito grande. Máximo: 10MB"}
+            {
+                "success": False,
+                "error": f"Arquivo muito grande. Máximo: {MAX_ATTACHMENT_SIZE // (1024 * 1024)}MB por arquivo",
+            }
+        ), 400
+
+    # Verificar tamanho total já enviado
+    current_total = sum(att.file_size for att in petition.attachments)
+    if current_total + file_size > MAX_TOTAL_SIZE_PER_PETITION:  # 50MB
+        remaining = (MAX_TOTAL_SIZE_PER_PETITION - current_total) // (1024 * 1024)
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Limite total de 50MB por petição excedido. Espaço disponível: {remaining}MB",
+            }
         ), 400
 
     # Gerar nome único

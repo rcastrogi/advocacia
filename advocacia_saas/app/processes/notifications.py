@@ -223,9 +223,7 @@ def get_unread_notifications(user_id, limit=50):
 def mark_notification_as_read(notification_id, user_id):
     """Marca uma notificação como lida."""
 
-    notification = ProcessNotification.query.filter_by(
-        id=notification_id, user_id=user_id
-    ).first()
+    notification = ProcessNotification.query.filter_by(id=notification_id, user_id=user_id).first()
 
     if notification:
         notification.mark_as_read()

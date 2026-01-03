@@ -4,22 +4,29 @@
 
 {% block admin_content %}
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-tags text-primary"></i> {{ title }}</h1>
-            <p class="text-muted mt-1">Gerencie as categorias do roadmap</p>
+    {% include 'components/list_header.html' with context %}
+
+    {# Statistics #}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-tags', 'color': 'primary', 'label': 'Total de Categorias', 'value': categories|length} %}
+            {% include 'components/stat_card.html' %}
         </div>
-        <div>
-            <a href="{{ url_for('admin.new_roadmap_category') }}" class="btn btn-success">
-                <i class="fas fa-plus"></i> Nova Categoria
-            </a>
-            <button class="btn btn-outline-secondary ms-2" data-reset-view="admin.roadmap_categories" title="Resetar preferências de tabela">
-                <i class="fas fa-undo"></i> Resetar Preferências
-            </button>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-list', 'color': 'info', 'label': 'Total de Itens', 'value': categories|length if categories else 0} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-palette', 'color': 'success', 'label': 'Cores', 'value': categories|map(attribute='color')|unique|list|length} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-star', 'color': 'warning', 'label': 'Ícones', 'value': categories|length} %}
+            {% include 'components/stat_card.html' %}
         </div>
     </div>
 
-    <div class="card shadow">
+    <div class="card shadow-sm">
         <div class="card-body">
             {% if categories %}
             <div class="table-responsive">

@@ -23,20 +23,14 @@ class CivilPetitionForm(FlaskForm):
     )
     forum = StringField("Fórum", validators=[DataRequired(), Length(max=255)])
     vara = StringField("Vara", validators=[DataRequired(), Length(max=255)])
-    process_number = StringField(
-        "Número do Processo", validators=[Optional(), Length(max=100)]
-    )
-    author_name = StringField(
-        "Nome do Autor", validators=[DataRequired(), Length(max=255)]
-    )
+    process_number = StringField("Número do Processo", validators=[Optional(), Length(max=100)])
+    author_name = StringField("Nome do Autor", validators=[DataRequired(), Length(max=255)])
     author_qualification = TextAreaField(
         "Qualificação do Autor",
         validators=[DataRequired()],
         render_kw={"rows": 3},
     )
-    defendant_name = StringField(
-        "Nome do Réu", validators=[DataRequired(), Length(max=255)]
-    )
+    defendant_name = StringField("Nome do Réu", validators=[DataRequired(), Length(max=255)])
     defendant_qualification = TextAreaField(
         "Qualificação do Réu",
         validators=[DataRequired()],
@@ -46,15 +40,11 @@ class CivilPetitionForm(FlaskForm):
     fundamentos = TextAreaField(
         "Fundamentação Jurídica", validators=[DataRequired()], render_kw={"rows": 5}
     )
-    pedidos = TextAreaField(
-        "Pedidos", validators=[DataRequired()], render_kw={"rows": 4}
-    )
+    pedidos = TextAreaField("Pedidos", validators=[DataRequired()], render_kw={"rows": 4})
     valor_causa = DecimalField("Valor da Causa (R$)", validators=[Optional()], places=2)
     cidade = StringField("Cidade", validators=[DataRequired(), Length(max=120)])
     data_assinatura = DateField("Data", default=date.today, validators=[DataRequired()])
-    advogado_nome = StringField(
-        "Nome do Advogado", validators=[DataRequired(), Length(max=255)]
-    )
+    advogado_nome = StringField("Nome do Advogado", validators=[DataRequired(), Length(max=255)])
     advogado_oab = StringField("OAB", validators=[DataRequired(), Length(max=50)])
     submit = SubmitField("Gerar PDF")
 
@@ -75,9 +65,7 @@ class FamilyPetitionForm(FlaskForm):
         validators=[Optional(), Length(max=255)],
         render_kw={"placeholder": "Ex: 1ª Vara de Família e Sucessões"},
     )
-    process_number = StringField(
-        "Número do Processo", validators=[Optional(), Length(max=100)]
-    )
+    process_number = StringField("Número do Processo", validators=[Optional(), Length(max=100)])
     action_type = SelectField(
         "Tipo da ação",
         validators=[Optional()],
@@ -116,9 +104,7 @@ class FamilyPetitionForm(FlaskForm):
 
     # Dados do casamento
     marriage_date = DateField("Data do casamento/união", validators=[Optional()])
-    marriage_city = StringField(
-        "Cidade do casamento", validators=[Optional(), Length(max=180)]
-    )
+    marriage_city = StringField("Cidade do casamento", validators=[Optional(), Length(max=180)])
     marriage_regime = SelectField(
         "Regime de bens",
         choices=[
@@ -155,12 +141,8 @@ class FamilyPetitionForm(FlaskForm):
         validators=[Optional()],
         render_kw={"rows": 2, "placeholder": "Rua, nº, bairro, cidade/UF, CEP"},
     )
-    author_cpf = StringField(
-        "CPF da Autora/Autor", validators=[Optional(), Length(max=20)]
-    )
-    spouse_two_name = StringField(
-        "Nome do Réu/Ré", validators=[DataRequired(), Length(max=255)]
-    )
+    author_cpf = StringField("CPF da Autora/Autor", validators=[Optional(), Length(max=20)])
+    spouse_two_name = StringField("Nome do Réu/Ré", validators=[DataRequired(), Length(max=255)])
     spouse_two_qualification = TextAreaField(
         "Qualificação do Réu/Ré",
         validators=[Optional()],
@@ -290,15 +272,11 @@ class FamilyPetitionForm(FlaskForm):
             "placeholder": "Descreva os fatos que levaram ao pedido de divórcio",
         },
     )
-    facts = TextAreaField(
-        "Fatos gerais", validators=[DataRequired()], render_kw={"rows": 5}
-    )
+    facts = TextAreaField("Fatos gerais", validators=[DataRequired()], render_kw={"rows": 5})
     fundamentos = TextAreaField(
         "Fundamentação jurídica", validators=[DataRequired()], render_kw={"rows": 5}
     )
-    pedidos = TextAreaField(
-        "Pedidos", validators=[DataRequired()], render_kw={"rows": 4}
-    )
+    pedidos = TextAreaField("Pedidos", validators=[DataRequired()], render_kw={"rows": 4})
     valor_causa = DecimalField("Valor da Causa (R$)", validators=[Optional()], places=2)
 
     # Advogado e assinatura
@@ -323,9 +301,7 @@ class FamilyPetitionForm(FlaskForm):
         validators=[Optional()],
         render_kw={"rows": 2, "placeholder": "Rua, nº, bairro, cidade/UF, CEP"},
     )
-    signature_author = BooleanField(
-        "Incluir assinatura da parte autora?", default=False
-    )
+    signature_author = BooleanField("Incluir assinatura da parte autora?", default=False)
 
     documents = MultipleFileField(
         "Documentos anexos (opcional)",
@@ -359,9 +335,7 @@ class SimplePetitionForm(FlaskForm):
     vara = StringField(
         "Vara",
         validators=[Optional(), Length(max=255)],
-        render_kw={
-            "placeholder": "Ex: 1ª Vara do Juizado Especial Cível de Santo Amaro"
-        },
+        render_kw={"placeholder": "Ex: 1ª Vara do Juizado Especial Cível de Santo Amaro"},
     )
     process_number = StringField(
         "Número do Processo",
@@ -423,9 +397,7 @@ class SimplePetitionForm(FlaskForm):
     valor_extenso = StringField(
         "Valor por extenso",
         validators=[Optional(), Length(max=255)],
-        render_kw={
-            "placeholder": "Ex: oitocentos e cinquenta e quatro reais e sessenta centavos"
-        },
+        render_kw={"placeholder": "Ex: oitocentos e cinquenta e quatro reais e sessenta centavos"},
     )
     folhas_referencia = StringField(
         "Folhas de referência",
@@ -479,9 +451,7 @@ class SimplePetitionForm(FlaskForm):
     valor_penhora_extenso = StringField(
         "Valor da penhora por extenso",
         validators=[Optional(), Length(max=255)],
-        render_kw={
-            "placeholder": "Ex: trezentos e sessenta e três reais e sessenta centavos"
-        },
+        render_kw={"placeholder": "Ex: trezentos e sessenta e três reais e sessenta centavos"},
     )
     debito_atualizado = StringField(
         "Débito atualizado total",

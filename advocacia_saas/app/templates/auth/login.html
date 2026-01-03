@@ -25,7 +25,7 @@
                             <span class="input-group-text bg-white">
                                 <i class="fas fa-envelope"></i>
                             </span>
-                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="seu@email.com") }}
+                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="seu@email.com", autocomplete="email") }}
                             {% if form.email.errors %}
                                 <div class="invalid-feedback">
                                     {% for error in form.email.errors %}
@@ -42,7 +42,7 @@
                             <span class="input-group-text bg-white">
                                 <i class="fas fa-lock"></i>
                             </span>
-                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="••••••••") }}
+                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="••••••••", autocomplete="current-password") }}
                             {% if form.password.errors %}
                                 <div class="invalid-feedback">
                                     {% for error in form.password.errors %}

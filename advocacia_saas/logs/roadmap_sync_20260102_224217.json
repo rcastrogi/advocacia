@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-01-02T22:42:17.962707+00:00",
+  "environment": "local",
+  "total_items": 39,
+  "status_distribution": {
+    "completed": 26,
+    "planned": 13
+  },
+  "overall_progress": 66.67,
+  "items_evolved": 13
+}

@@ -1,11 +1,10 @@
-import json
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from flask import abort, flash, redirect, render_template, request, url_for
+from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from app import db
+from app import db, limiter
 from app.billing import bp
 from app.billing.forms import AssignPlanForm, BillingPlanForm, PetitionTypeForm
 from app.billing.utils import (
@@ -14,7 +13,10 @@ from app.billing.utils import (
     ensure_default_plan,
     slugify,
 )
+from app.decorators import master_required, validate_with_schema
 from app.models import BillingPlan, PetitionType, PetitionUsage, User, UserPlan
+from app.rate_limits import ADMIN_API_LIMIT
+from app.schemas import BillingPlanSchema
 
 
 def _require_admin():
@@ -162,9 +164,9 @@ def toggle_petition_type(type_id):
 
 @bp.route("/plans", methods=["GET", "POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def plans():
-    _require_admin()
-
     form = BillingPlanForm()
     if form.validate_on_submit():
         slug = slugify(form.name.data)
@@ -177,10 +179,12 @@ def plans():
                 description=form.description.data,
                 plan_type=form.plan_type.data,
                 monthly_fee=form.monthly_fee.data or Decimal("0.00"),
-                monthly_petition_limit=int(form.monthly_petition_limit.data)
-                if form.monthly_petition_limit.data
-                and form.monthly_petition_limit.data.isdigit()
-                else None,
+                monthly_petition_limit=(
+                    int(form.monthly_petition_limit.data)
+                    if form.monthly_petition_limit.data
+                    and form.monthly_petition_limit.data.isdigit()
+                    else None
+                ),
                 supported_periods=form.supported_periods.data,
                 discount_percentage=form.discount_percentage.data or Decimal("0.00"),
                 active=form.active.data,
@@ -198,6 +202,8 @@ def plans():
 
 @bp.route("/plans/<int:plan_id>/toggle", methods=["POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def toggle_plan(plan_id):
     _require_admin()
     plan = BillingPlan.query.get_or_404(plan_id)

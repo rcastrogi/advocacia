@@ -5,7 +5,7 @@ Continuar migração dos tipos restantes
 import json
 
 from app import create_app, db
-from app.models import PetitionTemplate, PetitionType, PetitionTypeSection
+from app.models import PetitionTemplate, PetitionType
 from sqlalchemy import text
 
 app = create_app()
@@ -61,13 +61,11 @@ def continue_migration():
                     model_id = model_result.fetchone()[0]
                     print(f"  ✅ Modelo criado com ID: {model_id}")
 
-                    # Migrar seções
-                    type_sections = PetitionTypeSection.query.filter_by(
-                        petition_type_id=type_id
-                    ).all()
-                    print(f"  📋 Migrando {len(type_sections)} seções")
+                    # Migrar seções - usar as novas seções (IDs 7-12) ao invés de type_sections
+                    NEW_SECTION_IDS = [7, 8, 9, 10, 11, 12]
+                    print(f"  📋 Vinculando {len(NEW_SECTION_IDS)} seções")
 
-                    for type_section in type_sections:
+                    for order, section_id in enumerate(NEW_SECTION_IDS, 1):
                         insert_section_sql = text("""
                         INSERT INTO petition_model_sections (petition_model_id, section_id, "order", is_required, is_expanded, field_overrides)
                         VALUES (:model_id, :section_id, :order, :is_required, :is_expanded, :field_overrides)
@@ -77,13 +75,11 @@ def continue_migration():
                             insert_section_sql,
                             {
                                 "model_id": model_id,
-                                "section_id": type_section.section_id,
-                                "order": type_section.order,
-                                "is_required": type_section.is_required,
-                                "is_expanded": type_section.is_expanded,
-                                "field_overrides": json.dumps(
-                                    type_section.field_overrides or {}
-                                ),
+                                "section_id": section_id,
+                                "order": order,
+                                "is_required": True,
+                                "is_expanded": (order == 1),
+                                "field_overrides": json.dumps({}),
                             },
                         )
 

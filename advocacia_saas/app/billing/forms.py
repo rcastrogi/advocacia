@@ -19,16 +19,12 @@ def validate_json(form, field):
     try:
         json.loads(field.data)
     except (json.JSONDecodeError, TypeError):
-        raise ValidationError(
-            'JSON inválido. Use o formato: {"1m": 0.0, "3m": 5.0, ...}'
-        )
+        raise ValidationError('JSON inválido. Use o formato: {"1m": 0.0, "3m": 5.0, ...}')
 
 
 class PetitionTypeForm(FlaskForm):
     name = StringField("Nome", validators=[DataRequired(), Length(max=180)])
-    description = TextAreaField(
-        "Descrição", validators=[Optional()], render_kw={"rows": 3}
-    )
+    description = TextAreaField("Descrição", validators=[Optional()], render_kw={"rows": 3})
     category = SelectField(
         "Categoria",
         choices=[
@@ -55,9 +51,7 @@ class PetitionTypeForm(FlaskForm):
 
 class BillingPlanForm(FlaskForm):
     name = StringField("Nome do plano", validators=[DataRequired(), Length(max=120)])
-    description = TextAreaField(
-        "Descrição", validators=[Optional()], render_kw={"rows": 3}
-    )
+    description = TextAreaField("Descrição", validators=[Optional()], render_kw={"rows": 3})
     plan_type = SelectField(
         "Tipo de cobrança",
         choices=[

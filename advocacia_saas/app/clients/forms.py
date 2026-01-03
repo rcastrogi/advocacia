@@ -18,9 +18,7 @@ class MultiCheckboxField(SelectField):
 
 
 class DependentForm(FlaskForm):
-    full_name = StringField(
-        "Nome completo", validators=[DataRequired(), Length(min=2, max=200)]
-    )
+    full_name = StringField("Nome completo", validators=[DataRequired(), Length(min=2, max=200)])
     relationship = SelectField(
         "Parentesco",
         choices=[
@@ -39,9 +37,7 @@ class DependentForm(FlaskForm):
 
 class ClientForm(FlaskForm):
     # Personal Information
-    full_name = StringField(
-        "Nome completo *", validators=[DataRequired(), Length(min=2, max=200)]
-    )
+    full_name = StringField("Nome completo *", validators=[DataRequired(), Length(min=2, max=200)])
     rg = StringField("RG", validators=[Optional(), Length(max=20)])
     cpf_cnpj = StringField("CPF/CNPJ *", validators=[DataRequired(), Length(max=20)])
     civil_status = SelectField(
@@ -78,12 +74,8 @@ class ClientForm(FlaskForm):
     uf = SelectField("UF", choices=[("", "Selecione...")], validators=[Optional()])
 
     # Contacts
-    landline_phone = StringField(
-        "Telefone fixo", validators=[Optional(), Length(max=20)]
-    )
-    email = StringField(
-        "E-mail *", validators=[DataRequired(), Email(), Length(max=120)]
-    )
+    landline_phone = StringField("Telefone fixo", validators=[Optional(), Length(max=20)])
+    email = StringField("E-mail *", validators=[DataRequired(), Email(), Length(max=120)])
     mobile_phone = StringField("Celular *", validators=[DataRequired(), Length(max=20)])
 
     # Personal Conditions
@@ -117,9 +109,7 @@ class ClientForm(FlaskForm):
 
         # Custom validation for disability types
         if self.has_disability.data and not self.disability_types.data:
-            self.disability_types.errors.append(
-                "Selecione pelo menos um tipo de deficiência."
-            )
+            self.disability_types.errors.append("Selecione pelo menos um tipo de deficiência.")
             return False
 
         # Custom validation for delivery date

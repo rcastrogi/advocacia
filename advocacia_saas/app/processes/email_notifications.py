@@ -49,9 +49,7 @@ def send_deadline_notification(process, notification_type, days_until=None):
             "days_overdue": abs((process.next_deadline - datetime.now().date()).days),
         }
     elif notification_type == "deadline_today":
-        subject = (
-            f"PRAZO VENCE HOJE - Processo {process.process_number or process.title}"
-        )
+        subject = f"PRAZO VENCE HOJE - Processo {process.process_number or process.title}"
         template = "emails/deadline_today.html"
         context = {"process": process, "user": user, "deadline": process.next_deadline}
     elif notification_type == "deadline_urgent":
@@ -136,7 +134,9 @@ def send_cost_notification(process, cost):
         subject = f"CUSTO VENCIDO - Processo {process.process_number or process.title}"
         template = "emails/cost_overdue.html"
     else:
-        subject = f"CUSTO PRÓXIMO DO VENCIMENTO - Processo {process.process_number or process.title}"
+        subject = (
+            f"CUSTO PRÓXIMO DO VENCIMENTO - Processo {process.process_number or process.title}"
+        )
         template = "emails/cost_due_soon.html"
 
     # Renderizar template
@@ -166,9 +166,7 @@ def check_and_send_notifications():
     today = datetime.now().date()
 
     # Notificações de prazo
-    processes_with_deadlines = Process.query.filter(
-        Process.next_deadline.isnot(None)
-    ).all()
+    processes_with_deadlines = Process.query.filter(Process.next_deadline.isnot(None)).all()
 
     notifications_sent = 0
 
@@ -176,16 +174,12 @@ def check_and_send_notifications():
         days_until = (process.next_deadline - today).days
 
         # Prazo vencido
-        if days_until < 0 and not _notification_exists(
-            process.id, "deadline_overdue", today
-        ):
+        if days_until < 0 and not _notification_exists(process.id, "deadline_overdue", today):
             if send_deadline_notification(process, "deadline_overdue"):
                 notifications_sent += 1
 
         # Prazo vence hoje
-        elif days_until == 0 and not _notification_exists(
-            process.id, "deadline_today", today
-        ):
+        elif days_until == 0 and not _notification_exists(process.id, "deadline_today", today):
             if send_deadline_notification(process, "deadline_today"):
                 notifications_sent += 1
 
@@ -235,8 +229,6 @@ def _notification_exists(process_id, notification_type, date, related_id=None):
     )
 
     if related_id:
-        query = query.filter(
-            ProcessNotification.extra_data.contains({"cost_id": related_id})
-        )
+        query = query.filter(ProcessNotification.extra_data.contains({"cost_id": related_id}))
 
     return query.first() is not None

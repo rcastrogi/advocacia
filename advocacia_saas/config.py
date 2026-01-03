@@ -93,3 +93,10 @@ class Config:
 
     # Trial settings
     DEFAULT_TRIAL_DAYS = int(os.environ.get("DEFAULT_TRIAL_DAYS", 3))
+
+    # Feature Toggles - Mostrar erros reais ao invés de mensagens genéricas
+    SHOW_DETAILED_ERRORS = os.environ.get("SHOW_DETAILED_ERRORS", "False").lower() in [
+        "true",
+        "on",
+        "1",
+    ]

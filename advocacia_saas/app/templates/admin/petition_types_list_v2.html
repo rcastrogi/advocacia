@@ -1,0 +1,120 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin_content %}
+{# Page Header with Title, Description, and Actions #}
+{% set page_title = 'Tipos de Petição' %}
+{% set page_icon = 'fas fa-file-alt' %}
+{% set page_description = 'Configure os tipos de petições disponíveis na plataforma' %}
+{% set page_actions = [
+    {
+        'label': 'Novo Tipo',
+        'url': url_for('admin.petition_type_new'),
+        'icon': 'fas fa-plus',
+        'class': 'btn-primary'
+    }
+] %}
+{% include 'components/list_header.html' %}
+
+<div class="card shadow">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table 
+                class="table table-bordered" 
+                id="petitionTypesTable" 
+                data-table-view="admin.petition_types" 
+                data-page-length="25" 
+                data-language="//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Slug</th>
+                        <th>Categoria</th>
+                        <th>Dinâmico</th>
+                        <th>Ativo</th>
+                        <th>Cobrável</th>
+                        <th>Seções</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for petition_type in petition_types %}
+                    <tr>
+                        <td>
+                            <i class="fas {{ petition_type.icon }} text-{{ petition_type.color }}"></i>
+                            {{ petition_type.name }}
+                        </td>
+                        <td><code>{{ petition_type.slug }}</code></td>
+                        <td>
+                            <span class="badge bg-info text-white">{{ petition_type.category.title() }}</span>
+                        </td>
+                        <td>
+                            {% if petition_type.use_dynamic_form %}
+                            <span class="badge bg-success text-white">
+                                <i class="fas fa-check-circle me-1"></i>Sim
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary text-white">
+                                <i class="fas fa-times-circle me-1"></i>Não
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if petition_type.is_active %}
+                            <span class="badge bg-success text-white">
+                                <i class="fas fa-check-circle me-1"></i>Ativo
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger text-white">
+                                <i class="fas fa-times-circle me-1"></i>Inativo
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if petition_type.is_billable %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-dollar-sign me-1"></i>R$ {{ "%.2f"|format(petition_type.base_price) }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-info text-white">
+                                <i class="fas fa-check me-1"></i>Grátis
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a 
+                                href="{{ url_for('admin.petition_models_list') }}"
+                                class="btn btn-sm btn-outline-primary">
+                                {{ petition_type.models|length }} modelos
+                            </a>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a 
+                                    href="{{ url_for('admin.petition_type_edit', type_id=petition_type.id) }}"
+                                    class="btn btn-sm btn-outline-secondary" 
+                                    title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form 
+                                    method="post"
+                                    action="{{ url_for('admin.petition_type_delete', type_id=petition_type.id) }}"
+                                    class="d-inline"
+                                    onsubmit="return confirm('Tem certeza que deseja excluir este tipo de petição?')">
+                                    <button 
+                                        type="submit" 
+                                        class="btn btn-sm btn-outline-danger"
+                                        title="Excluir">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

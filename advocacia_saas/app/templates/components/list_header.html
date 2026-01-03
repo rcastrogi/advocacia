@@ -1,0 +1,42 @@
+{# 
+Componente de Header Padrão para List Pages
+Uso: {% include 'components/list_header.html' %}
+Requer context:
+  - page_title: Título da página
+  - page_description: Descrição da página
+  - page_icon: Ícone Font Awesome (ex: 'tags', 'users')
+  - new_btn_url: URL do botão "Novo"
+  - new_btn_label: Texto do botão (padrão: "Novo")
+  - table_view_key: Chave da view para preferences (ex: 'admin.plans')
+  - show_reset_btn: Mostrar botão reset (padrão: true)
+  - extra_actions: HTML adicional com mais botões
+#}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            {% if page_icon %}<i class="fas fa-{{ page_icon }} me-2 text-primary"></i>{% endif %}
+            {{ page_title }}
+        </h1>
+        {% if page_description %}
+        <p class="text-muted mb-0">{{ page_description }}</p>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+        {% if extra_actions %}
+            {{ extra_actions|safe }}
+        {% endif %}
+        {% if new_btn_url %}
+        <a href="{{ new_btn_url }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>{{ new_btn_label or 'Novo' }}
+        </a>
+        {% endif %}
+        {% if show_reset_btn and table_view_key %}
+        <button class="btn btn-outline-secondary" 
+                data-reset-view="{{ table_view_key }}" 
+                title="Resetar preferências de tabela">
+            <i class="fas fa-undo"></i>
+        </button>
+        {% endif %}
+    </div>
+</div>

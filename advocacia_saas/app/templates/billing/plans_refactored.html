@@ -1,0 +1,175 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    
+    {# Header Padrão #}
+    {% set page_title = 'Planos de Cobrança' %}
+    {% set page_icon = 'tags' %}
+    {% set page_description = 'Configure planos por uso ou mensais e controle quais estão ativos.' %}
+    {% set new_btn_url = url_for('billing.new_plan') %}
+    {% set new_btn_label = 'Novo Plano' %}
+    {% set table_view_key = 'billing.plans' %}
+    {% include 'components/list_header.html' %}
+
+    <div class="row">
+        {# Coluna da esquerda: Formulário #}
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <strong>Novo Plano</strong>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.name.label(class_='form-label') }}
+                            {{ form.name(class_='form-control') }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.description.label(class_='form-label') }}
+                            {{ form.description(class_='form-control') }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.plan_type.label(class_='form-label') }}
+                            {{ form.plan_type(class_='form-select') }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.monthly_fee.label(class_='form-label') }}
+                            {{ form.monthly_fee(class_='form-control') }}
+                            <small class="text-muted">Valor base mensal do plano.</small>
+                        </div>
+                        <div class="mb-3">
+                            {{ form.monthly_petition_limit.label(class_='form-label') }}
+                            {{ form.monthly_petition_limit(class_='form-control', id='monthly_petition_limit') }}
+                            <small class="text-muted">Quantidade de petições incluídas por mês.</small>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                {{ form.supported_periods.label(class_='form-label') }}
+                                {{ form.supported_periods(class_='form-select') }}
+                                <small class="text-muted">Período de cobrança.</small>
+                            </div>
+                            <div class="col">
+                                {{ form.discount_percentage.label(class_='form-label') }}
+                                {{ form.discount_percentage(class_='form-control') }}
+                                <small class="text-muted">Desconto %.</small>
+                            </div>
+                        </div>
+                        <div class="form-check form-switch mt-3">
+                            {{ form.active(class_='form-check-input') }}
+                            {{ form.active.label(class_='form-check-label') }}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-3">
+                            <i class="fas fa-save me-1"></i> {{ form.submit.label.text }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {# Coluna da direita: Tabela #}
+        <div class="col-lg-8">
+            {% block data_table %}
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="plansTable" 
+                               class="table table-hover mb-0" 
+                               width="100%"
+                               data-table-view="billing.plans">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Tipo</th>
+                                    <th>Período</th>
+                                    <th>Valor</th>
+                                    <th>Desconto</th>
+                                    <th>Preço Final</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for plan in plans %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ plan.name }}</strong>
+                                        {% if plan.description %}
+                                        <br><small class="text-muted">{{ plan.description[:50] }}{% if plan.description|length > 50 %}...{% endif %}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if plan.plan_type == 'per_usage' %}
+                                            <span class="badge bg-warning text-dark" title="Plano por uso">
+                                                <i class="fas fa-chart-line me-1"></i>Por uso
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-info text-white" title="Plano mensal">
+                                                <i class="fas fa-calendar me-1"></i>Mensal
+                                            </span>
+                                        {% endif %}
+                                        {% if plan.monthly_petition_limit %}
+                                        <br><small class="text-muted">{{ plan.monthly_petition_limit }} petições/mês</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ plan.get_period_label(plan.supported_periods) }}</span>
+                                    </td>
+                                    <td>R$ {{ '%.2f'|format(plan.monthly_fee or 0) }}</td>
+                                    <td>
+                                        {% if plan.discount_percentage > 0 %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-tag me-1"></i>{{ '%.1f'|format(plan.discount_percentage) }}%
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">R$ {{ '%.2f'|format(plan.get_price_for_period() or 0) }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if plan.active %}
+                                            <span class="badge bg-success" title="Plano ativo">
+                                                <i class="fas fa-check-circle me-1"></i>Ativo
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger" title="Plano inativo">
+                                                <i class="fas fa-times-circle me-1"></i>Inativo
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('billing.edit_plan', plan_id=plan.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="Editar plano">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form method="post" action="{{ url_for('billing.toggle_plan', plan_id=plan.id) }}" class="d-inline">
+                                                <button type="submit" 
+                                                        class="btn btn-sm btn-outline-secondary" 
+                                                        title="{{ 'Desativar plano' if plan.active else 'Ativar plano' }}">
+                                                    <i class="fas fa-{{ 'ban' if plan.active else 'check' }}"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">Nenhum plano cadastrado.</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endblock %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

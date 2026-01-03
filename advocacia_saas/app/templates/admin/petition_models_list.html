@@ -2,180 +2,156 @@
 
 {% block admin_content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-0">Modelos de Petição</h1>
-        <p class="text-muted">Gerencie os modelos de configuração para cada tipo de petição</p>
+{# Page Header #}
+{% set page_title = 'Modelos de Petição' %}
+{% set page_icon = 'fas fa-file-alt' %}
+{% set page_description = 'Gerencie os modelos de configuração para cada tipo de petição' %}
+{% set page_actions = [
+    {
+        'label': 'Novo Modelo',
+        'url': url_for('admin.petition_model_new'),
+        'icon': 'fas fa-plus',
+        'class': 'btn-primary'
+    }
+] %}
+{% include 'components/list_header.html' %}
+
+{# Statistics Cards #}
+<div class="row g-3 mb-4">
+    <div class="col-md-3 mb-3">
+        {% set stat_data = {
+            'icon': 'fas fa-file-alt',
+            'color': 'primary',
+            'label': 'Total de Modelos',
+            'value': petition_models|length
+        } %}
+        {% include 'components/stat_card.html' %}
     </div>
-    <a href="{{ url_for('admin.petition_model_new') }}" class="btn btn-primary">
-        <i class="fas fa-plus me-2"></i>Novo Modelo
-    </a>
-    <button class="btn btn-outline-secondary ms-2" data-reset-view="admin.petition_models" title="Resetar preferências de tabela">
-        <i class="fas fa-undo"></i>
-    </button>
+    <div class="col-md-3 mb-3">
+        {% set active_count = petition_models|selectattr('is_active')|list|length %}
+        {% set stat_data = {
+            'icon': 'fas fa-check-circle',
+            'color': 'success',
+            'label': 'Modelos Ativos',
+            'value': active_count
+        } %}
+        {% include 'components/stat_card.html' %}
+    </div>
+    <div class="col-md-3 mb-3">
+        {% set dynamic_count = petition_models|selectattr('use_dynamic_form')|list|length %}
+        {% set stat_data = {
+            'icon': 'fas fa-cogs',
+            'color': 'info',
+            'label': 'Com Formulário Dinâmico',
+            'value': dynamic_count
+        } %}
+        {% include 'components/stat_card.html' %}
+    </div>
+    <div class="col-md-3 mb-3">
+        {% set types_count = petition_models|map(attribute='petition_type')|unique|list|length %}
+        {% set stat_data = {
+            'icon': 'fas fa-tags',
+            'color': 'warning',
+            'label': 'Tipos de Petição',
+            'value': types_count
+        } %}
+        {% include 'components/stat_card.html' %}
+    </div>
 </div>
 
-<!-- Cards de estatísticas -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card border-left-primary shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                        Total de Modelos
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        {{ petition_models|length }}
-                                    </div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-file-alt fa-2x text-gray-300"></i>
-                                </div>
+{# Data Table #}
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if petition_models %}
+        <div class="table-responsive">
+            <table 
+                id="petitionModelsTable" 
+                class="table table-bordered" 
+                width="100%" 
+                cellspacing="0" 
+                data-table-view="admin.petition_models" 
+                data-page-length="25">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Tipo de Petição</th>
+                        <th>Seções</th>
+                        <th>Status</th>
+                        <th>Formulário</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for model in petition_models %}
+                    <tr>
+                        <td>
+                            <strong>{{ model.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ model.slug }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-info text-white">{{ model.petition_type.name }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary text-white">{{ model.model_sections.count() }} seções</span>
+                        </td>
+                        <td>
+                            {% if model.is_active %}
+                            <span class="badge bg-success text-white">
+                                <i class="fas fa-check-circle me-1"></i>Ativo
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger text-white">
+                                <i class="fas fa-times-circle me-1"></i>Inativo
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if model.use_dynamic_form %}
+                            <span class="badge bg-primary text-white">
+                                <i class="fas fa-cogs me-1"></i>Dinâmico
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary text-white">
+                                <i class="fas fa-cube me-1"></i>Estático
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a 
+                                    href="{{ url_for('admin.petition_model_edit', model_id=model.id) }}"
+                                    class="btn btn-outline-secondary"
+                                    title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form 
+                                    method="post"
+                                    action="{{ url_for('admin.petition_model_delete', model_id=model.id) }}"
+                                    class="d-inline"
+                                    onsubmit="return confirm('Tem certeza que deseja excluir este modelo?')">
+                                    <button 
+                                        type="submit" 
+                                        class="btn btn-outline-danger"
+                                        title="Excluir">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card border-left-success shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                        Modelos Ativos
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        {{ petition_models|selectattr('is_active')|list|length }}
-                                    </div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card border-left-info shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                        Com Formulário Dinâmico
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        {{ petition_models|selectattr('use_dynamic_form')|list|length }}
-                                    </div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-cogs fa-2x text-gray-300"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card border-left-warning shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                        Tipos de Petição
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        {{ petition_models|map(attribute='petition_type')|unique|list|length }}
-                                    </div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-tags fa-2x text-gray-300"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabela de modelos -->
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Lista de Modelos</h6>
-                </div>
-                <div class="card-body">
-                    {% if petition_models %}
-                    <div class="table-responsive">
-                        <table id="petitionModelsTable" class="table table-bordered" width="100%" cellspacing="0" data-table-view="admin.petition_models" data-page-length="25">
-                            <thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th>Tipo de Petição</th>
-                                    <th>Seções</th>
-                                    <th>Status</th>
-                                    <th>Formulário</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for model in petition_models %}
-                                <tr>
-                                    <td>
-                                        <strong>{{ model.name }}</strong>
-                                        <br>
-                                        <small class="text-muted">{{ model.slug }}</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-secondary">{{ model.petition_type.name }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">{{ model.model_sections.count() }} seções</span>
-                                    </td>
-                                    <td>
-                                        {% if model.is_active %}
-                                            <span class="badge bg-success">Ativo</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">Inativo</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if model.use_dynamic_form %}
-                                            <span class="badge bg-primary">Dinâmico</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Estático</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ url_for('admin.petition_model_edit', model_id=model.id) }}"
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <form method="POST"
-                                                  action="{{ url_for('admin.petition_model_delete', model_id=model.id) }}"
-                                                  style="display: inline;"
-                                                  onsubmit="return confirm('Tem certeza que deseja excluir este modelo?')">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-file-alt fa-3x text-gray-300 mb-3"></i>
-                        <h5 class="text-gray-500">Nenhum modelo encontrado</h5>
-                        <p class="text-gray-400">Comece criando seu primeiro modelo de petição.</p>
-                        <a href="{{ url_for('admin.petition_model_new') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Criar Primeiro Modelo
-                        </a>
-                    </div>
-                </div>
-            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            Nenhum modelo de petição encontrado. 
+            <a href="{{ url_for('admin.petition_model_new') }}" class="alert-link">Criar novo modelo</a>
+        </div>
+        {% endif %}
     </div>
 </div>
-{% endif %}
+
 {% endblock %}

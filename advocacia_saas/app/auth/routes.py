@@ -24,7 +24,10 @@ from app.auth.forms import (
     TwoFactorSetupForm,
     TwoFactorVerifyForm,
 )
+from app.decorators import validate_with_schema
 from app.models import User
+from app.rate_limits import LOGIN_LIMIT
+from app.schemas import UserSchema
 from app.utils.audit import AuditManager
 
 
@@ -68,148 +71,170 @@ def check_password_expiration():
 
 
 @bp.route("/login", methods=["GET", "POST"])
-@limiter.limit(
-    "10 per minute",
-    exempt_when=lambda: current_user.is_authenticated and current_user.is_master,
-)  # Master nunca é limitado
+@limiter.limit(LOGIN_LIMIT, exempt_when=lambda: current_user.is_authenticated)
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("main.dashboard"))
 
     form = LoginForm()
     if form.validate_on_submit():
-        # Detecta rapidamente se já existe um admin real; evita bloquear login normal
-        real_admin_exists = False
         try:
-            real_admin_exists = (
-                User.query.filter_by(user_type="master").first() is not None
-            )
-        except Exception:
-            pass
-
-        # DEMO: Credenciais hardcoded para testes (não usa banco de dados)
-        # Email: admin@advocaciasaas.com | Senha: admin123
-        if (
-            form.email.data == "admin@advocaciasaas.com"
-            and form.password.data == "admin123"
-            and not real_admin_exists
-        ):
-            from datetime import datetime, timedelta, timezone
-
-            # Criar usuário demo em memória (não persiste no banco)
-            from app.models import _demo_user_cache
-
-            demo_user = User(
-                id=999999,
-                username="admin_demo",
-                email="admin@advocaciasaas.com",
-                full_name="Administrador Demo",
-                user_type="master",
-                is_active=True,
-            )
-            # Configurar campos de segurança para evitar expiração
-            demo_user.created_at = datetime.now(timezone.utc)
-            demo_user.password_changed_at = datetime.now(timezone.utc)
-            demo_user.password_expires_at = datetime.now(timezone.utc) + timedelta(
-                days=9999
-            )
-            demo_user.password_history = "[]"
-            demo_user.force_password_change = False
+            # Detecta rapidamente se já existe um admin real; evita bloquear login normal
+            real_admin_exists = False
             try:
-                demo_user.set_password("admin123", skip_history_check=True)
-            except TypeError:
-                demo_user.set_password("admin123")
+                real_admin_exists = (
+                    User.query.filter_by(user_type="master").first() is not None
+                )
+            except Exception:
+                pass
 
-            # Armazenar no cache para o load_user encontrar
-            _demo_user_cache[999999] = demo_user
+            # DEMO: Credenciais hardcoded para testes (não usa banco de dados)
+            # Email: admin@advocaciasaas.com | Senha: admin123
+            if (
+                form.email.data == "admin@advocaciasaas.com"
+                and form.password.data == "admin123"
+                and not real_admin_exists
+            ):
+                from datetime import datetime, timedelta, timezone
 
-            login_user(demo_user, remember=form.remember_me.data)
-            flash(
-                "Login realizado com usuário demo (dados não salvos no banco)", "info"
-            )
-            # Log de auditoria para login demo
-            AuditManager.log_login(demo_user, success=True)
-            next_page = request.args.get("next")
-            if not next_page or urlparse(next_page).netloc != "":
-                next_page = url_for("main.dashboard")
-            return redirect(next_page)
+                # Criar usuário demo em memória (não persiste no banco)
+                from app.models import _demo_user_cache
 
-        # Fluxo normal: consultar banco de dados para outros usuários
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and user.check_password(form.password.data):
-            # 🔥 PROTEÇÃO ESPECIAL PARA USUÁRIO MASTER 🔥
-            # Usuários master NUNCA são bloqueados e sempre podem fazer login
-            if user.is_master:
-                # Master bypassa todas as verificações de segurança
-                login_user(user, remember=form.remember_me.data)
-                flash("Login realizado com sucesso (usuário master)", "success")
-                # Log de auditoria para login master
-                AuditManager.log_login(user, success=True)
+                demo_user = User(
+                    id=999999,
+                    username="admin_demo",
+                    email="admin@advocaciasaas.com",
+                    full_name="Administrador Demo",
+                    user_type="master",
+                    is_active=True,
+                )
+                # Configurar campos de segurança para evitar expiração
+                demo_user.created_at = datetime.now(timezone.utc)
+                demo_user.password_changed_at = datetime.now(timezone.utc)
+                demo_user.password_expires_at = datetime.now(timezone.utc) + timedelta(
+                    days=9999
+                )
+                demo_user.password_history = "[]"
+                demo_user.force_password_change = False
+                try:
+                    demo_user.set_password("admin123", skip_history_check=True)
+                except TypeError:
+                    demo_user.set_password("admin123")
+
+                # Armazenar no cache para o load_user encontrar
+                _demo_user_cache[999999] = demo_user
+
+                login_user(demo_user, remember=form.remember_me.data)
+                flash(
+                    "Login realizado com usuário demo (dados não salvos no banco)",
+                    "info",
+                )
+                # Log de auditoria para login demo
+                AuditManager.log_login(demo_user, success=True)
                 next_page = request.args.get("next")
                 if not next_page or urlparse(next_page).netloc != "":
                     next_page = url_for("main.dashboard")
                 return redirect(next_page)
 
-            # 🔥 PROTEÇÃO CONTRA USUÁRIOS INATIVOS 🔥
-            # Usuários normais devem estar ativos para fazer login
-            if not user.is_active:
-                flash(
-                    "Sua conta foi desativada. Entre em contato com o administrador.",
-                    "error",
-                )
-                return render_template("auth/login.html", title="Login", form=form)
+            # Fluxo normal: consultar banco de dados para outros usuários
+            user = User.query.filter_by(email=form.email.data).first()
+            if user and user.check_password(form.password.data):
+                # 🔥 PROTEÇÃO ESPECIAL PARA USUÁRIO MASTER 🔥
+                # Usuários master NUNCA são bloqueados e sempre podem fazer login
+                if user.is_master:
+                    # Master bypassa todas as verificações de segurança
+                    login_user(user, remember=form.remember_me.data)
+                    flash("Login realizado com sucesso (usuário master)", "success")
+                    # Log de auditoria para login master
+                    AuditManager.log_login(user, success=True)
+                    next_page = request.args.get("next")
+                    if not next_page or urlparse(next_page).netloc != "":
+                        next_page = url_for("main.dashboard")
+                    return redirect(next_page)
 
-            # Verificar se usuário requer 2FA
-            if user.requires_2fa():
-                # Verificar código 2FA
-                if not form.two_factor_code.data:
+                # 🔥 PROTEÇÃO CONTRA USUÁRIOS INATIVOS 🔥
+                # Usuários normais devem estar ativos para fazer login
+                if not user.is_active:
                     flash(
-                        "Este usuário requer autenticação de dois fatores. Digite o código 2FA.",
+                        "Sua conta foi desativada. Entre em contato com o administrador.",
+                        "error",
+                    )
+                    return render_template("auth/login.html", title="Login", form=form)
+
+                # Verificar se usuário requer 2FA
+                if user.requires_2fa():
+                    # Verificar código 2FA
+                    if not form.two_factor_code.data:
+                        flash(
+                            "Este usuário requer autenticação de dois fatores. Digite o código 2FA.",
+                            "warning",
+                        )
+                        return render_template(
+                            "auth/login.html",
+                            title="Login",
+                            form=form,
+                            require_2fa=True,
+                            user_email=user.email,
+                        )
+
+                    if not user.verify_2fa_code(form.two_factor_code.data):
+                        flash("Código 2FA inválido", "error")
+                        return render_template(
+                            "auth/login.html",
+                            title="Login",
+                            form=form,
+                            require_2fa=True,
+                            user_email=user.email,
+                        )
+
+                login_user(user, remember=form.remember_me.data)
+
+                # 🔥 USUÁRIOS MASTER NÃO SÃO AFETADOS POR EXPIRAÇÃO DE SENHA 🔥
+                if not user.is_master and (
+                    user.force_password_change or user.is_password_expired()
+                ):
+                    flash(
+                        "Sua senha expirou. Por favor, defina uma nova senha.",
                         "warning",
                     )
-                    return render_template(
-                        "auth/login.html",
-                        title="Login",
-                        form=form,
-                        require_2fa=True,
-                        user_email=user.email,
-                    )
+                    return redirect(url_for("auth.change_password"))
 
-                if not user.verify_2fa_code(form.two_factor_code.data):
-                    flash("Código 2FA inválido", "error")
-                    return render_template(
-                        "auth/login.html",
-                        title="Login",
-                        form=form,
-                        require_2fa=True,
-                        user_email=user.email,
-                    )
+                # Log de auditoria para login bem-sucedido
+                AuditManager.log_login(user, success=True)
 
-            login_user(user, remember=form.remember_me.data)
+                next_page = request.args.get("next")
+                if not next_page or urlparse(next_page).netloc != "":
+                    next_page = url_for("main.dashboard")
+                return redirect(next_page)
+            flash("Email ou senha inválidos", "error")
+            # Log de auditoria para login falhado
+            AuditManager.log_change(
+                entity_type="user",
+                entity_id=0,  # ID genérico para tentativas de login
+                action="login_failed",
+                description=f"Tentativa de login falhada - Email: {form.email.data}",
+                additional_metadata={"email_attempted": form.email.data},
+            )
+        except Exception as e:
+            # Registrar erro detalhado
+            current_app.logger.error(f"Erro durante login: {str(e)}", exc_info=True)
 
-            # 🔥 USUÁRIOS MASTER NÃO SÃO AFETADOS POR EXPIRAÇÃO DE SENHA 🔥
-            if not user.is_master and (
-                user.force_password_change or user.is_password_expired()
-            ):
-                flash("Sua senha expirou. Por favor, defina uma nova senha.", "warning")
-                return redirect(url_for("auth.change_password"))
+            # Importar helper de mensagens de erro
+            from app.utils.error_messages import format_error_for_user
 
-            # Log de auditoria para login bem-sucedido
-            AuditManager.log_login(user, success=True)
+            # Determinar tipo de erro
+            error_msg = str(e).lower()
+            if "database" in error_msg or "sql" in error_msg:
+                error_type = "database"
+            elif "permission" in error_msg:
+                error_type = "permission"
+            else:
+                error_type = "general"
 
-            next_page = request.args.get("next")
-            if not next_page or urlparse(next_page).netloc != "":
-                next_page = url_for("main.dashboard")
-            return redirect(next_page)
-        flash("Email ou senha inválidos", "error")
-        # Log de auditoria para login falhado
-        AuditManager.log_change(
-            entity_type="user",
-            entity_id=0,  # ID genérico para tentativas de login
-            action="login_failed",
-            description=f"Tentativa de login falhada - Email: {form.email.data}",
-            metadata={"email_attempted": form.email.data},
-        )
+            # Exibir erro real ou genérico baseado na configuração
+            user_message = format_error_for_user(e, error_type)
+            flash(user_message, "error")
+            return render_template("auth/login.html", title="Login", form=form)
     return render_template("auth/login.html", title="Login", form=form)
 
 
@@ -361,6 +386,8 @@ def logout():
     # Log de auditoria para logout
     AuditManager.log_logout(current_user)
     logout_user()
+    # Limpar session para evitar carregar mensagens antigas
+    session.clear()
     return redirect(url_for("main.index"))
 
 

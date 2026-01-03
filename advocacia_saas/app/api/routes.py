@@ -1,11 +1,11 @@
 import requests
-from config import Config
 from flask import jsonify, request
 from flask_login import current_user, login_required
 
 from app import limiter
 from app.api import bp
 from app.models import Cidade, Client, Estado, User
+from config import Config
 
 
 def api_login_required(f):
@@ -41,9 +41,7 @@ def get_cidades_by_estado(sigla):
         if not estado:
             return jsonify({"error": "Estado não encontrado"}), 404
 
-        cidades = (
-            Cidade.query.filter_by(estado_id=estado.id).order_by(Cidade.nome).all()
-        )
+        cidades = Cidade.query.filter_by(estado_id=estado.id).order_by(Cidade.nome).all()
         return jsonify([cidade.to_dict() for cidade in cidades])
     except Exception:
         return jsonify({"error": "Erro ao buscar cidades"}), 500
@@ -289,13 +287,15 @@ def get_flash_messages():
         for category, message in messages:
             formatted_messages.append(
                 {
-                    "type": "error"
-                    if category in ["error", "danger"]
-                    else "warning"
-                    if category == "warning"
-                    else "info"
-                    if category == "info"
-                    else "success",
+                    "type": (
+                        "error"
+                        if category in ["error", "danger"]
+                        else (
+                            "warning"
+                            if category == "warning"
+                            else "info" if category == "info" else "success"
+                        )
+                    ),
                     "message": message,
                 }
             )

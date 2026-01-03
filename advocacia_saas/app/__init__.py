@@ -132,6 +132,37 @@ def create_app(config_class=Config):
     login_manager.login_message = "Por favor, faça login para acessar esta página."
     login_manager.login_message_category = "info"
 
+    # Import all models to ensure they're registered with SQLAlchemy
+    # This MUST be done before any db.create_all() calls
+    from app.models import (  # noqa: F401, E402
+        AIGeneration,
+        AuditLog,
+        BillingPlan,
+        Client,
+        CreditPackage,
+        Payment,
+        PetitionModel,
+        PetitionModelSection,
+        PetitionSection,
+        PetitionType,
+        PetitionUsage,
+        Process,
+        RoadmapCategory,
+        RoadmapFeedback,
+        RoadmapItem,
+        SavedPetition,
+        Testimonial,
+        User,
+        UserCredits,
+        UserPlan,
+    )
+    
+    # Import roadmap voting models
+    from app.models_roadmap_votes import (  # noqa: F401, E402
+        RoadmapVote,
+        RoadmapVoteQuota,
+    )
+
     # Create upload directory if it doesn't exist
     if not os.path.exists(app.config["UPLOAD_FOLDER"]):
         os.makedirs(app.config["UPLOAD_FOLDER"])
@@ -210,6 +241,11 @@ def create_app(config_class=Config):
     from app.advanced import advanced_bp
 
     app.register_blueprint(advanced_bp)
+    
+    # Register roadmap voting API
+    from app.api_roadmap_votes import roadmap_votes_bp
+    
+    app.register_blueprint(roadmap_votes_bp)
 
     # Register error handlers
     from app.error_handlers import init_logging, register_error_handlers
@@ -276,6 +312,7 @@ def create_app(config_class=Config):
             if not text:
                 return ""
             return markdown.markdown(text, extensions=["extra", "codehilite"])
+
     except ImportError:
 
         @app.template_filter("markdown")
@@ -285,5 +322,23 @@ def create_app(config_class=Config):
                 return ""
             # Simple fallback - just return text with basic formatting
             return text.replace("\n", "<br>")
+
+    # Register audit helpers as template globals
+    from app.utils.audit_helpers import (
+        format_action_badge,
+        format_entity_reference,
+        format_entity_type_badge,
+        get_action_badge_config,
+        get_entity_badge_config,
+    )
+
+    app.jinja_env.filters["entity_badge"] = format_entity_type_badge
+    app.jinja_env.filters["action_badge"] = format_action_badge
+    app.jinja_env.filters["entity_reference"] = (
+        lambda entity_type, entity_id: format_entity_reference(entity_type, entity_id)
+    )
+
+    app.jinja_env.globals["entity_badge_config"] = get_entity_badge_config
+    app.jinja_env.globals["action_badge_config"] = get_action_badge_config
 
     return app

@@ -3,7 +3,28 @@ Script para inicializar o banco de dados da aplicação
 """
 
 from app import create_app, db
-from app.models import User
+from app.models import (
+    AIGeneration,
+    AuditLog,
+    BillingPlan,
+    Client,
+    CreditPackage,
+    Payment,
+    PetitionModel,
+    PetitionModelSection,
+    PetitionSection,
+    PetitionType,
+    PetitionTypeSection,
+    PetitionUsage,
+    Process,
+    RoadmapCategory,
+    RoadmapFeedback,
+    RoadmapItem,
+    SavedPetition,
+    Testimonial,
+    User,
+    UserPlan,
+)
 
 
 def init_db():

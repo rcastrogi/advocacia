@@ -1,14 +1,34 @@
 {% extends "admin/base_admin.html" %}
 
+{% block title %}Planos de Cobrança{% endblock %}
+
 {% block admin_content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1"><i class="fas fa-tags"></i> Planos de cobrança</h1>
-            <p class="text-muted mb-0">Configure planos por uso ou mensais e controle quais estão ativos.</p>
+<div class="container-fluid">
+    {% set page_title = 'Planos de Cobrança' %}
+    {% set page_icon = 'tags' %}
+    {% set page_description = 'Configure planos por uso ou mensais e controle quais estão ativos' %}
+    {% set new_btn_url = url_for('admin.users_list') %}
+    {% set new_btn_label = 'Usuários / Planos' %}
+    {% include 'components/list_header.html' %}
+
+    {# Statistics #}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-box', 'color': 'primary', 'label': 'Total de Planos', 'value': plans|length} %}
+            {% include 'components/stat_card.html' %}
         </div>
-        <a href="{{ url_for('admin.users_list') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-users-cog"></i> Usuários / planos
-        </a>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-check-circle', 'color': 'success', 'label': 'Planos Ativos', 'value': plans|selectattr('active')|list|length} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-calendar-alt', 'color': 'info', 'label': 'Mensais', 'value': plans|selectattr('plan_type', 'equalto', 'monthly')|list|length} %}
+            {% include 'components/stat_card.html' %}
+        </div>
+        <div class="col-md-3 mb-3">
+            {% set stat_data = {'icon': 'fas fa-lightning-bolt', 'color': 'warning', 'label': 'Por Uso', 'value': plans|selectattr('plan_type', 'equalto', 'usage')|list|length} %}
+            {% include 'components/stat_card.html' %}
+        </div>
     </div>
 
     <div class="row">

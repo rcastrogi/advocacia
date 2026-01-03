@@ -90,9 +90,7 @@ def start_chat(client_id):
     client = Client.query.get_or_404(client_id)
 
     # Verificar se já existe sala de chat
-    chat_room = ChatRoom.query.filter_by(
-        lawyer_id=current_user.id, client_id=client_id
-    ).first()
+    chat_room = ChatRoom.query.filter_by(lawyer_id=current_user.id, client_id=client_id).first()
 
     if not chat_room:
         # Criar nova sala
@@ -143,9 +141,7 @@ def send_message():
     db.session.commit()
 
     # Atualizar chat room
-    chat_room = ChatRoom.query.filter_by(
-        lawyer_id=current_user.id, client_id=client_id
-    ).first()
+    chat_room = ChatRoom.query.filter_by(lawyer_id=current_user.id, client_id=client_id).first()
 
     if chat_room:
         chat_room.update_last_message(message)

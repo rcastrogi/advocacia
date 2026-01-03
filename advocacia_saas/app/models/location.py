@@ -32,9 +32,7 @@ class Cidade(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False, index=True)
-    estado_id = db.Column(
-        db.Integer, db.ForeignKey("estados.id"), nullable=False, index=True
-    )
+    estado_id = db.Column(db.Integer, db.ForeignKey("estados.id"), nullable=False, index=True)
 
     def __repr__(self):
         return f"<Cidade {self.nome} - {self.estado.sigla}>"

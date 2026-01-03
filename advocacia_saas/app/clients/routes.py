@@ -62,9 +62,9 @@ def new():
             mobile_phone=form.mobile_phone.data,
             lgbt_declared=form.lgbt_declared.data,
             has_disability=form.has_disability.data,
-            disability_types=",".join(form.disability_types.data)
-            if form.disability_types.data
-            else None,
+            disability_types=(
+                ",".join(form.disability_types.data) if form.disability_types.data else None
+            ),
             is_pregnant_postpartum=form.is_pregnant_postpartum.data,
             delivery_date=form.delivery_date.data,
         )
@@ -115,9 +115,7 @@ def new():
 @subscription_required
 def view(id):
     client = Client.query.filter_by(id=id, lawyer_id=current_user.id).first_or_404()
-    return render_template(
-        "clients/view.html", title=f"Cliente: {client.full_name}", client=client
-    )
+    return render_template("clients/view.html", title=f"Cliente: {client.full_name}", client=client)
 
 
 @bp.route("/<int:id>/edit", methods=["GET", "POST"])
@@ -195,9 +193,7 @@ def edit(id):
 
         # Log de auditoria
         if changed_fields:
-            AuditManager.log_client_change(
-                client, "update", old_values, new_values, changed_fields
-            )
+            AuditManager.log_client_change(client, "update", old_values, new_values, changed_fields)
 
         return redirect(url_for("clients.view", id=client.id))
 

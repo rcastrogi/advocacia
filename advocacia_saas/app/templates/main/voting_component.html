@@ -1,0 +1,215 @@
+{% block voting_section %}
+<!-- Voting System Component -->
+<div class="voting-section mb-4">
+    <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="card-title mb-2">
+                        <i class="fas fa-thumbs-up text-primary"></i> Influencie o Futuro
+                    </h5>
+                    <p class="card-text text-muted small mb-0">
+                        Vote nas funcionalidades que mais deseja. Seu plano inclui 
+                        <span class="badge bg-primary" id="votes-remaining">-</span>
+                        votos disponíveis este mês.
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#topVotedFeatures">
+                        <i class="fas fa-chart-bar"></i> Ver Placar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Top Voted Features -->
+            <div class="collapse mt-3" id="topVotedFeatures">
+                <div class="card card-body border-0 bg-white">
+                    <h6 class="mb-3">Top 5 Features Mais Votadas</h6>
+                    <div id="leaderboard-list">
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-spinner fa-spin"></i> Carregando...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load vote status
+    loadVoteStatus();
+    
+    // Load leaderboard
+    loadLeaderboard();
+});
+
+function loadVoteStatus() {
+    fetch('/api/roadmap-votes/status', {
+        method: 'GET',
+        headers: {'Accept': 'application/json'},
+        credentials: 'include'
+    })
+    .then(response => {
+        if (response.status === 401) {
+            document.getElementById('votes-remaining').textContent = 'Login';
+            document.getElementById('votes-remaining').className = 'badge bg-secondary';
+            return null;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data) {
+            const remaining = data.votes_remaining || 0;
+            const badge = document.getElementById('votes-remaining');
+            badge.textContent = remaining;
+            if (remaining > 0) {
+                badge.className = 'badge bg-success';
+            } else {
+                badge.className = 'badge bg-danger';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao carregar status de votos:', error);
+        document.getElementById('votes-remaining').textContent = '0';
+    });
+}
+
+function loadLeaderboard() {
+    fetch('/api/roadmap-votes/leaderboard', {
+        method: 'GET',
+        headers: {'Accept': 'application/json'},
+        credentials: 'include'
+    })
+    .then(response => response.json())
+    .then(data => {
+        const list = document.getElementById('leaderboard-list');
+        const items = data.data || [];
+        
+        if (items.length === 0) {
+            list.innerHTML = '<p class="text-muted text-center py-3">Nenhum voto ainda</p>';
+            return;
+        }
+        
+        list.innerHTML = items.map((item, index) => `
+            <div class="d-flex align-items-center mb-2">
+                <span class="badge bg-gold me-2" style="width: 28px; text-align: center;">
+                    ${index + 1}
+                </span>
+                <div class="flex-grow-1">
+                    <div class="small">
+                        <strong>${item.title}</strong>
+                        <span class="text-muted float-end">${item.vote_count} ${item.vote_count === 1 ? 'voto' : 'votos'}</span>
+                    </div>
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-primary" style="width: ${Math.min((item.vote_count / items[0].vote_count) * 100, 100)}%"></div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    })
+    .catch(error => {
+        console.error('Erro ao carregar placar:', error);
+        document.getElementById('leaderboard-list').innerHTML = 
+            '<p class="text-danger text-center py-3">Erro ao carregar placar</p>';
+    });
+}
+
+function submitVote(itemId) {
+    fetch('/api/roadmap-votes/vote', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({roadmap_item_id: itemId})
+    })
+    .then(response => {
+        if (response.status === 401) {
+            window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+            return null;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data) {
+            if (data.success) {
+                showVoteNotification('Voto registrado com sucesso!', 'success');
+                loadVoteStatus();
+                loadLeaderboard();
+            } else {
+                showVoteNotification(data.message || 'Erro ao registrar voto', 'warning');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao votar:', error);
+        showVoteNotification('Erro ao registrar voto', 'danger');
+    });
+}
+
+function showVoteNotification(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+</script>
+
+<style>
+.voting-section .card {
+    border-top: 3px solid var(--primary-color) !important;
+}
+
+.voting-section .badge {
+    font-size: 0.9em;
+    padding: 0.35em 0.65em;
+}
+
+.vote-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.vote-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.vote-button.voted {
+    background-color: #d4af37 !important;
+    border-color: #d4af37 !important;
+    color: white !important;
+}
+
+.vote-count {
+    font-size: 0.85em;
+    font-weight: bold;
+    min-width: 24px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .voting-section .card-body {
+        padding: 1rem;
+    }
+    
+    .col-md-4 {
+        text-align: left !important;
+    }
+}
+</style>
+{% endblock %}

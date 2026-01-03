@@ -27,8 +27,9 @@ from flask import (
 from flask_login import current_user, login_required
 from sqlalchemy import and_, func
 
-from app import db
+from app import db, limiter
 from app.admin import bp
+from app.decorators import master_required, validate_with_schema
 from app.models import (
     AIGeneration,
     AuditLog,
@@ -41,7 +42,6 @@ from app.models import (
     PetitionModelSection,
     PetitionSection,
     PetitionType,
-    PetitionTypeSection,
     PetitionUsage,
     RoadmapCategory,
     RoadmapFeedback,
@@ -50,6 +50,15 @@ from app.models import (
     User,
     UserCredits,
     UserPlan,
+)
+from app.rate_limits import ADMIN_API_LIMIT
+from app.schemas import (
+    BillingPlanSchema,
+    PetitionModelSchema,
+    PetitionSectionSchema,
+    PetitionTypeSchema,
+    RoadmapCategorySchema,
+    RoadmapItemSchema,
 )
 from app.utils.audit import AuditManager
 
@@ -224,12 +233,14 @@ def _get_dashboard_alerts():
 
 @bp.route("/usuarios")
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def users_list():
     """Lista todos os usuários com métricas detalhadas"""
+    from sqlalchemy.orm import joinedload
+
     try:
         admin_logger.info(f"Admin {current_user.email} acessando lista de usuários")
-
-        _require_admin()
 
         # Parâmetros de filtro e ordenação
         search = request.args.get("search", "").strip()
@@ -244,7 +255,8 @@ def users_list():
             f"Filtros aplicados - search: '{search}', status: {status_filter}, type: {user_type_filter}"
         )
 
-        # Query base
+        # Query base com eager loading para evitar N+1
+        # Nota: subscriptions é dinâmico e não pode usar eager loading
         query = User.query
 
         # Filtro de busca
@@ -308,7 +320,19 @@ def users_list():
             f"Erro ao carregar lista de usuários para {current_user.email}: {str(e)}"
         )
         admin_logger.error(f"Traceback: {traceback.format_exc()}")
-        flash("Erro ao carregar lista de usuários. Tente novamente.", "danger")
+
+        # Importar helper de mensagens de erro
+        from app.utils.error_messages import format_error_for_user
+
+        # Determinar tipo de erro baseado na mensagem
+        error_msg = str(e).lower()
+        error_type = (
+            "database" if "database" in error_msg or "sql" in error_msg else "general"
+        )
+
+        # Exibir erro real ou genérico baseado na configuração
+        user_message = format_error_for_user(e, error_type)
+        flash(user_message, "danger")
         return redirect(url_for("admin.dashboard"))
 
 
@@ -1914,17 +1938,16 @@ def _get_bulk_user_metrics(users):
         credits = credits_data.get(uid, (0, 0))
         ai_stat = ai_stats.get(uid, (0, Decimal("0.00")))
 
+        # Proteger days_on_platform com timezone awareness
+        days_on_platform = 0
+        if user.created_at:
+            created_at = user.created_at
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            days_on_platform = (now - created_at).days
+
         metrics = {
-            "days_on_platform": (
-                now
-                - (
-                    user.created_at.replace(tzinfo=timezone.utc)
-                    if user.created_at and user.created_at.tzinfo is None
-                    else user.created_at
-                )
-            ).days
-            if user.created_at
-            else 0,
+            "days_on_platform": days_on_platform,
             "days_paying": first_payments.get(uid, 0),
             "plan_name": current_plans.get(uid, "Sem plano"),
             "total_clients": clients_count.get(uid, 0),
@@ -2112,13 +2135,17 @@ def petitions_admin():
 
 @bp.route("/petitions/sections")
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def petition_sections_list():
     """Lista todas as seções de petição"""
+    from app.utils.error_messages import format_error_for_user
+
     current_app.logger.info("🔍 [SECTIONS] Iniciando petition_sections_list")
-    _require_admin()
     current_app.logger.info("✅ [SECTIONS] Usuário admin autenticado")
 
     try:
+        # type_sections é dynamic (lazy="dynamic"), não pode ser eagerly loaded
         sections = PetitionSection.query.order_by(PetitionSection.order).all()
         current_app.logger.info(
             f"📊 [SECTIONS] Encontradas {len(sections)} seções no banco"
@@ -2142,11 +2169,16 @@ def petition_sections_list():
             f"❌ [SECTIONS] Erro em petition_sections_list: {str(e)}"
         )
         current_app.logger.error(f"❌ [SECTIONS] Traceback: {traceback.format_exc()}")
-        raise
+        error_message = format_error_for_user(e, "general")
+        flash(error_message, "danger")
+        return redirect(url_for("admin.petitions_admin"))
 
 
 @bp.route("/petitions/sections/new", methods=["GET", "POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
+@validate_with_schema(PetitionSectionSchema, location="form")
 def petition_section_new():
     """Cria uma nova seção de petição"""
     current_app.logger.info("🔍 [SECTIONS] Iniciando petition_section_new")
@@ -2156,16 +2188,16 @@ def petition_section_new():
     if request.method == "POST":
         current_app.logger.info("📝 [SECTIONS] Processando POST para nova seção")
 
-        name = request.form.get("name")
-        slug = request.form.get(
-            "slug"
-        )  # Slug será gerado automaticamente, mas mantemos para compatibilidade
-        description = request.form.get("description")
-        icon = request.form.get("icon", "fa-file-alt")
-        color = request.form.get("color", "primary")
-        order = int(request.form.get("order", 0))
-        is_active = "is_active" in request.form
-        fields_schema_raw = request.form.get("fields_schema", "[]")
+        # Dados já foram validados!
+        data = request.validated_data
+
+        name = data.get("name")
+        description = data.get("description")
+        icon = data.get("icon", "fa-file-alt")
+        color = data.get("color", "primary")
+        order = int(data.get("order", 0))
+        is_active = data.get("is_active", False)
+        fields_schema_raw = data.get("fields_schema", "[]")
 
         # Gerar slug único baseado no nome
         slug = generate_unique_slug(name, PetitionSection)
@@ -2228,6 +2260,9 @@ def petition_section_new():
 
 @bp.route("/petitions/sections/<int:section_id>/edit", methods=["GET", "POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
+@validate_with_schema(PetitionSectionSchema, location="form")
 def petition_section_edit(section_id):
     """Edita uma seção de petição"""
     current_app.logger.info(
@@ -2253,12 +2288,15 @@ def petition_section_edit(section_id):
         )
 
         try:
-            name = request.form.get("name")
-            description = request.form.get("description")
-            icon = request.form.get("icon", "fa-file-alt")
-            color = request.form.get("color", "primary")
-            order = int(request.form.get("order", 0))
-            is_active = "is_active" in request.form
+            # Dados já foram validados!
+            data = request.validated_data
+
+            name = data.get("name")
+            description = data.get("description")
+            icon = data.get("icon", "fa-file-alt")
+            color = data.get("color", "primary")
+            order = int(data.get("order", 0))
+            is_active = data.get("is_active", False)
 
             # Gerar slug único baseado no nome, considerando o slug atual
             new_slug = generate_unique_slug(name, PetitionSection, section.slug)
@@ -2272,7 +2310,7 @@ def petition_section_edit(section_id):
             section.is_active = is_active
 
             # Processar fields_schema
-            fields_schema_raw = request.form.get("fields_schema", "[]")
+            fields_schema_raw = data.get("fields_schema", "[]")
             try:
                 section.fields_schema = (
                     json.loads(fields_schema_raw) if fields_schema_raw else []
@@ -2318,6 +2356,8 @@ def petition_section_edit(section_id):
 
 @bp.route("/petitions/sections/<int:section_id>/delete", methods=["POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def petition_section_delete(section_id):
     """Exclui uma seção de petição"""
     current_app.logger.info(
@@ -2338,15 +2378,15 @@ def petition_section_delete(section_id):
         raise
 
     try:
-        # Verificar se a seção está sendo usada
-        usage_count = section.type_sections.count()
+        # Verificar se a seção está sendo usada em modelos
+        model_usage_count = len(section.model_sections)
         current_app.logger.info(
-            f"🔍 [SECTIONS] Verificando uso da seção - Usada em {usage_count} tipos de petição"
+            f"🔍 [SECTIONS] Verificando uso da seção - Usada em {model_usage_count} modelos de petição"
         )
 
-        if usage_count > 0:
+        if model_usage_count > 0:
             current_app.logger.warning(
-                f"⚠️ [SECTIONS] Tentativa de excluir seção em uso - ID: {section_id}, Usos: {usage_count}"
+                f"⚠️ [SECTIONS] Tentativa de excluir seção em uso - ID: {section_id}, Usos: {model_usage_count}"
             )
             flash(
                 "Não é possível excluir uma seção que está sendo usada em tipos de petição.",
@@ -2387,94 +2427,30 @@ def petition_type_sections(type_id):
         section_required = request.form.getlist("section_required[]")
         section_expanded = request.form.getlist("section_expanded[]")
 
-        # Atualizar configurações para cada seção
-        for i, section_id in enumerate(section_ids):
-            type_section = PetitionTypeSection.query.filter_by(
-                petition_type_id=type_id, section_id=int(section_id)
-            ).first()
+        # DEPRECATED: PetitionTypeSection removed - now only using PetitionModelSection
+        # This admin route is no longer functional
+        flash(
+            "Esta funcionalidade foi descontinuada. Use a gestão de modelos de petição.",
+            "info",
+        )
+        return redirect(url_for("admin.petitions_admin"))
 
-            if type_section:
-                type_section.order = (
-                    int(section_orders[i])
-                    if i < len(section_orders)
-                    else type_section.order
-                )
-                type_section.is_required = str(section_id) in section_required
-                type_section.is_expanded = str(section_id) in section_expanded
-
-        db.session.commit()
-        flash("Configurações das seções salvas com sucesso!", "success")
-        return redirect(url_for("admin.petition_type_sections", type_id=type_id))
-
-    # GET: mostrar página
-    all_sections = (
-        PetitionSection.query.filter_by(is_active=True)
-        .order_by(PetitionSection.order)
-        .all()
+    # GET: mostrar página - DEPRECATED
+    # PetitionTypeSection removed - functionality moved to PetitionModelSection management
+    flash(
+        "A gestão de seções por tipo de petição foi descontinuada. Use a gestão de modelos.",
+        "info",
     )
-
-    # Buscar seções já configuradas para este tipo
-    configured_sections = []
-    type_sections = (
-        PetitionTypeSection.query.filter_by(petition_type_id=type_id)
-        .order_by(PetitionTypeSection.order)
-        .all()
-    )
-
-    for type_section in type_sections:
-        configured_sections.append((type_section, type_section.section))
-
-    # Seções disponíveis (não configuradas ainda)
-    configured_ids = [ts.section_id for ts in type_sections]
-    available_sections = [s for s in all_sections if s.id not in configured_ids]
-
-    return render_template(
-        "admin/petition_type_sections.html",
-        title=f"Seções - {petition_type.name}",
-        petition_type=petition_type,
-        configured_sections=configured_sections,
-        available_sections=available_sections,
-    )
+    return redirect(url_for("admin.petitions_admin"))
 
 
 @bp.route("/petitions/types/<int:type_id>/sections/add", methods=["POST"])
 @login_required
 def petition_type_section_add(type_id):
-    """Adiciona uma seção a um tipo de petição"""
+    """DEPRECATED: PetitionTypeSection no longer used"""
     _require_admin()
-
-    petition_type = PetitionType.query.get_or_404(type_id)
-    section_id = request.form.get("section_id", type=int)
-
-    if section_id:
-        section = PetitionSection.query.get_or_404(section_id)
-
-        # Verificar se já existe
-        existing = PetitionTypeSection.query.filter_by(
-            petition_type_id=type_id, section_id=section_id
-        ).first()
-
-        if not existing:
-            # Pegar a maior ordem atual
-            max_order = (
-                db.session.query(db.func.max(PetitionTypeSection.order))
-                .filter_by(petition_type_id=type_id)
-                .scalar()
-                or 0
-            )
-
-            type_section = PetitionTypeSection(
-                petition_type_id=type_id,
-                section_id=section_id,
-                order=max_order + 1,
-            )
-
-            db.session.add(type_section)
-            db.session.commit()
-
-            flash(f"Seção '{section.name}' adicionada com sucesso!", "success")
-
-    return redirect(url_for("admin.petition_type_sections", type_id=type_id))
+    flash("Esta funcionalidade foi descontinuada.", "info")
+    return redirect(url_for("admin.petitions_admin"))
 
 
 @bp.route(
@@ -2482,73 +2458,68 @@ def petition_type_section_add(type_id):
 )
 @login_required
 def petition_type_section_remove(type_id, section_id):
-    """Remove uma seção de um tipo de petição"""
+    """DEPRECATED: PetitionTypeSection no longer used"""
     _require_admin()
-
-    type_section = PetitionTypeSection.query.filter_by(
-        petition_type_id=type_id, section_id=section_id
-    ).first_or_404()
-
-    db.session.delete(type_section)
-    db.session.commit()
-
-    flash("Seção removida com sucesso!", "success")
-    return redirect(url_for("admin.petition_type_sections", type_id=type_id))
+    flash("Esta funcionalidade foi descontinuada.", "info")
+    return redirect(url_for("admin.petitions_admin"))
 
 
 @bp.route("/petitions/types")
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def petition_types_list():
     """Lista todos os tipos de petição"""
-    _require_admin()
+    from app.utils.error_messages import format_error_for_user
 
-    petition_types = PetitionType.query.order_by(PetitionType.name).all()
+    try:
+        # Usar type_sections (dynamic relationship, não pode ser eagerly loaded)
+        petition_types = PetitionType.query.order_by(PetitionType.name).all()
 
-    return render_template(
-        "admin/petition_types_list.html",
-        title="Tipos de Petição",
-        petition_types=petition_types,
-    )
+        return render_template(
+            "admin/petition_types_list.html",
+            title="Tipos de Petição",
+            petition_types=petition_types,
+        )
+    except Exception as e:
+        error_message = format_error_for_user(e, "general")
+        current_app.logger.error(
+            f"Erro ao carregar lista de tipos de petição: {str(e)}"
+        )
+        flash(error_message, "danger")
+        return redirect(url_for("admin.petitions_admin"))
 
 
 @bp.route("/petitions/types/new", methods=["GET", "POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
+@validate_with_schema(PetitionTypeSchema, location="form")
 def petition_type_new():
     """Criar novo tipo de petição"""
-    _require_admin()
 
     if request.method == "POST":
-        name = request.form.get("name")
-        slug = request.form.get(
-            "slug"
-        )  # Slug será gerado automaticamente, mas mantemos para compatibilidade
-        description = request.form.get("description")
-        category = request.form.get("category", "civel")
-        icon = request.form.get("icon", "fa-file-alt")
-        color = request.form.get("color", "primary")
-        is_billable = request.form.get("is_billable") == "on"
-        base_price = request.form.get("base_price", "0.00")
-        use_dynamic_form = request.form.get("use_dynamic_form") == "on"
+        data = request.validated_data  # Dados já foram validados!
 
         # Gerar slug único baseado no nome
-        slug = generate_unique_slug(name, PetitionType)
+        slug = generate_unique_slug(data["name"], PetitionType)
 
         petition_type = PetitionType(
-            name=name,
+            name=data["name"],
             slug=slug,
-            description=description,
-            category=category,
-            icon=icon,
-            color=color,
-            is_billable=is_billable,
-            base_price=Decimal(base_price),
-            use_dynamic_form=use_dynamic_form,
+            description=data.get("description"),
+            category=data.get("category", "civel"),
+            icon=data.get("icon", "fa-file-alt"),
+            color=data.get("color", "primary"),
+            is_billable=data.get("is_billable", False),
+            base_price=Decimal(data.get("base_price", "0.00")),
+            use_dynamic_form=data.get("use_dynamic_form", False),
         )
 
         db.session.add(petition_type)
         db.session.commit()
 
-        flash(f"Tipo de petição '{name}' criado com sucesso!", "success")
+        flash(f"Tipo de petição '{data['name']}' criado com sucesso!", "success")
         return redirect(url_for("admin.petition_types_list"))
 
     return render_template(
@@ -2558,6 +2529,9 @@ def petition_type_new():
 
 @bp.route("/petitions/types/<int:type_id>/edit", methods=["GET", "POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
+@validate_with_schema(PetitionTypeSchema, location="form")
 def petition_type_edit(type_id):
     """Editar tipo de petição"""
     _require_admin()
@@ -2565,15 +2539,18 @@ def petition_type_edit(type_id):
     petition_type = PetitionType.query.get_or_404(type_id)
 
     if request.method == "POST":
-        name = request.form.get("name")
-        description = request.form.get("description")
-        category = request.form.get("category", "civel")
-        icon = request.form.get("icon", "fa-file-alt")
-        color = request.form.get("color", "primary")
-        is_billable = request.form.get("is_billable") == "on"
-        base_price = Decimal(request.form.get("base_price", "0.00"))
-        use_dynamic_form = request.form.get("use_dynamic_form") == "on"
-        is_active = request.form.get("is_active") == "on"
+        # Dados já foram validados!
+        data = request.validated_data
+
+        name = data.get("name")
+        description = data.get("description")
+        category = data.get("category", "civel")
+        icon = data.get("icon", "fa-file-alt")
+        color = data.get("color", "primary")
+        is_billable = data.get("is_billable", False)
+        base_price = Decimal(data.get("base_price", "0.00"))
+        use_dynamic_form = data.get("use_dynamic_form", False)
+        is_active = data.get("is_active", False)
 
         # Gerar slug único baseado no nome, considerando o slug atual
         new_slug = generate_unique_slug(name, PetitionType, petition_type.slug)
@@ -2608,6 +2585,8 @@ def petition_type_edit(type_id):
 
 @bp.route("/petitions/types/<int:type_id>/delete", methods=["POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def petition_type_delete(type_id):
     """Excluir tipo de petição"""
     _require_admin()
@@ -2669,11 +2648,13 @@ def _calculate_trends():
             else "down"
             if revenue_change < 0
             else "stable",
-            "trend": "Crescendo"
-            if revenue_change > 5
-            else "Caíndo"
-            if revenue_change < -5
-            else "Estável",
+            "trend": (
+                "Crescendo"
+                if revenue_change > 5
+                else "Caíndo"
+                if revenue_change < -5
+                else "Estável"
+            ),
         }
 
     # === Tendência de Novos Usuários ===
@@ -2705,11 +2686,13 @@ def _calculate_trends():
             else "down"
             if users_change < 0
             else "stable",
-            "trend": "Crescendo"
-            if users_change > 10
-            else "Caíndo"
-            if users_change < -10
-            else "Estável",
+            "trend": (
+                "Crescendo"
+                if users_change > 10
+                else "Caíndo"
+                if users_change < -10
+                else "Estável"
+            ),
         }
 
     # === Tendência de Petições ===
@@ -2735,16 +2718,20 @@ def _calculate_trends():
             "current": petitions_trend[-1],
             "previous": petitions_trend[-2],
             "change_percent": round(petitions_change, 1),
-            "direction": "up"
-            if petitions_change > 0
-            else "down"
-            if petitions_change < 0
-            else "stable",
-            "trend": "Crescendo"
-            if petitions_change > 5
-            else "Caíndo"
-            if petitions_change < -5
-            else "Estável",
+            "direction": (
+                "up"
+                if petitions_change > 0
+                else "down"
+                if petitions_change < 0
+                else "stable"
+            ),
+            "trend": (
+                "Crescendo"
+                if petitions_change > 5
+                else "Caíndo"
+                if petitions_change < -5
+                else "Estável"
+            ),
         }
 
     return trends
@@ -2844,54 +2831,67 @@ def roadmap_categories():
 
 @bp.route("/roadmap/categories/new", methods=["GET", "POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
+@validate_with_schema(RoadmapCategorySchema, location="form")
 def new_roadmap_category():
     """Criar nova categoria do roadmap"""
     _require_admin()
 
     if request.method == "POST":
-        name = request.form.get("name")
-        slug = request.form.get("slug")
-        description = request.form.get("description")
-        icon = request.form.get("icon", "fa-lightbulb")
-        color = request.form.get("color", "auto")  # default to auto-assign
-        order = int(request.form.get("order", 0))
+        try:
+            data = request.validated_data
 
-        # Verificar se slug já existe
-        if RoadmapCategory.query.filter_by(slug=slug).first():
-            flash("Slug já existe. Escolha outro.", "error")
+            name = data.get("name")
+            slug = data.get("slug")
+            description = data.get("description")
+            icon = data.get("icon", "fa-lightbulb")
+            color = data.get("color", "auto")  # default to auto-assign
+            order = int(data.get("order", 0))
+
+            # Verificar se slug já existe
+            if RoadmapCategory.query.filter_by(slug=slug).first():
+                flash("Slug já existe. Escolha outro.", "error")
+                return redirect(request.url)
+
+            # If color is 'auto' or blank, pick a palette color not currently used (to avoid duplicates)
+            if not color or color == "auto":
+                used = [c.color for c in RoadmapCategory.query.all()]
+                selected = None
+                for c in ROADMAP_COLOR_PALETTE:
+                    if c not in used:
+                        selected = c
+                        break
+                if not selected:
+                    # All colors used, pick one by cycling
+                    selected = ROADMAP_COLOR_PALETTE[
+                        len(used) % len(ROADMAP_COLOR_PALETTE)
+                    ]
+                color = selected
+
+            # If user selected a custom color not in palette, accept it but ensure it's a string
+            if not isinstance(color, str):
+                color = str(color)
+
+            category = RoadmapCategory(
+                name=name,
+                slug=slug,
+                description=description,
+                icon=icon,
+                color=color,
+                order=order,
+            )
+
+            db.session.add(category)
+            db.session.commit()
+
+            flash("Categoria criada com sucesso!", "success")
+            return redirect(url_for("admin.roadmap_categories"))
+        except Exception as e:
+            current_app.logger.error(f"Error creating roadmap category: {str(e)}")
+            error_msg = format_error_for_user(e, "Erro ao criar categoria do roadmap")
+            flash(error_msg, "error")
             return redirect(request.url)
-
-        # If color is 'auto' or blank, pick a palette color not currently used (to avoid duplicates)
-        if not color or color == "auto":
-            used = [c.color for c in RoadmapCategory.query.all()]
-            selected = None
-            for c in ROADMAP_COLOR_PALETTE:
-                if c not in used:
-                    selected = c
-                    break
-            if not selected:
-                # All colors used, pick one by cycling
-                selected = ROADMAP_COLOR_PALETTE[len(used) % len(ROADMAP_COLOR_PALETTE)]
-            color = selected
-
-        # If user selected a custom color not in palette, accept it but ensure it's a string
-        if not isinstance(color, str):
-            color = str(color)
-
-        category = RoadmapCategory(
-            name=name,
-            slug=slug,
-            description=description,
-            icon=icon,
-            color=color,
-            order=order,
-        )
-
-        db.session.add(category)
-        db.session.commit()
-
-        flash("Categoria criada com sucesso!", "success")
-        return redirect(url_for("admin.roadmap_categories"))
 
     return render_template(
         "admin/roadmap_category_form.html",
@@ -2902,6 +2902,9 @@ def new_roadmap_category():
 
 @bp.route("/roadmap/categories/<int:category_id>/edit", methods=["GET", "POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
+@validate_with_schema(RoadmapCategorySchema, location="form")
 def edit_roadmap_category(category_id):
     """Editar categoria do roadmap"""
     _require_admin()
@@ -2909,45 +2912,57 @@ def edit_roadmap_category(category_id):
     category = RoadmapCategory.query.get_or_404(category_id)
 
     if request.method == "POST":
-        category.name = request.form.get("name")
-        category.slug = request.form.get("slug")
-        category.description = request.form.get("description")
-        category.icon = request.form.get("icon", "fa-lightbulb")
-        submitted_color = request.form.get("color", "auto")
+        try:
+            data = request.validated_data
 
-        # If 'auto' selected, try to pick a distinct palette color (excluding this category)
-        if not submitted_color or submitted_color == "auto":
-            used = [
-                c.color
-                for c in RoadmapCategory.query.filter(
-                    RoadmapCategory.id != category_id
-                ).all()
-            ]
-            selected = None
-            for c in ROADMAP_COLOR_PALETTE:
-                if c not in used:
-                    selected = c
-                    break
-            if not selected:
-                selected = ROADMAP_COLOR_PALETTE[len(used) % len(ROADMAP_COLOR_PALETTE)]
-            category.color = selected
-        else:
-            category.color = submitted_color
+            category.name = data.get("name")
+            category.slug = data.get("slug")
+            category.description = data.get("description")
+            category.icon = data.get("icon", "fa-lightbulb")
+            submitted_color = data.get("color", "auto")
 
-        category.order = int(request.form.get("order", 0))
+            # If 'auto' selected, try to pick a distinct palette color (excluding this category)
+            if not submitted_color or submitted_color == "auto":
+                used = [
+                    c.color
+                    for c in RoadmapCategory.query.filter(
+                        RoadmapCategory.id != category_id
+                    ).all()
+                ]
+                selected = None
+                for c in ROADMAP_COLOR_PALETTE:
+                    if c not in used:
+                        selected = c
+                        break
+                if not selected:
+                    selected = ROADMAP_COLOR_PALETTE[
+                        len(used) % len(ROADMAP_COLOR_PALETTE)
+                    ]
+                category.color = selected
+            else:
+                category.color = submitted_color
 
-        # Verificar se slug já existe (exceto para este registro)
-        existing = RoadmapCategory.query.filter(
-            RoadmapCategory.slug == category.slug, RoadmapCategory.id != category_id
-        ).first()
+            category.order = int(data.get("order", 0))
 
-        if existing:
-            flash("Slug já existe. Escolha outro.", "error")
+            # Verificar se slug já existe (exceto para este registro)
+            existing = RoadmapCategory.query.filter(
+                RoadmapCategory.slug == category.slug, RoadmapCategory.id != category_id
+            ).first()
+
+            if existing:
+                flash("Slug já existe. Escolha outro.", "error")
+                return redirect(request.url)
+
+            db.session.commit()
+            flash("Categoria atualizada com sucesso!", "success")
+            return redirect(url_for("admin.roadmap_categories"))
+        except Exception as e:
+            current_app.logger.error(f"Error updating roadmap category: {str(e)}")
+            error_msg = format_error_for_user(
+                e, "Erro ao atualizar categoria do roadmap"
+            )
+            flash(error_msg, "error")
             return redirect(request.url)
-
-        db.session.commit()
-        flash("Categoria atualizada com sucesso!", "success")
-        return redirect(url_for("admin.roadmap_categories"))
 
     return render_template(
         "admin/roadmap_category_form.html",
@@ -2959,6 +2974,8 @@ def edit_roadmap_category(category_id):
 
 @bp.route("/roadmap/categories/<int:category_id>/delete", methods=["POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def delete_roadmap_category(category_id):
     """Excluir categoria do roadmap"""
     _require_admin()
@@ -2979,9 +2996,11 @@ def delete_roadmap_category(category_id):
 
 @bp.route("/roadmap/items")
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def roadmap_items():
     """Listar todos os itens do roadmap"""
-    _require_admin()
+    from sqlalchemy.orm import joinedload
 
     # Filtros
     status_filter = request.args.get("status")
@@ -2989,7 +3008,10 @@ def roadmap_items():
     visibility_filter = request.args.get("visibility")  # public, internal, all
     priority_filter = request.args.get("priority")
 
-    query = RoadmapItem.query.join(RoadmapCategory)
+    # Eager loading para evitar N+1
+    query = RoadmapItem.query.options(
+        joinedload(RoadmapItem.category), joinedload(RoadmapItem.feedback)
+    ).join(RoadmapCategory)
 
     if status_filter:
         query = query.filter(RoadmapItem.status == status_filter)
@@ -3046,6 +3068,9 @@ def roadmap_items():
 
 @bp.route("/roadmap/items/new", methods=["GET", "POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
+@validate_with_schema(RoadmapItemSchema, location="form")
 def new_roadmap_item():
     """Criar novo item do roadmap"""
     _require_admin()
@@ -3054,84 +3079,83 @@ def new_roadmap_item():
     users = User.query.filter(User.user_type.in_(["master", "admin"])).all()
 
     if request.method == "POST":
-        category_id = request.form.get("category_id")
-        title = request.form.get("title")
-        slug = request.form.get("slug")
-        description = request.form.get("description")
-        detailed_description = request.form.get("detailed_description")
+        try:
+            data = request.validated_data
 
-        # Status e prioridade
-        status = request.form.get("status", "planned")
-        priority = request.form.get("priority", "medium")
-        estimated_effort = request.form.get("estimated_effort", "medium")
+            # Extrair dados validados
+            category_id = data.get("category_id")
+            title = data.get("title")
+            slug = data.get("slug")
+            description = data.get("description")
+            detailed_description = data.get("detailed_description")
 
-        # Visibilidade
-        visible_to_users = "visible_to_users" in request.form
-        internal_only = "internal_only" in request.form
-        show_new_badge = "show_new_badge" in request.form
+            # Status e prioridade
+            status = data.get("status", "planned")
+            priority = data.get("priority", "medium")
+            estimated_effort = data.get("estimated_effort", "medium")
 
-        # Datas
-        planned_start_date = (
-            datetime.strptime(request.form.get("planned_start_date"), "%Y-%m-%d").date()
-            if request.form.get("planned_start_date")
-            else None
-        )
-        planned_completion_date = (
-            datetime.strptime(
-                request.form.get("planned_completion_date"), "%Y-%m-%d"
-            ).date()
-            if request.form.get("planned_completion_date")
-            else None
-        )
+            # Visibilidade
+            visible_to_users = data.get("visible_to_users", False)
+            internal_only = data.get("internal_only", False)
+            show_new_badge = data.get("show_new_badge", False)
 
-        # Detalhes
-        business_value = request.form.get("business_value")
-        technical_complexity = request.form.get("technical_complexity", "medium")
-        user_impact = request.form.get("user_impact", "medium")
+            # Datas
+            planned_start_date = data.get("planned_start_date")
+            planned_completion_date = data.get("planned_completion_date")
 
-        dependencies = request.form.get("dependencies")
-        blockers = request.form.get("blockers")
-        tags = request.form.get("tags")
-        notes = request.form.get("notes")
+            # Detalhes
+            business_value = data.get("business_value")
+            technical_complexity = data.get("technical_complexity", "medium")
+            user_impact = data.get("user_impact", "medium")
 
-        assigned_to = request.form.get("assigned_to")
-        assigned_to = int(assigned_to) if assigned_to else None
+            dependencies = data.get("dependencies")
+            blockers = data.get("blockers")
+            tags = data.get("tags")
+            notes = data.get("notes")
 
-        # Verificar se slug já existe
-        if RoadmapItem.query.filter_by(slug=slug).first():
-            flash("Slug já existe. Escolha outro.", "error")
+            assigned_to = data.get("assigned_to")
+            assigned_to = int(assigned_to) if assigned_to else None
+
+            # Verificar se slug já existe
+            if RoadmapItem.query.filter_by(slug=slug).first():
+                flash("Slug já existe. Escolha outro.", "error")
+                return redirect(request.url)
+
+            item = RoadmapItem(
+                category_id=category_id,
+                title=title,
+                slug=slug,
+                description=description,
+                detailed_description=detailed_description,
+                status=status,
+                priority=priority,
+                estimated_effort=estimated_effort,
+                visible_to_users=visible_to_users,
+                internal_only=internal_only,
+                show_new_badge=show_new_badge,
+                planned_start_date=planned_start_date,
+                planned_completion_date=planned_completion_date,
+                business_value=business_value,
+                technical_complexity=technical_complexity,
+                user_impact=user_impact,
+                dependencies=dependencies,
+                blockers=blockers,
+                tags=tags,
+                notes=notes,
+                assigned_to=assigned_to,
+                created_by=current_user.id,
+            )
+
+            db.session.add(item)
+            db.session.commit()
+
+            flash("Item do roadmap criado com sucesso!", "success")
+            return redirect(url_for("admin.roadmap_items"))
+        except Exception as e:
+            current_app.logger.error(f"Error creating roadmap item: {str(e)}")
+            error_msg = format_error_for_user(e, "Erro ao criar item do roadmap")
+            flash(error_msg, "error")
             return redirect(request.url)
-
-        item = RoadmapItem(
-            category_id=category_id,
-            title=title,
-            slug=slug,
-            description=description,
-            detailed_description=detailed_description,
-            status=status,
-            priority=priority,
-            estimated_effort=estimated_effort,
-            visible_to_users=visible_to_users,
-            internal_only=internal_only,
-            show_new_badge=show_new_badge,
-            planned_start_date=planned_start_date,
-            planned_completion_date=planned_completion_date,
-            business_value=business_value,
-            technical_complexity=technical_complexity,
-            user_impact=user_impact,
-            dependencies=dependencies,
-            blockers=blockers,
-            tags=tags,
-            notes=notes,
-            assigned_to=assigned_to,
-            created_by=current_user.id,
-        )
-
-        db.session.add(item)
-        db.session.commit()
-
-        flash("Item do roadmap criado com sucesso!", "success")
-        return redirect(url_for("admin.roadmap_items"))
 
     return render_template(
         "admin/roadmap_item_form.html",
@@ -3143,6 +3167,9 @@ def new_roadmap_item():
 
 @bp.route("/roadmap/items/<int:item_id>/edit", methods=["GET", "POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
+@validate_with_schema(RoadmapItemSchema, location="form")
 def edit_roadmap_item(item_id):
     """Editar item do roadmap"""
     _require_admin()
@@ -3152,69 +3179,67 @@ def edit_roadmap_item(item_id):
     users = User.query.filter(User.user_type.in_(["master", "admin"])).all()
 
     if request.method == "POST":
-        item.category_id = request.form.get("category_id")
-        item.title = request.form.get("title")
-        item.slug = request.form.get("slug")
-        item.description = request.form.get("description")
-        item.detailed_description = request.form.get("detailed_description")
+        try:
+            data = request.validated_data
 
-        # Status e prioridade
-        item.status = request.form.get("status", "planned")
-        item.priority = request.form.get("priority", "medium")
-        item.estimated_effort = request.form.get("estimated_effort", "medium")
+            item.category_id = data.get("category_id")
+            item.title = data.get("title")
+            item.slug = data.get("slug")
+            item.description = data.get("description")
+            item.detailed_description = data.get("detailed_description")
 
-        # Visibilidade
-        item.visible_to_users = "visible_to_users" in request.form
-        item.internal_only = "internal_only" in request.form
-        item.show_new_badge = "show_new_badge" in request.form
+            # Status e prioridade
+            item.status = data.get("status", "planned")
+            item.priority = data.get("priority", "medium")
+            item.estimated_effort = data.get("estimated_effort", "medium")
 
-        # Datas
-        item.planned_start_date = (
-            datetime.strptime(request.form.get("planned_start_date"), "%Y-%m-%d").date()
-            if request.form.get("planned_start_date")
-            else None
-        )
-        item.planned_completion_date = (
-            datetime.strptime(
-                request.form.get("planned_completion_date"), "%Y-%m-%d"
-            ).date()
-            if request.form.get("planned_completion_date")
-            else None
-        )
+            # Visibilidade
+            item.visible_to_users = data.get("visible_to_users", False)
+            item.internal_only = data.get("internal_only", False)
+            item.show_new_badge = data.get("show_new_badge", False)
 
-        # Atualizar datas reais se status mudou
-        if item.status == "in_progress" and not item.actual_start_date:
-            item.actual_start_date = datetime.now(timezone.utc).date()
-        elif item.status == "completed" and not item.actual_completion_date:
-            item.actual_completion_date = datetime.now(timezone.utc).date()
+            # Datas
+            item.planned_start_date = data.get("planned_start_date")
+            item.planned_completion_date = data.get("planned_completion_date")
 
-        # Detalhes
-        item.business_value = request.form.get("business_value")
-        item.technical_complexity = request.form.get("technical_complexity", "medium")
-        item.user_impact = request.form.get("user_impact", "medium")
+            # Atualizar datas reais se status mudou
+            if item.status == "in_progress" and not item.actual_start_date:
+                item.actual_start_date = datetime.now(timezone.utc).date()
+            elif item.status == "completed" and not item.actual_completion_date:
+                item.actual_completion_date = datetime.now(timezone.utc).date()
 
-        item.dependencies = request.form.get("dependencies")
-        item.blockers = request.form.get("blockers")
-        item.tags = request.form.get("tags")
-        item.notes = request.form.get("notes")
+            # Detalhes
+            item.business_value = data.get("business_value")
+            item.technical_complexity = data.get("technical_complexity", "medium")
+            item.user_impact = data.get("user_impact", "medium")
 
-        assigned_to = request.form.get("assigned_to")
-        item.assigned_to = int(assigned_to) if assigned_to else None
+            item.dependencies = data.get("dependencies")
+            item.blockers = data.get("blockers")
+            item.tags = data.get("tags")
+            item.notes = data.get("notes")
 
-        item.last_updated_by = current_user.id
+            assigned_to = data.get("assigned_to")
+            item.assigned_to = int(assigned_to) if assigned_to else None
 
-        # Verificar se slug já existe (exceto para este registro)
-        existing = RoadmapItem.query.filter(
-            RoadmapItem.slug == item.slug, RoadmapItem.id != item_id
-        ).first()
+            item.last_updated_by = current_user.id
 
-        if existing:
-            flash("Slug já existe. Escolha outro.", "error")
+            # Verificar se slug já existe (exceto para este registro)
+            existing = RoadmapItem.query.filter(
+                RoadmapItem.slug == item.slug, RoadmapItem.id != item_id
+            ).first()
+
+            if existing:
+                flash("Slug já existe. Escolha outro.", "error")
+                return redirect(request.url)
+
+            db.session.commit()
+            flash("Item do roadmap atualizado com sucesso!", "success")
+            return redirect(url_for("admin.roadmap_items"))
+        except Exception as e:
+            current_app.logger.error(f"Error updating roadmap item: {str(e)}")
+            error_msg = format_error_for_user(e, "Erro ao atualizar item do roadmap")
+            flash(error_msg, "error")
             return redirect(request.url)
-
-        db.session.commit()
-        flash("Item do roadmap atualizado com sucesso!", "success")
-        return redirect(url_for("admin.roadmap_items"))
 
     return render_template(
         "admin/roadmap_item_form.html",
@@ -3227,6 +3252,8 @@ def edit_roadmap_item(item_id):
 
 @bp.route("/roadmap/items/<int:item_id>/delete", methods=["POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def delete_roadmap_item(item_id):
     """Excluir item do roadmap"""
     _require_admin()
@@ -3242,6 +3269,8 @@ def delete_roadmap_item(item_id):
 
 @bp.route("/roadmap/items/<int:item_id>/toggle-visibility", methods=["POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def toggle_roadmap_item_visibility(item_id):
     """Alternar visibilidade do item para usuários"""
     _require_admin()
@@ -3539,29 +3568,50 @@ def roadmap_feedback_export():
 
 
 # ==========================================
-# PETITION MODELS MANAGEMENT
-# ==========================================
-
-
-@bp.route("/petitions/models")
+@bp.route("/petitions/models", methods=["GET"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def petition_models_list():
     """Lista todos os modelos de petição"""
-    current_app.logger.info("Acessando lista de modelos de petição")
-    _require_admin()
+    from sqlalchemy.orm import joinedload
 
-    petition_models = PetitionModel.query.order_by(PetitionModel.name).all()
-    current_app.logger.info(f"Encontrados {len(petition_models)} modelos de petição")
+    from app.utils.error_messages import format_error_for_user
 
-    return render_template(
-        "admin/petition_models_list.html",
-        title="Modelos de Petição",
-        petition_models=petition_models,
-    )
+    try:
+        current_app.logger.info("Acessando lista de modelos de petição")
+        _require_admin()
+
+        # Eager loading apenas para petition_type (model_sections é dynamic, não pode ser eagerly loaded)
+        petition_models = (
+            PetitionModel.query.options(joinedload(PetitionModel.petition_type))
+            .order_by(PetitionModel.name)
+            .all()
+        )
+
+        current_app.logger.info(
+            f"Encontrados {len(petition_models)} modelos de petição"
+        )
+
+        return render_template(
+            "admin/petition_models_list.html",
+            title="Modelos de Petição",
+            petition_models=petition_models,
+        )
+    except Exception as e:
+        error_message = format_error_for_user(e, "general")
+        current_app.logger.error(
+            f"Erro ao carregar lista de modelos de petição: {str(e)}"
+        )
+        flash(error_message, "danger")
+        return redirect(url_for("admin.petitions_admin"))
 
 
 @bp.route("/petitions/models/new", methods=["GET", "POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
+@validate_with_schema(PetitionModelSchema, location="form")
 def petition_model_new():
     """Criar novo modelo de petição"""
     current_app.logger.info("Acessando criação de novo modelo de petição")
@@ -3573,12 +3623,16 @@ def petition_model_new():
 
     if request.method == "POST":
         current_app.logger.info("Processando POST para criar modelo")
-        name = request.form.get("name")
-        description = request.form.get("description")
-        petition_type_id = request.form.get("petition_type_id")
-        is_active = request.form.get("is_active") == "on"
-        use_dynamic_form = request.form.get("use_dynamic_form") == "on"
-        template_content = request.form.get("template_content")
+
+        # Dados já foram validados!
+        data = request.validated_data
+
+        name = data.get("name")
+        description = data.get("description")
+        petition_type_id = data.get("petition_type_id")
+        is_active = data.get("is_active", False)
+        use_dynamic_form = data.get("use_dynamic_form", False)
+        template_content = data.get("template_content")
 
         # Gerar slug único baseado no nome
         slug = generate_unique_slug(f"Modelo - {name}", PetitionModel)
@@ -3641,6 +3695,9 @@ def petition_model_new():
 
 @bp.route("/petitions/models/<int:model_id>/edit", methods=["GET", "POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
+@validate_with_schema(PetitionModelSchema, location="form")
 def petition_model_edit(model_id):
     """Editar modelo de petição"""
     _require_admin()
@@ -3694,21 +3751,15 @@ def petition_model_edit(model_id):
 
         flash("Iniciando salvamento do modelo...", "info")
         try:
-            petition_model.description = request.form.get("description")
-            petition_model.petition_type_id = request.form.get("petition_type_id")
-            petition_model.is_active = request.form.get("is_active") == "on"
-            petition_model.use_dynamic_form = (
-                request.form.get("use_dynamic_form") == "on"
-            )
-            template_content = request.form.get("template_content")
-            # If main content is empty, use the captured hidden value (client-side hook)
-            if not template_content:
-                captured = request.form.get("template_content_capture")
-                if captured:
-                    current_app.logger.info(
-                        f"Fallback: using captured template for model {model_id}, length: {len(captured)}"
-                    )
-                    template_content = captured
+            # Dados já foram validados!
+            data = request.validated_data
+
+            petition_model.description = data.get("description")
+            petition_model.petition_type_id = data.get("petition_type_id")
+            petition_model.is_active = data.get("is_active", False)
+            petition_model.use_dynamic_form = data.get("use_dynamic_form", False)
+            template_content = data.get("template_content")
+
             current_app.logger.info(
                 f"Saving template for model {model_id}, length: {len(template_content or '')}"
             )
@@ -3716,7 +3767,7 @@ def petition_model_edit(model_id):
             current_app.logger.info(f"Template set to model {model_id}")
 
             # Atualizar seções do modelo
-            section_order_str = request.form.get("section_order", "")
+            section_order_str = data.get("section_order", "")
             if section_order_str:
                 # Parse da string de ordem: "order-1,order-2,order-3"
                 section_ids = []
@@ -3875,6 +3926,8 @@ def petition_model_update_section_order(model_id):
 
 @bp.route("/petitions/models/<int:model_id>/delete", methods=["POST"])
 @login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
 def petition_model_delete(model_id):
     """Excluir modelo de petição"""
     _require_admin()
@@ -4174,6 +4227,30 @@ def audit_logs():
     actions = db.session.query(AuditLog.action).distinct().all()
     actions = [a[0] for a in actions]
 
+    # IDs recentes por tipo de entidade (últimos 20 IDs únicos)
+    recent_entity_ids = {}
+    for et in entity_types:
+        recent_ids = (
+            db.session.query(AuditLog.entity_id)
+            .filter(AuditLog.entity_type == et)
+            .order_by(AuditLog.timestamp.desc())
+            .distinct()
+            .limit(20)
+            .all()
+        )
+        recent_entity_ids[et] = [int(item[0]) for item in recent_ids]
+
+    # IDs de usuários recentes
+    recent_user_ids = (
+        db.session.query(AuditLog.user_id)
+        .filter(AuditLog.user_id.isnot(None))
+        .order_by(AuditLog.timestamp.desc())
+        .distinct()
+        .limit(20)
+        .all()
+    )
+    recent_user_ids = [int(item[0]) for item in recent_user_ids]
+
     return render_template(
         "admin/audit_logs.html",
         title="Logs de Auditoria",
@@ -4182,6 +4259,8 @@ def audit_logs():
         today_logs=today_logs,
         entity_types=entity_types,
         actions=actions,
+        recent_entity_ids=recent_entity_ids,
+        recent_user_ids=recent_user_ids,
         filters={
             "entity_type": entity_type,
             "entity_id": entity_id,

@@ -1,5 +1,11 @@
 #!/bin/bash
 echo "🚀 Iniciando Petitio..."
+
+# Executar migrações do banco
+echo "📦 Aplicando migrações do banco..."
+flask db upgrade || echo "⚠️  Migração não necessária ou já aplicada"
+
+# Inicializar banco
 python init_db.py
 echo "✅ Banco inicializado"
 

@@ -93,9 +93,7 @@ def predict_limit_date(user):
         "status": "prediction",
         "days_remaining": int(days_to_limit),
         "daily_average": round(daily_average, 1),
-        "estimated_date": (datetime.utcnow() + timedelta(days=days_to_limit)).strftime(
-            "%d/%m/%Y"
-        ),
+        "estimated_date": (datetime.utcnow() + timedelta(days=days_to_limit)).strftime("%d/%m/%Y"),
         "message": f"Com base no uso atual ({daily_average:.1f} petições/dia), você atingirá o limite em aproximadamente {int(days_to_limit)} dias.",
     }
 
@@ -127,9 +125,7 @@ def get_usage_insights(user):
 
     # Dia do mês com mais uso
     peak_day = (
-        PetitionUsage.query.filter_by(
-            user_id=user.id, billing_cycle=current_cycle, billable=True
-        )
+        PetitionUsage.query.filter_by(user_id=user.id, billing_cycle=current_cycle, billable=True)
         .with_entities(
             func.date(PetitionUsage.generated_at).label("day"),
             func.count(PetitionUsage.id).label("count"),

@@ -50,17 +50,15 @@ def allowed_file(filename):
 @login_required
 def movements(process_id):
     """Lista andamentos de um processo"""
-    process = Process.query.filter_by(
-        id=process_id, user_id=current_user.id
-    ).first_or_404()
+    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
 
     page = request.args.get("page", 1, type=int)
     per_page = 20
 
     movements_query = ProcessMovement.query.filter_by(process_id=process_id)
-    movements_paginated = movements_query.order_by(
-        ProcessMovement.movement_date.desc()
-    ).paginate(page=page, per_page=per_page, error_out=False)
+    movements_paginated = movements_query.order_by(ProcessMovement.movement_date.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
 
     return render_template(
         "processes/movements.html", process=process, movements=movements_paginated
@@ -71,14 +69,10 @@ def movements(process_id):
 @login_required
 def add_movement(process_id):
     """Adiciona novo andamento"""
-    process = Process.query.filter_by(
-        id=process_id, user_id=current_user.id
-    ).first_or_404()
+    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
 
     if request.method == "POST":
-        movement_date = datetime.strptime(
-            request.form["movement_date"], "%Y-%m-%dT%H:%M"
-        )
+        movement_date = datetime.strptime(request.form["movement_date"], "%Y-%m-%dT%H:%M")
         description = request.form["description"]
         movement_type = request.form.get("movement_type")
         court_decision = request.form.get("court_decision")
@@ -117,17 +111,13 @@ def add_movement(process_id):
 @login_required
 def costs(process_id):
     """Lista custos de um processo"""
-    process = Process.query.filter_by(
-        id=process_id, user_id=current_user.id
-    ).first_or_404()
+    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
 
     costs_query = ProcessCost.query.filter_by(process_id=process_id)
     costs = costs_query.order_by(ProcessCost.created_at.desc()).all()
 
     # Totais
-    total_pending = sum(
-        cost.amount for cost in costs if cost.payment_status == "pending"
-    )
+    total_pending = sum(cost.amount for cost in costs if cost.payment_status == "pending")
     total_paid = sum(cost.amount for cost in costs if cost.payment_status == "paid")
 
     return render_template(
@@ -143,9 +133,7 @@ def costs(process_id):
 @login_required
 def add_cost(process_id):
     """Adiciona novo custo"""
-    process = Process.query.filter_by(
-        id=process_id, user_id=current_user.id
-    ).first_or_404()
+    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
 
     if request.method == "POST":
         cost_type = request.form["cost_type"]
@@ -182,9 +170,7 @@ def add_cost(process_id):
 @login_required
 def mark_cost_paid(cost_id):
     """Marca custo como pago"""
-    cost = ProcessCost.query.filter_by(
-        id=cost_id, user_id=current_user.id
-    ).first_or_404()
+    cost = ProcessCost.query.filter_by(id=cost_id, user_id=current_user.id).first_or_404()
 
     cost.payment_status = "paid"
     cost.payment_date = datetime.now().date()
@@ -203,27 +189,19 @@ def mark_cost_paid(cost_id):
 @login_required
 def attachments(process_id):
     """Lista anexos de um processo"""
-    process = Process.query.filter_by(
-        id=process_id, user_id=current_user.id
-    ).first_or_404()
+    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
 
-    attachments_query = ProcessAttachment.query.filter_by(
-        process_id=process_id, status="active"
-    )
+    attachments_query = ProcessAttachment.query.filter_by(process_id=process_id, status="active")
     attachments = attachments_query.order_by(ProcessAttachment.created_at.desc()).all()
 
-    return render_template(
-        "processes/attachments.html", process=process, attachments=attachments
-    )
+    return render_template("processes/attachments.html", process=process, attachments=attachments)
 
 
 @bp.route("/<int:process_id>/attachments/upload", methods=["GET", "POST"])
 @login_required
 def upload_attachment(process_id):
     """Upload de anexo"""
-    process = Process.query.filter_by(
-        id=process_id, user_id=current_user.id
-    ).first_or_404()
+    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
 
     if request.method == "POST":
         if "file" not in request.files:
@@ -266,9 +244,7 @@ def upload_attachment(process_id):
             db.session.commit()
 
             flash("Anexo enviado com sucesso!", "success")
-            return redirect(
-                url_for("process_management.attachments", process_id=process_id)
-            )
+            return redirect(url_for("process_management.attachments", process_id=process_id))
 
     return render_template("processes/upload_attachment.html", process=process)
 
@@ -300,9 +276,7 @@ def download_attachment(attachment_id):
 @login_required
 def api_movements(process_id):
     """API para listar andamentos"""
-    process = Process.query.filter_by(
-        id=process_id, user_id=current_user.id
-    ).first_or_404()
+    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
 
     movements = (
         ProcessMovement.query.filter_by(process_id=process_id)
@@ -331,15 +305,11 @@ def api_movements(process_id):
 @login_required
 def api_costs_summary(process_id):
     """API para resumo de custos"""
-    process = Process.query.filter_by(
-        id=process_id, user_id=current_user.id
-    ).first_or_404()
+    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
 
     costs = ProcessCost.query.filter_by(process_id=process_id).all()
 
-    total_pending = sum(
-        cost.amount for cost in costs if cost.payment_status == "pending"
-    )
+    total_pending = sum(cost.amount for cost in costs if cost.payment_status == "pending")
     total_paid = sum(cost.amount for cost in costs if cost.payment_status == "paid")
     total_overdue = sum(cost.amount for cost in costs if cost.is_overdue())
 
