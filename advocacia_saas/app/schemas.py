@@ -279,12 +279,12 @@ class RoadmapItemSchema(Schema):
         allow_none=True,
     )
     status = fields.Str(
-        validate=validate.OneOf(["planned", "in_progress", "completed", "cancelled"]),
+        validate=validate.OneOf(["planned", "in_progress", "completed", "cancelled", "on_hold"]),
         dump_default="planned",
         allow_none=True,
     )
     estimated_effort = fields.Str(
-        validate=validate.OneOf(["low", "medium", "high"]),
+        validate=validate.OneOf(["small", "medium", "large", "xlarge"]),
         dump_default="medium",
         allow_none=True,
     )
