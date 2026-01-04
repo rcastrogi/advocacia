@@ -77,6 +77,8 @@ def validate_with_schema(schema_class, location="json"):
             import logging as py_logging
             
             schema = schema_class()
+            
+            py_logging.info(f"🔵 [VALIDATE_WITH_SCHEMA] Decorator acionado para {schema_class.__name__}")
 
             try:
                 # Obter dados da requisição
@@ -84,6 +86,7 @@ def validate_with_schema(schema_class, location="json"):
                     data = request.get_json()
                 elif location == "form":
                     data = request.form.to_dict()
+                    py_logging.info(f"🔵 [VALIDATE_WITH_SCHEMA] Form data recebido: {data}")
                 elif location == "args":
                     data = request.args.to_dict()
                 else:
@@ -93,22 +96,25 @@ def validate_with_schema(schema_class, location="json"):
                     data = {}
 
                 # Log dos dados recebidos - usar logging diretamente
-                py_logging.info(f"🔍 VALIDATE_SCHEMA [{schema_class.__name__}] - Raw form data: {data}")
-                py_logging.info(f"🔍 VALIDATE_SCHEMA - Form keys: {list(data.keys())}")
+                py_logging.info(f"🔍 VALIDATE_SCHEMA [{schema_class.__name__}] - Raw data: {data}")
+                py_logging.info(f"🔍 VALIDATE_SCHEMA - Data keys: {list(data.keys())}")
 
                 # Validar com o schema
                 validated_data = schema.load(data)
                 
-                py_logging.info(f"✅ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation passed. Validated data keys: {list(validated_data.keys())}")
+                py_logging.info(f"✅ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation PASSED. Validated keys: {list(validated_data.keys())}")
 
                 # Armazenar dados validados no request para acesso na função
                 request.validated_data = validated_data
+                
+                py_logging.info(f"✅ [VALIDATE_WITH_SCHEMA] request.validated_data setado com sucesso")
 
                 return f(*args, **kwargs)
 
             except ValidationError as err:
                 # Log do erro de validação - usar logging diretamente
-                py_logging.error(f"❌ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation errors: {err.messages}")
+                py_logging.error(f"❌ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation FAILED!")
+                py_logging.error(f"❌ Validation errors: {err.messages}")
                 py_logging.error(f"❌ Raw form data that failed: {data}")
                 
                 # Retornar erros de validação como JSON
