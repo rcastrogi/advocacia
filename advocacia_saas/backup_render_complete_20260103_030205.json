@@ -1,0 +1,1009 @@
+{
+  "timestamp": "2026-01-03T03:02:05.385095",
+  "render_db_url_prefix": "sqlite:///f:/PROJETOS/advocaci",
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@petitio.com",
+      "username": "admin",
+      "full_name": "Administrador",
+      "is_admin": "<bound method User.is_admin of <User admin>>",
+      "created_at": "2026-01-03T06:01:57.263584"
+    }
+  ],
+  "billing_plans": [
+    {
+      "id": 1,
+      "name": "Essencial",
+      "monthly_fee": 0.0,
+      "plan_type": "per_usage",
+      "votes_per_period": 2,
+      "created_at": "2026-01-03T05:11:51.380900"
+    },
+    {
+      "id": 2,
+      "name": "Profissional",
+      "monthly_fee": 99.0,
+      "plan_type": "monthly",
+      "votes_per_period": 5,
+      "created_at": "2026-01-03T05:11:51.382180"
+    },
+    {
+      "id": 3,
+      "name": "Escritório",
+      "monthly_fee": 199.0,
+      "plan_type": "monthly",
+      "votes_per_period": 0,
+      "created_at": "2026-01-03T05:11:51.383381"
+    },
+    {
+      "id": 4,
+      "name": "Pay per use",
+      "monthly_fee": 0.0,
+      "plan_type": "per_usage",
+      "votes_per_period": 0,
+      "created_at": "2026-01-03T05:11:51.383944"
+    }
+  ],
+  "user_plans": [
+    {
+      "id": 1,
+      "user_id": 4,
+      "plan_id": 4,
+      "status": "active",
+      "started_at": "2026-01-02T02:57:18.815752",
+      "renewal_date": null,
+      "is_current": true
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "plan_id": 4,
+      "status": "active",
+      "started_at": "2026-01-02T14:57:47.048022",
+      "renewal_date": null,
+      "is_current": true
+    }
+  ],
+  "roadmap_categories": [
+    {
+      "id": 1,
+      "name": "Funcionalidades",
+      "slug": "funcionalidades",
+      "description": "Novas funcionalidades e melhorias",
+      "icon": "fa-lightbulb",
+      "color": "primary",
+      "order": 1
+    },
+    {
+      "id": 2,
+      "name": "Interface",
+      "slug": "interface",
+      "description": "Melhorias na interface do usuário",
+      "icon": "fa-palette",
+      "color": "orange",
+      "order": 2
+    },
+    {
+      "id": 3,
+      "name": "Performance",
+      "slug": "performance",
+      "description": "Otimização de performance e velocidade",
+      "icon": "fa-tachometer-alt",
+      "color": "olive",
+      "order": 3
+    },
+    {
+      "id": 4,
+      "name": "Segurança",
+      "slug": "seguranca",
+      "description": "Melhorias de segurança e privacidade",
+      "icon": "fa-shield-alt",
+      "color": "danger",
+      "order": 4
+    },
+    {
+      "id": 5,
+      "name": "Integração",
+      "slug": "integracao",
+      "description": "Integrações com sistemas externos",
+      "icon": "fa-plug",
+      "color": "warning",
+      "order": 5
+    },
+    {
+      "id": 6,
+      "name": "Mobile",
+      "slug": "mobile",
+      "description": "Aplicativos e funcionalidades móveis",
+      "icon": "fa-mobile-alt",
+      "color": "cyan",
+      "order": 6
+    },
+    {
+      "id": 7,
+      "name": "IA e Automação",
+      "slug": "ia-automacao",
+      "description": "Recursos de inteligência artificial",
+      "icon": "fa-robot",
+      "color": "lime",
+      "order": 7
+    },
+    {
+      "id": 8,
+      "name": "Outros",
+      "slug": "outros",
+      "description": "Outras melhorias e correções",
+      "icon": "fa-cog",
+      "color": "muted",
+      "order": 8
+    }
+  ],
+  "roadmap_items": [
+    {
+      "id": 1,
+      "title": "Dashboard de Analytics Avançado",
+      "description": "Implementar dashboard completo com gráficos interativos e métricas em tempo real",
+      "detailed_description": "Criar um dashboard moderno com ApexCharts para visualização de dados, incluindo métricas de uso, conversão, retenção e performance do sistema.",
+      "slug": "dashboard-analytics-avancado",
+      "status": "in_progress",
+      "priority": "high",
+      "estimated_effort": "large",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 2,
+      "title": "Modo Escuro Completo",
+      "description": "Implementar modo escuro em toda a aplicação com alternância automática",
+      "detailed_description": "Adicionar suporte completo ao modo escuro usando CSS custom properties, com detecção automática de preferência do sistema e botão de alternância manual.",
+      "slug": "modo-escuro-completo",
+      "status": "in_progress",
+      "priority": "medium",
+      "estimated_effort": "medium",
+      "category_id": 2,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 3,
+      "title": "Autenticação de Dois Fatores",
+      "description": "Implementar 2FA com SMS e aplicativo autenticador",
+      "detailed_description": "Adicionar autenticação de dois fatores usando TOTP (Google Authenticator) e SMS como opções, com interface de configuração no perfil do usuário.",
+      "slug": "autenticacao-dois-fatores",
+      "status": "in_progress",
+      "priority": "high",
+      "estimated_effort": "large",
+      "category_id": 4,
+      "show_new_badge": true,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": null
+    },
+    {
+      "id": 4,
+      "title": "Assistente IA para Revisão de Petições",
+      "description": "IA que analisa e sugere melhorias nas petições geradas",
+      "detailed_description": "Implementar assistente de IA que faz análise jurídica das petições, sugere melhorias, identifica inconsistências e oferece recomendações personalizadas.",
+      "slug": "assistente-ia-revisao-peticao",
+      "status": "in_progress",
+      "priority": "critical",
+      "estimated_effort": "xlarge",
+      "category_id": 7,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 5,
+      "title": "Aplicativo Mobile Nativo",
+      "description": "Desenvolver app mobile nativo para iOS e Android",
+      "detailed_description": "Criar aplicativo mobile nativo usando React Native ou Flutter, com funcionalidades principais do sistema disponíveis offline.",
+      "slug": "aplicativo-mobile-nativo",
+      "status": "in_progress",
+      "priority": "high",
+      "estimated_effort": "xlarge",
+      "category_id": 6,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 6,
+      "title": "Otimização de Performance",
+      "description": "Melhorar velocidade de carregamento e resposta do sistema",
+      "detailed_description": "Implementar cache, otimização de queries, compressão de assets e CDN para melhorar significativamente a performance geral da plataforma.",
+      "slug": "otimizacao-performance",
+      "status": "in_progress",
+      "priority": "high",
+      "estimated_effort": "large",
+      "category_id": 3,
+      "show_new_badge": true,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": "2025-12-31"
+    },
+    {
+      "id": 7,
+      "title": "Integração com Tribunais",
+      "description": "API para envio direto de petições aos tribunais",
+      "detailed_description": "Desenvolver integração com APIs dos tribunais para envio automático de petições, acompanhamento de processos e notificações de andamento.",
+      "slug": "integracao-tribunais",
+      "status": "in_progress",
+      "priority": "critical",
+      "estimated_effort": "xlarge",
+      "category_id": 5,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 8,
+      "title": "Portal do Cliente Avançado",
+      "description": "Portal completo para clientes com dashboard, documentos, calendário, chat e notificações",
+      "detailed_description": "Implementar portal do cliente com interface moderna, upload de documentos, calendário integrado, timeline visual, sistema de chat em tempo real e push notifications.",
+      "slug": "portal-cliente-avancado",
+      "status": "in_progress",
+      "priority": "high",
+      "estimated_effort": "large",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 9,
+      "title": "Sistema de Notificações Inteligentes",
+      "description": "Notificações contextuais e lembretes automáticos baseados no comportamento do usuário",
+      "detailed_description": "Implementar sistema inteligente de notificações que aprende com o comportamento do usuário, enviando lembretes sobre prazos, sugestões de uso e alertas importantes no momento certo.",
+      "slug": "sistema-notificacoes-inteligentes",
+      "status": "in_progress",
+      "priority": "high",
+      "estimated_effort": "large",
+      "category_id": 1,
+      "show_new_badge": true,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": null
+    },
+    {
+      "id": 10,
+      "title": "Sistema de Feedback e Avaliações",
+      "description": "Sistema completo de avaliação de petições e coleta de feedback",
+      "detailed_description": "Implementar sistema de rating para petições geradas, coleta de feedback estruturado, análise de satisfação e sugestões automáticas de melhoria baseadas no feedback.",
+      "slug": "sistema-feedback-avaliacoes",
+      "status": "in_progress",
+      "priority": "high",
+      "estimated_effort": "medium",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 11,
+      "title": "Marketplace de Templates",
+      "description": "Plataforma para usuários compartilharem e venderem templates personalizados",
+      "detailed_description": "Criar marketplace onde advogados podem compartilhar seus templates personalizados, vender para outros usuários, avaliar templates e ganhar comissão sobre vendas.",
+      "slug": "marketplace-templates",
+      "status": "in_progress",
+      "priority": "high",
+      "estimated_effort": "xlarge",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 12,
+      "title": "Sistema de Gamificação",
+      "description": "Pontos, conquistas e níveis para engajar usuários",
+      "detailed_description": "Implementar sistema de pontos por uso, conquistas desbloqueáveis, níveis de experiência, leaderboards e recompensas para aumentar o engajamento e fidelização.",
+      "slug": "sistema-gamificacao",
+      "status": "in_progress",
+      "priority": "medium",
+      "estimated_effort": "large",
+      "category_id": 1,
+      "show_new_badge": true,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": null
+    },
+    {
+      "id": 13,
+      "title": "Programa de Indicação",
+      "description": "Sistema de referências com recompensas para usuários",
+      "detailed_description": "Criar programa onde usuários ganham créditos ou benefícios ao indicar novos clientes, com tracking automático de conversões e sistema de recompensas.",
+      "slug": "programa-indicacao",
+      "status": "in_progress",
+      "priority": "medium",
+      "estimated_effort": "medium",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-17",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 14,
+      "title": "Integração com Google Drive",
+      "description": "Sincronização automática com Google Drive para backup e compartilhamento",
+      "detailed_description": "Permitir que usuários conectem suas contas do Google Drive para backup automático de petições, sincronização de arquivos e compartilhamento direto.",
+      "slug": "integracao-google-drive",
+      "status": "completed",
+      "priority": "medium",
+      "estimated_effort": "medium",
+      "category_id": 5,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 15,
+      "title": "Integração com Outlook e Gmail",
+      "description": "Sincronização de contatos e calendário com email providers",
+      "detailed_description": "Integrar com Outlook e Gmail para sincronização automática de contatos de clientes, lembretes de audiências no calendário e envio direto de petições por email.",
+      "slug": "integracao-outlook-gmail",
+      "status": "completed",
+      "priority": "medium",
+      "estimated_effort": "large",
+      "category_id": 5,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 16,
+      "title": "API Pública REST",
+      "description": "API para integrações de terceiros e automação",
+      "detailed_description": "Desenvolver API REST completa para integração com outros sistemas, permitindo automação de processos, sincronização de dados e extensibilidade da plataforma.",
+      "slug": "api-publica-rest",
+      "status": "completed",
+      "priority": "low",
+      "estimated_effort": "xlarge",
+      "category_id": 5,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 17,
+      "title": "Sistema White-label",
+      "description": "Possibilidade de customização completa da marca e identidade visual",
+      "detailed_description": "Implementar sistema white-label que permite escritórios personalizarem completamente a aparência da plataforma com suas cores, logos e identidade visual.",
+      "slug": "sistema-white-label",
+      "status": "completed",
+      "priority": "low",
+      "estimated_effort": "large",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 18,
+      "title": "Relatórios Avançados e Exportação",
+      "description": "Sistema completo de relatórios com exportação em múltiplos formatos",
+      "detailed_description": "Implementar geração avançada de relatórios em PDF, Excel, dashboards customizáveis e exportação automática para sistemas externos.",
+      "slug": "relatorios-avancados-exportacao",
+      "status": "completed",
+      "priority": "medium",
+      "estimated_effort": "large",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 19,
+      "title": "Sistema de Backup Automático",
+      "description": "Backups incrementais automáticos com restauração point-in-time",
+      "detailed_description": "Implementar sistema robusto de backup com backups incrementais automáticos, armazenamento em múltiplas regiões e capacidade de restauração para qualquer ponto no tempo.",
+      "slug": "sistema-backup-automatico",
+      "status": "completed",
+      "priority": "high",
+      "estimated_effort": "large",
+      "category_id": 4,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 20,
+      "title": "Sistema de Auditoria Completo",
+      "description": "Logs detalhados de todas as ações para compliance e segurança",
+      "detailed_description": "Implementar auditoria completa com logs de todas as ações dos usuários, alterações em dados sensíveis, acessos ao sistema e geração automática de relatórios de auditoria.",
+      "slug": "sistema-auditoria-completo",
+      "status": "completed",
+      "priority": "medium",
+      "estimated_effort": "medium",
+      "category_id": 4,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 21,
+      "title": "Arquitetura de Microserviços",
+      "description": "Migrar para arquitetura de microserviços para melhor escalabilidade",
+      "detailed_description": "Refatorar a aplicação para arquitetura de microserviços, separando funcionalidades em serviços independentes para melhor manutenção, escalabilidade e resiliência.",
+      "slug": "arquitetura-microservicos",
+      "status": "completed",
+      "priority": "low",
+      "estimated_effort": "xlarge",
+      "category_id": 3,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 22,
+      "title": "CDN Global e Load Balancing",
+      "description": "Implementar CDN global e balanceamento de carga automático",
+      "detailed_description": "Configurar CDN global para distribuição de conteúdo estático, implementar load balancing inteligente e otimizar para usuários em diferentes regiões geográficas.",
+      "slug": "cdn-global-load-balancing",
+      "status": "completed",
+      "priority": "medium",
+      "estimated_effort": "large",
+      "category_id": 3,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 23,
+      "title": "Sistema de Logs de Auditoria Completo",
+      "description": "Implementação completa de sistema de auditoria para rastrear ações de usuários e advogados",
+      "detailed_description": "Sistema abrangente de logging de auditoria que registra todas as ações importantes no sistema, incluindo criação/edição/exclusão de dados, login/logout, geração de petições, e outras operações críticas. Inclui interface admin para visualização e filtros avançados.",
+      "slug": "sistema-logs-auditoria-completo",
+      "status": "completed",
+      "priority": "high",
+      "estimated_effort": "large",
+      "category_id": 4,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 24,
+      "title": "Dashboard Financeiro Avançado",
+      "description": "Dashboard completo para análise financeira com métricas de receita, custos e projeções",
+      "detailed_description": "Implementação de dashboard financeiro com gráficos interativos, análise de tendências, métricas de LTV, CAC, margem de lucro, e relatórios exportáveis. Inclui segmentação por plano, período e tipo de usuário.",
+      "slug": "dashboard-financeiro-avancado",
+      "status": "completed",
+      "priority": "high",
+      "estimated_effort": "large",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 25,
+      "title": "Sistema de Planos e Preços Dinâmico",
+      "description": "Sistema completo de gestão de planos de assinatura com preços dinâmicos e limites configuráveis",
+      "detailed_description": "Implementação de sistema de planos flexível com configuração de limites por plano (petições, IA, armazenamento), preços dinâmicos, upgrade/downgrade automático, e integração com gateways de pagamento.",
+      "slug": "sistema-planos-precos-dinamico",
+      "status": "completed",
+      "priority": "critical",
+      "estimated_effort": "xlarge",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 26,
+      "title": "Sistema de Petições Dinâmicas",
+      "description": "Sistema avançado de geração de petições com formulários dinâmicos e seções configuráveis",
+      "detailed_description": "Implementação completa de sistema de petições com tipos configuráveis, seções modulares, formulários dinâmicos baseados em templates, e geração automática de documentos jurídicos.",
+      "slug": "sistema-peticao-dinamicas",
+      "status": "completed",
+      "priority": "critical",
+      "estimated_effort": "xlarge",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-03",
+      "actual_completion_date": "2026-01-03"
+    },
+    {
+      "id": 27,
+      "title": "Integração Completa com IA",
+      "description": "Sistema completo de IA para geração de conteúdo, análise jurídica e automação",
+      "detailed_description": "Implementação de sistema de IA integrado com controle de créditos, geração de petições assistida por IA, análise de documentos, e métricas de uso. Inclui diferentes modelos de IA e controle de custos.",
+      "slug": "integracao-completa-ia",
+      "status": "planned",
+      "priority": "critical",
+      "estimated_effort": "xlarge",
+      "category_id": 7,
+      "show_new_badge": true,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": "2025-12-31"
+    },
+    {
+      "id": 28,
+      "title": "Sistema de Notificações e Alertas",
+      "description": "Sistema completo de notificações push, email e in-app para usuários",
+      "detailed_description": "Implementação de sistema de notificações abrangente com templates personalizáveis, agendamento, histórico, e integração com diferentes canais (email, push, SMS).",
+      "slug": "sistema-notificacoes-alertas",
+      "status": "planned",
+      "priority": "high",
+      "estimated_effort": "large",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 29,
+      "title": "Sistema de Gerenciamento de Roadmap",
+      "description": "Plataforma completa para gestão de roadmap de desenvolvimento com feedback dos usuários",
+      "detailed_description": "Implementação de sistema de roadmap com categorias, itens priorizados, status tracking, feedback dos usuários, e interface admin completa para gestão.",
+      "slug": "sistema-gerenciamento-roadmap",
+      "status": "planned",
+      "priority": "medium",
+      "estimated_effort": "large",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 30,
+      "title": "Sistema de Agendamento e Calendário Jurídico",
+      "description": "Calendário integrado com agendamentos de audiências, prazos processuais e reuniões",
+      "detailed_description": "Implementação completa de sistema de calendário jurídico com lembretes automáticos, integração com tribunais, alertas de prazos processuais, agendamento de audiências e reuniões. Inclui visualização mensal/semanal/diária, compartilhamento de calendários entre equipe e notificações push.",
+      "slug": "sistema-agendamento-calendario-juridico",
+      "status": "planned",
+      "priority": "critical",
+      "estimated_effort": "xlarge",
+      "category_id": 1,
+      "show_new_badge": true,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": null
+    },
+    {
+      "id": 31,
+      "title": "Gestão Avançada de Documentos",
+      "description": "Sistema completo de upload, versionamento e organização de documentos",
+      "detailed_description": "Implementação de GED (Gestão Eletrônica de Documentos) com upload seguro, versionamento automático, OCR para digitalização, busca inteligente por conteúdo, compartilhamento controlado, integração com Google Drive/OneDrive e compliance LGPD.",
+      "slug": "gestao-avancada-documentos",
+      "status": "planned",
+      "priority": "critical",
+      "estimated_effort": "xlarge",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 32,
+      "title": "Sistema de Cobrança Automática",
+      "description": "Faturamento automático, lembretes de cobrança e integração PIX/Boleto",
+      "detailed_description": "Sistema completo de cobrança automática com geração de faturas recorrentes, lembretes automáticos por email/SMS, integração com PIX, boleto bancário e cartões de crédito. Inclui dunning management, relatórios de inadimplência e dashboard financeiro.",
+      "slug": "sistema-cobranca-automatica",
+      "status": "planned",
+      "priority": "critical",
+      "estimated_effort": "large",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 33,
+      "title": "Análise de Dados e Business Intelligence",
+      "description": "Dashboards executivos com previsões e análise avançada de dados",
+      "detailed_description": "Implementação de sistema de BI completo com dashboards executivos, análise preditiva de receita/usuários, segmentação avançada, relatórios customizáveis e machine learning para insights automáticos.",
+      "slug": "analise-dados-business-intelligence",
+      "status": "planned",
+      "priority": "high",
+      "estimated_effort": "xlarge",
+      "category_id": 1,
+      "show_new_badge": true,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": null
+    },
+    {
+      "id": 34,
+      "title": "Sistema de Comunicação Interna",
+      "description": "Chat e colaboração em tempo real entre membros da equipe",
+      "detailed_description": "Plataforma de comunicação interna com chat em tempo real, compartilhamento de arquivos, comentários em processos, notificações push, integração com tarefas e projetos. Similar ao Slack mas focado em escritórios de advocacia.",
+      "slug": "sistema-comunicacao-interna",
+      "status": "planned",
+      "priority": "high",
+      "estimated_effort": "large",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 35,
+      "title": "Sistema de Backup e Recuperação Avançado",
+      "description": "Backups automáticos, recuperação point-in-time e alta disponibilidade",
+      "detailed_description": "Implementação de sistema robusto de backup com recuperação point-in-time, replicação geográfica, testes automáticos de restauração, compliance LGPD e monitoramento 24/7. Inclui SLA de disponibilidade de 99.9%.",
+      "slug": "sistema-backup-recuperacao-avancado",
+      "status": "planned",
+      "priority": "high",
+      "estimated_effort": "large",
+      "category_id": 4,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 36,
+      "title": "API Pública RESTful Completa",
+      "description": "API completa para integração com sistemas externos",
+      "detailed_description": "Desenvolvimento de API RESTful abrangente com documentação OpenAPI, autenticação OAuth2/JWT, rate limiting, webhooks, SDKs para diferentes linguagens e portal de desenvolvedores. Permite integração com sistemas jurídicos, CRMs e ferramentas de gestão.",
+      "slug": "api-publica-restful-completa",
+      "status": "planned",
+      "priority": "high",
+      "estimated_effort": "xlarge",
+      "category_id": 5,
+      "show_new_badge": true,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": null
+    },
+    {
+      "id": 37,
+      "title": "Sistema de Compliance LGPD Avançado",
+      "description": "Controle completo de consentimento, auditoria e relatórios de compliance",
+      "detailed_description": "Implementação completa de sistema LGPD com controle granular de consentimentos, auditoria automática de acessos, relatórios de compliance, DPO tools, anonimização de dados e integração com Autoridade Nacional de Proteção de Dados.",
+      "slug": "sistema-compliance-lgpd-avancado",
+      "status": "planned",
+      "priority": "medium",
+      "estimated_effort": "large",
+      "category_id": 4,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 38,
+      "title": "Sistema de Gamificação para Engajamento",
+      "description": "Pontuação, conquistas e leaderboards para aumentar engajamento",
+      "detailed_description": "Implementação de sistema de gamificação com pontos por atividades, badges por conquistas, leaderboards mensais, desafios especiais e sistema de recompensas. Motiva o uso contínuo da plataforma e competição saudável entre usuários.",
+      "slug": "sistema-gamificacao-engajamento",
+      "status": "planned",
+      "priority": "medium",
+      "estimated_effort": "medium",
+      "category_id": 1,
+      "show_new_badge": false,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": "2026-01-02"
+    },
+    {
+      "id": 39,
+      "title": "Portal do Cliente Mobile-First",
+      "description": "Otimização completa para mobile com PWA e notificações push",
+      "detailed_description": "Redesign completo do portal do cliente focado em mobile, implementação de Progressive Web App (PWA), notificações push nativas, gestos touch otimizados e experiência fluida em dispositivos móveis.",
+      "slug": "portal-cliente-mobile-first",
+      "status": "planned",
+      "priority": "medium",
+      "estimated_effort": "large",
+      "category_id": 6,
+      "show_new_badge": true,
+      "planned_completion_date": "2026-01-24",
+      "actual_completion_date": null
+    }
+  ],
+  "roadmap_feedback": [],
+  "petition_types": [
+    {
+      "id": 1,
+      "name": "Ação de Alimentos",
+      "slug": "acao-de-alimentos",
+      "description": "Ação para fixação ou revisão de alimentos",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 2,
+      "name": "Ação de Divórcio",
+      "slug": "acao-de-divorcio",
+      "description": "Ação de divórcio consensual ou litigioso",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 3,
+      "name": "Ação de Cobrança",
+      "slug": "acao-de-cobranca",
+      "description": "Ação para cobrança de dívida",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 4,
+      "name": "Ação de Reintegração de Posse",
+      "slug": "acao-de-reintegracao",
+      "description": "Ação possessória de reintegração",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 5,
+      "name": "Petição Cível",
+      "slug": "peticao-inicial-civel",
+      "description": "Modelo genérico para demandas cíveis de baixa complexidade.",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 6,
+      "name": "Guarda e Regulamentação de Visitas",
+      "slug": "guarda-e-regulacao-de-visitas",
+      "description": "Discussões sobre guarda compartilhada, unilateral e convívio.",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 7,
+      "name": "Divórcio Consensual",
+      "slug": "divorcio-consensual",
+      "description": "Divórcio amigável com partilha básica.",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 8,
+      "name": "Pedido de Habeas Corpus",
+      "slug": "pedido-de-habeas-corpus",
+      "description": "Liberdade de locomoção em caso de ameaça ou coação ilegal.",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 9,
+      "name": "Defesa Criminal",
+      "slug": "defesa-criminal",
+      "description": "Peças de defesa prévia, alegações finais e memoriais.",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 10,
+      "name": "Reclamação Trabalhista",
+      "slug": "reclamacao-trabalhista",
+      "description": "Pedidos de horas extras, verbas rescisórias e equiparação.",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 11,
+      "name": "Defesa Trabalhista",
+      "slug": "defesa-trabalhista",
+      "description": "Contestação a reclamatórias com tese patronal.",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 12,
+      "name": "Mandado de Segurança",
+      "slug": "mandado-de-seguranca",
+      "description": "Controle de legalidade de ato de autoridade.",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 13,
+      "name": "Execução Fiscal",
+      "slug": "execucao-fiscal",
+      "description": "Peças iniciais ou defesas em execuções fiscais.",
+      "icon": "fa-file-alt"
+    },
+    {
+      "id": 14,
+      "name": "Petição Personalizada",
+      "slug": "peticao-personalizada",
+      "description": "Modelo livre para demandas específicas do escritório.",
+      "icon": "fa-file-alt"
+    }
+  ],
+  "petition_sections": [
+    {
+      "id": 1,
+      "name": "Qualificação das Partes",
+      "slug": "qualifica-o-das-partes",
+      "description": "Dados das partes envolvidas na ação",
+      "order": 0
+    },
+    {
+      "id": 2,
+      "name": "Cabeçalho da Petição",
+      "slug": "cabecalho",
+      "description": "Informações do juízo e partes",
+      "order": 2
+    },
+    {
+      "id": 3,
+      "name": "Fatos",
+      "slug": "fatos",
+      "description": "Narrativa dos fatos ocorridos",
+      "order": 3
+    },
+    {
+      "id": 4,
+      "name": "Direito Aplicável",
+      "slug": "direito",
+      "description": "Fundamentação jurídica",
+      "order": 4
+    },
+    {
+      "id": 5,
+      "name": "Pedido",
+      "slug": "pedido",
+      "description": "Pedidos formulados",
+      "order": 5
+    },
+    {
+      "id": 6,
+      "name": "Fechamento",
+      "slug": "fechamento",
+      "description": "Local, data e assinatura",
+      "order": 6
+    },
+    {
+      "id": 7,
+      "name": "Qualificação das Partes",
+      "slug": "qualificacao-partes",
+      "description": "Dados dos autores, réus e outras partes envolvidas",
+      "order": 0
+    },
+    {
+      "id": 8,
+      "name": "Endereço e Localização",
+      "slug": "endereco-localizacao",
+      "description": "Endereços das partes envolvidas",
+      "order": 0
+    },
+    {
+      "id": 9,
+      "name": "Fatos e Fundamentos",
+      "slug": "fatos-fundamentos",
+      "description": "Descrição dos fatos relevantes ao caso",
+      "order": 0
+    },
+    {
+      "id": 10,
+      "name": "Pedidos",
+      "slug": "pedidos",
+      "description": "O que está sendo solicitado ao juiz",
+      "order": 0
+    },
+    {
+      "id": 11,
+      "name": "Provas",
+      "slug": "provas",
+      "description": "Documentos e provas que sustentam a ação",
+      "order": 0
+    },
+    {
+      "id": 12,
+      "name": "Conclusão",
+      "slug": "conclusao",
+      "description": "Observações finais e encerramento",
+      "order": 0
+    }
+  ],
+  "petition_models": [
+    {
+      "id": 1,
+      "name": "Modelo - Ação de Alimentos",
+      "slug": "modelo-acao-de-alimentos",
+      "description": "Modelo padrão para Ação de Alimentos",
+      "petition_type_id": 1,
+      "template_content": "{{ CABEÇALHO_DA_PETIÇÃO }}\r\n\r\nEXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(ÍZA) DE DIREITO DA {{ vara }}\r\n\r\n{{ autor_nome }}, {{ autor_qualificacao }}, vem propor:\r\n\r\n{{ tipo_acao }} \r\n\r\nem face de {{ reu_nome }}, {{ reu_qualificacao }}\r\n\r\n{{ QUALIFICAÇÃO_DAS_PARTES }} \r\n\r\n{{ FATOS }}\r\n\r\n{{ DIREITO_APLICÁVEL }}\r\n\r\n{{ PEDIDO }}\r\n\r\n{{ FECHAMENTO }}\r\n\r\n{{ local }}, {{ data }}\r\n\r\n{{ advogado_nome }}\r\n{{ advogado_oab }}"
+    },
+    {
+      "id": 2,
+      "name": "Modelo - Ação de Divórcio",
+      "slug": "modelo-acao-de-divorcio",
+      "description": "Modelo padrão para Ação de Divórcio",
+      "petition_type_id": 2,
+      "template_content": null
+    },
+    {
+      "id": 3,
+      "name": "Modelo - Ação de Cobrança",
+      "slug": "modelo-acao-de-cobranca",
+      "description": "Modelo padrão para Ação de Cobrança",
+      "petition_type_id": 3,
+      "template_content": null
+    },
+    {
+      "id": 4,
+      "name": "Modelo - Ação de Reintegração de Posse",
+      "slug": "modelo-acao-de-reintegracao",
+      "description": "Modelo padrão para Ação de Reintegração de Posse",
+      "petition_type_id": 4,
+      "template_content": null
+    },
+    {
+      "id": 5,
+      "name": "Modelo - Petição Cível",
+      "slug": "modelo-peticao-inicial-civel",
+      "description": "Modelo padrão para Petição Cível",
+      "petition_type_id": 5,
+      "template_content": ""
+    },
+    {
+      "id": 6,
+      "name": "Modelo - Guarda e Regulamentação de Visitas",
+      "slug": "modelo-guarda-e-regulacao-de-visitas",
+      "description": "Modelo padrão para Guarda e Regulamentação de Visitas",
+      "petition_type_id": 6,
+      "template_content": ""
+    },
+    {
+      "id": 7,
+      "name": "Modelo - Divórcio Consensual",
+      "slug": "modelo-divorcio-consensual",
+      "description": "Modelo padrão para Divórcio Consensual",
+      "petition_type_id": 7,
+      "template_content": ""
+    },
+    {
+      "id": 8,
+      "name": "Modelo - Pedido de Habeas Corpus",
+      "slug": "modelo-pedido-de-habeas-corpus",
+      "description": "Modelo padrão para Pedido de Habeas Corpus",
+      "petition_type_id": 8,
+      "template_content": ""
+    },
+    {
+      "id": 9,
+      "name": "Modelo - Defesa Criminal",
+      "slug": "modelo-defesa-criminal",
+      "description": "Modelo padrão para Defesa Criminal",
+      "petition_type_id": 9,
+      "template_content": ""
+    },
+    {
+      "id": 10,
+      "name": "Modelo - Reclamação Trabalhista",
+      "slug": "modelo-reclamacao-trabalhista",
+      "description": "Modelo padrão para Reclamação Trabalhista",
+      "petition_type_id": 10,
+      "template_content": ""
+    },
+    {
+      "id": 11,
+      "name": "Modelo - Defesa Trabalhista",
+      "slug": "modelo-defesa-trabalhista",
+      "description": "Modelo padrão para Defesa Trabalhista",
+      "petition_type_id": 11,
+      "template_content": ""
+    },
+    {
+      "id": 12,
+      "name": "Modelo - Mandado de Segurança",
+      "slug": "modelo-mandado-de-seguranca",
+      "description": "Modelo padrão para Mandado de Segurança",
+      "petition_type_id": 12,
+      "template_content": ""
+    },
+    {
+      "id": 13,
+      "name": "Modelo - Execução Fiscal",
+      "slug": "modelo-execucao-fiscal",
+      "description": "Modelo padrão para Execução Fiscal",
+      "petition_type_id": 13,
+      "template_content": ""
+    },
+    {
+      "id": 14,
+      "name": "Modelo - Petição Personalizada",
+      "slug": "modelo-peticao-personalizada",
+      "description": "Modelo padrão para Petição Personalizada",
+      "petition_type_id": 14,
+      "template_content": ""
+    }
+  ],
+  "petition_model_sections": [],
+  "petition_type_sections": [],
+  "audit_logs": [],
+  "summary": {
+    "users": 1,
+    "billing_plans": 4,
+    "user_plans": 2,
+    "roadmap_categories": 8,
+    "roadmap_items": 39,
+    "roadmap_feedback": 0,
+    "petition_types": 14,
+    "petition_sections": 12,
+    "petition_models": 14,
+    "petition_type_sections": 0,
+    "petition_model_sections": 0,
+    "audit_logs": 0,
+    "total_records": 94
+  }
+}

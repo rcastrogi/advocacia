@@ -19,13 +19,13 @@ if __name__ == "__main__":
             if User.query.count() == 0:
                 admin = User(
                     username="admin",
-                    email="admin@advocaciasaas.com",
+                    email="admin@petitio.com",
                     full_name="Administrador",
                     user_type="master",
                 )
                 admin.set_password("admin123")
                 db.session.add(admin)
                 db.session.commit()
-                print("Usuário master criado: admin@advocaciasaas.com / admin123")
+                print("Usuario master criado: admin@petitio.com / admin123")
 
     app.run(debug=True, host="127.0.0.1", port=5000)

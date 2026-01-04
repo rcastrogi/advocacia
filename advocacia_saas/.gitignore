@@ -20,43 +20,56 @@ instance/
 .idea/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
 # OS
 .DS_Store
 Thumbs.db
+.env.local
+.env.*.local
+
+# Output gerado
+*.sql
+output/
+temp/
+dist/
 
 # Logs
 *.log
+
+# Arquivos de cache e temporários
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Migrations - PARTE DO PROJETO (NÃO IGNORAR)
+# migrations/ ← Descomente APENAS se não quiser versionar migrations
 
 # Virtual Environment
 venv/
 env/
 ENV/
 
-# Documentação temporária (não essencial para produção)
-SEMANA*.md
-RESUMO_*.md
-PLANO_*.md
-GUIA_*.md
-STATUS_*.md
-CHECKLIST_*.md
-PROJETO_*.md
-INDEX_*.md
-IMPLEMENTACAO_*.md
-*_RESULTADO.md
-*_QUICKSTART.md
-EXEMPLOS_*.md
-SECOES_*.md
-ACCESSIBILITY_*.md
-DEPLOY.md
-MIGRATE_*.md
-MIGRATION_*.md
-INSTALAR_*.md
-*_EXEMPLO_*.py
+# Documentação (exceto README que é essencial)
+*.md
+!README.md
+!docs/**/*.md
 
-# Scripts temporários (para testes/desenvolvimento)
+# Scripts temporários E DE TESTES (não essenciais para produção)
+# Testes
 test_*.py
 run_tests.py
+*_test.py
+
+# Scripts de administração/debug (gerados durante desenvolvimento)
 check_*.py
 inspect_*.py
 show_*.py
@@ -73,6 +86,10 @@ fix_*.py
 cleanup_*.py
 demonstrate_*.py
 create_comprehensive_*.py
+continue_*.py
+generate_*.py
+*_EXEMPLO_*.py
+SEMANA*.py
 
 # Arquivos build
 build/

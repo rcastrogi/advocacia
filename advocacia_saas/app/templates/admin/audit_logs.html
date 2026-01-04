@@ -129,7 +129,9 @@
                             <tr>
                                 <th>Data/Hora</th>
                                 <th>Usuário</th>
+                                <th style="width: 80px;">ID User</th>
                                 <th>Entidade</th>
+                                <th style="width: 80px;">ID Entidade</th>
                                 <th>Ação</th>
                                 <th>IP</th>
                                 <th>Descrição</th>
@@ -146,15 +148,23 @@
                                 </td>
                                 <td>
                                     {% if log.user %}
-                                        <strong>{{ log.user.email }}</strong><br>
-                                        <small class="text-muted">ID: {{ log.user.id }}</small>
+                                        <strong>{{ log.user.email }}</strong>
                                     {% else %}
                                         <span class="text-muted">Sistema</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {{ log.entity_type|entity_badge|safe }}<br>
-                                    <small class="text-muted mt-1 d-block">ID: {{ log.entity_id }}</small>
+                                    {% if log.user_id %}
+                                        <small class="badge bg-info">{{ log.user_id }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ log.entity_type|entity_badge|safe }}
+                                </td>
+                                <td>
+                                    <small class="badge bg-warning">{{ log.entity_id }}</small>
                                 </td>
                                 <td>
                                     {{ log.action|action_badge|safe }}

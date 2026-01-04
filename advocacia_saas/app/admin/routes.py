@@ -2793,6 +2793,22 @@ def roadmap():
     )
 
 
+@bp.route("/roadmap/matriz")
+@login_required
+def roadmap_matrix():
+    """Visualização de matriz de impacto vs esforço do roadmap"""
+    _require_admin()
+    
+    # Buscar todos os itens do roadmap
+    roadmap_items = RoadmapItem.query.all()
+    
+    return render_template(
+        "admin/roadmap_matrix.html",
+        title="Matriz de Impacto vs Esforço",
+        roadmap_items=roadmap_items,
+    )
+
+
 # Expanded palette of distinct colors used for roadmap categories (keeps Bootstrap core names + additional distinct hues)
 ROADMAP_COLOR_PALETTE = [
     "primary",

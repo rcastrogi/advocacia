@@ -2503,6 +2503,10 @@ class RoadmapItem(db.Model):
         db.String(20), default="medium"
     )  # low, medium, high
     user_impact = db.Column(db.String(20), default="medium")  # low, medium, high
+    
+    # Matriz de Priorização (1-5 escala)
+    impact_score = db.Column(db.Integer, default=3)  # 1=baixo, 5=crítico. Para admin visualizar prioridade
+    effort_score = db.Column(db.Integer, default=3)  # 1=fácil, 5=muito complexo. Para admin calcular ROI
 
     # Dependências
     dependencies = db.Column(db.Text)  # IDs de outros itens separados por vírgula

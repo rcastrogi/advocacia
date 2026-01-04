@@ -54,8 +54,8 @@ A aplicação estará disponível em: `http://localhost:5000`
 
 Após a inicialização do banco de dados, um usuário administrador será criado:
 
-- **Email**: admin@advocaciasaas.com
-- **Senha**: admin123
+- **Email**: admin@petitio.com
+- **Senha**: **************
 - **Tipo**: Administrador
 
 ⚠️ **IMPORTANTE**: Altere a senha padrão após o primeiro login!
