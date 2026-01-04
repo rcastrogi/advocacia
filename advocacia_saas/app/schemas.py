@@ -267,22 +267,67 @@ class RoadmapItemSchema(Schema):
         validate=validate.Length(min=2, max=255),
         error_messages={"required": "Título do item é obrigatório"},
     )
+    slug = fields.Str(allow_none=True, validate=validate.Length(max=255))
     description = fields.Str(allow_none=True)
+    detailed_description = fields.Str(allow_none=True)
     category_id = fields.Int(
         required=True, error_messages={"required": "Categoria é obrigatória"}
     )
     priority = fields.Str(
         validate=validate.OneOf(["low", "medium", "high", "critical"]),
         dump_default="medium",
+        allow_none=True,
     )
     status = fields.Str(
         validate=validate.OneOf(["planned", "in_progress", "completed", "cancelled"]),
         dump_default="planned",
+        allow_none=True,
     )
-    estimated_date = fields.DateTime(allow_none=True)
-    completed_date = fields.DateTime(allow_none=True)
+    estimated_effort = fields.Str(
+        validate=validate.OneOf(["low", "medium", "high"]),
+        dump_default="medium",
+        allow_none=True,
+    )
+    visible_to_users = fields.Bool(dump_default=False)
+    internal_only = fields.Bool(dump_default=False)
+    show_new_badge = fields.Bool(dump_default=False)
+    planned_start_date = fields.Date(allow_none=True)
+    planned_completion_date = fields.Date(allow_none=True)
+    actual_start_date = fields.Date(dump_only=True, allow_none=True)
+    actual_completion_date = fields.Date(dump_only=True, allow_none=True)
+    business_value = fields.Str(allow_none=True)
+    technical_complexity = fields.Str(
+        validate=validate.OneOf(["low", "medium", "high"]),
+        dump_default="medium",
+        allow_none=True,
+    )
+    user_impact = fields.Str(
+        validate=validate.OneOf(["low", "medium", "high"]),
+        dump_default="medium",
+        allow_none=True,
+    )
+    dependencies = fields.Str(allow_none=True)
+    blockers = fields.Str(allow_none=True)
+    tags = fields.Str(allow_none=True)
+    notes = fields.Str(allow_none=True)
+    assigned_to = fields.Int(allow_none=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
+
+    @pre_load
+    def process_input(self, data, **kwargs):
+        """Pré-processar dados do form (converte strings para tipos corretos)"""
+        # Converter campos booleanos (form envia "on" ou não envia nada)
+        for bool_field in ['visible_to_users', 'internal_only', 'show_new_badge']:
+            if bool_field in data:
+                data[bool_field] = data[bool_field] in ['on', 'true', True, '1', 1]
+
+        # Converter campos vazios para None
+        for key in data:
+            if data[key] == '':
+                data[key] = None
+
+        return data
 
 
 class RoadmapCategorySchema(Schema):
