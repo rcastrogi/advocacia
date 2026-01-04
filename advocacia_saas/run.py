@@ -11,6 +11,13 @@ def make_shell_context():
 
 if __name__ == "__main__":
     with app.app_context():
+        # Corrigir schema do banco antes de iniciar
+        try:
+            from init_db_schema import init_schema_fixes
+            init_schema_fixes()
+        except Exception as e:
+            print(f"⚠️  Erro ao executar init_db_schema: {str(e)}")
+        
         # Só cria tabelas se for desenvolvimento local com SQLite
         if app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite"):
             db.create_all()

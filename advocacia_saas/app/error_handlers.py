@@ -99,19 +99,28 @@ def register_error_handlers(app):
     @app.errorhandler(500)
     def internal_server_error(error):
         """Erro 500 - Erro interno do servidor"""
-        logger.error(f"Erro 500: {str(error)}", exc_info=True)
-        logger.error(f"Request URL: {request.url}")
-        logger.error(f"Request Method: {request.method}")
-        logger.error(f"Request Args: {request.args}")
-        logger.error(f"Request Form: {request.form}")
+        
+        # Log CRÍTICO do erro
+        logger.critical("="*80)
+        logger.critical("🔴 ERRO 500 - ERRO INTERNO DO SERVIDOR 🔴")
+        logger.critical("="*80)
+        logger.critical(f"Erro: {str(error)}")
+        logger.critical(f"Tipo: {type(error)}")
+        logger.critical(f"Request URL: {request.url}")
+        logger.critical(f"Request Method: {request.method}")
+        logger.critical(f"Request Args: {request.args}")
+        logger.critical(f"Client IP: {request.remote_addr}")
+        logger.critical(f"User Agent: {request.user_agent}")
+        
         if hasattr(error, "__traceback__"):
             import traceback
-
-            logger.error("Full traceback:")
+            logger.critical("Full traceback:")
             for line in traceback.format_exception(
                 type(error), error, error.__traceback__
             ):
-                logger.error(line)
+                logger.critical(line)
+        
+        logger.critical("="*80)
 
         if (
             request.is_json

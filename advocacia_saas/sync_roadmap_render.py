@@ -28,6 +28,22 @@ def add_columns_to_render():
 
         print("\n🔗 Conectado ao PostgreSQL do Render")
 
+        # CORRIGIR: Adicionar votes_per_period em billing_plans se faltar
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='billing_plans' 
+            AND column_name='votes_per_period'
+        """)
+        
+        if not cursor.fetchone():
+            print("⚠️  Coluna 'votes_per_period' faltando em billing_plans. Adicionando...")
+            cursor.execute("""
+                ALTER TABLE billing_plans 
+                ADD COLUMN votes_per_period INTEGER DEFAULT 0
+            """)
+            print("✅ Coluna 'votes_per_period' adicionada ao Render")
+
         # Verificar se as colunas já existem
         cursor.execute("""
             SELECT column_name 
@@ -62,8 +78,19 @@ def add_columns_to_render():
 
         return True
 
+    except psycopg2.errors.DuplicateColumn:
+        print("⏭️  Colunas já existem no Render")
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return True
+        
     except Exception as e:
         print(f"❌ Erro ao conectar ao Render: {str(e)}")
+        if conn:
+            conn.rollback()
+            cursor.close()
+            conn.close()
         return False
 
 

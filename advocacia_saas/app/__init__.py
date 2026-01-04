@@ -14,6 +14,10 @@ from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from flask_talisman import Talisman
 
+# Inicializar logging ANTES de qualquer coisa
+from logging_config import setup_production_logging
+setup_production_logging()
+
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
@@ -246,6 +250,10 @@ def create_app(config_class=Config):
     from app.api_roadmap_votes import roadmap_votes_bp
 
     app.register_blueprint(roadmap_votes_bp)
+
+    # Register logs visualization routes
+    from app.logs_routes import bp as logs_bp
+    app.register_blueprint(logs_bp)
 
     # Register error handlers
     from app.error_handlers import init_logging, register_error_handlers
