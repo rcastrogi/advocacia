@@ -73,6 +73,7 @@ def validate_with_schema(schema_class, location="json"):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            from flask import current_app
             schema = schema_class()
 
             try:
@@ -89,8 +90,14 @@ def validate_with_schema(schema_class, location="json"):
                 if data is None:
                     data = {}
 
+                # Log dos dados recebidos
+                current_app.logger.debug(f"🔍 VALIDATE_SCHEMA [{schema_class.__name__}] - Raw form data: {data}")
+                current_app.logger.debug(f"🔍 VALIDATE_SCHEMA - Form keys: {list(data.keys())}")
+
                 # Validar com o schema
                 validated_data = schema.load(data)
+                
+                current_app.logger.debug(f"✅ VALIDATE_SCHEMA - Validation passed. Validated data keys: {list(validated_data.keys())}")
 
                 # Armazenar dados validados no request para acesso na função
                 request.validated_data = validated_data
@@ -98,6 +105,10 @@ def validate_with_schema(schema_class, location="json"):
                 return f(*args, **kwargs)
 
             except ValidationError as err:
+                # Log do erro de validação
+                current_app.logger.error(f"❌ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation errors: {err.messages}")
+                current_app.logger.error(f"❌ Raw form data that failed: {data}")
+                
                 # Retornar erros de validação como JSON
                 if (
                     request.is_json
@@ -119,6 +130,10 @@ def validate_with_schema(schema_class, location="json"):
                         else:
                             flash(f"{field}: {messages}", "danger")
                     return redirect(request.referrer or url_for("admin.dashboard"))
+
+        return decorated_function
+
+    return decorator
 
         return decorated_function
 
