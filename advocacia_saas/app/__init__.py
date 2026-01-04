@@ -16,6 +16,7 @@ from flask_talisman import Talisman
 
 # Inicializar logging ANTES de qualquer coisa
 from logging_config import setup_production_logging
+
 setup_production_logging()
 
 db = SQLAlchemy()
@@ -253,6 +254,7 @@ def create_app(config_class=Config):
 
     # Register logs visualization routes
     from app.logs_routes import bp as logs_bp
+
     app.register_blueprint(logs_bp)
 
     # Register error handlers

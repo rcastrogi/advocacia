@@ -35,9 +35,11 @@ def add_columns_to_render():
             WHERE table_name='billing_plans' 
             AND column_name='votes_per_period'
         """)
-        
+
         if not cursor.fetchone():
-            print("⚠️  Coluna 'votes_per_period' faltando em billing_plans. Adicionando...")
+            print(
+                "⚠️  Coluna 'votes_per_period' faltando em billing_plans. Adicionando..."
+            )
             cursor.execute("""
                 ALTER TABLE billing_plans 
                 ADD COLUMN votes_per_period INTEGER DEFAULT 0
@@ -84,7 +86,7 @@ def add_columns_to_render():
         cursor.close()
         conn.close()
         return True
-        
+
     except Exception as e:
         print(f"❌ Erro ao conectar ao Render: {str(e)}")
         if conn:

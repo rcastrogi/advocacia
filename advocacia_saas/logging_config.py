@@ -7,74 +7,75 @@ Captura TODOS os erros e os exibe no console/logs
 
 import logging
 import logging.handlers
-import sys
 import os
+import sys
 from datetime import datetime
+
 
 def setup_production_logging():
     """Configura logging robusto para capturar TUDO em produção"""
-    
+
     # Criar logger raiz
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
-    
+
     # HANDLER 1: Console (stdout) - TUDO vai pra console
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG)
     console_formatter = logging.Formatter(
-        '%(asctime)s [%(levelname)s] %(name)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     console_handler.setFormatter(console_formatter)
     root_logger.addHandler(console_handler)
-    
+
     # HANDLER 2: Arquivo de log (se em produção)
-    if os.getenv('FLASK_ENV') != 'development' or True:  # Sempre ativa
-        log_dir = 'logs'
+    if os.getenv("FLASK_ENV") != "development" or True:  # Sempre ativa
+        log_dir = "logs"
         os.makedirs(log_dir, exist_ok=True)
-        
-        log_file = os.path.join(log_dir, 'petitio_production.log')
-        
+
+        log_file = os.path.join(log_dir, "petitio_production.log")
+
         file_handler = logging.handlers.RotatingFileHandler(
             log_file,
-            maxBytes=10*1024*1024,  # 10MB
-            backupCount=10
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=10,
         )
         file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter(
-            '%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            "%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
         file_handler.setFormatter(file_formatter)
         root_logger.addHandler(file_handler)
-    
+
     # Configurar loggers específicos
-    logging.getLogger('flask').setLevel(logging.DEBUG)
-    logging.getLogger('sqlalchemy').setLevel(logging.DEBUG)
-    logging.getLogger('werkzeug').setLevel(logging.DEBUG)
-    
+    logging.getLogger("flask").setLevel(logging.DEBUG)
+    logging.getLogger("sqlalchemy").setLevel(logging.DEBUG)
+    logging.getLogger("werkzeug").setLevel(logging.DEBUG)
+
     # Capturar exceções não tratadas
     def log_unhandled_exception(exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
-        
+
         root_logger.critical(
-            "EXCEÇÃO NÃO TRATADA",
-            exc_info=(exc_type, exc_value, exc_traceback)
+            "EXCEÇÃO NÃO TRATADA", exc_info=(exc_type, exc_value, exc_traceback)
         )
-    
+
     sys.excepthook = log_unhandled_exception
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("✅ LOGGING INICIALIZADO COM SUCESSO")
-    print("="*70)
+    print("=" * 70)
     print(f"   🔹 Console: ATIVADO (stdout)")
     print(f"   🔹 Arquivo: {log_dir}/petitio_production.log")
     print(f"   🔹 Nível: DEBUG (captura TUDO)")
     print("   🔹 SQLAlchemy: DEBUG ATIVADO")
     print("   🔹 Werkzeug: DEBUG ATIVADO")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
+
 
 if __name__ == "__main__":
     setup_production_logging()
