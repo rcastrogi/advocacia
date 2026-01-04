@@ -2798,10 +2798,10 @@ def roadmap():
 def roadmap_matrix():
     """Visualização de matriz de impacto vs esforço do roadmap"""
     _require_admin()
-    
+
     # Buscar todos os itens do roadmap
     roadmap_items = RoadmapItem.query.all()
-    
+
     return render_template(
         "admin/roadmap_matrix.html",
         title="Matriz de Impacto vs Esforço",
