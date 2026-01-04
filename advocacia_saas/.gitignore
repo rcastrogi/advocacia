@@ -88,6 +88,7 @@ demonstrate_*.py
 create_comprehensive_*.py
 continue_*.py
 generate_*.py
+sync_*.py
 *_EXEMPLO_*.py
 SEMANA*.py
 
