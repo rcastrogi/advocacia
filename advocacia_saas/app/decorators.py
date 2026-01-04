@@ -74,6 +74,8 @@ def validate_with_schema(schema_class, location="json"):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             from flask import current_app
+            import logging as py_logging
+            
             schema = schema_class()
 
             try:
@@ -90,14 +92,14 @@ def validate_with_schema(schema_class, location="json"):
                 if data is None:
                     data = {}
 
-                # Log dos dados recebidos
-                current_app.logger.debug(f"🔍 VALIDATE_SCHEMA [{schema_class.__name__}] - Raw form data: {data}")
-                current_app.logger.debug(f"🔍 VALIDATE_SCHEMA - Form keys: {list(data.keys())}")
+                # Log dos dados recebidos - usar logging diretamente
+                py_logging.info(f"🔍 VALIDATE_SCHEMA [{schema_class.__name__}] - Raw form data: {data}")
+                py_logging.info(f"🔍 VALIDATE_SCHEMA - Form keys: {list(data.keys())}")
 
                 # Validar com o schema
                 validated_data = schema.load(data)
                 
-                current_app.logger.debug(f"✅ VALIDATE_SCHEMA - Validation passed. Validated data keys: {list(validated_data.keys())}")
+                py_logging.info(f"✅ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation passed. Validated data keys: {list(validated_data.keys())}")
 
                 # Armazenar dados validados no request para acesso na função
                 request.validated_data = validated_data
@@ -105,9 +107,9 @@ def validate_with_schema(schema_class, location="json"):
                 return f(*args, **kwargs)
 
             except ValidationError as err:
-                # Log do erro de validação
-                current_app.logger.error(f"❌ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation errors: {err.messages}")
-                current_app.logger.error(f"❌ Raw form data that failed: {data}")
+                # Log do erro de validação - usar logging diretamente
+                py_logging.error(f"❌ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation errors: {err.messages}")
+                py_logging.error(f"❌ Raw form data that failed: {data}")
                 
                 # Retornar erros de validação como JSON
                 if (
