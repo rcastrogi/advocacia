@@ -134,7 +134,3 @@ def validate_with_schema(schema_class, location="json"):
         return decorated_function
 
     return decorator
-
-        return decorated_function
-
-    return decorator
