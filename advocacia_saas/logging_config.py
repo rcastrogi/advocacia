@@ -67,7 +67,7 @@ def setup_production_logging():
     sys.excepthook = log_unhandled_exception
 
     print("\n" + "=" * 70)
-    print("[OK] LOGGING INICIALIZADO COM SUCESSO")
+    print("✅ LOGGING INICIALIZADO COM SUCESSO")
     print("=" * 70)
     print(f"   🔹 Console: ATIVADO (stdout)")
     print(f"   🔹 Arquivo: {log_dir}/petitio_production.log")
