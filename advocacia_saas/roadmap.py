@@ -33,20 +33,23 @@ cmd = sys.argv[1].lower()
 
 os.environ["PYTHONIOENCODING"] = "utf-8"
 
+# Usar o mesmo executável Python
+python_exe = sys.executable
+
 if cmd in ["validate", "v"]:
-    os.system("python validate_and_update_roadmap.py")
+    subprocess.call([python_exe, "validate_and_update_roadmap.py"])
 elif cmd in ["summary", "s"]:
-    os.system("python roadmap_summary.py")
+    subprocess.call([python_exe, "roadmap_summary.py"])
 elif cmd in ["all", "a"]:
     print("\n" + "=" * 80)
     print("Etapa 1: VALIDAR E ATUALIZAR")
     print("=" * 80)
-    os.system("python validate_and_update_roadmap.py")
+    subprocess.call([python_exe, "validate_and_update_roadmap.py"])
     print("\n\n")
     print("=" * 80)
     print("Etapa 2: RESUMO VISUAL")
     print("=" * 80)
-    os.system("python roadmap_summary.py")
+    subprocess.call([python_exe, "roadmap_summary.py"])
 else:
     print(f"Comando inválido: {cmd}")
     print("Use: validate, summary, ou all")
