@@ -2544,21 +2544,21 @@ class RoadmapItem(db.Model):
     def get_status_display(self):
         """Retorna o status formatado com cores Bootstrap vibrantes"""
         status_map = {
-            "planned": ("Planejado", "secondary"),     # Cinza - futuro
-            "in_progress": ("Em Andamento", "primary"), # Azul - ativo
-            "completed": ("Concluído", "success"),      # Verde - pronto
-            "cancelled": ("Cancelado", "danger"),       # Vermelho - bloqueado
-            "on_hold": ("Em Espera", "warning"),        # Amarelo - pausado
+            "planned": ("Planejado", "secondary"),  # Cinza - futuro
+            "in_progress": ("Em Andamento", "primary"),  # Azul - ativo
+            "completed": ("Concluído", "success"),  # Verde - pronto
+            "cancelled": ("Cancelado", "danger"),  # Vermelho - bloqueado
+            "on_hold": ("Em Espera", "warning"),  # Amarelo - pausado
         }
         return status_map.get(self.status, ("Desconhecido", "secondary"))
 
     def get_priority_display(self):
         """Retorna a prioridade formatada com cores Bootstrap vibrantes"""
         priority_map = {
-            "low": ("Baixa", "success"),           # Verde - tranquilo
-            "medium": ("Média", "info"),           # Azul - moderado
-            "high": ("Alta", "warning"),           # Amarelo/Laranja - atração
-            "critical": ("Crítica", "danger"),     # Vermelho - urgente
+            "low": ("Baixa", "success"),  # Verde - tranquilo
+            "medium": ("Média", "info"),  # Azul - moderado
+            "high": ("Alta", "warning"),  # Amarelo/Laranja - atração
+            "critical": ("Crítica", "danger"),  # Vermelho - urgente
         }
         return priority_map.get(self.priority, ("Média", "info"))
 
