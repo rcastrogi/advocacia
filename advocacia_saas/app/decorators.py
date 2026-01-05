@@ -77,42 +77,42 @@ def validate_with_schema(schema_class, location="json"):
             logger = logging.getLogger(__name__)
             
             schema = schema_class()
-            logger.info(f"🔵 validate_with_schema: {schema_class.__name__}")
-            logger.info(f"   Method: {request.method}")
-            logger.info(f"   URL: {request.url}")
-            logger.info(f"   Content-Type: {request.content_type}")
-            logger.info(f"   Request Headers: {dict(request.headers)}")
+            
+            # Validação só aplica em POST/PUT/PATCH
+            if request.method not in ["POST", "PUT", "PATCH"]:
+                logger.debug(f"[validate_with_schema] Pulando validação para {request.method}")
+                return f(*args, **kwargs)
+            
+            logger.info(f"[validate_with_schema] {schema_class.__name__} - {request.method}")
+            logger.info(f"  Content-Type: {request.content_type}")
 
             try:
                 # Obter dados da requisição
                 if location == "json":
-                    data = request.get_json()
+                    data = request.get_json(silent=True) or {}
                 elif location == "form":
-                    # DEBUG: Ver exatamente o que vem no request
-                    logger.info(f"   📝 request.form: {dict(request.form)}")
-                    logger.info(f"   📝 request.json: {request.get_json()}")
-                    logger.info(f"   📝 request.data (raw): {request.data}")
-                    
                     # Se form estiver vazio mas houver JSON, usar JSON
                     form_dict = request.form.to_dict()
-                    if not form_dict and request.is_json:
-                        logger.warning(f"   ⚠️  Form vazio mas JSON presente. Usando JSON ao invés de form.")
-                        data = request.get_json() or {}
+                    json_data = request.get_json(silent=True)
+                    
+                    if not form_dict and json_data:
+                        logger.info(f"  [INFO] Form vazio mas JSON presente. Usando JSON.")
+                        data = json_data
                     else:
                         data = form_dict
                         
-                    logger.info(f"   📝 Final data: {data}")
+                    logger.info(f"  Form data keys: {list(data.keys()) if data else 'vazio'}")
                 elif location == "args":
                     data = request.args.to_dict()
                 else:
-                    data = request.get_json()
+                    data = request.get_json(silent=True) or {}
 
                 if data is None:
                     data = {}
 
                 # Validar com o schema
                 validated_data = schema.load(data)
-                logger.info(f"✅ Validação passou: {schema_class.__name__}")
+                logger.info(f"  [OK] Validacao passou")
 
                 # Armazenar dados validados no request para acesso na função
                 request.validated_data = validated_data
@@ -120,8 +120,8 @@ def validate_with_schema(schema_class, location="json"):
                 return f(*args, **kwargs)
 
             except ValidationError as err:
-                logger.error(f"❌ Validação falhou: {schema_class.__name__}")
-                logger.error(f"   Erros: {err.messages}")
+                logger.error(f"  [ERRO] Validacao falhou")
+                logger.error(f"  Erros: {err.messages}")
                 
                 # Retornar erros de validação como JSON
                 if (
