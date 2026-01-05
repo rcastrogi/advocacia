@@ -74,11 +74,13 @@ def validate_with_schema(schema_class, location="json"):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             from flask import current_app
-            import logging as py_logging
+            import sys
             
             schema = schema_class()
             
-            py_logging.info(f"🔵 [VALIDATE_WITH_SCHEMA] Decorator acionado para {schema_class.__name__}")
+            print(f"🔵 [VALIDATE_WITH_SCHEMA] Decorator acionado para {schema_class.__name__}", flush=True)
+            sys.stderr.write(f"🔵 [VALIDATE_WITH_SCHEMA] Decorator acionado para {schema_class.__name__}\n")
+            sys.stderr.flush()
 
             try:
                 # Obter dados da requisição
@@ -86,7 +88,9 @@ def validate_with_schema(schema_class, location="json"):
                     data = request.get_json()
                 elif location == "form":
                     data = request.form.to_dict()
-                    py_logging.info(f"🔵 [VALIDATE_WITH_SCHEMA] Form data recebido: {data}")
+                    print(f"🔵 [VALIDATE_WITH_SCHEMA] Form data recebido: {data}", flush=True)
+                    sys.stderr.write(f"🔵 [VALIDATE_WITH_SCHEMA] Form data recebido: {data}\n")
+                    sys.stderr.flush()
                 elif location == "args":
                     data = request.args.to_dict()
                 else:
@@ -95,27 +99,38 @@ def validate_with_schema(schema_class, location="json"):
                 if data is None:
                     data = {}
 
-                # Log dos dados recebidos - usar logging diretamente
-                py_logging.info(f"🔍 VALIDATE_SCHEMA [{schema_class.__name__}] - Raw data: {data}")
-                py_logging.info(f"🔍 VALIDATE_SCHEMA - Data keys: {list(data.keys())}")
+                # Log dos dados recebidos
+                print(f"🔍 VALIDATE_SCHEMA [{schema_class.__name__}] - Raw data: {data}", flush=True)
+                print(f"🔍 VALIDATE_SCHEMA - Data keys: {list(data.keys())}", flush=True)
+                sys.stderr.write(f"🔍 VALIDATE_SCHEMA [{schema_class.__name__}] - Raw data: {data}\n")
+                sys.stderr.write(f"🔍 VALIDATE_SCHEMA - Data keys: {list(data.keys())}\n")
+                sys.stderr.flush()
 
                 # Validar com o schema
                 validated_data = schema.load(data)
                 
-                py_logging.info(f"✅ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation PASSED. Validated keys: {list(validated_data.keys())}")
+                print(f"✅ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation PASSED. Validated keys: {list(validated_data.keys())}", flush=True)
+                sys.stderr.write(f"✅ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation PASSED. Validated keys: {list(validated_data.keys())}\n")
+                sys.stderr.flush()
 
                 # Armazenar dados validados no request para acesso na função
                 request.validated_data = validated_data
                 
-                py_logging.info(f"✅ [VALIDATE_WITH_SCHEMA] request.validated_data setado com sucesso")
+                print(f"✅ [VALIDATE_WITH_SCHEMA] request.validated_data setado com sucesso", flush=True)
+                sys.stderr.write(f"✅ [VALIDATE_WITH_SCHEMA] request.validated_data setado com sucesso\n")
+                sys.stderr.flush()
 
                 return f(*args, **kwargs)
 
             except ValidationError as err:
-                # Log do erro de validação - usar logging diretamente
-                py_logging.error(f"❌ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation FAILED!")
-                py_logging.error(f"❌ Validation errors: {err.messages}")
-                py_logging.error(f"❌ Raw form data that failed: {data}")
+                # Log do erro de validação
+                print(f"❌ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation FAILED!", flush=True)
+                print(f"❌ Validation errors: {err.messages}", flush=True)
+                print(f"❌ Raw form data that failed: {data}", flush=True)
+                sys.stderr.write(f"❌ VALIDATE_SCHEMA [{schema_class.__name__}] - Validation FAILED!\n")
+                sys.stderr.write(f"❌ Validation errors: {err.messages}\n")
+                sys.stderr.write(f"❌ Raw form data that failed: {data}\n")
+                sys.stderr.flush()
                 
                 # Retornar erros de validação como JSON
                 if (
