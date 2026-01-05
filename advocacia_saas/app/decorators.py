@@ -77,15 +77,22 @@ def validate_with_schema(schema_class, location="json"):
             logger = logging.getLogger(__name__)
             
             schema = schema_class()
-            logger.debug(f"🔵 validate_with_schema: {schema_class.__name__}")
+            logger.debug(f"🔵 validate_with_schema: {schema_class.__name__}, location={location}")
 
             try:
                 # Obter dados da requisição
                 if location == "json":
                     data = request.get_json()
                 elif location == "form":
+                    # DEBUG: Ver exatamente o que vem no request
+                    logger.info(f"📝 request.form type: {type(request.form)}")
+                    logger.info(f"📝 request.form keys: {list(request.form.keys())}")
+                    logger.info(f"📝 request.form: {request.form}")
+                    logger.info(f"📝 request.files: {request.files}")
+                    
                     data = request.form.to_dict()
-                    logger.info(f"📝 Form data recebido: {list(data.keys())}")
+                    logger.info(f"📝 Form data (to_dict): {data}")
+                    logger.info(f"📝 Form data keys: {list(data.keys())}")
                 elif location == "args":
                     data = request.args.to_dict()
                 else:
