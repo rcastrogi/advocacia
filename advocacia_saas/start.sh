@@ -1,6 +1,16 @@
 #!/bin/bash
 echo "🚀 Iniciando Petitio..."
 
+# ⚙️ Limpeza automática de logs antigos
+echo "🧹 Limpando logs antigos..."
+if [ -d "logs" ]; then
+    rm -f logs/* 2>/dev/null || true
+    echo "✅ Logs antigos removidos"
+else
+    mkdir -p logs
+    echo "📁 Diretório de logs criado"
+fi
+
 # Executar migrações do banco
 echo "📦 Aplicando migrações do banco..."
 flask db upgrade || echo "⚠️  Migração não necessária ou já aplicada"

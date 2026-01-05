@@ -21,6 +21,9 @@ COPY advocacia_saas/ .
 # Tornar script executável
 RUN chmod +x start.sh
 
+# Criar diretório de logs (mas não vamos mais gravar nele)
+RUN mkdir -p logs
+
 # Expor porta
 EXPOSE 8080
 
