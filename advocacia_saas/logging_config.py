@@ -29,25 +29,9 @@ def setup_production_logging():
     console_handler.setFormatter(console_formatter)
     root_logger.addHandler(console_handler)
 
-    # HANDLER 2: Arquivo de log (se em produção)
-    if os.getenv("FLASK_ENV") != "development" or True:  # Sempre ativa
-        log_dir = "logs"
-        os.makedirs(log_dir, exist_ok=True)
-
-        log_file = os.path.join(log_dir, "petitio_production.log")
-
-        file_handler = logging.handlers.RotatingFileHandler(
-            log_file,
-            maxBytes=10 * 1024 * 1024,  # 10MB
-            backupCount=10,
-        )
-        file_handler.setLevel(logging.DEBUG)
-        file_formatter = logging.Formatter(
-            "%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        file_handler.setFormatter(file_formatter)
-        root_logger.addHandler(file_handler)
+    # HANDLER 2: Arquivo de log DESABILITADO (para não estourar espaço do servidor)
+    # Logs são enviados apenas para stdout (console) e capturados pelo Render
+    pass
 
     # Configurar loggers específicos
     logging.getLogger("flask").setLevel(logging.DEBUG)
@@ -69,8 +53,8 @@ def setup_production_logging():
     print("\n" + "=" * 70)
     print("✅ LOGGING INICIALIZADO COM SUCESSO")
     print("=" * 70)
-    print(f"   🔹 Console: ATIVADO (stdout)")
-    print(f"   🔹 Arquivo: {log_dir}/petitio_production.log")
+    print(f"   🔹 Console: ATIVADO (stdout - capturado pelo Render)")
+    print(f"   🔹 Arquivo: DESABILITADO (para preservar espaço do servidor)")
     print(f"   🔹 Nível: DEBUG (captura TUDO)")
     print("   🔹 SQLAlchemy: DEBUG ATIVADO")
     print("   🔹 Werkzeug: DEBUG ATIVADO")

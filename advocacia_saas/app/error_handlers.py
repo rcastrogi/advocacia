@@ -223,26 +223,7 @@ def init_logging(app):
     app.logger.addHandler(console_handler)
     app.logger.setLevel(logging.INFO)
 
-    # Configurar handler de arquivo (sempre ativo para debug)
-    import os
-    from logging.handlers import RotatingFileHandler
+    # Arquivo de log DESABILITADO para preservar espaço do servidor
+    # Todos os logs vão para stdout e são capturados pelo Render
 
-    if not os.path.exists("logs"):
-        os.mkdir("logs")
-
-    file_handler = RotatingFileHandler(
-        "logs/petitio.log",
-        maxBytes=10240000,  # 10MB
-        backupCount=10,
-    )
-
-    file_handler.setFormatter(
-        logging.Formatter(
-            "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
-        )
-    )
-
-    file_handler.setLevel(logging.DEBUG if app.debug else logging.INFO)
-    app.logger.addHandler(file_handler)
-
-    app.logger.info("Petitio startup - Logging inicializado")
+    app.logger.info("Petitio startup - Logging inicializado (arquivo desabilitado)")
