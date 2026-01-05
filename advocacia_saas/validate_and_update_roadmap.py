@@ -210,16 +210,13 @@ try:
         ORDER BY count DESC
     """)
 
-    print("\n📊 RESUMO DO ROADMAP ATUALIZADO:")
+    print("\n** RESUMO DO ROADMAP ATUALIZADO:")
     print("-" * 80)
     total = 0
     for status, count, percentage in cursor.fetchall():
         status_color = color_status(status)
-        emoji = {"completed": "✅", "in_progress": "🚀", "planned": "📅"}.get(
-            status, "❓"
-        )
         print(
-            f"  {emoji} {status_color}{status:15s}{Colors.RESET}: {count:2d} items ({percentage:5.1f}%)"
+            f"  {status_color} {status.upper():15s} {Colors.RESET}: {count:2d} items ({percentage:5.1f}%)"
         )
         total += count
 
@@ -243,22 +240,24 @@ try:
     for priority, count in cursor.fetchall():
         if priority == "critical":
             color = Colors.CRITICAL
+            badge = "CRITICA"
         elif priority == "high":
             color = Colors.HIGH
+            badge = "ALTA"
+        elif priority == "medium":
+            color = ""
+            badge = "MEDIA"
         else:
             color = ""
-
-        emoji = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}.get(
-            priority, "⚪"
-        )
+            badge = "BAIXA"
 
         priority_badge = (
-            f"{color}{priority:10s}{Colors.RESET}" if color else f"{priority:10s}"
+            f"{color} {badge:8s} {Colors.RESET}" if color else f"  {badge:6s}"
         )
-        print(f"  {emoji} {priority_badge}: {count:2d} items")
+        print(f"  {priority_badge}: {count:2d} items")
 
-    print(f"\n✅ Total de {updated} items atualizados com status real!")
-    print(f"📈 Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"\n** Total de {updated} items atualizados com status real!")
+    print(f"** Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 80)
 
     cursor.close()

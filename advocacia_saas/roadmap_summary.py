@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Gerar visualização completa do roadmap atualizado
 """
 
+import sys
 import os
 from datetime import datetime
 from urllib.parse import urlparse
 
 import psycopg2
+
+# Força encoding UTF-8
+if sys.stdout.encoding != 'utf-8':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 
 # Cores ANSI para terminal mais vibrantes
