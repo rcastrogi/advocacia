@@ -3,9 +3,10 @@
 """
 Atalho para rodar os scripts de roadmap com cores
 """
-import sys
+
 import os
 import subprocess
+import sys
 
 if len(sys.argv) < 2:
     print("""
@@ -30,22 +31,22 @@ Exemplos:
 
 cmd = sys.argv[1].lower()
 
-os.environ['PYTHONIOENCODING'] = 'utf-8'
+os.environ["PYTHONIOENCODING"] = "utf-8"
 
-if cmd in ['validate', 'v']:
-    os.system('python validate_and_update_roadmap.py')
-elif cmd in ['summary', 's']:
-    os.system('python roadmap_summary.py')
-elif cmd in ['all', 'a']:
-    print("\n" + "="*80)
+if cmd in ["validate", "v"]:
+    os.system("python validate_and_update_roadmap.py")
+elif cmd in ["summary", "s"]:
+    os.system("python roadmap_summary.py")
+elif cmd in ["all", "a"]:
+    print("\n" + "=" * 80)
     print("Etapa 1: VALIDAR E ATUALIZAR")
-    print("="*80)
-    os.system('python validate_and_update_roadmap.py')
+    print("=" * 80)
+    os.system("python validate_and_update_roadmap.py")
     print("\n\n")
-    print("="*80)
+    print("=" * 80)
     print("Etapa 2: RESUMO VISUAL")
-    print("="*80)
-    os.system('python roadmap_summary.py')
+    print("=" * 80)
+    os.system("python roadmap_summary.py")
 else:
     print(f"Comando inválido: {cmd}")
     print("Use: validate, summary, ou all")
