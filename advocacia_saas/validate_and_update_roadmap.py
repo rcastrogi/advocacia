@@ -3,35 +3,41 @@
 """
 Validar features implementadas no projeto e atualizar roadmap com status correto
 """
-import sys
-import psycopg2
+
 import os
-from urllib.parse import urlparse
+import sys
 from datetime import datetime
+from urllib.parse import urlparse
+
+import psycopg2
 
 # Força encoding UTF-8
-if sys.stdout.encoding != 'utf-8':
+if sys.stdout.encoding != "utf-8":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+
 
 # Cores ANSI para terminal
 class Colors:
-    COMPLETED = '\033[38;2;255;255;255m\033[48;2;34;139;34m'      # Verde escuro
-    IN_PROGRESS = '\033[38;2;0;0;0m\033[48;2;30;144;255m'         # Azul
-    PLANNED = '\033[38;2;255;255;255m\033[48;2;75;0;130m'         # Índigo
-    CRITICAL = '\033[38;2;255;255;255m\033[48;2;220;0;0m'         # Vermelho
-    HIGH = '\033[38;2;255;255;255m\033[48;2;255;140;0m'           # Laranja
-    RESET = '\033[0m'
+    COMPLETED = "\033[38;2;255;255;255m\033[48;2;34;139;34m"  # Verde escuro
+    IN_PROGRESS = "\033[38;2;0;0;0m\033[48;2;30;144;255m"  # Azul
+    PLANNED = "\033[38;2;255;255;255m\033[48;2;75;0;130m"  # Índigo
+    CRITICAL = "\033[38;2;255;255;255m\033[48;2;220;0;0m"  # Vermelho
+    HIGH = "\033[38;2;255;255;255m\033[48;2;255;140;0m"  # Laranja
+    RESET = "\033[0m"
+
 
 def color_status(status):
     colors = {
-        'completed': Colors.COMPLETED,
-        'in_progress': Colors.IN_PROGRESS,
-        'planned': Colors.PLANNED
+        "completed": Colors.COMPLETED,
+        "in_progress": Colors.IN_PROGRESS,
+        "planned": Colors.PLANNED,
     }
-    return colors.get(status, '')
+    return colors.get(status, "")
 
-database_url = os.getenv('DATABASE_URL')
+
+database_url = os.getenv("DATABASE_URL")
 
 if not database_url:
     print("[ERRO] DATABASE_URL não configurada")
@@ -40,17 +46,37 @@ if not database_url:
 # Map de features para status correto baseado no projeto
 ROADMAP_STATUS_UPDATE = {
     # COMPLETO/IMPLEMENTADO
-    1: {"status": "completed", "notes": "Dashboard analytics em produção com visualizações e filtros"},
-    2: {"status": "completed", "notes": "Modo escuro implementado em toda interface (Bootstrap 5)"},
-    3: {"status": "in_progress", "notes": "Segurança básica OK. 2FA planejado para próxima fase"},
-    4: {"status": "in_progress", "notes": "IA para revisão em MVP. GPT-4 integrado com créditos"},
+    1: {
+        "status": "completed",
+        "notes": "Dashboard analytics em produção com visualizações e filtros",
+    },
+    2: {
+        "status": "completed",
+        "notes": "Modo escuro implementado em toda interface (Bootstrap 5)",
+    },
+    3: {
+        "status": "in_progress",
+        "notes": "Segurança básica OK. 2FA planejado para próxima fase",
+    },
+    4: {
+        "status": "in_progress",
+        "notes": "IA para revisão em MVP. GPT-4 integrado com créditos",
+    },
     5: {"status": "planned", "notes": "App mobile (iOS/Android) fora do escopo atual"},
-    6: {"status": "completed", "notes": "Performance otimizada: Redis, caching, CDN integrado"},
+    6: {
+        "status": "completed",
+        "notes": "Performance otimizada: Redis, caching, CDN integrado",
+    },
     7: {"status": "planned", "notes": "Integração com tribunais em roadmap futuro"},
-    8: {"status": "completed", "notes": "Portal do cliente implementado com autoatendimento"},
-    9: {"status": "in_progress", "notes": "Notificações: push, email e SMS integrados (Firebase + SendGrid)"},
+    8: {
+        "status": "completed",
+        "notes": "Portal do cliente implementado com autoatendimento",
+    },
+    9: {
+        "status": "in_progress",
+        "notes": "Notificações: push, email e SMS integrados (Firebase + SendGrid)",
+    },
     10: {"status": "planned", "notes": "Sistema de feedback planejado para Q2"},
-    
     # ARQUITETURA E INTEGRAÇÕES
     11: {"status": "planned", "notes": "Marketplace de templates em roadmap"},
     12: {"status": "planned", "notes": "Gamificação opcional fora de escopo"},
@@ -62,21 +88,28 @@ ROADMAP_STATUS_UPDATE = {
     18: {"status": "completed", "notes": "Relatórios avançados com export PDF/Excel"},
     19: {"status": "completed", "notes": "Backup automático geográfico com DR"},
     20: {"status": "completed", "notes": "Auditoria completa com logs imutáveis LGPD"},
-    
     # ESCALABILIDADE
     21: {"status": "planned", "notes": "Microserviços em roadmap futuro"},
     22: {"status": "completed", "notes": "CDN global e load balancing implementado"},
     23: {"status": "completed", "notes": "Logs centralizados com ELK Stack"},
     24: {"status": "completed", "notes": "Dashboard financeiro para admins"},
-    25: {"status": "completed", "notes": "Sistema de planos dinâmico com Stripe/Mercado Pago"},
-    26: {"status": "in_progress", "notes": "Petições dinâmicas com builder visual em MVP"},
+    25: {
+        "status": "completed",
+        "notes": "Sistema de planos dinâmico com Stripe/Mercado Pago",
+    },
+    26: {
+        "status": "in_progress",
+        "notes": "Petições dinâmicas com builder visual em MVP",
+    },
     27: {"status": "in_progress", "notes": "IA com LLM (GPT-4, Claude) em produção"},
     28: {"status": "completed", "notes": "Notificações multi-canal com priorização"},
     29: {"status": "completed", "notes": "Roadmap público com votação de features"},
     30: {"status": "completed", "notes": "Calendário jurídico com prazos automáticos"},
-    
     # DOCUMENTOS E SEGURANÇA
-    31: {"status": "completed", "notes": "Gestão de documentos com versionamento e OCR"},
+    31: {
+        "status": "completed",
+        "notes": "Gestão de documentos com versionamento e OCR",
+    },
     32: {"status": "completed", "notes": "Cobrança automática com Stripe/Mercado Pago"},
     33: {"status": "in_progress", "notes": "BI e data warehouse em desenvolvimento"},
     34: {"status": "in_progress", "notes": "Comunicação interna com chat integrado"},
@@ -120,20 +153,21 @@ try:
         port=parsed.port or 5432,
         database=parsed.path[1:],
         user=parsed.username,
-        password=parsed.password
+        password=parsed.password,
     )
-    
+
     cursor = conn.cursor()
-    
+
     updated = 0
     for item_id, update_data in ROADMAP_STATUS_UPDATE.items():
         status = update_data["status"]
         notes = update_data["notes"]
         completion_date = COMPLETION_DATES.get(item_id)
-        
+
         # Se está completo, usar data de conclusão
         if status == "completed" and completion_date:
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE roadmap_items SET
                     status = %s,
                     notes = %s,
@@ -141,24 +175,31 @@ try:
                     implemented_at = CURRENT_TIMESTAMP,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
-            """, (status, notes, completion_date, item_id))
+            """,
+                (status, notes, completion_date, item_id),
+            )
         else:
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE roadmap_items SET
                     status = %s,
                     notes = %s,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
-            """, (status, notes, item_id))
-        
+            """,
+                (status, notes, item_id),
+            )
+
         updated += 1
         status_color = color_status(status)
-        print(f"  [{item_id:2d}] {status_color}{status:15s}{Colors.RESET} - {notes[:50]}")
-    
+        print(
+            f"  [{item_id:2d}] {status_color}{status:15s}{Colors.RESET} - {notes[:50]}"
+        )
+
     conn.commit()
-    
+
     # Relatório
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     cursor.execute("""
         SELECT 
             status,
@@ -168,20 +209,20 @@ try:
         GROUP BY status
         ORDER BY count DESC
     """)
-    
+
     print("\n📊 RESUMO DO ROADMAP ATUALIZADO:")
     print("-" * 80)
     total = 0
     for status, count, percentage in cursor.fetchall():
         status_color = color_status(status)
-        emoji = {
-            "completed": "✅",
-            "in_progress": "🚀",
-            "planned": "📅"
-        }.get(status, "❓")
-        print(f"  {emoji} {status_color}{status:15s}{Colors.RESET}: {count:2d} items ({percentage:5.1f}%)")
+        emoji = {"completed": "✅", "in_progress": "🚀", "planned": "📅"}.get(
+            status, "❓"
+        )
+        print(
+            f"  {emoji} {status_color}{status:15s}{Colors.RESET}: {count:2d} items ({percentage:5.1f}%)"
+        )
         total += count
-    
+
     cursor.execute("""
         SELECT 
             priority,
@@ -196,35 +237,35 @@ try:
                 WHEN 'low' THEN 4
             END
     """)
-    
+
     print("\n" + "-" * 80)
     print("PRIORIDADES:")
     for priority, count in cursor.fetchall():
-        if priority == 'critical':
+        if priority == "critical":
             color = Colors.CRITICAL
-        elif priority == 'high':
+        elif priority == "high":
             color = Colors.HIGH
         else:
-            color = ''
-        
-        emoji = {
-            "critical": "🔴",
-            "high": "🟠",
-            "medium": "🟡",
-            "low": "🟢"
-        }.get(priority, "⚪")
-        
-        priority_badge = f"{color}{priority:10s}{Colors.RESET}" if color else f"{priority:10s}"
+            color = ""
+
+        emoji = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}.get(
+            priority, "⚪"
+        )
+
+        priority_badge = (
+            f"{color}{priority:10s}{Colors.RESET}" if color else f"{priority:10s}"
+        )
         print(f"  {emoji} {priority_badge}: {count:2d} items")
-    
+
     print(f"\n✅ Total de {updated} items atualizados com status real!")
     print(f"📈 Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("="*80)
-    
+    print("=" * 80)
+
     cursor.close()
     conn.close()
-    
+
 except Exception as e:
     print(f"[ERRO] {str(e)}")
     import traceback
+
     traceback.print_exc()
