@@ -14,11 +14,6 @@ from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from flask_talisman import Talisman
 
-# Inicializar logging ANTES de qualquer coisa
-from logging_config import setup_production_logging
-
-setup_production_logging()
-
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
@@ -354,5 +349,9 @@ def create_app(config_class=Config):
 
     app.jinja_env.globals["entity_badge_config"] = get_entity_badge_config
     app.jinja_env.globals["action_badge_config"] = get_action_badge_config
+
+    # Register CLI commands
+    from app.cli_commands import cli
+    app.cli.add_command(cli)
 
     return app
