@@ -3188,12 +3188,11 @@ def new_roadmap_item():
 @validate_with_schema(RoadmapItemSchema, location="form")
 def edit_roadmap_item(item_id):
     """Editar item do roadmap"""
-    import sys
-    _require_admin()
+    import logging
+    logger = logging.getLogger(__name__)
     
-    print(f"🔵 EDIT_ROADMAP: Iniciando rota para item {item_id}, método {request.method}", flush=True)
-    sys.stderr.write(f"🔵 EDIT_ROADMAP: Iniciando rota para item {item_id}, método {request.method}\n")
-    sys.stderr.flush()
+    _require_admin()
+    logger.info(f"📝 Editando roadmap item {item_id}")
 
     item = RoadmapItem.query.get_or_404(item_id)
     categories = RoadmapCategory.query.filter_by(is_active=True).all()
@@ -3201,20 +3200,12 @@ def edit_roadmap_item(item_id):
 
     if request.method == "POST":
         try:
-            print(f"🔵 EDIT_ROADMAP: Verificando request.validated_data", flush=True)
-            sys.stderr.write(f"🔵 EDIT_ROADMAP: Verificando request.validated_data\n")
-            sys.stderr.flush()
-            
             if not hasattr(request, 'validated_data'):
-                print(f"❌ EDIT_ROADMAP: request.validated_data NÃO EXISTE!", flush=True)
-                sys.stderr.write(f"❌ EDIT_ROADMAP: request.validated_data NÃO EXISTE!\n")
-                sys.stderr.flush()
+                logger.error(f"❌ request.validated_data não existe!")
                 return jsonify({"error": "Dados não validados"}), 400
             
             data = request.validated_data
-            print(f"🔵 EDIT_ROADMAP: Dados validados recebidos: {list(data.keys())}", flush=True)
-            sys.stderr.write(f"🔵 EDIT_ROADMAP: Dados validados recebidos: {list(data.keys())}\n")
-            sys.stderr.flush()
+            logger.info(f"✅ Dados validados recebidos: {list(data.keys())}")
 
             item.category_id = data.get("category_id")
             item.title = data.get("title")
@@ -3266,25 +3257,19 @@ def edit_roadmap_item(item_id):
                 return redirect(request.url)
 
             db.session.commit()
-            print(f"✅ EDIT_ROADMAP: Item {item_id} atualizado com sucesso!", flush=True)
-            sys.stderr.write(f"✅ EDIT_ROADMAP: Item {item_id} atualizado com sucesso!\n")
-            sys.stderr.flush()
-            
+            logger.info(f"✅ Roadmap item {item_id} atualizado com sucesso")
             flash("Item do roadmap atualizado com sucesso!", "success")
             return redirect(url_for("admin.roadmap_items"))
         except Exception as e:
             import traceback
-            print(f"❌ EDIT_ROADMAP: Erro ao atualizar item {item_id}: {str(e)}", flush=True)
-            print(f"❌ EDIT_ROADMAP: Traceback:\n{traceback.format_exc()}", flush=True)
-            sys.stderr.write(f"❌ EDIT_ROADMAP: Erro ao atualizar item {item_id}: {str(e)}\n")
-            sys.stderr.write(f"❌ EDIT_ROADMAP: Traceback:\n{traceback.format_exc()}\n")
-            sys.stderr.flush()
+            logger.error(f"❌ Erro ao atualizar roadmap item {item_id}")
+            logger.error(f"   Erro: {str(e)}")
+            logger.error(f"   Traceback: {traceback.format_exc()}")
             
             current_app.logger.error(f"Error updating roadmap item: {str(e)}")
             error_msg = format_error_for_user(e, "Erro ao atualizar item do roadmap")
             flash(error_msg, "error")
             
-            # Retornar JSON com erro para visibilidade no console do browser
             if request.accept_mimetypes.best in ["application/json", "text/json"]:
                 return jsonify({"error": error_msg, "details": str(e)}), 500
             
