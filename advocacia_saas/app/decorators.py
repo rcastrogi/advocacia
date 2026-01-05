@@ -77,7 +77,11 @@ def validate_with_schema(schema_class, location="json"):
             logger = logging.getLogger(__name__)
             
             schema = schema_class()
-            logger.debug(f"🔵 validate_with_schema: {schema_class.__name__}, location={location}")
+            logger.info(f"🔵 validate_with_schema: {schema_class.__name__}")
+            logger.info(f"   Method: {request.method}")
+            logger.info(f"   URL: {request.url}")
+            logger.info(f"   Content-Type: {request.content_type}")
+            logger.info(f"   Request Headers: {dict(request.headers)}")
 
             try:
                 # Obter dados da requisição
@@ -85,14 +89,19 @@ def validate_with_schema(schema_class, location="json"):
                     data = request.get_json()
                 elif location == "form":
                     # DEBUG: Ver exatamente o que vem no request
-                    logger.info(f"📝 request.form type: {type(request.form)}")
-                    logger.info(f"📝 request.form keys: {list(request.form.keys())}")
-                    logger.info(f"📝 request.form: {request.form}")
-                    logger.info(f"📝 request.files: {request.files}")
+                    logger.info(f"   📝 request.form: {dict(request.form)}")
+                    logger.info(f"   📝 request.json: {request.get_json()}")
+                    logger.info(f"   📝 request.data (raw): {request.data}")
                     
-                    data = request.form.to_dict()
-                    logger.info(f"📝 Form data (to_dict): {data}")
-                    logger.info(f"📝 Form data keys: {list(data.keys())}")
+                    # Se form estiver vazio mas houver JSON, usar JSON
+                    form_dict = request.form.to_dict()
+                    if not form_dict and request.is_json:
+                        logger.warning(f"   ⚠️  Form vazio mas JSON presente. Usando JSON ao invés de form.")
+                        data = request.get_json() or {}
+                    else:
+                        data = form_dict
+                        
+                    logger.info(f"   📝 Final data: {data}")
                 elif location == "args":
                     data = request.args.to_dict()
                 else:
