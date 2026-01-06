@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Verificar Código 2FA{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt"></i> Verificar Código 2FA
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if method == 'email' %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-envelope"></i>
+                        Um código de 6 dígitos foi enviado para <strong>{{ email }}</strong>.
+                        <br>
+                        <small>Verifique seu email e digite o código abaixo.</small>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('auth.setup_2fa') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group mb-3">
+                            {{ form.verification_code.label(class="form-label") }}
+                            {% if form.verification_code.errors %}
+                                {{ form.verification_code(class="form-control is-invalid", placeholder="000000", autocomplete="off") }}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.verification_code.errors %}
+                                        <i class="fas fa-exclamation-circle"></i> {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.verification_code(class="form-control text-center", placeholder="000000", autocomplete="off", inputmode="numeric", maxlength="6") }}
+                            {% endif %}
+                            <small class="form-text text-muted d-block mt-2">
+                                <i class="fas fa-clock"></i> Código expira em 10 minutos
+                            </small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('auth.setup_2fa') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-arrow-left"></i> Voltar
+                            </a>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="alert alert-warning" role="alert">
+                        <small>
+                            <strong>Não recebeu o código?</strong>
+                            <ul class="mb-0">
+                                <li>Verifique a pasta de spam</li>
+                                <li>Aguarde alguns segundos (pode demorar um pouco)</li>
+                                <li><a href="{{ url_for('auth.setup_2fa') }}">Clique aqui para tentar novamente</a></li>
+                            </ul>
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control[inputmode="numeric"] {
+        font-size: 24px;
+        letter-spacing: 10px;
+        text-align: center;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
