@@ -4265,10 +4265,9 @@ def audit_logs():
     recent_entity_ids = {}
     for et in entity_types:
         recent_ids = (
-            db.session.query(AuditLog.entity_id)
+            db.session.query(AuditLog.entity_id, AuditLog.timestamp)
             .filter(AuditLog.entity_type == et)
             .order_by(AuditLog.timestamp.desc())
-            .distinct()
             .limit(20)
             .all()
         )
@@ -4276,10 +4275,9 @@ def audit_logs():
 
     # IDs de usuários recentes
     recent_user_ids = (
-        db.session.query(AuditLog.user_id)
+        db.session.query(AuditLog.user_id, AuditLog.timestamp)
         .filter(AuditLog.user_id.isnot(None))
         .order_by(AuditLog.timestamp.desc())
-        .distinct()
         .limit(20)
         .all()
     )
