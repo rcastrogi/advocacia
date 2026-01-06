@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 from flask import (
@@ -163,6 +164,14 @@ def login():
 
                 # Verificar se usuário requer 2FA
                 if user.requires_2fa():
+                    # Se 2FA por email, enviar código automaticamente
+                    if user.two_factor_method == "email":
+                        user.send_2fa_email_code()
+                        flash(
+                            "Código de autenticação enviado para seu email. Digite-o abaixo.",
+                            "info",
+                        )
+                    
                     # Verificar código 2FA
                     if not form.two_factor_code.data:
                         flash(
@@ -175,6 +184,7 @@ def login():
                             form=form,
                             require_2fa=True,
                             user_email=user.email,
+                            two_factor_method=user.two_factor_method,
                         )
 
                     if not user.verify_2fa_code(form.two_factor_code.data):
@@ -185,6 +195,7 @@ def login():
                             form=form,
                             require_2fa=True,
                             user_email=user.email,
+                            two_factor_method=user.two_factor_method,
                         )
 
                 login_user(user, remember=form.remember_me.data)
@@ -614,6 +625,8 @@ def update_timezone():
 @login_required
 def setup_2fa():
     """Configurar 2FA para o usuário"""
+    from app.services import EmailService, generate_email_2fa_code
+    
     # Verificar se usuário pode usar 2FA (apenas admin e advogados)
     if not current_user.requires_2fa() and not current_user.is_admin():
         flash("2FA não está disponível para seu tipo de usuário.", "error")
@@ -628,17 +641,44 @@ def setup_2fa():
     qr_code_data = None
 
     if form.validate_on_submit():
-        # Verificar código de verificação
-        if current_user.verify_2fa_code(form.verification_code.data):
-            # Habilitar 2FA
-            backup_codes = current_user.enable_2fa(form.method.data)
-            flash("2FA habilitado com sucesso!", "success")
-
-            # Mostrar códigos de backup
-            session["backup_codes"] = backup_codes
-            return redirect(url_for("auth.show_backup_codes"))
+        method = form.method.data
+        
+        if method == "email":
+            # Para email, gerar código e enviar
+            code = generate_email_2fa_code()
+            current_user.email_2fa_code = code
+            
+            from datetime import timedelta
+            current_user.email_2fa_code_expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+            db.session.commit()
+            
+            # Enviar código por email
+            if EmailService.send_2fa_code_email(current_user.email, code, method="email"):
+                flash(f"Código enviado para {current_user.email}. Verifique seu email.", "info")
+                # Mostrar formulário de verificação
+                session["pending_2fa_method"] = "email"
+                return render_template("auth/verify_2fa_setup.html", form=form, method="email", email=current_user.email)
+            else:
+                flash("Erro ao enviar código. Tente novamente.", "error")
+                return render_template("auth/setup_2fa.html", form=form)
         else:
-            flash("Código de verificação inválido.", "error")
+            # Para TOTP
+            # Verificar código de verificação
+            if current_user.verify_2fa_code(form.verification_code.data):
+                # Habilitar 2FA
+                backup_codes = current_user.enable_2fa(method)
+                
+                # Enviar notificação
+                method_name = "Email" if method == "email" else "Aplicativo Autenticador (TOTP)"
+                EmailService.send_2fa_enabled_notification(current_user.email, current_user.full_name or current_user.username, method)
+                
+                flash("2FA habilitado com sucesso!", "success")
+                
+                # Mostrar códigos de backup
+                session["backup_codes"] = backup_codes
+                return redirect(url_for("auth.show_backup_codes"))
+            else:
+                flash("Código de verificação inválido.", "error")
 
     # Preparar dados para TOTP
     if form.method.data == "totp" or not form.method.data:
@@ -688,10 +728,15 @@ def show_backup_codes():
 @login_required
 def disable_2fa():
     """Desabilitar 2FA"""
+    from app.services import EmailService
+    
     if not current_user.two_factor_enabled:
         flash("2FA não está habilitado.", "error")
         return redirect(url_for("auth.profile"))
 
+    # Enviar notificação antes de desabilitar
+    EmailService.send_2fa_disabled_notification(current_user.email, current_user.full_name or current_user.username)
+    
     current_user.disable_2fa()
     flash("2FA desabilitado com sucesso.", "success")
     return redirect(url_for("auth.profile"))

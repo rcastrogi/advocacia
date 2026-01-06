@@ -100,10 +100,12 @@ class User(UserMixin, db.Model):
 
     # Two-Factor Authentication (2FA) fields
     two_factor_enabled = db.Column(db.Boolean, default=False)
-    two_factor_method = db.Column(db.String(20), default="totp")  # 'totp' or 'sms'
+    two_factor_method = db.Column(db.String(20), default="totp")  # 'totp', 'email' or 'sms'
     totp_secret = db.Column(db.String(32))  # Secret key for TOTP
     two_factor_backup_codes = db.Column(db.Text)  # JSON array of backup codes
     two_factor_last_used = db.Column(db.DateTime)  # Last time 2FA was used
+    email_2fa_code = db.Column(db.String(6))  # Temporary code for email 2FA
+    email_2fa_code_expires = db.Column(db.DateTime)  # Expiration time for email code
 
     # Relationships
     clients = db.relationship(
@@ -574,7 +576,7 @@ class User(UserMixin, db.Model):
         db.session.commit()
 
     def verify_2fa_code(self, code):
-        """Verifica código 2FA (TOTP ou backup)"""
+        """Verifica código 2FA (TOTP, Email ou backup)"""
         import json
 
         import pyotp
@@ -596,6 +598,24 @@ class User(UserMixin, db.Model):
             except (json.JSONDecodeError, ValueError):
                 pass
 
+        # Verifica código de email 2FA
+        if self.two_factor_method == "email" and self.email_2fa_code:
+            # Verifica se código não expirou (10 minutos)
+            if self.email_2fa_code_expires and datetime.now(timezone.utc) <= self.email_2fa_code_expires:
+                if code == self.email_2fa_code:
+                    # Limpar código após uso
+                    self.email_2fa_code = None
+                    self.email_2fa_code_expires = None
+                    self.two_factor_last_used = datetime.now(timezone.utc)
+                    db.session.commit()
+                    return True
+            else:
+                # Código expirou
+                self.email_2fa_code = None
+                self.email_2fa_code_expires = None
+                db.session.commit()
+                return False
+
         # Verifica TOTP
         if self.two_factor_method == "totp" and self.totp_secret:
             totp = pyotp.TOTP(self.totp_secret)
@@ -615,6 +635,25 @@ class User(UserMixin, db.Model):
 
         totp = pyotp.TOTP(self.totp_secret)
         return totp.provisioning_uri(name=self.email, issuer_name="Petitio")
+
+    def send_2fa_email_code(self) -> bool:
+        """
+        Gera e envia código 2FA por email
+        Retorna True se enviado com sucesso
+        """
+        from datetime import timedelta
+        from app.services import EmailService, generate_email_2fa_code
+
+        # Gerar código de 6 dígitos
+        code = generate_email_2fa_code()
+        
+        # Definir expiração em 10 minutos
+        self.email_2fa_code = code
+        self.email_2fa_code_expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+        db.session.commit()
+
+        # Enviar por email
+        return EmailService.send_2fa_code_email(self.email, code, method="email")
 
     def requires_2fa(self):
         """Verifica se usuário deve usar 2FA (administradores e advogados)"""
