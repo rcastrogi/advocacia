@@ -164,6 +164,21 @@ def login():
 
                 # Verificar se usuário requer 2FA
                 if user.requires_2fa():
+                    # ⏱️ Verificar se está bloqueado por múltiplas tentativas
+                    if user.is_2fa_locked():
+                        flash(
+                            "Muitas tentativas falhadas de 2FA. Tente novamente em 15 minutos.",
+                            "error",
+                        )
+                        # Log de auditoria
+                        AuditManager.log_change(
+                            entity_type="user",
+                            entity_id=user.id,
+                            action="2fa_locked",
+                            description=f"Usuário bloqueado por múltiplas tentativas de 2FA",
+                        )
+                        return render_template("auth/login.html", title="Login", form=form)
+                    
                     # Se 2FA por email, enviar código automaticamente
                     if user.two_factor_method == "email":
                         user.send_2fa_email_code()
@@ -188,7 +203,18 @@ def login():
                         )
 
                     if not user.verify_2fa_code(form.two_factor_code.data):
+                        # ❌ Tentativa falhada - incrementar contador
+                        user.record_2fa_failed_attempt()
+                        
                         flash("Código 2FA inválido", "error")
+                        # Log de auditoria
+                        AuditManager.log_change(
+                            entity_type="user",
+                            entity_id=user.id,
+                            action="2fa_failed_attempt",
+                            description=f"Tentativa falha de 2FA (tentativa {user.two_factor_failed_attempts})",
+                        )
+                        
                         return render_template(
                             "auth/login.html",
                             title="Login",
@@ -197,6 +223,16 @@ def login():
                             user_email=user.email,
                             two_factor_method=user.two_factor_method,
                         )
+                    
+                    # ✅ 2FA bem-sucedido - resetar contador
+                    user.reset_2fa_failed_attempts()
+                    # Log de auditoria
+                    AuditManager.log_change(
+                        entity_type="user",
+                        entity_id=user.id,
+                        action="2fa_success",
+                        description=f"Login bem-sucedido com 2FA",
+                    )
 
                 login_user(user, remember=form.remember_me.data)
 
@@ -661,15 +697,34 @@ def setup_2fa():
             else:
                 flash("Erro ao enviar código. Tente novamente.", "error")
                 return render_template("auth/setup_2fa.html", form=form)
-        else:
             # Para TOTP
             # Verificar código de verificação
             if current_user.verify_2fa_code(form.verification_code.data):
                 # Habilitar 2FA
                 backup_codes = current_user.enable_2fa(method)
                 
-                # Enviar notificação
+                # Registrar auditoria
+                from app.utils.audit import AuditManager
+                AuditManager.log_change(
+                    entity_type="user",
+                    entity_id=current_user.id,
+                    action="2fa_enabled",
+                    new_values={"method": method},
+                    description=f"2FA habilitado via {method}",
+                    additional_metadata={"method": method, "ip_address": request.remote_addr}
+                )
+                
+                # Criar notificação in-app
+                from app.models import Notification
                 method_name = "Email" if method == "email" else "Aplicativo Autenticador (TOTP)"
+                Notification.create_notification(
+                    user_id=current_user.id,
+                    notification_type="2fa_enabled",
+                    title="Autenticação de Dois Fatores Ativada",
+                    message=f"2FA foi ativado com sucesso via {method_name}. Você receberá um código adicional ao fazer login.",
+                )
+                
+                # Enviar email de notificação
                 EmailService.send_2fa_enabled_notification(current_user.email, current_user.full_name or current_user.username, method)
                 
                 flash("2FA habilitado com sucesso!", "success")
@@ -724,22 +779,207 @@ def show_backup_codes():
     return render_template("auth/backup_codes.html", backup_codes=backup_codes)
 
 
+@bp.route("/2fa/manage")
+@login_required
+def manage_2fa():
+    """Página para gerenciar configurações de 2FA"""
+    return render_template("auth/manage_2fa.html")
+
+
 @bp.route("/2fa/disable", methods=["POST"])
 @login_required
 def disable_2fa():
     """Desabilitar 2FA"""
     from app.services import EmailService
+    from app.utils.audit import AuditManager
+    from app.models import Notification
+    from flask import request
     
     if not current_user.two_factor_enabled:
         flash("2FA não está habilitado.", "error")
         return redirect(url_for("auth.profile"))
 
-    # Enviar notificação antes de desabilitar
+    # Registrar auditoria
+    AuditManager.log_change(
+        entity_type="user",
+        entity_id=current_user.id,
+        action="2fa_disabled",
+        old_values={"method": current_user.two_factor_method, "enabled": True},
+        new_values={"enabled": False},
+        description="2FA desabilitado",
+        additional_metadata={"ip_address": request.remote_addr}
+    )
+    
+    # Criar notificação in-app
+    Notification.create_notification(
+        user_id=current_user.id,
+        notification_type="2fa_disabled",
+        title="Autenticação de Dois Fatores Desativada",
+        message="2FA foi desativado para sua conta. Você poderá fazer login usando apenas sua senha.",
+    )
+    
+    # Enviar notificação por email
     EmailService.send_2fa_disabled_notification(current_user.email, current_user.full_name or current_user.username)
     
     current_user.disable_2fa()
     flash("2FA desabilitado com sucesso.", "success")
     return redirect(url_for("auth.profile"))
+
+
+@bp.route("/2fa/regenerate-codes", methods=["POST"])
+@login_required
+def regenerate_backup_codes():
+    """Regenerar códigos de recuperação"""
+    from app.utils.audit import AuditManager
+    from app.models import Notification
+    from flask import request, jsonify
+    
+    if not current_user.two_factor_enabled:
+        flash("2FA não está habilitado.", "error")
+        return redirect(url_for("auth.profile"))
+    
+    # Gerar novos códigos
+    backup_codes = current_user.regenerate_backup_codes()
+    
+    # Registrar auditoria
+    AuditManager.log_change(
+        entity_type="user",
+        entity_id=current_user.id,
+        action="2fa_backup_codes_regenerated",
+        description="Códigos de recuperação 2FA regenerados",
+        additional_metadata={"ip_address": request.remote_addr, "codes_count": len(backup_codes)}
+    )
+    
+    # Criar notificação in-app
+    Notification.create_notification(
+        user_id=current_user.id,
+        notification_type="2fa_codes_regenerated",
+        title="Códigos de Recuperação Regenerados",
+        message=f"Novos códigos de recuperação 2FA foram gerados. Os códigos anteriores não são mais válidos.",
+    )
+    
+    # Armazenar na sessão para exibição
+    from flask import session
+    session["backup_codes"] = backup_codes
+    
+    flash("Códigos de recuperação regenerados com sucesso!", "success")
+    return redirect(url_for("auth.show_backup_codes"))
+
+
+@bp.route("/2fa/download-codes")
+@login_required
+def download_backup_codes():
+    """Download dos códigos de recuperação em PDF"""
+    from io import BytesIO
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib import colors
+    from datetime import datetime, timezone
+    from flask import request
+    
+    if not current_user.two_factor_enabled:
+        flash("2FA não está habilitado.", "error")
+        return redirect(url_for("auth.profile"))
+    
+    # Obter códigos
+    backup_codes = current_user.get_backup_codes()
+    if not backup_codes:
+        flash("Nenhum código de recuperação disponível.", "error")
+        return redirect(url_for("auth.profile"))
+    
+    # Registrar auditoria
+    from app.utils.audit import AuditManager
+    AuditManager.log_change(
+        entity_type="user",
+        entity_id=current_user.id,
+        action="2fa_backup_codes_downloaded",
+        description="Códigos de recuperação 2FA baixados em PDF",
+        additional_metadata={"ip_address": request.remote_addr}
+    )
+    
+    # Criar PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#1e40af'),
+        spaceAfter=30,
+        alignment=1
+    )
+    
+    # Título
+    elements.append(Paragraph("Códigos de Recuperação - 2FA", title_style))
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # Informações
+    info_style = ParagraphStyle(
+        'Info',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#666666'),
+        spaceAfter=20
+    )
+    
+    user_info = f"<b>Usuário:</b> {current_user.email}<br/><b>Data:</b> {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S')}<br/><b>Sistema:</b> Petitio"
+    elements.append(Paragraph(user_info, info_style))
+    elements.append(Spacer(1, 0.2*inch))
+    
+    # Aviso importante
+    warning_style = ParagraphStyle(
+        'Warning',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#b91c1c'),
+        spaceAfter=20,
+        borderPadding=10,
+        borderRadius=5
+    )
+    
+    warning = "<b>⚠️ IMPORTANTE:</b> Armazene estes códigos em um local seguro. Use um código quando não conseguir acessar seu autenticador. Cada código só pode ser usado uma vez."
+    elements.append(Paragraph(warning, warning_style))
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # Tabela de códigos
+    codes_data = [["Código de Recuperação"]]
+    for i, code in enumerate(backup_codes, 1):
+        codes_data.append([f"{i}. {code}"])
+    
+    table = Table(codes_data, colWidths=[5*inch])
+    table_style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f3f4f6')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
+        ('FONTNAME', (0, 1), (-1, -1), 'Courier'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
+        ('PADDING', (0, 0), (-1, -1), 8),
+    ])
+    table.setStyle(table_style)
+    elements.append(table)
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    from flask import send_file
+    return send_file(
+        buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f'backup-codes-2fa-{datetime.now(timezone.utc).strftime("%Y%m%d")}.pdf'
+    )
 
 
 @bp.route("/2fa/verify", methods=["GET", "POST"])

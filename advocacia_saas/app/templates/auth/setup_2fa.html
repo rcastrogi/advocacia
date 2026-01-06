@@ -55,32 +55,43 @@
                             <p>Siga os passos abaixo para configurar seu aplicativo autenticador:</p>
 
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-5">
                                     <ol>
-                                        <li>Baixe um aplicativo autenticador (Google Authenticator, Authy, etc.)</li>
-                                        <li>Escaneie o código QR ao lado ou digite a chave manualmente</li>
-                                        <li>Digite o código de 6 dígitos gerado pelo app no campo abaixo</li>
+                                        <li>Baixe um aplicativo autenticador:
+                                            <ul>
+                                                <li>Google Authenticator</li>
+                                                <li>Authy</li>
+                                                <li>Microsoft Authenticator</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Escaneie o código QR</strong> ao lado</li>
+                                        <li>Digite o código de 6 dígitos gerado no campo abaixo</li>
                                     </ol>
                                 </div>
-                                <div class="col-md-6 text-center">
-                                    {% if qr_code_data %}
-                                    <div class="mb-3">
-                                        <img src="data:image/png;base64,{{ qr_code_data }}" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                                <div class="col-md-7 text-center">
+                                    <div class="card border-primary">
+                                        <div class="card-body p-4">
+                                            {% if qr_code_data %}
+                                            <img src="data:image/png;base64,{{ qr_code_data }}" alt="QR Code" class="img-fluid" style="max-width: 280px; border: 3px solid #1e40af; border-radius: 8px;">
+                                            <p class="small text-muted mt-3"><i class="fas fa-arrow-up"></i> Escaneie este código QR com seu aplicativo autenticador</p>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    <p class="small text-muted">Escaneie este código QR</p>
-                                    {% endif %}
                                 </div>
                             </div>
 
                             {% if totp_uri %}
-                            <div class="mb-3">
-                                <label class="form-label">Chave Manual (caso não consiga escanear o QR):</label>
+                            <div class="mt-4 p-3 bg-light rounded">
+                                <label class="form-label"><strong>Chave Manual (caso não consiga escanear):</strong></label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" value="{{ totp_uri.split('secret=')[1].split('&')[0] }}" readonly>
+                                    <input type="text" class="form-control font-monospace" value="{{ totp_uri.split('secret=')[1].split('&')[0] }}" readonly>
                                     <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this.previousElementSibling)">
-                                        <i class="fas fa-copy"></i>
+                                        <i class="fas fa-copy"></i> Copiar
                                     </button>
                                 </div>
+                                <small class="form-text text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle"></i> Digite esta chave no seu aplicativo autenticador para adicionar a conta manualmente
+                                </small>
                             </div>
                             {% endif %}
                         </div>

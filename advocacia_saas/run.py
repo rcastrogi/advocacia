@@ -1,5 +1,6 @@
 from app import create_app, db
 from app.models import Client, Dependent, User
+import os
 
 app = create_app()
 
@@ -36,4 +37,9 @@ if __name__ == "__main__":
                 db.session.commit()
                 print("Usuario master criado: admin@petitio.com / admin123")
 
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    # Use Flask development server with reloader disabled
+    # This works better on Windows than Waitress
+    print("\nIniciando aplicação...")
+    print("Acesse: http://127.0.0.1:5000")
+    print("Tecle CTRL+C para parar\n")
+    app.run(debug=False, use_reloader=False, host="127.0.0.1", port=5000, threaded=True)

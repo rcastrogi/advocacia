@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar 2FA - Petitio{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            {% if current_user.two_factor_enabled %}
+            <!-- 2FA Habilitado -->
+            <div class="card mb-4 border-success">
+                <div class="card-header bg-success text-white">
+                    <h3><i class="fas fa-shield-alt"></i> Autenticação de Dois Fatores - Ativada</h3>
+                    <p class="mb-0">Sua conta está protegida com 2FA</p>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Detalhes da Configuração</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <strong>Método:</strong>
+                                    {% if current_user.two_factor_method == 'totp' %}
+                                    <span class="badge bg-primary"><i class="fas fa-mobile-alt"></i> Aplicativo Autenticador (TOTP)</span>
+                                    {% elif current_user.two_factor_method == 'email' %}
+                                    <span class="badge bg-info"><i class="fas fa-envelope"></i> Email</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Desconhecido</span>
+                                    {% endif %}
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Códigos de Recuperação:</strong>
+                                    <span class="badge bg-{{ 'danger' if current_user.count_remaining_backup_codes() < 3 else 'info' }}">
+                                        {{ current_user.count_remaining_backup_codes() }} / 10 disponíveis
+                                    </span>
+                                </li>
+                                {% if current_user.two_factor_last_used %}
+                                <li class="mb-2">
+                                    <strong>Último Uso:</strong>
+                                    {{ current_user.two_factor_last_used.strftime('%d/%m/%Y às %H:%M') }}
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Ações</h5>
+                            <div class="d-flex flex-column gap-2">
+                                <a href="{{ url_for('auth.download_backup_codes') }}" class="btn btn-info" target="_blank">
+                                    <i class="fas fa-file-pdf"></i> Baixar Códigos em PDF
+                                </a>
+                                {% if current_user.count_remaining_backup_codes() < 3 %}
+                                <form method="POST" action="{{ url_for('auth.regenerate_backup_codes') }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-warning w-100">
+                                        <i class="fas fa-redo"></i> Regenerar Códigos ({{ current_user.count_remaining_backup_codes() }} restantes)
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="{{ url_for('auth.regenerate_backup_codes') }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-outline-warning w-100">
+                                        <i class="fas fa-redo"></i> Regenerar Códigos
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#disableModal">
+                                    <i class="fas fa-times"></i> Desabilitar 2FA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if current_user.count_remaining_backup_codes() < 3 %}
+                    <div class="alert alert-warning mb-0">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Atenção!</strong> Você tem poucos códigos de recuperação. Recomendamos regenerar novos códigos para manter sua segurança.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Informações de Segurança -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Informações de Segurança</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Como funciona o 2FA:</h6>
+                    <ol>
+                        <li>Você faz login com seu email e senha</li>
+                        <li>Um código de 6 dígitos é gerado pelo seu aplicativo autenticador</li>
+                        <li>Você digita este código para completar o login</li>
+                        <li>Se perder acesso ao seu autenticador, pode usar um código de recuperação</li>
+                    </ol>
+
+                    <hr>
+
+                    <h6>Dicas de Segurança:</h6>
+                    <ul>
+                        <li>Guarde seus códigos de recuperação em um local seguro</li>
+                        <li>Não compartilhe sua chave secreta do autenticador</li>
+                        <li>Faça backup do seu autenticador antes de trocar de dispositivo</li>
+                        <li>Considere regenerar códigos periodicamente</li>
+                    </ul>
+                </div>
+            </div>
+
+            {% else %}
+            <!-- 2FA Desabilitado -->
+            <div class="card border-warning mb-4">
+                <div class="card-header bg-warning">
+                    <h3><i class="fas fa-exclamation-circle"></i> Autenticação de Dois Fatores - Desativada</h3>
+                    <p class="mb-0">Sua conta não está protegida com 2FA</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>Recomendação:</strong> Ativar 2FA adiciona uma camada extra de segurança à sua conta.
+                        Mesmo se sua senha for comprometida, um invasor não conseguirá acessar sua conta sem o código 2FA.
+                    </div>
+
+                    <h5 class="mb-3">Benefícios do 2FA:</h5>
+                    <ul>
+                        <li><strong>Proteção Extra:</strong> Requer dois métodos de autenticação diferentes</li>
+                        <li><strong>Segurança de Dados:</strong> Protege seus clientes e documentos legais</li>
+                        <li><strong>Conformidade:</strong> Atende requisitos de segurança e conformidade legal</li>
+                    </ul>
+
+                    <a href="{{ url_for('auth.setup_2fa') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shield-alt"></i> Habilitar 2FA Agora
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Voltar -->
+            <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar para Perfil
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Desabilitar 2FA -->
+<div class="modal fade" id="disableModal" tabindex="-1" aria-labelledby="disableModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="disableModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Desabilitar 2FA
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Tem certeza de que deseja desabilitar o 2FA?</strong></p>
+                <p class="text-muted">
+                    Desabilitar 2FA reduzirá a segurança da sua conta. Você poderá fazer login usando apenas sua senha.
+                </p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Esta ação não pode ser desfeita imediatamente. Você precisará configurar 2FA novamente para reabilitar.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('auth.disable_2fa') }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times"></i> Sim, Desabilitar 2FA
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar notificações if any
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        if (alert.classList.contains('alert-warning') && alert.closest('.card')) {
+            // Auto-scroll para alertas importantes
+            setTimeout(() => {
+                alert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 500);
+        }
+    });
+});
+</script>
+{% endblock %}

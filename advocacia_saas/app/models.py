@@ -108,6 +108,8 @@ class User(UserMixin, db.Model):
     two_factor_last_used = db.Column(db.DateTime)  # Last time 2FA was used
     email_2fa_code = db.Column(db.String(6))  # Temporary code for email 2FA
     email_2fa_code_expires = db.Column(db.DateTime)  # Expiration time for email code
+    two_factor_failed_attempts = db.Column(db.Integer, default=0)  # Failed 2FA attempts
+    two_factor_locked_until = db.Column(db.DateTime)  # Bloqueado até esta data após múltiplas tentativas
 
     # Relationships
     clients = db.relationship(
@@ -568,7 +570,7 @@ class User(UserMixin, db.Model):
     # =============================================================================
 
     def enable_2fa(self, method="totp"):
-        """Habilita 2FA para o usuário"""
+        """Habilita 2FA para o usuário com códigos de recuperação mais robustos"""
         import json
         import secrets
 
@@ -581,8 +583,16 @@ class User(UserMixin, db.Model):
             # Gera chave secreta TOTP
             self.totp_secret = pyotp.random_base32()
 
-        # Gera códigos de backup
-        backup_codes = [secrets.token_hex(4).upper() for _ in range(10)]
+        # Gera códigos de backup mais robustos (12 caracteres em formato XXXX-XXXX-XXXX)
+        backup_codes = []
+        for _ in range(10):
+            # Gera 3 segmentos de 4 caracteres aleatórios
+            code = "-".join([
+                secrets.token_hex(2).upper()  # 4 caracteres hex = 16 bits
+                for _ in range(3)
+            ])
+            backup_codes.append(code)
+        
         self.two_factor_backup_codes = json.dumps(backup_codes)
 
         db.session.commit()
@@ -677,6 +687,38 @@ class User(UserMixin, db.Model):
         # Enviar por email
         return EmailService.send_2fa_code_email(self.email, code, method="email")
 
+    def is_2fa_locked(self) -> bool:
+        """Verifica se usuário está bloqueado por múltiplas tentativas de 2FA"""
+        if not self.two_factor_locked_until:
+            return False
+        
+        if datetime.now(timezone.utc) > self.two_factor_locked_until:
+            # Bloqueio expirou
+            self.two_factor_locked_until = None
+            self.two_factor_failed_attempts = 0
+            db.session.commit()
+            return False
+        
+        return True
+
+    def record_2fa_failed_attempt(self):
+        """Registra tentativa falhada de 2FA. Bloqueia após 3 tentativas"""
+        from datetime import timedelta
+        
+        self.two_factor_failed_attempts = (self.two_factor_failed_attempts or 0) + 1
+        
+        if self.two_factor_failed_attempts >= 3:
+            # Bloquear por 15 minutos
+            self.two_factor_locked_until = datetime.now(timezone.utc) + timedelta(minutes=15)
+        
+        db.session.commit()
+
+    def reset_2fa_failed_attempts(self):
+        """Reseta contador de tentativas falhadas após sucesso"""
+        self.two_factor_failed_attempts = 0
+        self.two_factor_locked_until = None
+        db.session.commit()
+
     def requires_2fa(self):
         """Verifica se usuário deve usar 2FA (administradores e advogados)"""
         return (
@@ -695,6 +737,28 @@ class User(UserMixin, db.Model):
             return json.loads(self.two_factor_backup_codes)
         except json.JSONDecodeError:
             return []
+
+    def regenerate_backup_codes(self):
+        """Gera novos códigos de recuperação, invalidando os antigos"""
+        import json
+        import secrets
+
+        # Gera novos códigos de backup (12 caracteres em formato XXXX-XXXX-XXXX)
+        backup_codes = []
+        for _ in range(10):
+            code = "-".join([
+                secrets.token_hex(2).upper()  # 4 caracteres hex = 16 bits
+                for _ in range(3)
+            ])
+            backup_codes.append(code)
+        
+        self.two_factor_backup_codes = json.dumps(backup_codes)
+        db.session.commit()
+        return backup_codes
+
+    def count_remaining_backup_codes(self):
+        """Retorna quantidade de códigos de backup não utilizados"""
+        return len(self.get_backup_codes())
 
 
 class Client(db.Model):
