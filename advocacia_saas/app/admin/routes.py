@@ -3025,9 +3025,9 @@ def roadmap_items():
     priority_filter = request.args.get("priority")
 
     # Eager loading para evitar N+1
-    query = RoadmapItem.query.options(
-        joinedload(RoadmapItem.category)
-    ).join(RoadmapCategory)
+    query = RoadmapItem.query.options(joinedload(RoadmapItem.category)).join(
+        RoadmapCategory
+    )
 
     if status_filter:
         query = query.filter(RoadmapItem.status == status_filter)
@@ -3189,8 +3189,9 @@ def new_roadmap_item():
 def edit_roadmap_item(item_id):
     """Editar item do roadmap"""
     import logging
+
     logger = logging.getLogger(__name__)
-    
+
     _require_admin()
     logger.info(f"📝 Editando roadmap item {item_id}")
 
@@ -3200,10 +3201,10 @@ def edit_roadmap_item(item_id):
 
     if request.method == "POST":
         try:
-            if not hasattr(request, 'validated_data'):
+            if not hasattr(request, "validated_data"):
                 logger.error(f"❌ request.validated_data não existe!")
                 return jsonify({"error": "Dados não validados"}), 400
-            
+
             data = request.validated_data
             logger.info(f"✅ Dados validados recebidos: {list(data.keys())}")
 
@@ -3262,17 +3263,18 @@ def edit_roadmap_item(item_id):
             return redirect(url_for("admin.roadmap_items"))
         except Exception as e:
             import traceback
+
             logger.error(f"❌ Erro ao atualizar roadmap item {item_id}")
             logger.error(f"   Erro: {str(e)}")
             logger.error(f"   Traceback: {traceback.format_exc()}")
-            
+
             current_app.logger.error(f"Error updating roadmap item: {str(e)}")
             error_msg = format_error_for_user(e, "Erro ao atualizar item do roadmap")
             flash(error_msg, "error")
-            
+
             if request.accept_mimetypes.best in ["application/json", "text/json"]:
                 return jsonify({"error": error_msg, "details": str(e)}), 500
-            
+
             return redirect(request.url)
 
     return render_template(
