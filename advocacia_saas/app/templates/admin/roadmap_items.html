@@ -224,4 +224,50 @@
         </div>
     </div>
 </div>
+
+<script>
+// ============================================
+// Toggle Visibility com AJAX
+// ============================================
+document.querySelectorAll('form[action*="toggle-visibility"]').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Perguntar confirmação
+        if (!confirm('Alterar visibilidade?')) {
+            return; // Cancelado - não fazer nada
+        }
+        
+        const btn = this.querySelector('button[type="submit"]');
+        
+        // Desabilitar botão
+        btn.disabled = true;
+        btn.classList.add('disabled');
+        
+        try {
+            const response = await fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (response.ok) {
+                // Sucesso - recarregar página
+                setTimeout(() => location.reload(), 500);
+            } else {
+                // Erro
+                alert('Erro ao alterar visibilidade');
+                btn.disabled = false;
+                btn.classList.remove('disabled');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao conectar com o servidor');
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+        }
+    });
+});
+</script>
 {% endblock %}
