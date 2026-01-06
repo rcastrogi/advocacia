@@ -3026,7 +3026,7 @@ def roadmap_items():
 
     # Eager loading para evitar N+1
     query = RoadmapItem.query.options(
-        joinedload(RoadmapItem.category), joinedload(RoadmapItem.feedback)
+        joinedload(RoadmapItem.category)
     ).join(RoadmapCategory)
 
     if status_filter:
