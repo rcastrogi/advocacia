@@ -52,7 +52,9 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     user_type = db.Column(
         db.String(20), nullable=False, default="advogado"
-    )  # 'master', 'advogado' or 'escritorio'
+    )  # 'master' = Dono do sistema (acesso total)
+       # 'admin' = Administrador de escritório (futuro) - controla vários advogados
+       # 'advogado' = Advogado individual ou de escritório
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -516,12 +518,32 @@ class User(UserMixin, db.Model):
         return consent and consent.is_valid() if consent else False
 
     def is_admin(self):
-        """Verifica se é administrador"""
+        """
+        Verifica se é administrador (master ou admin de escritório)
+        
+        - master: Dono do sistema, acesso total a tudo
+        - admin: Administrador de escritório de advocacia (futuro)
+        
+        Returns:
+            bool: True se é master ou admin
+        """
         return self.user_type in ["master", "admin"]
 
     @property
     def is_master(self):
-        """Verifica se é usuário master (super admin)"""
+        """
+        Verifica se é usuário master (super admin)
+        
+        Master é o dono do sistema com acesso total.
+        Tem permissão para tudo, incluindo:
+        - Gerenciar outros usuários
+        - Acessar dados de qualquer escritório
+        - Configurar sistema inteiro
+        - Nunca pode ter acesso bloqueado
+        
+        Returns:
+            bool: True se é master
+        """
         return self.user_type == "master"
 
     @property
