@@ -2,6 +2,51 @@
 
 {% block title %}{{ title }}{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<style>
+    /* ============================================
+       Badge Color Definitions (Bootstrap 5)
+       ============================================ */
+    .bg-danger {
+        background-color: #dc3545 !important;
+    }
+    
+    .bg-warning {
+        background-color: #ffc107 !important;
+    }
+    
+    .bg-success {
+        background-color: #198754 !important;
+    }
+    
+    .bg-info {
+        background-color: #0dcaf0 !important;
+    }
+    
+    .bg-primary {
+        background-color: #0d6efd !important;
+    }
+    
+    .bg-secondary {
+        background-color: #6c757d !important;
+    }
+    
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+
+    /* Text color adjustments for contrast */
+    .text-dark {
+        color: #212529 !important;
+    }
+    
+    .text-white {
+        color: #fff !important;
+    }
+</style>
+{% endblock %}
+
 {% block admin_content %}
 <div class="container-fluid">
     {% include 'components/list_header.html' with context %}
