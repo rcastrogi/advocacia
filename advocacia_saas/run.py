@@ -1,6 +1,7 @@
+import os
+
 from app import create_app, db
 from app.models import Client, Dependent, User
-import os
 
 app = create_app()
 

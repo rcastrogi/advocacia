@@ -53,8 +53,8 @@ class User(UserMixin, db.Model):
     user_type = db.Column(
         db.String(20), nullable=False, default="advogado"
     )  # 'master' = Dono do sistema (acesso total)
-       # 'admin' = Administrador de escritório (futuro) - controla vários advogados
-       # 'advogado' = Advogado individual ou de escritório
+    # 'admin' = Administrador de escritório (futuro) - controla vários advogados
+    # 'advogado' = Advogado individual ou de escritório
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -102,14 +102,18 @@ class User(UserMixin, db.Model):
 
     # Two-Factor Authentication (2FA) fields
     two_factor_enabled = db.Column(db.Boolean, default=False)
-    two_factor_method = db.Column(db.String(20), default="totp")  # 'totp', 'email' or 'sms'
+    two_factor_method = db.Column(
+        db.String(20), default="totp"
+    )  # 'totp', 'email' or 'sms'
     totp_secret = db.Column(db.String(32))  # Secret key for TOTP
     two_factor_backup_codes = db.Column(db.Text)  # JSON array of backup codes
     two_factor_last_used = db.Column(db.DateTime)  # Last time 2FA was used
     email_2fa_code = db.Column(db.String(6))  # Temporary code for email 2FA
     email_2fa_code_expires = db.Column(db.DateTime)  # Expiration time for email code
     two_factor_failed_attempts = db.Column(db.Integer, default=0)  # Failed 2FA attempts
-    two_factor_locked_until = db.Column(db.DateTime)  # Bloqueado até esta data após múltiplas tentativas
+    two_factor_locked_until = db.Column(
+        db.DateTime
+    )  # Bloqueado até esta data após múltiplas tentativas
 
     # Relationships
     clients = db.relationship(
@@ -522,10 +526,10 @@ class User(UserMixin, db.Model):
     def is_admin(self):
         """
         Verifica se é administrador (master ou admin de escritório)
-        
+
         - master: Dono do sistema, acesso total a tudo
         - admin: Administrador de escritório de advocacia (futuro)
-        
+
         Returns:
             bool: True se é master ou admin
         """
@@ -535,14 +539,14 @@ class User(UserMixin, db.Model):
     def is_master(self):
         """
         Verifica se é usuário master (super admin)
-        
+
         Master é o dono do sistema com acesso total.
         Tem permissão para tudo, incluindo:
         - Gerenciar outros usuários
         - Acessar dados de qualquer escritório
         - Configurar sistema inteiro
         - Nunca pode ter acesso bloqueado
-        
+
         Returns:
             bool: True se é master
         """
@@ -587,12 +591,14 @@ class User(UserMixin, db.Model):
         backup_codes = []
         for _ in range(10):
             # Gera 3 segmentos de 4 caracteres aleatórios
-            code = "-".join([
-                secrets.token_hex(2).upper()  # 4 caracteres hex = 16 bits
-                for _ in range(3)
-            ])
+            code = "-".join(
+                [
+                    secrets.token_hex(2).upper()  # 4 caracteres hex = 16 bits
+                    for _ in range(3)
+                ]
+            )
             backup_codes.append(code)
-        
+
         self.two_factor_backup_codes = json.dumps(backup_codes)
 
         db.session.commit()
@@ -633,7 +639,10 @@ class User(UserMixin, db.Model):
         # Verifica código de email 2FA
         if self.two_factor_method == "email" and self.email_2fa_code:
             # Verifica se código não expirou (10 minutos)
-            if self.email_2fa_code_expires and datetime.now(timezone.utc) <= self.email_2fa_code_expires:
+            if (
+                self.email_2fa_code_expires
+                and datetime.now(timezone.utc) <= self.email_2fa_code_expires
+            ):
                 if code == self.email_2fa_code:
                     # Limpar código após uso
                     self.email_2fa_code = None
@@ -674,11 +683,12 @@ class User(UserMixin, db.Model):
         Retorna True se enviado com sucesso
         """
         from datetime import timedelta
+
         from app.services import EmailService, generate_email_2fa_code
 
         # Gerar código de 6 dígitos
         code = generate_email_2fa_code()
-        
+
         # Definir expiração em 10 minutos
         self.email_2fa_code = code
         self.email_2fa_code_expires = datetime.now(timezone.utc) + timedelta(minutes=10)
@@ -691,26 +701,28 @@ class User(UserMixin, db.Model):
         """Verifica se usuário está bloqueado por múltiplas tentativas de 2FA"""
         if not self.two_factor_locked_until:
             return False
-        
+
         if datetime.now(timezone.utc) > self.two_factor_locked_until:
             # Bloqueio expirou
             self.two_factor_locked_until = None
             self.two_factor_failed_attempts = 0
             db.session.commit()
             return False
-        
+
         return True
 
     def record_2fa_failed_attempt(self):
         """Registra tentativa falhada de 2FA. Bloqueia após 3 tentativas"""
         from datetime import timedelta
-        
+
         self.two_factor_failed_attempts = (self.two_factor_failed_attempts or 0) + 1
-        
+
         if self.two_factor_failed_attempts >= 3:
             # Bloquear por 15 minutos
-            self.two_factor_locked_until = datetime.now(timezone.utc) + timedelta(minutes=15)
-        
+            self.two_factor_locked_until = datetime.now(timezone.utc) + timedelta(
+                minutes=15
+            )
+
         db.session.commit()
 
     def reset_2fa_failed_attempts(self):
@@ -746,12 +758,14 @@ class User(UserMixin, db.Model):
         # Gera novos códigos de backup (12 caracteres em formato XXXX-XXXX-XXXX)
         backup_codes = []
         for _ in range(10):
-            code = "-".join([
-                secrets.token_hex(2).upper()  # 4 caracteres hex = 16 bits
-                for _ in range(3)
-            ])
+            code = "-".join(
+                [
+                    secrets.token_hex(2).upper()  # 4 caracteres hex = 16 bits
+                    for _ in range(3)
+                ]
+            )
             backup_codes.append(code)
-        
+
         self.two_factor_backup_codes = json.dumps(backup_codes)
         db.session.commit()
         return backup_codes
