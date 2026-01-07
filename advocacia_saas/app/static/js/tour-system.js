@@ -516,6 +516,221 @@ class TourSystem {
                 }
             ]
         };
+
+        // Tour de Autenticação de Dois Fatores (2FA)
+        this.tours.two_factor_auth = {
+            steps: [
+                {
+                    element: '.page-header, [data-tour="2fa-header"]',
+                    intro: 'Autenticação de Dois Fatores - Proteção máxima da sua conta com verificação adicional.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="2fa-status"]',
+                    intro: 'Status do 2FA: veja se a autenticação de dois fatores está ativada ou desativada.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="2fa-enable"]',
+                    intro: 'Clique para ativar 2FA e aumentar a segurança da sua conta.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="2fa-qr-code"]',
+                    intro: 'Escaneie este código QR com seu autenticador (Google Authenticator, Authy, Microsoft Authenticator, etc).',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="2fa-backup-codes"]',
+                    intro: 'Seus códigos de backup - guarde-os em local seguro para recuperar acesso se perder seu autenticador.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="2fa-download-backup"]',
+                    intro: 'Baixe os códigos de backup em PDF para guardar seguro. Cada código pode ser usado uma única vez.',
+                    position: 'left'
+                },
+                {
+                    element: '[data-tour="2fa-rate-limiting"]',
+                    intro: 'Proteção contra força bruta: após 3 tentativas incorretas de 2FA, sua conta fica bloqueada por 15 minutos.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="2fa-verification"]',
+                    intro: 'Insira o código de 6 dígitos do seu autenticador para verificar.',
+                    position: 'right'
+                }
+            ]
+        };
+
+        // Tour de Auditoria e Logs
+        this.tours.audit_logs = {
+            steps: [
+                {
+                    element: '.page-header, [data-tour="audit-header"]',
+                    intro: 'Logs de Auditoria - Rastreie todas as ações no sistema para compliance e segurança.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="audit-stats"]',
+                    intro: 'Estatísticas: total de eventos registrados e eventos de hoje.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="audit-table"]',
+                    intro: 'Tabela de eventos: data/hora, usuário, ação, entidade afetada e detalhes completos.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="audit-entity-type"]',
+                    intro: 'Filtro por tipo de entidade: User, Document, Process, Petition, 2FA, etc.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="audit-entity-id"]',
+                    intro: 'Filtro por ID específico: rastreie eventos de uma entidade em particular.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="audit-action"]',
+                    intro: 'Filtro por ação: CREATE, UPDATE, DELETE, LOGIN, 2FA_ENABLED, 2FA_DISABLED, etc.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="audit-user"]',
+                    intro: 'Filtro por usuário: veja todas as ações de um usuário específico.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="audit-date-range"]',
+                    intro: 'Filtro por período: selecione datas inicial e final para análise temporal.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="audit-details"]',
+                    intro: 'Clique em um evento para ver detalhes completos: valores antigos, novos, IP, user agent e mais.',
+                    position: 'left'
+                }
+            ]
+        };
+
+        // Tour de Segurança Avançada
+        this.tours.security_settings = {
+            steps: [
+                {
+                    element: '.page-header, [data-tour="security-header"]',
+                    intro: 'Configurações de Segurança - Proteja sua conta com as melhores práticas de segurança.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="password-security"]',
+                    intro: 'Segurança de Senha: altere sua senha regularmente e use combinações fortes.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="two-factor"]',
+                    intro: 'Autenticação de Dois Fatores (2FA): adicione uma camada extra de segurança.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="login-history"]',
+                    intro: 'Histórico de Login: veja todos os acessos à sua conta com data, hora, IP e localização.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="active-sessions"]',
+                    intro: 'Sessões Ativas: veja todos os dispositivos/navegadores conectados e encerre sesões suspeitas.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="api-keys"]',
+                    intro: 'Chaves de API: crie e gerencie tokens para integrações seguras com outros sistemas.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="trusted-devices"]',
+                    intro: 'Dispositivos Confiáveis: adicione dispositivos à lista branca para pular 2FA em locais seguros.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="security-notifications"]',
+                    intro: 'Notificações de Segurança: receba alertas sobre login de novo dispositivo, mudança de senha, etc.',
+                    position: 'left'
+                }
+            ]
+        };
+
+        // Tour de Gerenciamento de 2FA (para administradores)
+        this.tours.admin_2fa_management = {
+            steps: [
+                {
+                    element: '.page-header, [data-tour="admin-2fa-header"]',
+                    intro: 'Gerenciamento de 2FA - Administre autenticação de dois fatores para os usuários.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="2fa-user-list"]',
+                    intro: 'Lista de usuários: visualize status de 2FA (ativado/desativado) para cada usuário.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="2fa-user-reset"]',
+                    intro: 'Reset de 2FA: reinicialize o 2FA de um usuário se ele perdeu acesso.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="2fa-enforcement"]',
+                    intro: 'Forçar 2FA: exija que certos grupos de usuários usem 2FA obrigatoriamente.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="2fa-audit-logs"]',
+                    intro: 'Logs de 2FA: rastreie eventos de 2FA (ativação, desativação, tentativas de login).',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="2fa-statistics"]',
+                    intro: 'Estatísticas: percentual de usuários com 2FA ativado, tentativas bloqueadas, etc.',
+                    position: 'right'
+                }
+            ]
+        };
+
+        // Tour de Gerenciamento de Auditoria (para administradores)
+        this.tours.admin_audit_management = {
+            steps: [
+                {
+                    element: '.page-header, [data-tour="admin-audit-header"]',
+                    intro: 'Gerenciamento de Auditoria - Administre logs do sistema para compliance e investigação.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tour="audit-system-logs"]',
+                    intro: 'Logs do Sistema: todos os eventos registrados com timestamp, usuário, ação e detalhes.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="audit-retention"]',
+                    intro: 'Política de Retenção: defina por quanto tempo os logs são mantidos no sistema.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="audit-export"]',
+                    intro: 'Exportar Logs: baixe relatórios de auditoria em CSV ou JSON para análise externa.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="audit-alerts"]',
+                    intro: 'Alertas de Segurança: configure notificações para eventos suspeitos ou críticos.',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tour="audit-compliance"]',
+                    intro: 'Relatórios de Compliance: gere relatórios para LGPD, ISO 27001 e outras certificações.',
+                    position: 'right'
+                }
+            ]
+        };
     }
 
     startTour(tourName) {
@@ -635,6 +850,18 @@ class TourSystem {
                     description: 'Gerencie advogados, escritórios e permissões'
                 },
                 {
+                    id: 'admin_2fa_management',
+                    icon: 'fas fa-shield-alt text-danger',
+                    title: 'Gerenciamento de 2FA',
+                    description: 'Administre autenticação de dois fatores dos usuários'
+                },
+                {
+                    id: 'admin_audit_management',
+                    icon: 'fas fa-list-alt text-warning',
+                    title: 'Auditoria do Sistema',
+                    description: 'Rastreie e gerencie logs para compliance'
+                },
+                {
                     id: 'admin_billing',
                     icon: 'fas fa-credit-card text-info',
                     title: 'Sistema de Cobrança',
@@ -642,7 +869,7 @@ class TourSystem {
                 },
                 {
                     id: 'admin_system',
-                    icon: 'fas fa-cogs text-warning',
+                    icon: 'fas fa-cogs text-secondary',
                     title: 'Configurações do Sistema',
                     description: 'Gerencie templates, integrações e configurações globais'
                 }
@@ -679,6 +906,24 @@ class TourSystem {
                     icon: 'fas fa-users text-secondary',
                     title: 'Clientes',
                     description: 'Gerencie seus clientes e seus casos'
+                },
+                {
+                    id: 'two_factor_auth',
+                    icon: 'fas fa-shield-alt text-danger',
+                    title: 'Autenticação 2FA',
+                    description: 'Proteja sua conta com autenticação de dois fatores'
+                },
+                {
+                    id: 'security_settings',
+                    icon: 'fas fa-lock text-danger',
+                    title: 'Configurações de Segurança',
+                    description: 'Gerencie senhas, sessões e chaves de API'
+                },
+                {
+                    id: 'audit_logs',
+                    icon: 'fas fa-list-alt text-muted',
+                    title: 'Logs de Auditoria',
+                    description: 'Rastreie ações no sistema e mudanças em suas contas'
                 }
             ];
         }
@@ -862,6 +1107,13 @@ class TourSystem {
             peticionador: 'Peticionador',
             dynamic_form: 'Formulários',
             clients: 'Clientes',
+            processes_dashboard: 'Processos',
+            processes_reports: 'Relatórios de Processos',
+
+            // Tours de Segurança
+            two_factor_auth: 'Autenticação de Dois Fatores',
+            security_settings: 'Configurações de Segurança',
+            audit_logs: 'Logs de Auditoria',
 
             // Tours para clientes
             client_dashboard: 'Dashboard do Cliente',
@@ -871,6 +1123,8 @@ class TourSystem {
             // Tours para administradores
             admin_dashboard: 'Dashboard Administrativo',
             admin_users: 'Gerenciamento de Usuários',
+            admin_2fa_management: 'Gerenciamento de 2FA',
+            admin_audit_management: 'Auditoria do Sistema',
             admin_billing: 'Sistema de Cobrança',
             admin_system: 'Configurações do Sistema'
         };
