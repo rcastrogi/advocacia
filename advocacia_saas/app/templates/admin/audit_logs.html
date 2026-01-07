@@ -58,45 +58,39 @@
                         </div>
 
                         <div class="col-md-2">
-                            <label for="user_id" class="form-label">
-                                ID do Usuário
+                            <label for="user_id" class="form-label">ID do Usuário</label>
+                            <select name="user_id" id="user_id" class="form-select">
+                                <option value="">-- Todos --</option>
                                 {% if recent_user_ids %}
-                                <small class="d-block text-muted">
-                                    Recentes: 
-                                    {% for uid in recent_user_ids[:5] %}
-                                        <a href="#" onclick="document.getElementById('user_id').value='{{ uid }}'; return false;" 
-                                           class="badge bg-light text-dark me-1" title="Clique para selecionar">
-                                            {{ uid }}
-                                        </a>
-                                    {% endfor %}
-                                </small>
+                                    <optgroup label="Recentes">
+                                        {% for uid in recent_user_ids %}
+                                        <option value="{{ uid }}" {% if filters.user_id|int == uid %}selected{% endif %}>
+                                            ID {{ uid }}
+                                        </option>
+                                        {% endfor %}
+                                    </optgroup>
                                 {% endif %}
-                            </label>
-                            <input type="number" name="user_id" id="user_id" class="form-control"
-                                   value="{{ filters.user_id or '' }}" placeholder="Ex: 1">
+                            </select>
                         </div>
 
                         <div class="col-md-2">
-                            <label for="entity_id" class="form-label">
-                                ID da Entidade
+                            <label for="entity_id" class="form-label">ID da Entidade</label>
+                            <select name="entity_id" id="entity_id" class="form-select">
+                                <option value="">-- Todos --</option>
                                 {% if entity_type and recent_entity_ids.get(entity_type) %}
-                                <small class="d-block text-muted">
-                                    Recentes: 
-                                    {% for eid in recent_entity_ids.get(entity_type, [])[:5] %}
-                                        <a href="#" onclick="document.getElementById('entity_id').value='{{ eid }}'; return false;" 
-                                           class="badge bg-light text-dark me-1" title="Clique para selecionar">
-                                            {{ eid }}
-                                        </a>
-                                    {% endfor %}
-                                </small>
-                                {% elif entity_type %}
-                                <small class="d-block text-muted">Nenhum ID recente para este tipo</small>
+                                    <optgroup label="Recentes">
+                                        {% for eid in recent_entity_ids.get(entity_type, []) %}
+                                        <option value="{{ eid }}" {% if filters.entity_id|int == eid %}selected{% endif %}>
+                                            ID {{ eid }}
+                                        </option>
+                                        {% endfor %}
+                                    </optgroup>
+                                {% elif not entity_type %}
+                                    <option disabled>Selecione um tipo de entidade acima</option>
                                 {% else %}
-                                <small class="d-block text-muted">Selecione um tipo de entidade acima</small>
+                                    <option disabled>Nenhum ID recente para este tipo</option>
                                 {% endif %}
-                            </label>
-                            <input type="number" name="entity_id" id="entity_id" class="form-control"
-                                   value="{{ filters.entity_id or '' }}" placeholder="Ex: 123">
+                            </select>
                         </div>
 
                         <div class="col-md-2">
@@ -247,4 +241,17 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Recarregar IDs da entidade quando o tipo mudar
+    const entityTypeSelect = document.getElementById('entity_type');
+    entityTypeSelect.addEventListener('change', function() {
+        // Se mudou de tipo, limpar o entity_id
+        if (this.value !== '{{ filters.entity_type or "" }}') {
+            document.getElementById('entity_id').value = '';
+        }
+    });
+});
+</script>
 {% endblock %}

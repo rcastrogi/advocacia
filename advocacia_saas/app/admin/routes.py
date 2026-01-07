@@ -4263,27 +4263,46 @@ def audit_logs():
     actions = db.session.query(AuditLog.action).distinct().all()
     actions = [a[0] for a in actions]
 
-    # IDs recentes por tipo de entidade (últimos 20 IDs únicos)
+    # IDs recentes por tipo de entidade (últimos 5 IDs ÚNICOS apenas)
     recent_entity_ids = {}
     for et in entity_types:
         recent_ids = (
             db.session.query(AuditLog.entity_id, AuditLog.timestamp)
             .filter(AuditLog.entity_type == et)
             .order_by(AuditLog.timestamp.desc())
-            .limit(20)
+            .limit(100)
             .all()
         )
-        recent_entity_ids[et] = [int(item[0]) for item in recent_ids]
+        # Remove duplicatas mantendo ordem
+        seen = set()
+        unique_ids = []
+        for item in recent_ids:
+            eid = int(item[0])
+            if eid not in seen:
+                seen.add(eid)
+                unique_ids.append(eid)
+                if len(unique_ids) >= 5:  # Apenas 5 IDs únicos
+                    break
+        recent_entity_ids[et] = unique_ids
 
-    # IDs de usuários recentes
-    recent_user_ids = (
+    # IDs de usuários recentes (5 IDs ÚNICOS apenas)
+    recent_user_ids_query = (
         db.session.query(AuditLog.user_id, AuditLog.timestamp)
         .filter(AuditLog.user_id.isnot(None))
         .order_by(AuditLog.timestamp.desc())
-        .limit(20)
+        .limit(100)
         .all()
     )
-    recent_user_ids = [int(item[0]) for item in recent_user_ids]
+    # Remove duplicatas
+    seen = set()
+    recent_user_ids = []
+    for item in recent_user_ids_query:
+        uid = int(item[0])
+        if uid not in seen:
+            seen.add(uid)
+            recent_user_ids.append(uid)
+            if len(recent_user_ids) >= 5:  # Apenas 5 IDs únicos
+                break
 
     return render_template(
         "admin/audit_logs.html",

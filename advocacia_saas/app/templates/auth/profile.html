@@ -234,6 +234,32 @@
                         Última alteração: {{ current_user.password_changed_at|local_datetime(current_user.timezone or 'America/Sao_Paulo') }}
                     </p>
                     {% endif %}
+
+                    <hr class="my-3">
+
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="mb-1"><strong>Autenticação de Dois Fatores (2FA)</strong></p>
+                            <p class="text-muted small mb-0">
+                                {% if current_user.two_factor_enabled %}
+                                    <span class="badge bg-success">Ativado</span>
+                                    <small class="d-block mt-1">Método: <strong>{{ 'Email' if current_user.two_factor_method == 'email' else 'Aplicativo Autenticador' }}</strong></small>
+                                {% else %}
+                                    <span class="badge bg-secondary">Não configurado</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% if current_user.requires_2fa() or current_user.is_admin() %}
+                        <a href="{{ url_for('auth.manage_2fa') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-lock me-1"></i> 
+                            {% if current_user.two_factor_enabled %}
+                                Gerenciar 2FA
+                            {% else %}
+                                Ativar 2FA
+                            {% endif %}
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             
