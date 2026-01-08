@@ -27,12 +27,14 @@ class TourSystem {
     }
 
     checkDriverAvailability() {
-        // Verificar se Driver.js está disponível
-        if (typeof window.driver !== 'function') {
+        // Verificar se Driver.js está disponível (API: window.driver.js.driver)
+        const isAvailable = window.driver && window.driver.js && typeof window.driver.js.driver === 'function';
+        if (!isAvailable) {
             console.warn('⚠️ Driver.js não foi detectado. Aguardando carregamento...');
             // Esperar um tempo maior para o Driver.js carregar
             setTimeout(() => {
-                if (typeof window.driver === 'function') {
+                const loaded = window.driver && window.driver.js && typeof window.driver.js.driver === 'function';
+                if (loaded) {
                     console.log('✅ Driver.js carregado com sucesso!');
                 } else {
                     console.error('❌ Falha ao carregar Driver.js. Tours não estarão disponíveis.');
@@ -441,8 +443,9 @@ class TourSystem {
             return;
         }
 
-        // Verificar se Driver.js está disponível
-        if (typeof window.driver !== 'function') {
+        // Verificar se Driver.js está disponível (API: window.driver.js.driver)
+        const isDriverAvailable = window.driver && window.driver.js && typeof window.driver.js.driver === 'function';
+        if (!isDriverAvailable) {
             // Limitar tentativas para evitar loop infinito
             if (this.driverAttempts >= this.maxDriverAttempts) {
                 console.error('❌ Driver.js não conseguiu carregar após várias tentativas. Tours desabilitados.');
@@ -460,7 +463,7 @@ class TourSystem {
 
         const steps = this.tours[tourName].steps;
 
-        this.currentDriver = window.driver({
+        this.currentDriver = window.driver.js.driver({
             steps: steps,
             popoverClass: 'driver-popover',
             nextBtnText: 'Próximo →',
@@ -489,7 +492,8 @@ class TourSystem {
             const maxAttempts = 20; // 2 segundos (20 * 100ms)
             
             const waitForDriver = () => {
-                if (typeof window.driver === 'function') {
+                const isReady = window.driver && window.driver.js && typeof window.driver.js.driver === 'function';
+                if (isReady) {
                     // Mostrar tour de boas-vindas após 2 segundos
                     setTimeout(() => {
                         this.startTourForCurrentPage();

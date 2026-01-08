@@ -1013,28 +1013,23 @@
     <!-- jQuery Mask Plugin -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     
-    <!-- Driver.js for guided tours (visual melhor) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.min.css">
+    <!-- Driver.js for guided tours (LOCAL - não depende de CDN) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/driver.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tour-driver-custom.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.min.js"></script>
+    <script src="{{ url_for('static', filename='js/driver.min.js') }}"></script>
     
     <!-- Verificação de Driver.js -->
     <script>
-        // Verificar se Driver.js carregou
-        let driverCheckAttempts = 0;
-        const checkDriver = () => {
-            if (typeof window.driver === 'function') {
-                console.log('✅ Driver.js carregado com sucesso!');
+        // Verificar se Driver.js carregou (API: window.driver.js.driver)
+        (function() {
+            if (window.driver && window.driver.js && typeof window.driver.js.driver === 'function') {
+                console.log('✅ Driver.js carregado com sucesso! (local)');
                 window.driverLoaded = true;
-            } else if (driverCheckAttempts < 50) {
-                driverCheckAttempts++;
-                setTimeout(checkDriver, 100);
             } else {
-                console.error('❌ Driver.js falhou ao carregar após 5 segundos');
+                console.error('❌ Driver.js não está disponível');
                 window.driverLoaded = false;
             }
-        };
-        checkDriver();
+        })();
     </script>
     
     <!-- Tour System (atualizado para Driver.js) -->
