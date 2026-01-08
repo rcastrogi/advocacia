@@ -29,6 +29,9 @@
     animation: tourSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
     z-index: 1000001 !important;
     position: fixed !important;
+    /* GARANTIR QUE FIQUE VISÍVEL NA TELA */
+    max-height: calc(100vh - 40px) !important;
+    overflow-y: auto !important;
 }
 
 /* Barra decorativa superior dourada */
@@ -326,5 +329,20 @@
     .driver-popover,
     .driver-overlay {
         display: none !important;
+    }
+}
+
+/* ===== FORÇAR POPOVER VISÍVEL ===== */
+/* Garantir que nunca fique fora da tela */
+.driver-popover[style] {
+    /* Limitar posição máxima */
+    max-height: calc(100vh - 60px) !important;
+}
+
+/* Quando o popover estiver muito embaixo, subir */
+@supports (inset: 0) {
+    .driver-popover {
+        /* Margem de segurança do viewport */
+        margin-bottom: 40px !important;
     }
 }

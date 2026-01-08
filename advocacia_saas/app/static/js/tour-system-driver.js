@@ -469,14 +469,40 @@ class TourSystem {
             nextBtnText: 'Próximo →',
             prevBtnText: '← Anterior',
             doneBtnText: 'Concluído',
-            progressText: 'Passo %current% de %total%',
+            progressText: 'Passo {{current}} de {{total}}',
             showProgress: true,
-            showButtons: true,
+            showButtons: ['next', 'previous', 'close'],
             allowClose: true,
-            stageBackground: 'rgba(0, 0, 0, 0.5)',
-            onHighlighted: (element) => {
-                // Scroll do elemento para o viewport se necessário
-                element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            stagePadding: 10,
+            stageRadius: 8,
+            popoverOffset: 15,
+            smoothScroll: true,
+            onHighlightStarted: (element) => {
+                // Scroll do elemento para o centro da tela ANTES de destacar
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            },
+            onPopoverRender: (popover) => {
+                // Garantir que o popover fique visível na viewport
+                setTimeout(() => {
+                    const popoverEl = popover?.wrapper;
+                    if (popoverEl) {
+                        const rect = popoverEl.getBoundingClientRect();
+                        const viewportHeight = window.innerHeight;
+                        
+                        // Se o popover está cortado embaixo, mover para cima
+                        if (rect.bottom > viewportHeight - 20) {
+                            const newTop = Math.max(20, viewportHeight - rect.height - 40);
+                            popoverEl.style.top = newTop + 'px';
+                        }
+                        
+                        // Se o popover está cortado em cima, mover para baixo
+                        if (rect.top < 20) {
+                            popoverEl.style.top = '20px';
+                        }
+                    }
+                }, 50);
             }
         });
 
