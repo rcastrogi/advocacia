@@ -478,4 +478,25 @@ class TourSystem {
 // Inicializar tour system quando o documento carregar
 document.addEventListener('DOMContentLoaded', () => {
     window.petitioTourSystem = new TourSystem();
+    // Alias para compatibilidade
+    window.tourSystem = window.petitioTourSystem;
+    
+    // Funções globais para fácil acesso
+    window.startTour = (tourName) => {
+        if (window.petitioTourSystem) {
+            window.petitioTourSystem.startTour(tourName);
+        }
+    };
+    
+    window.startTourForCurrentPage = () => {
+        if (window.petitioTourSystem) {
+            window.petitioTourSystem.startTourForCurrentPage();
+        }
+    };
+    
+    window.stopTour = () => {
+        if (window.petitioTourSystem) {
+            window.petitioTourSystem.stopTour();
+        }
+    };
 });

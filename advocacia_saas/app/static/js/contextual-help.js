@@ -277,7 +277,7 @@ class ContextualHelpSystem {
                             <hr>
                             <div class="text-center">
                                 <p class="mb-2"><strong>Precisa de mais ajuda?</strong></p>
-                                <button class="btn btn-outline-primary me-2" onclick="tourSystem.showTourMenu()">
+                                <button class="btn btn-outline-primary me-2" onclick="if(window.petitioTourSystem)window.petitioTourSystem.startTourForCurrentPage()">
                                     <i class="fas fa-route me-1"></i> Fazer Tour Guiado
                                 </button>
                                 <a href="/roadmap" class="btn btn-outline-info">
@@ -327,7 +327,7 @@ class ContextualHelpSystem {
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                            <button type="button" class="btn btn-primary" onclick="tourSystem.startTour('${currentPage}')">
+                            <button type="button" class="btn btn-primary" onclick="if(window.petitioTourSystem)window.petitioTourSystem.startTourForCurrentPage()">
                                 <i class="fas fa-route me-1"></i> Fazer Tour Completo
                             </button>
                         </div>
@@ -397,8 +397,8 @@ class ContextualHelpSystem {
             // Ctrl+Shift+T para tour
             if (e.ctrlKey && e.shiftKey && e.key === 'T') {
                 e.preventDefault();
-                if (window.tourSystem) {
-                    tourSystem.showTourMenu();
+                if (window.petitioTourSystem) {
+                    window.petitioTourSystem.startTourForCurrentPage();
                 }
             }
         });
