@@ -242,6 +242,15 @@ SECTIONS = [
                 "placeholder": "Indique se há necessidade de perícia",
                 "rows": 3,
             },
+            {
+                "name": "provas_upload",
+                "label": "Enviar Provas/Documentos",
+                "type": "file",
+                "required": False,
+                "multiple": True,
+                "accept": ".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif",
+                "hint": "Você pode enviar múltiplos arquivos (PDF, DOC, DOCX, imagens) com as provas documentais do caso",
+            },
         ],
     },
     {

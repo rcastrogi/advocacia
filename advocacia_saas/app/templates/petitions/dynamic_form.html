@@ -525,7 +525,7 @@
                         <!-- Lista de arquivos selecionados -->
                         <div class="mt-2" x-show="selectedFiles['{{ section_config.section.slug }}_{{ field.name }}'] && selectedFiles['{{ section_config.section.slug }}_{{ field.name }}'].length > 0">
                             <small class="text-muted">Arquivos selecionados:
-                            <span x-text="'(' + (selectedFiles['{{ section_config.section.slug }}_{{ field.name }}'].reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(1) + 'MB / 50MB)'"></span>
+                            <span x-text="'(' + ((selectedFiles['{{ section_config.section.slug }}_{{ field.name }}'] || []).reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(1) + 'MB / 50MB)'"></span>
                             </small>
                             <ul class="list-sm">
                                 <template x-for="(file, index) in (selectedFiles['{{ section_config.section.slug }}_{{ field.name }}'] || [])" :key="file.name + index">
@@ -1627,7 +1627,7 @@ document.addEventListener('alpine:init', () => {
                 'image/jpeg', 'image/png', 'image/gif', 'text/plain'];
             
             // Calcular tamanho total atual
-            let currentTotalSize = this.selectedFiles[fieldName].reduce((sum, f) => sum + f.size, 0);
+            let currentTotalSize = (this.selectedFiles[fieldName] || []).reduce((sum, f) => sum + f.size, 0);
             
             for (const file of files) {
                 // Validar tamanho individual
@@ -1654,13 +1654,13 @@ document.addEventListener('alpine:init', () => {
             }
             
             // Armazenar referência nos formData
-            this.formData[fieldName] = this.selectedFiles[fieldName].map(f => f.name).join(', ');
+            this.formData[fieldName] = (this.selectedFiles[fieldName] || []).map(f => f.name).join(', ');
         },
         
         removeFile(fieldName, index) {
             if (this.selectedFiles[fieldName]) {
                 this.selectedFiles[fieldName].splice(index, 1);
-                this.formData[fieldName] = this.selectedFiles[fieldName].map(f => f.name).join(', ');
+                this.formData[fieldName] = (this.selectedFiles[fieldName] || []).map(f => f.name).join(', ');
             }
         },
         
