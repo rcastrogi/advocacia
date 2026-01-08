@@ -148,7 +148,9 @@
                             {% elif user.user_type == 'escritorio' %}
                             <span class="badge bg-info">Escritório</span>
                             {% elif user.user_type == 'master' %}
-                            <span class="badge bg-danger">Admin</span>
+                            <span class="badge bg-danger">👑 Master</span>
+                            {% elif user.user_type == 'admin' %}
+                            <span class="badge bg-warning text-dark">🔧 Admin</span>
                             {% else %}
                             <span class="badge bg-secondary">{{ user.user_type }}</span>
                             {% endif %}

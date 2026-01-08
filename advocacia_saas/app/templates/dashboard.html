@@ -36,8 +36,14 @@
                 <p class="text-white opacity-75 mb-0">
                     Bem-vindo, <strong>{{ current_user.full_name or current_user.username }}</strong>!
                     {% if current_user.user_type %}
-                        <span class="badge {% if current_user.user_type == 'escritorio' %}badge-escritorio{% else %}badge-advogado{% endif %} ms-2">
-                            {{ current_user.user_type|title }}
+                        <span class="badge {% if current_user.user_type == 'master' %}badge-danger{% elif current_user.user_type == 'admin' %}badge-warning{% elif current_user.user_type == 'escritorio' %}badge-escritorio{% else %}badge-advogado{% endif %} ms-2">
+                            {% if current_user.user_type == 'master' %}
+                                👑 Master
+                            {% elif current_user.user_type == 'admin' %}
+                                🔧 Admin
+                            {% else %}
+                                {{ current_user.user_type|title }}
+                            {% endif %}
                         </span>
                     {% endif %}
                 </p>

@@ -7,3 +7,11 @@ compare_schemas.py
 
 # Local debug log
 advocacia_saas/debug.log
+
+# Scripts de teste e desenvolvimento (não necessários em produção)
+test_admin_layouts.py
+test_sections.py
+test_template.py
+test_toasts.py
+check_sections.py
+activate_indenizatoria_model.py
