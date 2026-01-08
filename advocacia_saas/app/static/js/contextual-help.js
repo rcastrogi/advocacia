@@ -186,8 +186,7 @@ class ContextualHelpSystem {
         const helpButton = document.createElement('div');
         helpButton.id = 'floating-help-button';
         helpButton.innerHTML = `
-            <button class="btn btn-primary rounded-circle shadow-lg"
-                    style="width: 56px; height: 56px; position: fixed; bottom: 24px; right: 24px; z-index: 1050;"
+            <button class="btn shadow-lg"
                     onclick="contextualHelp.showHelpMenu()"
                     title="Ajuda e Tutoriais">
                 <i class="fas fa-question"></i>
@@ -199,12 +198,40 @@ class ContextualHelpSystem {
         // Adicionar estilos
         const style = document.createElement('style');
         style.textContent = `
+            #floating-help-button .btn {
+                width: 44px;
+                height: 44px;
+                min-width: 44px;
+                min-height: 44px;
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                z-index: 1050;
+                padding: 0;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #1a365d 0%, #0f2440 100%);
+                border: 3px solid #c9a227;
+                color: #ffffff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(26, 54, 93, 0.4);
+            }
+            #floating-help-button .btn i {
+                font-size: 18px;
+                line-height: 1;
+                margin: 0;
+                padding: 0;
+            }
             #floating-help-button .btn:hover {
                 transform: scale(1.1);
-                box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
+                box-shadow: 0 8px 25px rgba(26, 54, 93, 0.5);
+                background: linear-gradient(135deg, #234876 0%, #1a365d 100%);
+                border-color: #e8d48a;
             }
-            #floating-help-button .btn {
-                transition: all 0.3s ease;
+            #floating-help-button .btn:active {
+                transform: scale(1.05);
             }
         `;
         document.head.appendChild(style);
