@@ -23,7 +23,7 @@
 
     <div class="row g-3">
         <div class="col-md-4">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm" data-tour="current-plan">
                 <div class="card-body">
                     <p class="text-muted mb-1">Plano atual</p>
                     {% if plan %}
@@ -37,7 +37,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm" data-tour="plan-features">
                 <div class="card-body">
                     <p class="text-muted mb-1">Uso no ciclo {{ cycle }}</p>
                     <h4>{{ totals.count }} petições <small class="text-muted">({{ totals.billable }} cobradas)</small></h4>
@@ -65,7 +65,7 @@
         <div class="card-header">
             <strong>Histórico do ciclo atual</strong>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive" data-tour="payment-history">
             <table class="table mb-0">
                 <thead>
                     <tr>
