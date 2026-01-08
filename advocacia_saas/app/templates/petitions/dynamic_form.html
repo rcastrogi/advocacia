@@ -98,6 +98,47 @@
     .chevron-icon {
         transition: transform 0.3s ease;
     }
+    
+    /* Campos de endereço otimizados */
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.35rem;
+    }
+    
+    .form-control,
+    .form-select {
+        font-size: 0.9rem;
+        padding: 0.35rem 0.65rem;
+        line-height: 1.4;
+    }
+    
+    .input-group .form-control {
+        padding: 0.35rem 0.65rem;
+    }
+    
+    .input-group .btn {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Melhorar espaçamento mínimo entre campos */
+    .conditional-field {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Grid de endereço responsivo */
+    .row.g-3 > [class*="col-"] {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Em telas pequenas, todos ocupam 100% */
+    @media (max-width: 768px) {
+        [class*="col-md-"] {
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+        }
+    }
     .section-collapsed .chevron-icon {
         transform: rotate(-90deg);
     }
