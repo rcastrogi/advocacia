@@ -393,6 +393,164 @@ class TourSystem {
                 }
             ]
         };
+
+        // Tour para Roadmap (usuário final)
+        this.tours.roadmap = {
+            steps: [
+                {
+                    element: '.hero-section',
+                    popover: {
+                        title: '🗺️ Roadmap de Desenvolvimento',
+                        description: 'Aqui você acompanha todas as funcionalidades que estamos desenvolvendo para melhorar sua experiência.',
+                        side: 'bottom'
+                    }
+                },
+                {
+                    element: '.progress-circle',
+                    popover: {
+                        title: '📊 Progresso Geral',
+                        description: 'Veja o percentual de funcionalidades já implementadas no sistema.',
+                        side: 'left'
+                    }
+                },
+                {
+                    element: '#roadmapTabs',
+                    popover: {
+                        title: '📑 Abas de Navegação',
+                        description: 'Alterne entre "Já Implantado" para ver o que está pronto e "A Implantar" para ver o que está por vir.',
+                        side: 'bottom'
+                    }
+                },
+                {
+                    element: '.card.hover-lift',
+                    popover: {
+                        title: '📋 Detalhes da Funcionalidade',
+                        description: 'Clique em qualquer item para ver mais detalhes, descrição completa e status de desenvolvimento.',
+                        side: 'top'
+                    }
+                }
+            ]
+        };
+
+        // Tour para Perfil do Usuário
+        this.tours.profile = {
+            steps: [
+                {
+                    element: '.card-header',
+                    popover: {
+                        title: '👤 Seu Perfil',
+                        description: 'Aqui você pode editar suas informações pessoais e configurações da conta.',
+                        side: 'bottom'
+                    }
+                },
+                {
+                    element: '#full_name',
+                    popover: {
+                        title: '📝 Nome Completo',
+                        description: 'Seu nome será exibido nas petições e documentos gerados.',
+                        side: 'right'
+                    }
+                },
+                {
+                    element: '#oab_number',
+                    popover: {
+                        title: '⚖️ Número da OAB',
+                        description: 'Informe seu número de inscrição na OAB para validação automática.',
+                        side: 'right'
+                    }
+                },
+                {
+                    element: '#current_password',
+                    popover: {
+                        title: '🔒 Alterar Senha',
+                        description: 'Para alterar sua senha, informe a senha atual e defina uma nova.',
+                        side: 'top'
+                    }
+                }
+            ]
+        };
+
+        // Tour para Portal de Assinatura/Billing
+        this.tours.billing = {
+            steps: [
+                {
+                    element: '[data-tour="current-plan"]',
+                    popover: {
+                        title: '💳 Seu Plano Atual',
+                        description: 'Veja qual plano você está utilizando e seu status de assinatura.',
+                        side: 'bottom'
+                    }
+                },
+                {
+                    element: '[data-tour="plan-features"]',
+                    popover: {
+                        title: '📊 Uso no Ciclo',
+                        description: 'Acompanhe quantas petições você gerou neste período de cobrança.',
+                        side: 'bottom'
+                    }
+                },
+                {
+                    element: '[href*="upgrade"]',
+                    popover: {
+                        title: '⬆️ Fazer Upgrade',
+                        description: 'Clique aqui para ver os planos disponíveis e fazer upgrade para ter mais recursos.',
+                        side: 'left'
+                    }
+                }
+            ]
+        };
+
+        // Tour para Calendário/Prazos
+        this.tours.calendar = {
+            steps: [
+                {
+                    element: '.fc-toolbar',
+                    popover: {
+                        title: '📅 Calendário Jurídico',
+                        description: 'Visualize todos os seus prazos, audiências e compromissos em um calendário integrado.',
+                        side: 'bottom'
+                    }
+                },
+                {
+                    element: '.fc-dayGridMonth-button',
+                    popover: {
+                        title: '📆 Visualização Mensal',
+                        description: 'Alterne entre visualização por mês, semana ou dia.',
+                        side: 'bottom'
+                    }
+                },
+                {
+                    element: '.fc-event',
+                    popover: {
+                        title: '⏰ Eventos e Prazos',
+                        description: 'Clique em um evento para ver detalhes, editar ou excluir.',
+                        side: 'top'
+                    }
+                }
+            ]
+        };
+
+        // Tour para Créditos de IA
+        this.tours.ai_credits = {
+            steps: [
+                {
+                    element: '.card:first-of-type',
+                    popover: {
+                        title: '🤖 Seus Créditos de IA',
+                        description: 'Veja quantos créditos você tem disponíveis para gerar petições com inteligência artificial.',
+                        side: 'bottom'
+                    }
+                },
+                {
+                    element: '[href*="comprar"], .btn-success',
+                    popover: {
+                        title: '💰 Comprar Créditos',
+                        description: 'Adquira mais créditos para continuar usando a IA para gerar petições automaticamente.',
+                        side: 'left'
+                    }
+                }
+            ]
+        };
     }
 
     addTourButtonToMenu() {
@@ -420,20 +578,43 @@ class TourSystem {
     startTourForCurrentPage() {
         // Detectar qual página estamos e iniciar tour apropriado
         const url = window.location.href.toLowerCase();
+        const path = window.location.pathname.toLowerCase();
         let tourName = null;
 
-        if (url.includes('/admin')) {
+        // Mapeamento de URLs para tours
+        if (path.includes('/admin')) {
             tourName = 'admin_dashboard';
-        } else if (url.includes('/processes')) {
+        } else if (path.includes('/roadmap')) {
+            tourName = 'roadmap';
+        } else if (path.includes('/processes') || path.includes('/processos')) {
             tourName = 'processes_dashboard';
-        } else if (url.includes('/dashboard')) {
+        } else if (path.includes('/clients') || path.includes('/clientes')) {
+            tourName = 'clients_list';
+        } else if (path.includes('/petitions') || path.includes('/peticoes')) {
+            tourName = 'petitions_form';
+        } else if (path.includes('/billing') || path.includes('/assinatura')) {
+            tourName = 'billing';
+        } else if (path.includes('/profile') || path.includes('/perfil')) {
+            tourName = 'profile';
+        } else if (path.includes('/calendar') || path.includes('/calendario') || path.includes('/deadlines') || path.includes('/prazos')) {
+            tourName = 'calendar';
+        } else if (path.includes('/reports') || path.includes('/relatorios')) {
+            tourName = 'reports';
+        } else if (path.includes('/credits') || path.includes('/creditos')) {
+            tourName = 'ai_credits';
+        } else if (path.includes('/dashboard')) {
             tourName = 'lawyer_dashboard';
         }
 
         if (tourName && this.tours[tourName]) {
             this.startTour(tourName);
         } else {
-            console.log('Nenhum tour disponível para esta página');
+            // Tentar tour genérico baseado no dashboard
+            if (this.tours.lawyer_dashboard) {
+                this.startTour('lawyer_dashboard');
+            } else {
+                console.log('Nenhum tour disponível para esta página');
+            }
         }
     }
 
