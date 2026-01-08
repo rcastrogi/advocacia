@@ -20,12 +20,6 @@ python run.py
 
 Acesse: http://localhost:5000
 
-## 🔐 Credenciais Padrão
-
-- Email: admin@petitio.com
-- Senha: admin123
-
-⚠️ Altere após o primeiro login!
 
 ## 📦 Deploy
 
