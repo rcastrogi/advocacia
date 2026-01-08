@@ -419,6 +419,13 @@ class TourSystem {
             return;
         }
 
+        // Verificar se Driver.js está disponível
+        if (typeof window.driver !== 'function') {
+            console.error('Driver.js não foi carregado. Tentando novamente em 500ms...');
+            setTimeout(() => this.startTour(tourName), 500);
+            return;
+        }
+
         const steps = this.tours[tourName].steps;
 
         this.currentDriver = window.driver({
@@ -445,12 +452,20 @@ class TourSystem {
         // Verificar se é o primeiro acesso
         const hasSeenTour = localStorage.getItem('petitio_tour_seen');
         if (!hasSeenTour && document.querySelector('[href*="dashboard"]')) {
-            // Mostrar tour de boas-vindas após 2 segundos
-            setTimeout(() => {
-                this.startTourForCurrentPage();
-            }, 2000);
-
-            localStorage.setItem('petitio_tour_seen', 'true');
+            // Aguardar Driver.js estar disponível antes de mostrar tour
+            const waitForDriver = () => {
+                if (typeof window.driver === 'function') {
+                    // Mostrar tour de boas-vindas após 2 segundos
+                    setTimeout(() => {
+                        this.startTourForCurrentPage();
+                    }, 2000);
+                    localStorage.setItem('petitio_tour_seen', 'true');
+                } else {
+                    // Tentar novamente em 100ms
+                    setTimeout(waitForDriver, 100);
+                }
+            };
+            waitForDriver();
         }
     }
 
