@@ -7,6 +7,8 @@ class TourSystem {
     constructor() {
         this.currentDriver = null;
         this.tours = {};
+        this.driverAttempts = 0;
+        this.maxDriverAttempts = 10; // Máximo 10 tentativas (5 segundos)
         this.init();
     }
 
@@ -14,11 +16,31 @@ class TourSystem {
         // Registrar tours disponíveis
         this.registerTours();
 
+        // Verificar se Driver.js foi carregado
+        this.checkDriverAvailability();
+
         // Adicionar botão de tour ao menu do usuário se estiver logado
         this.addTourButtonToMenu();
 
         // Verificar se deve mostrar tour de boas-vindas para novos usuários
         this.checkFirstTimeUser();
+    }
+
+    checkDriverAvailability() {
+        // Verificar se Driver.js está disponível
+        if (typeof window.driver !== 'function') {
+            console.warn('⚠️ Driver.js não foi detectado. Aguardando carregamento...');
+            // Esperar um tempo maior para o Driver.js carregar
+            setTimeout(() => {
+                if (typeof window.driver === 'function') {
+                    console.log('✅ Driver.js carregado com sucesso!');
+                } else {
+                    console.error('❌ Falha ao carregar Driver.js. Tours não estarão disponíveis.');
+                }
+            }, 3000);
+        } else {
+            console.log('✅ Driver.js detectado!');
+        }
     }
 
     registerTours() {
@@ -28,8 +50,8 @@ class TourSystem {
                 {
                     element: '[data-tour="main-header"]',
                     popover: {
-                        title: 'Bem-vindo ao Petitio!',
-                        description: 'Sistema completo de gestão jurídica para advogados.',
+                        title: '👋 Bem-vindo ao Petitio!',
+                        description: 'Sistema completo de gestão jurídica inteligente. Aqui você gerencia clientes, petições e prazos em um único lugar.',
                         side: 'bottom',
                         align: 'start'
                     }
@@ -37,48 +59,48 @@ class TourSystem {
                 {
                     element: '[data-tour="quick-actions"]',
                     popover: {
-                        title: 'Ações Rápidas',
-                        description: 'Acesse rapidamente as ações mais usadas: criar petição, adicionar cliente, etc.',
+                        title: '⚡ Ações Rápidas',
+                        description: 'Acesse os recursos mais usados: criar petição com IA, adicionar novo cliente, visualizar processos e muito mais.',
                         side: 'top'
                     }
                 },
                 {
                     element: '[data-tour="stats-petitions"]',
                     popover: {
-                        title: 'Estatísticas de Petições',
-                        description: 'Visualize quantas petições você criou, usou IA e quanto economizou.',
+                        title: '📄 Petições IA',
+                        description: 'Visualize quantas petições você criou este mês. Ilimitadas ou com limite conforme seu plano de assinatura.',
                         side: 'top'
                     }
                 },
                 {
                     element: '[data-tour="stats-clients"]',
                     popover: {
-                        title: 'Clientes Ativos',
-                        description: 'Veja quantos clientes estão cadastrados em seu sistema.',
+                        title: '👥 Seus Clientes',
+                        description: 'Total de clientes cadastrados no sistema. Clique para gerenciar, editar dados e consultar histórico.',
                         side: 'top'
                     }
                 },
                 {
                     element: '[data-tour="stats-ai-credits"]',
                     popover: {
-                        title: 'Créditos de IA',
-                        description: 'Acompanhe seu uso de IA e quanto ainda pode gerar com seu plano.',
+                        title: '🤖 Créditos de IA',
+                        description: 'Acompanhe seu saldo de créditos de inteligência artificial para geração automática de petições.',
                         side: 'top'
                     }
                 },
                 {
                     element: '[data-tour="recent-petitions"]',
                     popover: {
-                        title: 'Petições Recentes',
-                        description: 'Acesse rapidamente suas petições mais recentes.',
+                        title: '📋 Petições Recentes',
+                        description: 'Acesse rapidamente suas petições mais recentes. Clique para editar, visualizar ou converter em documento.',
                         side: 'left'
                     }
                 },
                 {
                     element: '[data-tour="your-plan"]',
                     popover: {
-                        title: 'Seu Plano',
-                        description: 'Visualize seu plano atual e benefícios inclusos.',
+                        title: '💳 Seu Plano',
+                        description: 'Visualize seu plano atual, benefícios inclusos, limite de petições e data de renovação da assinatura.',
                         side: 'left'
                     }
                 }
@@ -91,8 +113,8 @@ class TourSystem {
                 {
                     element: '.navbar-brand',
                     popover: {
-                        title: 'Painel Administrativo',
-                        description: 'Você está no painel de administração do sistema Petitio.',
+                        title: '🛡️ Painel Administrativo',
+                        description: 'Você está no painel de administração do sistema Petitio. Aqui você gerencia toda a plataforma.',
                         side: 'bottom',
                         align: 'start'
                     }
@@ -100,40 +122,40 @@ class TourSystem {
                 {
                     element: '[href*="admin/usuarios"]',
                     popover: {
-                        title: 'Gerenciar Usuários',
-                        description: 'Visualize, edite e gerencie todos os usuários do sistema.',
+                        title: '👨‍💼 Gerenciar Usuários',
+                        description: 'Visualize, edite, ative/desative e gerencie todos os usuários do sistema. Altere permissões e planos.',
                         side: 'bottom'
                     }
                 },
                 {
                     element: '[href*="admin/petitions"]',
                     popover: {
-                        title: 'Tipos e Modelos de Petições',
-                        description: 'Configure os tipos de petições, modelos e seções disponíveis.',
+                        title: '⚙️ Tipos e Modelos',
+                        description: 'Configure os tipos de petições, edite modelos, adicione seções customizadas e gerencie templates.',
                         side: 'bottom'
                     }
                 },
                 {
                     element: '[href*="admin/roadmap"]',
                     popover: {
-                        title: 'Roadmap & Feedback',
-                        description: 'Gerencie o roadmap de features e feedback dos usuários.',
+                        title: '🗺️ Roadmap & Feedback',
+                        description: 'Gerencie o roadmap de features, analise feedback dos usuários e priorize desenvolvimentos.',
                         side: 'bottom'
                     }
                 },
                 {
                     element: '[href*="billing"]',
                     popover: {
-                        title: 'Planos de Cobrança',
-                        description: 'Configure os planos de assinatura e limites do sistema.',
+                        title: '💰 Planos de Cobrança',
+                        description: 'Configure os planos de assinatura, limites, preços e gerencie faturamento da plataforma.',
                         side: 'bottom'
                     }
                 },
                 {
                     element: '[href*="admin/logs"]',
                     popover: {
-                        title: 'Logs do Sistema',
-                        description: 'Monitore atividades e erros do sistema em tempo real.',
+                        title: '📊 Logs do Sistema',
+                        description: 'Monitore atividades, erros e eventos do sistema em tempo real para debugging e análise.',
                         side: 'bottom'
                     }
                 }
@@ -146,48 +168,48 @@ class TourSystem {
                 {
                     element: '[data-tour="urgent-deadlines"]',
                     popover: {
-                        title: 'Prazos Urgentes',
-                        description: 'Veja aqui os processos com prazos próximos de vencer.',
+                        title: '⚠️ Prazos Urgentes',
+                        description: 'Processos com prazos próximos de vencer aparecem aqui. Monitore cuidadosamente para não perder prazos.',
                         side: 'bottom'
                     }
                 },
                 {
                     element: '[data-tour="notifications"]',
                     popover: {
-                        title: 'Notificações',
-                        description: 'Receba alertas sobre movimentações e prazos importantes.',
+                        title: '🔔 Notificações',
+                        description: 'Receba alertas automáticos sobre movimentações processuais e prazos importantes do seu calendário.',
                         side: 'top'
                     }
                 },
                 {
                     element: '[data-tour="quick-actions"]',
                     popover: {
-                        title: 'Ações Rápidas',
-                        description: 'Acesse rapidamente as funcionalidades mais usadas.',
+                        title: '⚡ Ações Rápidas',
+                        description: 'Acesse rapidamente as funcionalidades mais usadas: criar processo, adicionar prazo, enviar petição.',
                         side: 'top'
                     }
                 },
                 {
                     element: '[data-tour="recent-processes"]',
                     popover: {
-                        title: 'Processos Recentes',
-                        description: 'Seus últimos processos acessados aparecem aqui.',
+                        title: '📁 Processos Recentes',
+                        description: 'Seus últimos processos acessados aparecem aqui. Clique para retomar o trabalho rapidamente.',
                         side: 'left'
                     }
                 },
                 {
                     element: '[data-tour="pending-petitions"]',
                     popover: {
-                        title: 'Petições Pendentes',
-                        description: 'Petições que ainda não foram envolvidas com processos.',
+                        title: '📋 Petições Pendentes',
+                        description: 'Petições já criadas mas que ainda não foram vinculadas a nenhum processo. Complete a vinculação aqui.',
                         side: 'left'
                     }
                 },
                 {
                     element: '[data-tour="status-distribution"]',
                     popover: {
-                        title: 'Distribuição de Status',
-                        description: 'Visualize a distribuição dos seus processos por status.',
+                        title: '📊 Distribuição de Status',
+                        description: 'Visualize a distribuição dos seus processos por status (ativo, encerrado, suspenso, etc).',
                         side: 'left'
                     }
                 }
@@ -421,10 +443,20 @@ class TourSystem {
 
         // Verificar se Driver.js está disponível
         if (typeof window.driver !== 'function') {
-            console.error('Driver.js não foi carregado. Tentando novamente em 500ms...');
+            // Limitar tentativas para evitar loop infinito
+            if (this.driverAttempts >= this.maxDriverAttempts) {
+                console.error('❌ Driver.js não conseguiu carregar após várias tentativas. Tours desabilitados.');
+                return;
+            }
+            
+            this.driverAttempts++;
+            console.warn(`⏳ Driver.js não foi carregado (tentativa ${this.driverAttempts}/${this.maxDriverAttempts}). Tentando novamente em 500ms...`);
             setTimeout(() => this.startTour(tourName), 500);
             return;
         }
+
+        // Reset contador se conseguiu carregar
+        this.driverAttempts = 0;
 
         const steps = this.tours[tourName].steps;
 
@@ -453,6 +485,9 @@ class TourSystem {
         const hasSeenTour = localStorage.getItem('petitio_tour_seen');
         if (!hasSeenTour && document.querySelector('[href*="dashboard"]')) {
             // Aguardar Driver.js estar disponível antes de mostrar tour
+            let attempts = 0;
+            const maxAttempts = 20; // 2 segundos (20 * 100ms)
+            
             const waitForDriver = () => {
                 if (typeof window.driver === 'function') {
                     // Mostrar tour de boas-vindas após 2 segundos
@@ -460,9 +495,13 @@ class TourSystem {
                         this.startTourForCurrentPage();
                     }, 2000);
                     localStorage.setItem('petitio_tour_seen', 'true');
-                } else {
+                } else if (attempts < maxAttempts) {
+                    attempts++;
                     // Tentar novamente em 100ms
                     setTimeout(waitForDriver, 100);
+                } else {
+                    console.warn('⚠️ Driver.js não foi carregado. Tour de boas-vindas cancelado.');
+                    localStorage.setItem('petitio_tour_seen', 'true'); // Evitar tentar novamente
                 }
             };
             waitForDriver();
