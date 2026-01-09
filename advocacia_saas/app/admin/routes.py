@@ -4059,7 +4059,7 @@ def petition_model_generate_template(model_id):
 
         # Obter seções ordenadas com seus campos
         sections = petition_model.get_sections_ordered()
-        
+
         # Construir informações detalhadas das seções
         sections_info = []
         all_fields = []
@@ -4069,22 +4069,26 @@ def petition_model_generate_template(model_id):
                 section_data = {
                     "name": section.name,
                     "description": section.description or "",
-                    "fields": []
+                    "fields": [],
                 }
-                
+
                 # Extrair campos da seção
                 if section.fields_schema:
-                    fields = section.fields_schema if isinstance(section.fields_schema, list) else []
+                    fields = (
+                        section.fields_schema
+                        if isinstance(section.fields_schema, list)
+                        else []
+                    )
                     for field in fields:
                         field_info = {
                             "name": field.get("name", ""),
                             "label": field.get("label", ""),
                             "type": field.get("type", "text"),
-                            "required": field.get("required", False)
+                            "required": field.get("required", False),
                         }
                         section_data["fields"].append(field_info)
                         all_fields.append(field_info)
-                
+
                 sections_info.append(section_data)
 
         # Se IA está configurada, usar para gerar template inteligente
@@ -4100,13 +4104,15 @@ def petition_model_generate_template(model_id):
             sections_description = ""
             for i, sec in enumerate(sections_info, 1):
                 sections_description += f"\n{i}. **{sec['name']}**"
-                if sec['description']:
+                if sec["description"]:
                     sections_description += f" - {sec['description']}"
-                if sec['fields']:
+                if sec["fields"]:
                     sections_description += "\n   Campos disponíveis:"
-                    for f in sec['fields']:
-                        req = " (obrigatório)" if f['required'] else ""
-                        sections_description += f"\n   - {f['label']} ({f['name']}): tipo {f['type']}{req}"
+                    for f in sec["fields"]:
+                        req = " (obrigatório)" if f["required"] else ""
+                        sections_description += (
+                            f"\n   - {f['label']} ({f['name']}): tipo {f['type']}{req}"
+                        )
 
             # Construir prompt otimizado
             prompt = f"""Você é um advogado sênior brasileiro especialista em redação de peças processuais.
@@ -4196,8 +4202,10 @@ Sempre cria templates completos, profissionais e prontos para uso.""",
                 template_content = template_content.strip()
                 if template_content.startswith("```"):
                     lines = template_content.split("\n")
-                    template_content = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
-                
+                    template_content = "\n".join(
+                        lines[1:-1] if lines[-1] == "```" else lines[1:]
+                    )
+
                 return jsonify(
                     {
                         "success": True,
@@ -4281,17 +4289,23 @@ def petition_model_generate_template_preview():
                     section_data = {
                         "name": section.name,
                         "description": section.description or "",
-                        "fields": []
+                        "fields": [],
                     }
                     if section.fields_schema:
-                        fields = section.fields_schema if isinstance(section.fields_schema, list) else []
+                        fields = (
+                            section.fields_schema
+                            if isinstance(section.fields_schema, list)
+                            else []
+                        )
                         for field in fields:
-                            section_data["fields"].append({
-                                "name": field.get("name", ""),
-                                "label": field.get("label", ""),
-                                "type": field.get("type", "text"),
-                                "required": field.get("required", False)
-                            })
+                            section_data["fields"].append(
+                                {
+                                    "name": field.get("name", ""),
+                                    "label": field.get("label", ""),
+                                    "type": field.get("type", "text"),
+                                    "required": field.get("required", False),
+                                }
+                            )
                     sections_info.append(section_data)
 
         ai_service = AIService()
@@ -4309,13 +4323,15 @@ def petition_model_generate_template_preview():
             sections_description = ""
             for i, sec in enumerate(sections_info, 1):
                 sections_description += f"\n{i}. **{sec['name']}**"
-                if sec['description']:
+                if sec["description"]:
                     sections_description += f" - {sec['description']}"
-                if sec['fields']:
+                if sec["fields"]:
                     sections_description += "\n   Campos disponíveis:"
-                    for f in sec['fields']:
-                        req = " (obrigatório)" if f['required'] else ""
-                        sections_description += f"\n   - {f['label']} ({f['name']}): tipo {f['type']}{req}"
+                    for f in sec["fields"]:
+                        req = " (obrigatório)" if f["required"] else ""
+                        sections_description += (
+                            f"\n   - {f['label']} ({f['name']}): tipo {f['type']}{req}"
+                        )
 
             prompt = f"""Você é um advogado sênior brasileiro especialista em redação de peças processuais.
 Crie um template Jinja2 COMPLETO e PROFISSIONAL para a seguinte petição:
@@ -4403,7 +4419,9 @@ Sempre cria templates completos, profissionais e prontos para uso.""",
                 template_content = template_content.strip()
                 if template_content.startswith("```"):
                     lines = template_content.split("\n")
-                    template_content = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
+                    template_content = "\n".join(
+                        lines[1:-1] if lines[-1] == "```" else lines[1:]
+                    )
 
                 return jsonify(
                     {
