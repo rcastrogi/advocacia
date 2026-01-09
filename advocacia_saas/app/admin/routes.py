@@ -4028,17 +4028,17 @@ TEMPLATE_GENERATION_CREDIT_COST = 2
 def _check_and_use_ai_credits(amount):
     """Verifica e debita créditos para uso de IA (master não paga)"""
     from app.models import UserCredits
-    
+
     # Master não paga créditos
     if current_user.user_type == "master":
         return True, None
-    
+
     user_credits = UserCredits.get_or_create(current_user.id)
-    
+
     # Verificar se tem créditos suficientes
     if not user_credits.has_credits(amount):
         return False, "Créditos insuficientes para gerar template com IA"
-    
+
     # Debitar créditos
     user_credits.use_credits(amount)
     return True, None
@@ -4054,26 +4054,28 @@ def petition_model_generate_template(model_id):
 
     try:
         from app.services.ai_service import AIService
-        
+
         ai_service = AIService()
-        
+
         # Obter seções ordenadas
         sections = petition_model.get_sections_ordered()
         section_names = [ms.section.name for ms in sections if ms.section]
-        
+
         # Se IA está configurada, usar para gerar template inteligente
         if ai_service.is_configured():
             # Verificar e debitar créditos antes de usar IA
-            has_credits, error_msg = _check_and_use_ai_credits(TEMPLATE_GENERATION_CREDIT_COST)
+            has_credits, error_msg = _check_and_use_ai_credits(
+                TEMPLATE_GENERATION_CREDIT_COST
+            )
             if not has_credits:
                 return jsonify({"success": False, "error": error_msg}), 402
-            
+
             # Construir prompt para a IA
             prompt = f"""Você é um especialista em petições jurídicas brasileiras. 
 Gere um template Jinja2 profissional para uma petição com as seguintes características:
 
 **Tipo de Petição:** {petition_model.name}
-**Descrição:** {petition_model.description or 'Não especificada'}
+**Descrição:** {petition_model.description or "Não especificada"}
 
 **Seções que devem estar presentes (na ordem):**
 {chr(10).join([f"- {name}" for name in section_names]) if section_names else "- Nenhuma seção definida ainda"}
@@ -4090,28 +4092,35 @@ Gere um template Jinja2 profissional para uma petição com as seguintes caracte
 Gere o template completo:"""
 
             messages = [
-                {"role": "system", "content": "Você é um assistente especializado em criar templates de petições jurídicas brasileiras no formato Jinja2."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "Você é um assistente especializado em criar templates de petições jurídicas brasileiras no formato Jinja2.",
+                },
+                {"role": "user", "content": prompt},
             ]
-            
+
             try:
                 template_content, metadata = ai_service._call_openai(
                     messages=messages,
                     model="gpt-4o-mini",
                     temperature=0.5,
-                    max_tokens=3000
+                    max_tokens=3000,
                 )
-                
-                return jsonify({
-                    "success": True, 
-                    "template": template_content.strip(),
-                    "ai_generated": True,
-                    "metadata": metadata
-                })
+
+                return jsonify(
+                    {
+                        "success": True,
+                        "template": template_content.strip(),
+                        "ai_generated": True,
+                        "metadata": metadata,
+                    }
+                )
             except Exception as ai_error:
-                current_app.logger.warning(f"Erro na IA, usando fallback: {str(ai_error)}")
+                current_app.logger.warning(
+                    f"Erro na IA, usando fallback: {str(ai_error)}"
+                )
                 # Fallback para geração básica
-        
+
         # Fallback: geração básica sem IA
         template_parts = []
 
@@ -4143,7 +4152,9 @@ Gere o template completo:"""
 
         template_content = "\n".join(template_parts)
 
-        return jsonify({"success": True, "template": template_content, "ai_generated": False})
+        return jsonify(
+            {"success": True, "template": template_content, "ai_generated": False}
+        )
 
     except Exception as e:
         current_app.logger.error(f"Erro ao gerar template: {str(e)}")
@@ -4158,34 +4169,40 @@ def petition_model_generate_template_preview():
 
     try:
         from app.services.ai_service import AIService
-        
+
         data = request.get_json() or {}
         model_name = data.get("name", "Petição")
         model_description = data.get("description", "")
         section_ids = data.get("section_ids", [])
-        
+
         # Obter nomes das seções
         section_names = []
         if section_ids:
-            sections = PetitionSection.query.filter(PetitionSection.id.in_(section_ids)).all()
+            sections = PetitionSection.query.filter(
+                PetitionSection.id.in_(section_ids)
+            ).all()
             # Manter a ordem original
             section_map = {s.id: s.name for s in sections}
-            section_names = [section_map.get(sid) for sid in section_ids if section_map.get(sid)]
-        
+            section_names = [
+                section_map.get(sid) for sid in section_ids if section_map.get(sid)
+            ]
+
         ai_service = AIService()
-        
+
         # Se IA está configurada, usar para gerar template inteligente
         if ai_service.is_configured():
             # Verificar e debitar créditos antes de usar IA
-            has_credits, error_msg = _check_and_use_ai_credits(TEMPLATE_GENERATION_CREDIT_COST)
+            has_credits, error_msg = _check_and_use_ai_credits(
+                TEMPLATE_GENERATION_CREDIT_COST
+            )
             if not has_credits:
                 return jsonify({"success": False, "error": error_msg}), 402
-            
+
             prompt = f"""Você é um especialista em petições jurídicas brasileiras. 
 Gere um template Jinja2 profissional para uma petição com as seguintes características:
 
 **Tipo de Petição:** {model_name}
-**Descrição:** {model_description or 'Não especificada'}
+**Descrição:** {model_description or "Não especificada"}
 
 **Seções que devem estar presentes (na ordem):**
 {chr(10).join([f"- {name}" for name in section_names]) if section_names else "- Nenhuma seção definida ainda"}
@@ -4202,29 +4219,38 @@ Gere um template Jinja2 profissional para uma petição com as seguintes caracte
 Gere o template completo:"""
 
             messages = [
-                {"role": "system", "content": "Você é um assistente especializado em criar templates de petições jurídicas brasileiras no formato Jinja2."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "Você é um assistente especializado em criar templates de petições jurídicas brasileiras no formato Jinja2.",
+                },
+                {"role": "user", "content": prompt},
             ]
-            
+
             try:
                 template_content, metadata = ai_service._call_openai(
                     messages=messages,
                     model="gpt-4o-mini",
                     temperature=0.5,
-                    max_tokens=3000
+                    max_tokens=3000,
                 )
-                
-                return jsonify({
-                    "success": True, 
-                    "template": template_content.strip(),
-                    "ai_generated": True
-                })
+
+                return jsonify(
+                    {
+                        "success": True,
+                        "template": template_content.strip(),
+                        "ai_generated": True,
+                    }
+                )
             except Exception as ai_error:
-                current_app.logger.warning(f"Erro na IA, usando fallback: {str(ai_error)}")
-        
+                current_app.logger.warning(
+                    f"Erro na IA, usando fallback: {str(ai_error)}"
+                )
+
         # Fallback: geração básica sem IA
         template_parts = []
-        template_parts.append("EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(ÍZA) DE DIREITO DA {{ vara }}")
+        template_parts.append(
+            "EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(ÍZA) DE DIREITO DA {{ vara }}"
+        )
         template_parts.append("")
         template_parts.append("{{ autor_nome }}, {{ autor_qualificacao }}, vem propor:")
         template_parts.append("")
@@ -4245,7 +4271,9 @@ Gere o template completo:"""
 
         template_content = "\n".join(template_parts)
 
-        return jsonify({"success": True, "template": template_content, "ai_generated": False})
+        return jsonify(
+            {"success": True, "template": template_content, "ai_generated": False}
+        )
 
     except Exception as e:
         current_app.logger.error(f"Erro ao gerar template preview: {str(e)}")

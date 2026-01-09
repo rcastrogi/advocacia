@@ -149,7 +149,9 @@ class PetitionModelSchema(Schema):
     """Validação de modelos de petição"""
 
     class Meta:
-        unknown = EXCLUDE  # Ignora campos extras como section_order, use_dynamic_form, etc.
+        unknown = (
+            EXCLUDE  # Ignora campos extras como section_order, use_dynamic_form, etc.
+        )
 
     id = fields.Int(dump_only=True)
     name = fields.Str(
@@ -284,7 +286,9 @@ class RoadmapItemSchema(Schema):
         allow_none=True,
     )
     status = fields.Str(
-        validate=validate.OneOf(["planned", "in_progress", "completed", "cancelled", "on_hold"]),
+        validate=validate.OneOf(
+            ["planned", "in_progress", "completed", "cancelled", "on_hold"]
+        ),
         dump_default="planned",
         allow_none=True,
     )
@@ -323,13 +327,13 @@ class RoadmapItemSchema(Schema):
     def process_input(self, data, **kwargs):
         """Pré-processar dados do form (converte strings para tipos corretos)"""
         # Converter campos booleanos (form envia "on" ou não envia nada)
-        for bool_field in ['visible_to_users', 'internal_only', 'show_new_badge']:
+        for bool_field in ["visible_to_users", "internal_only", "show_new_badge"]:
             if bool_field in data:
-                data[bool_field] = data[bool_field] in ['on', 'true', True, '1', 1]
+                data[bool_field] = data[bool_field] in ["on", "true", True, "1", 1]
 
         # Converter campos vazios para None
         for key in data:
-            if data[key] == '':
+            if data[key] == "":
                 data[key] = None
 
         return data
