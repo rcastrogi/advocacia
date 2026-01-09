@@ -4021,18 +4021,98 @@ def petition_model_fields(model_id):
     return jsonify({"fields": fields})
 
 
+# Custo em créditos para geração de template com IA
+TEMPLATE_GENERATION_CREDIT_COST = 2
+
+
+def _check_and_use_ai_credits(amount):
+    """Verifica e debita créditos para uso de IA (master não paga)"""
+    from app.models import UserCredits
+    
+    # Master não paga créditos
+    if current_user.user_type == "master":
+        return True, None
+    
+    user_credits = UserCredits.get_or_create(current_user.id)
+    
+    # Verificar se tem créditos suficientes
+    if not user_credits.has_credits(amount):
+        return False, "Créditos insuficientes para gerar template com IA"
+    
+    # Debitar créditos
+    user_credits.use_credits(amount)
+    return True, None
+
+
 @bp.route("/petitions/models/<int:model_id>/generate_template", methods=["POST"])
 @login_required
 def petition_model_generate_template(model_id):
-    """Gerar template Jinja2 baseado nas seções do modelo"""
+    """Gerar template Jinja2 baseado nas seções do modelo usando IA"""
     _require_admin()
 
     petition_model = PetitionModel.query.get_or_404(model_id)
 
     try:
+        from app.services.ai_service import AIService
+        
+        ai_service = AIService()
+        
         # Obter seções ordenadas
         sections = petition_model.get_sections_ordered()
+        section_names = [ms.section.name for ms in sections if ms.section]
+        
+        # Se IA está configurada, usar para gerar template inteligente
+        if ai_service.is_configured():
+            # Verificar e debitar créditos antes de usar IA
+            has_credits, error_msg = _check_and_use_ai_credits(TEMPLATE_GENERATION_CREDIT_COST)
+            if not has_credits:
+                return jsonify({"success": False, "error": error_msg}), 402
+            
+            # Construir prompt para a IA
+            prompt = f"""Você é um especialista em petições jurídicas brasileiras. 
+Gere um template Jinja2 profissional para uma petição com as seguintes características:
 
+**Tipo de Petição:** {petition_model.name}
+**Descrição:** {petition_model.description or 'Não especificada'}
+
+**Seções que devem estar presentes (na ordem):**
+{chr(10).join([f"- {name}" for name in section_names]) if section_names else "- Nenhuma seção definida ainda"}
+
+**Instruções:**
+1. Use variáveis Jinja2 no formato {{ nome_variavel }}
+2. O cabeçalho deve ser formal e adequado ao tipo de petição
+3. Inclua variáveis para: vara, autor_nome, autor_qualificacao, reu_nome, reu_qualificacao
+4. Para cada seção, crie um título em maiúsculas e uma variável correspondente
+5. O rodapé deve ter local, data, advogado_nome e advogado_oab
+6. Use linguagem jurídica formal brasileira
+7. Retorne APENAS o template, sem explicações
+
+Gere o template completo:"""
+
+            messages = [
+                {"role": "system", "content": "Você é um assistente especializado em criar templates de petições jurídicas brasileiras no formato Jinja2."},
+                {"role": "user", "content": prompt}
+            ]
+            
+            try:
+                template_content, metadata = ai_service._call_openai(
+                    messages=messages,
+                    model="gpt-4o-mini",
+                    temperature=0.5,
+                    max_tokens=3000
+                )
+                
+                return jsonify({
+                    "success": True, 
+                    "template": template_content.strip(),
+                    "ai_generated": True,
+                    "metadata": metadata
+                })
+            except Exception as ai_error:
+                current_app.logger.warning(f"Erro na IA, usando fallback: {str(ai_error)}")
+                # Fallback para geração básica
+        
+        # Fallback: geração básica sem IA
         template_parts = []
 
         # Cabeçalho da petição
@@ -4063,10 +4143,112 @@ def petition_model_generate_template(model_id):
 
         template_content = "\n".join(template_parts)
 
-        return jsonify({"success": True, "template": template_content})
+        return jsonify({"success": True, "template": template_content, "ai_generated": False})
 
     except Exception as e:
         current_app.logger.error(f"Erro ao gerar template: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@bp.route("/petitions/models/generate_template_preview", methods=["POST"])
+@login_required
+def petition_model_generate_template_preview():
+    """Gerar template Jinja2 para preview (antes de criar o modelo) usando IA"""
+    _require_admin()
+
+    try:
+        from app.services.ai_service import AIService
+        
+        data = request.get_json() or {}
+        model_name = data.get("name", "Petição")
+        model_description = data.get("description", "")
+        section_ids = data.get("section_ids", [])
+        
+        # Obter nomes das seções
+        section_names = []
+        if section_ids:
+            sections = PetitionSection.query.filter(PetitionSection.id.in_(section_ids)).all()
+            # Manter a ordem original
+            section_map = {s.id: s.name for s in sections}
+            section_names = [section_map.get(sid) for sid in section_ids if section_map.get(sid)]
+        
+        ai_service = AIService()
+        
+        # Se IA está configurada, usar para gerar template inteligente
+        if ai_service.is_configured():
+            # Verificar e debitar créditos antes de usar IA
+            has_credits, error_msg = _check_and_use_ai_credits(TEMPLATE_GENERATION_CREDIT_COST)
+            if not has_credits:
+                return jsonify({"success": False, "error": error_msg}), 402
+            
+            prompt = f"""Você é um especialista em petições jurídicas brasileiras. 
+Gere um template Jinja2 profissional para uma petição com as seguintes características:
+
+**Tipo de Petição:** {model_name}
+**Descrição:** {model_description or 'Não especificada'}
+
+**Seções que devem estar presentes (na ordem):**
+{chr(10).join([f"- {name}" for name in section_names]) if section_names else "- Nenhuma seção definida ainda"}
+
+**Instruções:**
+1. Use variáveis Jinja2 no formato {{ nome_variavel }}
+2. O cabeçalho deve ser formal e adequado ao tipo de petição
+3. Inclua variáveis para: vara, autor_nome, autor_qualificacao, reu_nome, reu_qualificacao
+4. Para cada seção, crie um título em maiúsculas e uma variável correspondente
+5. O rodapé deve ter local, data, advogado_nome e advogado_oab
+6. Use linguagem jurídica formal brasileira
+7. Retorne APENAS o template, sem explicações
+
+Gere o template completo:"""
+
+            messages = [
+                {"role": "system", "content": "Você é um assistente especializado em criar templates de petições jurídicas brasileiras no formato Jinja2."},
+                {"role": "user", "content": prompt}
+            ]
+            
+            try:
+                template_content, metadata = ai_service._call_openai(
+                    messages=messages,
+                    model="gpt-4o-mini",
+                    temperature=0.5,
+                    max_tokens=3000
+                )
+                
+                return jsonify({
+                    "success": True, 
+                    "template": template_content.strip(),
+                    "ai_generated": True
+                })
+            except Exception as ai_error:
+                current_app.logger.warning(f"Erro na IA, usando fallback: {str(ai_error)}")
+        
+        # Fallback: geração básica sem IA
+        template_parts = []
+        template_parts.append("EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(ÍZA) DE DIREITO DA {{ vara }}")
+        template_parts.append("")
+        template_parts.append("{{ autor_nome }}, {{ autor_qualificacao }}, vem propor:")
+        template_parts.append("")
+        template_parts.append(f"{{{{ tipo_acao }}}}")
+        template_parts.append("")
+        template_parts.append("em face de {{ reu_nome }}, {{ reu_qualificacao }}")
+        template_parts.append("")
+
+        for name in section_names:
+            section_var = name.upper().replace(" ", "_").replace("/", "_")
+            template_parts.append(f"{{{{ {section_var} }}}}")
+            template_parts.append("")
+
+        template_parts.append("{{ local }}, {{ data }}")
+        template_parts.append("")
+        template_parts.append("{{ advogado_nome }}")
+        template_parts.append("{{ advogado_oab }}")
+
+        template_content = "\n".join(template_parts)
+
+        return jsonify({"success": True, "template": template_content, "ai_generated": False})
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao gerar template preview: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 

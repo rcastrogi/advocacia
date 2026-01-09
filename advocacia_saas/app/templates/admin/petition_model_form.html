@@ -234,9 +234,10 @@
                                 </div>
                             </div>
 
-                            <div class="d-flex gap-2">
+                            <div class="d-flex gap-2 flex-wrap align-items-center">
                                 <button type="button" class="btn btn-outline-success btn-sm" onclick="generateTemplateFromSections()">
-                                    <i class="fas fa-magic me-1"></i>Gerar Template das Seções
+                                    <i class="fas fa-magic me-1"></i>Gerar Template com IA
+                                    <span class="badge bg-warning text-dark ms-1" title="Custo em créditos">2 <i class="fas fa-coins"></i></span>
                                 </button>
                                 <button type="button" class="btn btn-outline-primary btn-sm" onclick="validateTemplate()">
                                     <i class="fas fa-check me-1"></i>Validar Template
@@ -244,6 +245,9 @@
                                 <button type="button" class="btn btn-outline-info btn-sm" onclick="previewTemplate()">
                                     <i class="fas fa-eye me-1"></i>Pré-visualizar
                                 </button>
+                                <small class="text-muted ms-2">
+                                    <i class="fas fa-info-circle"></i> Master não consome créditos
+                                </small>
                             </div>
                         </div>
 
@@ -261,31 +265,6 @@
                                         <div class="text-muted small">
                                             <i class="fas fa-spinner fa-spin me-1"></i>Carregando campos...
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Assistente IA -->
-                            <div class="card border-primary mt-3">
-                                <div class="card-header bg-primary text-white">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-robot me-2"></i>Assistente IA
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-2">
-                                        <label for="ai_prompt" class="form-label small">O que você quer gerar?</label>
-                                        <textarea class="form-control form-control-sm" id="ai_prompt" rows="3"
-                                                  placeholder="Ex: Gere uma seção DOS FATOS para uma ação de cobrança"></textarea>
-                                    </div>
-                                    <button type="button" class="btn btn-primary btn-sm w-100" onclick="generateWithAI()">
-                                        <i class="fas fa-magic me-1"></i>Gerar com IA
-                                    </button>
-                                    <div class="mt-2">
-                                        <small class="text-muted">
-                                            <i class="fas fa-coins me-1"></i>
-                                            Créditos: <span id="ai_credits">10</span>
-                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -637,37 +616,71 @@ Valor da causa: R$ {{ valor_causa }}
         textarea.setSelectionRange(start + fieldText.length, start + fieldText.length);
     };
 
-    // Gerar template das seções
+    // Gerar template das seções com IA
     window.generateTemplateFromSections = function() {
         const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
-        if (!petitionModelId) {
-            alert('Erro: ID do modelo não encontrado');
-            return;
-        }
-
-        const button = event.target;
+        
+        const button = event.target.closest('button');
         const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Gerando...';
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Gerando com IA...';
         button.disabled = true;
 
-        fetch(`/admin/petitions/models/${petitionModelId}/generate_template`, {
+        // Obter seções selecionadas
+        const selectedSections = document.getElementById('selected-sections');
+        const sectionIds = selectedSections ? Array.from(selectedSections.options).map(opt => parseInt(opt.value)) : [];
+        
+        // Obter nome e descrição do modelo
+        const modelName = document.getElementById('name').value || 'Petição';
+        const modelDescription = document.getElementById('description').value || '';
+
+        let fetchUrl, fetchBody;
+        
+        if (petitionModelId) {
+            // Editando modelo existente
+            fetchUrl = `/admin/petitions/models/${petitionModelId}/generate_template`;
+            fetchBody = JSON.stringify({});
+        } else {
+            // Criando novo modelo - usar rota de preview
+            fetchUrl = '/admin/petitions/models/generate_template_preview';
+            fetchBody = JSON.stringify({
+                name: modelName,
+                description: modelDescription,
+                section_ids: sectionIds
+            });
+        }
+
+        fetch(fetchUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-            }
+            },
+            body: fetchBody
         })
-        .then(response => response.json())
+        .then(response => {
+            // Tratar erro 402 (créditos insuficientes) especialmente
+            if (response.status === 402) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Créditos insuficientes');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 document.getElementById('template_content').value = data.template;
-                showToast('Template gerado com sucesso!', 'success');
+                const aiMsg = data.ai_generated ? ' (gerado com IA - 2 créditos)' : ' (template básico - grátis)';
+                showToast('Template gerado com sucesso!' + aiMsg, 'success');
             } else {
                 showToast('Erro ao gerar template: ' + (data.error || 'Erro desconhecido'), 'error');
             }
         })
         .catch(error => {
             console.error('Erro:', error);
-            showToast('Erro ao gerar template', 'error');
+            if (error.message.includes('Créditos insuficientes')) {
+                showToast('❌ ' + error.message + '. Adquira mais créditos para usar a IA.', 'warning');
+            } else {
+                showToast('Erro ao gerar template: ' + error.message, 'error');
+            }
         })
         .finally(() => {
             button.innerHTML = originalText;
@@ -685,7 +698,7 @@ Valor da causa: R$ {{ valor_causa }}
             return;
         }
 
-        const button = event.target;
+        const button = event.target.closest('button');
         const originalText = button.innerHTML;
         button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Validando...';
         button.disabled = true;

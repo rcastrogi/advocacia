@@ -4,7 +4,7 @@ Marshmallow schemas para validação de dados
 
 from datetime import datetime
 
-from marshmallow import Schema, fields, post_load, pre_load, validate
+from marshmallow import EXCLUDE, Schema, fields, post_load, pre_load, validate
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 # ============================================================================
@@ -148,6 +148,9 @@ class PetitionTypeSchema(Schema):
 class PetitionModelSchema(Schema):
     """Validação de modelos de petição"""
 
+    class Meta:
+        unknown = EXCLUDE  # Ignora campos extras como section_order, use_dynamic_form, etc.
+
     id = fields.Int(dump_only=True)
     name = fields.Str(
         required=True,
@@ -159,7 +162,9 @@ class PetitionModelSchema(Schema):
     )
     description = fields.Str(allow_none=True)
     template_content = fields.Str(
-        required=True, error_messages={"required": "Conteúdo do template é obrigatório"}
+        required=False,  # Não obrigatório - pode ser gerado depois
+        allow_none=True,
+        load_default="",
     )
     is_active = fields.Bool(dump_default=True)
     created_at = fields.DateTime(dump_only=True)
