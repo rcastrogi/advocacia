@@ -4,16 +4,10 @@
 
 {# Page Header #}
 {% set page_title = 'Modelos de Petição' %}
-{% set page_icon = 'fas fa-file-alt' %}
+{% set page_icon = 'file-alt' %}
 {% set page_description = 'Gerencie os modelos de configuração para cada tipo de petição' %}
-{% set page_actions = [
-    {
-        'label': 'Novo Modelo',
-        'url': url_for('admin.petition_model_new'),
-        'icon': 'fas fa-plus',
-        'class': 'btn-primary'
-    }
-] %}
+{% set new_btn_url = url_for('admin.petition_model_new') %}
+{% set new_btn_label = 'Novo Modelo' %}
 {% include 'components/list_header.html' %}
 
 {# Statistics Cards #}

@@ -4,17 +4,13 @@
 
 {# Page Header #}
 {% set page_title = 'Gerenciamento de Usuários' %}
-{% set page_icon = 'fas fa-users' %}
+{% set page_icon = 'users' %}
 {% set page_description = total_users ~ ' usuários cadastrados | ' ~ active_users ~ ' ativos | ' ~ paying_users ~ ' pagantes' %}
-{% set page_actions = [
-    {
-        'label': 'Exportar JSON',
-        'url': url_for('admin.export_users'),
-        'icon': 'fas fa-download',
-        'class': 'btn-outline-success',
-        'target': '_blank'
-    }
-] %}
+{% set extra_actions %}
+<a href="{{ url_for('admin.export_users') }}" class="btn btn-outline-success" target="_blank">
+    <i class="fas fa-download me-1"></i>Exportar JSON
+</a>
+{% endset %}
 {% include 'components/list_header.html' %}
 
 {# Statistics Cards #}

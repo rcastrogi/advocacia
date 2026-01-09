@@ -3,16 +3,10 @@
 {% block admin_content %}
 {# Page Header with Title, Description, and Actions #}
 {% set page_title = 'Tipos de Petição' %}
-{% set page_icon = 'fas fa-file-alt' %}
+{% set page_icon = 'file-alt' %}
 {% set page_description = 'Configure os tipos de petições disponíveis na plataforma' %}
-{% set page_actions = [
-    {
-        'label': 'Novo Tipo',
-        'url': url_for('admin.petition_type_new'),
-        'icon': 'fas fa-plus',
-        'class': 'btn-primary'
-    }
-] %}
+{% set new_btn_url = url_for('admin.petition_type_new') %}
+{% set new_btn_label = 'Novo Tipo' %}
 {% include 'components/list_header.html' %}
 
 <div class="card shadow">
