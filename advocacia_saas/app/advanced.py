@@ -6,7 +6,7 @@ Inclui calendário, automação e relatórios.
 import json
 from datetime import datetime, timedelta
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import and_, func, or_
 
@@ -117,6 +117,30 @@ def get_calendar_events():
                 },
             }
         )
+
+    # Adicionar bloqueios de agenda
+    try:
+        from app.models import AgendaBlock
+        
+        # Determinar período para gerar eventos de bloqueio
+        if start:
+            start_range = datetime.fromisoformat(start.replace("Z", "+00:00")).date()
+        else:
+            start_range = datetime.utcnow().date()
+        
+        if end:
+            end_range = datetime.fromisoformat(end.replace("Z", "+00:00")).date()
+        else:
+            end_range = start_range + timedelta(days=90)
+        
+        blocks = AgendaBlock.query.filter_by(user_id=current_user.id, is_active=True).all()
+        
+        for block in blocks:
+            block_events = block.to_calendar_events(start_range, end_range)
+            calendar_events.extend(block_events)
+    except Exception as e:
+        # Log do erro mas não falha a requisição
+        current_app.logger.error(f"Erro ao carregar bloqueios: {str(e)}")
 
     return jsonify(calendar_events)
 
