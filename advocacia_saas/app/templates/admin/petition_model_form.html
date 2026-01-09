@@ -538,7 +538,12 @@ Valor da causa: R$ {{ valor_causa }}
     // Função para carregar campos disponíveis
     function loadAvailableFields() {
         const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
-        if (!petitionModelId) return;
+        
+        // Se não tem modelo (criação), carregar campos das seções selecionadas
+        if (!petitionModelId) {
+            loadFieldsFromSelectedSections();
+            return;
+        }
 
         fetch(`/admin/petitions/models/${petitionModelId}/fields`)
             .then(response => {
@@ -555,9 +560,42 @@ Valor da causa: R$ {{ valor_causa }}
                 document.getElementById('available-fields').innerHTML =
                     '<div class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Erro ao carregar campos</div>';
             });
+    }
 
     // Exportar para o escopo global para que outras funções (p.ex. saveOrder) possam chamar
     window.loadAvailableFields = loadAvailableFields;
+
+    // Carregar campos das seções selecionadas (modo criação)
+    function loadFieldsFromSelectedSections() {
+        const selectedSections = document.getElementById('selected-sections');
+        if (!selectedSections) {
+            document.getElementById('available-fields').innerHTML = 
+                '<div class="text-muted small">Selecione seções para ver os campos disponíveis</div>';
+            return;
+        }
+        
+        const sectionIds = Array.from(selectedSections.options).map(opt => parseInt(opt.value));
+        
+        if (sectionIds.length === 0) {
+            document.getElementById('available-fields').innerHTML = 
+                '<div class="text-muted small">Selecione seções para ver os campos disponíveis</div>';
+            return;
+        }
+        
+        fetch('/admin/petitions/sections/fields_by_ids', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ section_ids: sectionIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            displayAvailableFields(data.fields || []);
+        })
+        .catch(error => {
+            console.error('Erro ao carregar campos:', error);
+            document.getElementById('available-fields').innerHTML = 
+                '<div class="text-muted small">Campos serão carregados após salvar o modelo</div>';
+        });
     }
 
     // Exibir campos disponíveis
@@ -703,7 +741,12 @@ Valor da causa: R$ {{ valor_causa }}
         button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Validando...';
         button.disabled = true;
 
-        fetch(`/admin/petitions/models/${petitionModelId}/validate_template`, {
+        // Usar rota genérica que funciona sem ID
+        const validateUrl = petitionModelId 
+            ? `/admin/petitions/models/${petitionModelId}/validate_template`
+            : '/admin/petitions/models/validate_template_generic';
+
+        fetch(validateUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -738,12 +781,17 @@ Valor da causa: R$ {{ valor_causa }}
             return;
         }
 
-        const button = event.target;
+        const button = event.target.closest('button');
         const originalText = button.innerHTML;
         button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Gerando preview...';
         button.disabled = true;
 
-        fetch(`/admin/petitions/models/${petitionModelId}/preview_template`, {
+        // Usar rota genérica que funciona sem ID
+        const previewUrl = petitionModelId 
+            ? `/admin/petitions/models/${petitionModelId}/preview_template`
+            : '/admin/petitions/models/preview_template_generic';
+
+        fetch(previewUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -778,55 +826,6 @@ Valor da causa: R$ {{ valor_causa }}
         .catch(error => {
             console.error('Erro:', error);
             showToast('Erro ao gerar preview', 'error');
-        })
-        .finally(() => {
-            button.innerHTML = originalText;
-            button.disabled = false;
-        });
-    };
-
-    // Gerar com IA
-    window.generateWithAI = function() {
-        const prompt = document.getElementById('ai_prompt').value.trim();
-        const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
-
-        if (!prompt) {
-            showToast('Digite um prompt para a IA', 'warning');
-            return;
-        }
-
-        const button = event.target;
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Gerando...';
-        button.disabled = true;
-
-        fetch(`/admin/petitions/models/${petitionModelId}/generate_with_ai`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ prompt: prompt })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const textarea = document.getElementById('template_content');
-                const currentContent = textarea.value;
-                textarea.value = currentContent + (currentContent ? '\n\n' : '') + data.content;
-                document.getElementById('ai_prompt').value = '';
-                showToast('Conteúdo gerado com IA!', 'success');
-
-                // Atualizar créditos
-                if (data.credits_remaining !== undefined) {
-                    document.getElementById('ai_credits').textContent = data.credits_remaining;
-                }
-            } else {
-                showToast('Erro ao gerar com IA: ' + (data.error || 'Erro desconhecido'), 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            showToast('Erro ao gerar com IA', 'error');
         })
         .finally(() => {
             button.innerHTML = originalText;
@@ -894,16 +893,19 @@ Valor da causa: R$ {{ valor_causa }}
                 try {
                     const ta = document.getElementById('template_content');
                     const val = ta ? ta.value : '';
-                    // silent hidden copy (no console logging)
-                    let hidden = document.getElementById('template_content_capture');
+                    
+                    // Copiar para campo hidden com nome template_content
+                    // O textarea está fora do form, então precisamos do hidden dentro
+                    let hidden = document.getElementById('template_content_hidden');
                     if (!hidden) {
                         hidden = document.createElement('input');
                         hidden.type = 'hidden';
-                        hidden.name = 'template_content_capture';
-                        hidden.id = 'template_content_capture';
+                        hidden.name = 'template_content';  // Nome correto para o backend
+                        hidden.id = 'template_content_hidden';
                         modelForm.appendChild(hidden);
                     }
                     hidden.value = val;
+                    
                     // briefly highlight indicator to show submit happened
                     if (indicator) {
                         indicator.classList.add('text-success');

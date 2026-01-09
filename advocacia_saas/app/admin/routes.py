@@ -4280,6 +4280,117 @@ Gere o template completo:"""
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@bp.route("/petitions/sections/fields_by_ids", methods=["POST"])
+@login_required
+def petition_sections_fields_by_ids():
+    """Retornar campos das seções selecionadas (para modo criação)"""
+    _require_admin()
+
+    data = request.get_json()
+    section_ids = data.get("section_ids", [])
+
+    if not section_ids:
+        return jsonify({"fields": []})
+
+    try:
+        sections = PetitionSection.query.filter(PetitionSection.id.in_(section_ids)).all()
+        all_fields = []
+
+        for section in sections:
+            if section.fields_schema:
+                schema = section.fields_schema
+                if isinstance(schema, str):
+                    import json
+                    schema = json.loads(schema)
+
+                fields = schema.get("fields", [])
+                for field in fields:
+                    field_data = {
+                        "name": field.get("name", field.get("field_name", "")),
+                        "display_name": field.get("label", field.get("display_name", "")),
+                        "category": section.name,
+                    }
+                    all_fields.append(field_data)
+
+        return jsonify({"fields": all_fields})
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao carregar campos: {str(e)}")
+        return jsonify({"fields": [], "error": str(e)}), 500
+
+
+@bp.route("/petitions/models/validate_template_generic", methods=["POST"])
+@login_required
+def petition_model_validate_template_generic():
+    """Validar template Jinja2 (sem modelo específico)"""
+    _require_admin()
+
+    data = request.get_json()
+    template = data.get("template", "")
+
+    if not template.strip():
+        return jsonify({"valid": False, "errors": ["Template vazio"]})
+
+    try:
+        from jinja2 import Template, TemplateSyntaxError
+
+        Template(template)
+        return jsonify({"valid": True})
+
+    except TemplateSyntaxError as e:
+        return jsonify(
+            {
+                "valid": False,
+                "errors": [f"Erro de sintaxe na linha {e.lineno}: {e.message}"],
+            }
+        )
+    except Exception as e:
+        return jsonify({"valid": False, "errors": [f"Erro desconhecido: {str(e)}"]})
+
+
+@bp.route("/petitions/models/preview_template_generic", methods=["POST"])
+@login_required
+def petition_model_preview_template_generic():
+    """Gerar preview do template Jinja2 (sem modelo específico)"""
+    _require_admin()
+
+    data = request.get_json()
+    template_content = data.get("template", "")
+
+    if not template_content.strip():
+        return jsonify({"success": False, "error": "Template vazio"})
+
+    try:
+        from jinja2 import Template
+
+        # Criar dados de exemplo genéricos para preview
+        sample_data = {
+            "vara": "1ª Vara Cível da Comarca de São Paulo",
+            "autor_nome": "João Silva Santos",
+            "autor_qualificacao": "brasileiro, casado, empresário, portador do CPF 123.456.789-00",
+            "tipo_acao": "AÇÃO CÍVEL",
+            "reu_nome": "Empresa XYZ Ltda",
+            "reu_qualificacao": "pessoa jurídica de direito privado, inscrita no CNPJ 12.345.678/0001-90",
+            "local": "São Paulo",
+            "data": "15 de janeiro de 2024",
+            "advogado_nome": "Dr. Maria Aparecida",
+            "advogado_oab": "OAB/SP 123.456",
+            "fatos": "[DESCRIÇÃO DOS FATOS]",
+            "fundamentos": "[FUNDAMENTOS JURÍDICOS]",
+            "pedidos": "[PEDIDOS]",
+            "valor_causa": "10.000,00",
+        }
+
+        template = Template(template_content)
+        rendered = template.render(**sample_data)
+
+        return jsonify({"success": True, "preview": rendered})
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao gerar preview: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @bp.route("/petitions/models/<int:model_id>/validate_template", methods=["POST"])
 @login_required
 def petition_model_validate_template(model_id):
