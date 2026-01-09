@@ -43,9 +43,10 @@ def create_app(config_class=Config):
     # Configure JSON and response encoding
     app.config["JSON_AS_ASCII"] = False
     app.config["JSONIFY_MIMETYPE"] = "application/json; charset=utf-8"
-    
+
     # ✅ Setup logging centralizado
     from app.logger_config import setup_logging
+
     setup_logging(app)
 
     # Initialize Sentry for error tracking

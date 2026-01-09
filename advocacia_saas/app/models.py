@@ -4622,9 +4622,7 @@ class AgendaBlock(db.Model):
     )
 
     # Relacionamentos
-    user = db.relationship(
-        "User", backref=db.backref("agenda_blocks", lazy="dynamic")
-    )
+    user = db.relationship("User", backref=db.backref("agenda_blocks", lazy="dynamic"))
 
     def __repr__(self):
         return f"<AgendaBlock {self.title} user={self.user_id}>"
@@ -4633,8 +4631,9 @@ class AgendaBlock(db.Model):
         """Retorna os dias da semana formatados."""
         if not self.weekdays:
             return ""
-        
+
         import json
+
         days_map = {
             0: "Segunda",
             1: "Terça",
@@ -4642,7 +4641,7 @@ class AgendaBlock(db.Model):
             3: "Quinta",
             4: "Sexta",
             5: "Sábado",
-            6: "Domingo"
+            6: "Domingo",
         }
         try:
             days = json.loads(self.weekdays)
@@ -4656,7 +4655,7 @@ class AgendaBlock(db.Model):
             "morning": "Manhã (08:00 - 12:00)",
             "afternoon": "Tarde (12:00 - 18:00)",
             "evening": "Noite (18:00 - 22:00)",
-            "all_day": "Dia Inteiro"
+            "all_day": "Dia Inteiro",
         }
         return period_map.get(self.day_period, "")
 
@@ -4679,59 +4678,20 @@ class AgendaBlock(db.Model):
         from datetime import datetime, timedelta
 
         events = []
-        
+
         if self.block_type == "single" and self.start_date:
             # Bloqueio único
-            start_dt = datetime.combine(self.start_date, self.start_time or datetime.min.time())
-            end_dt = datetime.combine(self.end_date or self.start_date, self.end_time or datetime.max.time())
-            
+            start_dt = datetime.combine(
+                self.start_date, self.start_time or datetime.min.time()
+            )
+            end_dt = datetime.combine(
+                self.end_date or self.start_date, self.end_time or datetime.max.time()
+            )
+
             if start_dt.date() >= start_range and start_dt.date() <= end_range:
-                events.append({
-                    "id": f"block_{self.id}",
-                    "title": f"🚫 {self.title}",
-                    "start": start_dt.isoformat(),
-                    "end": end_dt.isoformat(),
-                    "allDay": self.all_day,
-                    "color": self.color,
-                    "display": "background",
-                    "classNames": ["agenda-block"],
-                    "extendedProps": {
-                        "type": "block",
-                        "block_id": self.id,
-                        "editable": False
-                    }
-                })
-        
-        elif self.block_type == "recurring" and self.weekdays:
-            # Bloqueio recorrente
-            try:
-                weekdays = json.loads(self.weekdays)
-            except:
-                weekdays = []
-            
-            current = start_range
-            while current <= end_range:
-                # Python: weekday() retorna 0=Segunda, 6=Domingo
-                if current.weekday() in weekdays:
-                    # Determinar horários baseado no período ou horário específico
-                    if self.all_day:
-                        start_dt = datetime.combine(current, datetime.min.time())
-                        end_dt = datetime.combine(current, datetime.max.time().replace(microsecond=0))
-                    elif self.day_period:
-                        periods = {
-                            "morning": (datetime.strptime("08:00", "%H:%M").time(), datetime.strptime("12:00", "%H:%M").time()),
-                            "afternoon": (datetime.strptime("12:00", "%H:%M").time(), datetime.strptime("18:00", "%H:%M").time()),
-                            "evening": (datetime.strptime("18:00", "%H:%M").time(), datetime.strptime("22:00", "%H:%M").time()),
-                        }
-                        period_times = periods.get(self.day_period, (datetime.min.time(), datetime.max.time()))
-                        start_dt = datetime.combine(current, period_times[0])
-                        end_dt = datetime.combine(current, period_times[1])
-                    else:
-                        start_dt = datetime.combine(current, self.start_time or datetime.min.time())
-                        end_dt = datetime.combine(current, self.end_time or datetime.max.time())
-                    
-                    events.append({
-                        "id": f"block_{self.id}_{current.isoformat()}",
+                events.append(
+                    {
+                        "id": f"block_{self.id}",
                         "title": f"🚫 {self.title}",
                         "start": start_dt.isoformat(),
                         "end": end_dt.isoformat(),
@@ -4742,16 +4702,81 @@ class AgendaBlock(db.Model):
                         "extendedProps": {
                             "type": "block",
                             "block_id": self.id,
-                            "editable": False
+                            "editable": False,
+                        },
+                    }
+                )
+
+        elif self.block_type == "recurring" and self.weekdays:
+            # Bloqueio recorrente
+            try:
+                weekdays = json.loads(self.weekdays)
+            except:
+                weekdays = []
+
+            current = start_range
+            while current <= end_range:
+                # Python: weekday() retorna 0=Segunda, 6=Domingo
+                if current.weekday() in weekdays:
+                    # Determinar horários baseado no período ou horário específico
+                    if self.all_day:
+                        start_dt = datetime.combine(current, datetime.min.time())
+                        end_dt = datetime.combine(
+                            current, datetime.max.time().replace(microsecond=0)
+                        )
+                    elif self.day_period:
+                        periods = {
+                            "morning": (
+                                datetime.strptime("08:00", "%H:%M").time(),
+                                datetime.strptime("12:00", "%H:%M").time(),
+                            ),
+                            "afternoon": (
+                                datetime.strptime("12:00", "%H:%M").time(),
+                                datetime.strptime("18:00", "%H:%M").time(),
+                            ),
+                            "evening": (
+                                datetime.strptime("18:00", "%H:%M").time(),
+                                datetime.strptime("22:00", "%H:%M").time(),
+                            ),
                         }
-                    })
-                
+                        period_times = periods.get(
+                            self.day_period, (datetime.min.time(), datetime.max.time())
+                        )
+                        start_dt = datetime.combine(current, period_times[0])
+                        end_dt = datetime.combine(current, period_times[1])
+                    else:
+                        start_dt = datetime.combine(
+                            current, self.start_time or datetime.min.time()
+                        )
+                        end_dt = datetime.combine(
+                            current, self.end_time or datetime.max.time()
+                        )
+
+                    events.append(
+                        {
+                            "id": f"block_{self.id}_{current.isoformat()}",
+                            "title": f"🚫 {self.title}",
+                            "start": start_dt.isoformat(),
+                            "end": end_dt.isoformat(),
+                            "allDay": self.all_day,
+                            "color": self.color,
+                            "display": "background",
+                            "classNames": ["agenda-block"],
+                            "extendedProps": {
+                                "type": "block",
+                                "block_id": self.id,
+                                "editable": False,
+                            },
+                        }
+                    )
+
                 current += timedelta(days=1)
-        
+
         return events
 
     def to_dict(self):
         import json
+
         return {
             "id": self.id,
             "title": self.title,
@@ -4759,7 +4784,9 @@ class AgendaBlock(db.Model):
             "block_type": self.block_type,
             "weekdays": json.loads(self.weekdays) if self.weekdays else [],
             "weekdays_display": self.get_weekdays_display(),
-            "start_time": self.start_time.strftime("%H:%M") if self.start_time else None,
+            "start_time": self.start_time.strftime("%H:%M")
+            if self.start_time
+            else None,
             "end_time": self.end_time.strftime("%H:%M") if self.end_time else None,
             "all_day": self.all_day,
             "start_date": self.start_date.isoformat() if self.start_date else None,
