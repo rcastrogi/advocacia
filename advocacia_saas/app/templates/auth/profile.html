@@ -118,7 +118,7 @@
                             </div>
                         </div>
 
-                        {% if current_user.user_type == 'advogado' %}
+                        {% if current_user.user_type in ['advogado', 'master'] %}
                         <div class="mb-4">
                             {{ form.specialties.label(class="form-label text-uppercase small text-muted fw-semibold") }}
                             <div class="row row-cols-1 row-cols-md-2 g-2">
@@ -269,14 +269,14 @@
                     <p><strong>Usuário:</strong> {{ current_user.username }}</p>
                     <p><strong>Tipo:</strong> 
                         {% if current_user.user_type == 'master' %}
-                            <span class="badge bg-warning">Administrador</span>
+                            <span class="badge bg-warning">Admin</span>
                         {% elif current_user.user_type == 'escritorio' %}
                             <span class="badge bg-info">Escritório</span>
                         {% else %}
                             <span class="badge bg-primary">Advogado</span>
                         {% endif %}
                     </p>
-                    {% if current_user.user_type == 'advogado' and current_user.get_specialties() %}
+                    {% if current_user.user_type in ['advogado', 'master'] and current_user.get_specialties() %}
                     <div class="mb-2">
                         <strong>Áreas de Atuação:</strong>
                         <div class="mt-2">

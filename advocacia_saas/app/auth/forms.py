@@ -259,8 +259,8 @@ class ProfileForm(FlaskForm):
                 raise ValidationError("Email já cadastrado. Use outro email.")
 
     def validate_specialties(self, specialties):
-        """Valida que pelo menos uma especialidade seja selecionada para advogados"""
-        if self.user_type == "advogado":
+        """Valida que pelo menos uma especialidade seja selecionada para advogados e masters"""
+        if self.user_type in ["advogado", "master"]:
             if not specialties.data or len(specialties.data) == 0:
                 raise ValidationError("Selecione pelo menos uma área de atuação.")
 
