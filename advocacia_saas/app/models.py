@@ -4848,18 +4848,21 @@ class TemplateExample(db.Model):
     def get_best_examples(cls, petition_type_id=None, tags=None, limit=2):
         """
         Retorna os melhores templates exemplares para uso no prompt.
-        Prioriza por: qualidade, uso recente, tipo de petição.
+        IMPORTANTE: Retorna APENAS exemplos do mesmo tipo de petição para evitar
+        misturar contextos (ex: ação civil vs criminal).
         """
         query = cls.query.filter(cls.is_active == True)
 
-        # Filtrar por tipo se especificado
+        # OBRIGATÓRIO: Filtrar por tipo de petição
+        # Não usar exemplos de outros tipos para evitar contaminação de contexto
         if petition_type_id:
-            # Primeiro tenta do mesmo tipo, depois genéricos
-            same_type = query.filter(cls.petition_type_id == petition_type_id)
-            if same_type.count() > 0:
-                query = same_type
+            query = query.filter(cls.petition_type_id == petition_type_id)
+        else:
+            # Se não especificou tipo, não retorna exemplos
+            # É melhor não ter exemplo do que ter exemplo errado
+            return []
 
-        # Filtrar por tags se especificado
+        # Filtrar por tags se especificado (refinamento adicional)
         if tags:
             for tag in tags[:3]:  # Máximo 3 tags
                 query = query.filter(cls.tags.ilike(f"%{tag}%"))

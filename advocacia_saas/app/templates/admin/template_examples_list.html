@@ -1,0 +1,205 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Exemplos de Templates - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="fas fa-star text-warning me-2"></i>Exemplos de Templates
+        </h1>
+        <p class="text-muted mb-0">Templates de alta qualidade usados pela IA para melhorar gerações</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.petition_template_example_new') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Novo Exemplo
+        </a>
+    </div>
+</div>
+
+{% if examples %}
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 50px;">ID</th>
+                        <th>Nome</th>
+                        <th>Tipo de Petição</th>
+                        <th class="text-center">Qualidade</th>
+                        <th class="text-center">Uso</th>
+                        <th class="text-center">Status</th>
+                        <th>Tags</th>
+                        <th>Criado em</th>
+                        <th style="width: 150px;" class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for example in examples %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-secondary">{{ example.id }}</span>
+                        </td>
+                        <td>
+                            <strong>{{ example.name }}</strong>
+                            {% if example.description %}
+                            <br><small class="text-muted">{{ example.description[:50] }}{% if example.description|length > 50 %}...{% endif %}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if example.petition_type %}
+                                <span class="badge bg-info">{{ example.petition_type.name }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Geral</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% set quality = example.quality_score or 5 %}
+                            {% for i in range(5) %}
+                                {% if i < quality %}
+                                    <i class="fas fa-star text-warning"></i>
+                                {% else %}
+                                    <i class="far fa-star text-muted"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary">{{ example.usage_count or 0 }}x</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge {% if example.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                {% if example.is_active %}Ativo{% else %}Inativo{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if example.tags %}
+                                {% for tag in example.tags.split(',') %}
+                                    <span class="badge bg-light text-dark">{{ tag.strip() }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>{{ example.created_at.strftime('%d/%m/%Y') if example.created_at else '-' }}</small>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-info" onclick="previewExample({{ example.id }})" title="Visualizar">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-{{ 'warning' if example.is_active else 'success' }}" 
+                                        onclick="toggleExample({{ example.id }})" 
+                                        title="{{ 'Desativar' if example.is_active else 'Ativar' }}">
+                                    <i class="fas fa-{{ 'pause' if example.is_active else 'play' }}"></i>
+                                </button>
+                                <a href="{{ url_for('admin.petition_template_example_edit', example_id=example.id) }}" class="btn btn-outline-primary" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger" onclick="deleteExample({{ example.id }}, '{{ example.name }}')" title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card shadow-sm">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-star fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">Nenhum exemplo cadastrado</h5>
+        <p class="text-muted mb-4">
+            Exemplos de templates ajudam a IA a gerar conteúdo de melhor qualidade.<br>
+            Você pode criar exemplos manualmente ou marcar templates existentes como exemplares.
+        </p>
+        <a href="{{ url_for('admin.petition_template_example_new') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Adicionar Primeiro Exemplo
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal de Preview -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>Visualizar Exemplo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="preview-content" style="white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 1rem; border-radius: 8px; max-height: 400px; overflow-y: auto;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const examples = {
+    {% for example in examples %}
+    {{ example.id }}: `{{ example.template_content|e|replace('\n', '\\n')|replace('`', '\\`') }}`,
+    {% endfor %}
+};
+
+function previewExample(id) {
+    const content = examples[id] || 'Template não encontrado';
+    document.getElementById('preview-content').textContent = content;
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+}
+
+function toggleExample(id) {
+    fetch(`/admin/template-examples/${id}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro ao alterar status: ' + (data.error || 'Erro desconhecido'));
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao alterar status do exemplo');
+    });
+}
+
+function deleteExample(id, name) {
+    if (!confirm(`Tem certeza que deseja excluir o exemplo "${name}"?\n\nEsta ação não pode ser desfeita.`)) {
+        return;
+    }
+    
+    fetch(`/admin/petitions/templates/examples/${id}/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro ao excluir: ' + (data.error || 'Erro desconhecido'));
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao excluir exemplo');
+    });
+}
+</script>
+
+{% endblock %}

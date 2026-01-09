@@ -245,9 +245,34 @@
                                 <button type="button" class="btn btn-outline-info btn-sm" onclick="previewTemplate()">
                                     <i class="fas fa-eye me-1"></i>Pré-visualizar
                                 </button>
+                                {% if petition_model %}
+                                <button type="button" class="btn btn-outline-warning btn-sm" onclick="saveAsExample()" title="Salvar como template exemplar para melhorar futuras gerações">
+                                    <i class="fas fa-star me-1"></i>Salvar como Exemplo
+                                </button>
+                                {% endif %}
                                 <small class="text-muted ms-2">
                                     <i class="fas fa-info-circle"></i> Master não consome créditos
                                 </small>
+                            </div>
+                            
+                            <!-- Feedback após geração com IA -->
+                            <div id="ai-feedback-container" class="mt-3 d-none">
+                                <div class="alert alert-light border">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <span class="small"><i class="fas fa-robot me-1"></i>O template gerado foi útil?</span>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-success" onclick="sendFeedback(5, 'positive')">
+                                                <i class="fas fa-thumbs-up"></i> Ótimo
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="sendFeedback(3, 'neutral')">
+                                                <i class="fas fa-meh"></i> OK
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" onclick="sendFeedback(1, 'negative')">
+                                                <i class="fas fa-thumbs-down"></i> Ruim
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -667,9 +692,10 @@ Valor da causa: R$ {{ valor_causa }}
         const selectedSections = document.getElementById('selected-sections');
         const sectionIds = selectedSections ? Array.from(selectedSections.options).map(opt => parseInt(opt.value)) : [];
         
-        // Obter nome e descrição do modelo
+        // Obter nome, descrição e tipo do modelo
         const modelName = document.getElementById('name').value || 'Petição';
         const modelDescription = document.getElementById('description').value || '';
+        const petitionTypeId = document.getElementById('petition_type_id').value || null;
 
         let fetchUrl, fetchBody;
         
@@ -679,11 +705,13 @@ Valor da causa: R$ {{ valor_causa }}
             fetchBody = JSON.stringify({});
         } else {
             // Criando novo modelo - usar rota de preview
+            // Enviar petition_type_id para buscar exemplos do tipo correto
             fetchUrl = '/admin/petitions/models/generate_template_preview';
             fetchBody = JSON.stringify({
                 name: modelName,
                 description: modelDescription,
-                section_ids: sectionIds
+                section_ids: sectionIds,
+                petition_type_id: petitionTypeId ? parseInt(petitionTypeId) : null
             });
         }
 
@@ -708,6 +736,11 @@ Valor da causa: R$ {{ valor_causa }}
                 document.getElementById('template_content').value = data.template;
                 const aiMsg = data.ai_generated ? ' (gerado com IA - 2 créditos)' : ' (template básico - grátis)';
                 showToast('Template gerado com sucesso!' + aiMsg, 'success');
+                
+                // Mostrar botões de feedback se foi gerado com IA
+                if (data.ai_generated) {
+                    showFeedbackContainer(data.template);
+                }
             } else {
                 showToast('Erro ao gerar template: ' + (data.error || 'Erro desconhecido'), 'error');
             }
@@ -831,6 +864,81 @@ Valor da causa: R$ {{ valor_causa }}
             button.innerHTML = originalText;
             button.disabled = false;
         });
+    };
+
+    // Salvar template como exemplo de alta qualidade
+    window.saveAsExample = function() {
+        const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
+        
+        if (!petitionModelId) {
+            showToast('Salve o modelo primeiro antes de marcar como exemplo', 'warning');
+            return;
+        }
+        
+        const template = document.getElementById('template_content').value;
+        if (!template.trim()) {
+            showToast('Template vazio - nada para salvar como exemplo', 'warning');
+            return;
+        }
+
+        if (!confirm('Salvar este template como exemplo de alta qualidade?\n\nTemplates exemplares são usados pela IA para melhorar futuras gerações.')) {
+            return;
+        }
+
+        fetch(`/admin/petitions/models/${petitionModelId}/save_as_example`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('⭐ Template salvo como exemplo! A IA usará este padrão para melhorar futuras gerações.', 'success');
+            } else {
+                showToast('Erro: ' + (data.error || 'Erro desconhecido'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showToast('Erro ao salvar exemplo', 'error');
+        });
+    };
+
+    // Enviar feedback sobre template gerado
+    let lastGeneratedTemplate = '';
+    
+    window.sendFeedback = function(rating, feedbackType) {
+        const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
+        
+        fetch('/admin/petitions/templates/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model_id: petitionModelId,
+                template: lastGeneratedTemplate,
+                rating: rating,
+                feedback_type: feedbackType,
+                action_taken: rating >= 4 ? 'used_as_is' : 'edited'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('ai-feedback-container').classList.add('d-none');
+                showToast('Obrigado pelo feedback! Isso ajuda a melhorar a IA.', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao enviar feedback:', error);
+        });
+    };
+
+    // Mostrar feedback container após geração
+    window.showFeedbackContainer = function(template) {
+        lastGeneratedTemplate = template;
+        const container = document.getElementById('ai-feedback-container');
+        if (container) {
+            container.classList.remove('d-none');
+        }
     };
 
     // Toggle modal de ajuda

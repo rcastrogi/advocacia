@@ -57,6 +57,11 @@
                        title="Seções de Petição">
                         <i class="fas fa-puzzle-piece me-2"></i><span>Seções de Petição</span>
                     </a>
+                    <a href="{{ url_for('admin.petition_template_examples_list') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'template_example' in request.endpoint else '' }}"
+                       title="Exemplos para IA">
+                        <i class="fas fa-star text-warning me-2"></i><span>Exemplos para IA</span>
+                    </a>
                     <a href="{{ url_for('admin.roadmap') }}" 
                        class="list-group-item list-group-item-action {{ 'active' if 'roadmap' in request.endpoint and 'feedback' not in request.endpoint else '' }}"
                        title="Roadmap">

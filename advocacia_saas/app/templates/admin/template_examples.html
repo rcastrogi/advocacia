@@ -1,0 +1,300 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ title }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-graduation-cap text-primary me-2"></i>
+                Templates Exemplares
+            </h1>
+            <p class="text-muted mb-0">
+                Templates de alta qualidade usados como referência para a IA na geração de novos templates.
+            </p>
+        </div>
+        <div>
+            <span class="badge bg-primary fs-6">
+                <i class="fas fa-brain me-1"></i>
+                Few-Shot Learning
+            </span>
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-start">
+            <i class="fas fa-lightbulb fa-lg me-3 mt-1"></i>
+            <div>
+                <strong>Como funciona o aprendizado:</strong>
+                <ul class="mb-0 mt-2">
+                    <li>Templates exemplares são usados como referência quando a IA gera novos templates</li>
+                    <li>Quanto maior a qualidade (★), mais provável será usado como exemplo</li>
+                    <li>A IA aprende o estilo, estrutura e linguagem jurídica dos melhores templates</li>
+                    <li>Para adicionar um exemplo, edite um modelo de petição e clique em "Salvar como Exemplo"</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-file-alt fa-2x opacity-50 me-3"></i>
+                        <div>
+                            <h4 class="mb-0">{{ examples | length }}</h4>
+                            <small>Total de Exemplos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle fa-2x opacity-50 me-3"></i>
+                        <div>
+                            <h4 class="mb-0">{{ examples | selectattr('is_active') | list | length }}</h4>
+                            <small>Ativos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-star fa-2x opacity-50 me-3"></i>
+                        <div>
+                            {% set total_score = examples | map(attribute='quality_score') | sum %}
+                            {% set avg_score = (total_score / examples|length) if examples|length > 0 else 0 %}
+                            <h4 class="mb-0">{{ "%.1f"|format(avg_score) }}</h4>
+                            <small>Qualidade Média</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-sync fa-2x opacity-50 me-3"></i>
+                        <div>
+                            <h4 class="mb-0">{{ examples | map(attribute='usage_count') | sum }}</h4>
+                            <small>Usos Totais</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Templates -->
+    {% if examples %}
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th style="width: 30%">Template</th>
+                            <th>Tipo</th>
+                            <th class="text-center">Qualidade</th>
+                            <th class="text-center">Usos</th>
+                            <th class="text-center">Status</th>
+                            <th>Tags</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for example in examples %}
+                        <tr id="example-row-{{ example.id }}">
+                            <td>
+                                <div class="fw-bold">{{ example.name }}</div>
+                                <small class="text-muted">
+                                    {{ example.description[:60] }}{% if example.description|length > 60 %}...{% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                {% if example.petition_type %}
+                                <span class="badge bg-secondary">
+                                    {{ example.petition_type.name }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="stars" title="{{ example.quality_score }}/5">
+                                    {% for i in range(5) %}
+                                    <i class="fas fa-star {% if i < example.quality_score %}text-warning{% else %}text-muted opacity-25{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark">
+                                    {{ example.usage_count }}x
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {% if example.is_active %}bg-success{% else %}bg-secondary{% endif %}" id="status-badge-{{ example.id }}">
+                                    {% if example.is_active %}Ativo{% else %}Inativo{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if example.tags %}
+                                {% for tag in example.tags.split(',')[:3] %}
+                                <span class="badge bg-light text-dark me-1">{{ tag.strip() }}</span>
+                                {% endfor %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="viewExample({{ example.id }})" title="Ver template">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-outline-{{ 'warning' if example.is_active else 'success' }}" 
+                                            onclick="toggleExample({{ example.id }})" 
+                                            title="{{ 'Desativar' if example.is_active else 'Ativar' }}">
+                                        <i class="fas fa-{{ 'pause' if example.is_active else 'play' }}"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="deleteExample({{ example.id }}, '{{ example.name|e }}')" title="Excluir">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+            <h5>Nenhum template exemplar cadastrado</h5>
+            <p class="text-muted mb-4">
+                Templates exemplares ajudam a IA a gerar templates melhores.<br>
+                Para adicionar um exemplo, edite um modelo de petição de alta qualidade e clique em "Salvar como Exemplo".
+            </p>
+            <a href="{{ url_for('admin.petition_models') }}" class="btn btn-primary">
+                <i class="fas fa-file-alt me-2"></i>
+                Ver Modelos de Petição
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para visualizar template -->
+<div class="modal fade" id="viewTemplateModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-code me-2"></i>
+                    <span id="modal-template-name">Template</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="modal-template-content" class="bg-light p-3 rounded" style="max-height: 500px; overflow-y: auto;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dados dos templates em JSON para JS -->
+<script id="examples-data" type="application/json">
+{{ examples | map(attribute='__dict__') | list | tojson if examples else '[]' }}
+</script>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+// Armazenar dados dos templates
+const examplesData = {};
+{% for example in examples %}
+examplesData[{{ example.id }}] = {
+    name: "{{ example.name | e }}",
+    content: {{ example.template_content | tojson }}
+};
+{% endfor %}
+
+function viewExample(id) {
+    const data = examplesData[id];
+    if (data) {
+        document.getElementById('modal-template-name').textContent = data.name;
+        document.getElementById('modal-template-content').textContent = data.content;
+        new bootstrap.Modal(document.getElementById('viewTemplateModal')).show();
+    }
+}
+
+function toggleExample(id) {
+    fetch(`{{ url_for('admin.template_examples_list') }}/${id}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro ao alterar status: ' + (data.error || 'Erro desconhecido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Erro ao processar requisição');
+    });
+}
+
+function deleteExample(id, name) {
+    if (!confirm(`Tem certeza que deseja excluir o template exemplar "${name}"?\n\nEsta ação não pode ser desfeita.`)) {
+        return;
+    }
+    
+    fetch(`{{ url_for('admin.template_examples_list') }}/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById(`example-row-${id}`).remove();
+            // Verificar se ainda há exemplos na tabela
+            const tbody = document.querySelector('tbody');
+            if (tbody && tbody.children.length === 0) {
+                location.reload();
+            }
+        } else {
+            alert('Erro ao excluir: ' + (data.error || 'Erro desconhecido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Erro ao processar requisição');
+    });
+}
+</script>
+{% endblock %}
