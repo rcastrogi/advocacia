@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Evento - Calendário Jurídico{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-calendar-plus me-2 text-primary"></i>Novo Evento
+                    </h1>
+                    <p class="text-muted">Adicione um novo compromisso ao calendário</p>
+                </div>
+                <a href="{{ url_for('advanced.calendar') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Voltar ao Calendário
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Dados do Evento</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('advanced.new_calendar_event') }}">
+                        <!-- Título -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                   placeholder="Ex: Audiência de Conciliação">
+                        </div>
+
+                        <!-- Descrição -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"
+                                      placeholder="Detalhes do evento..."></textarea>
+                        </div>
+
+                        <div class="row">
+                            <!-- Data/Hora Início -->
+                            <div class="col-md-6 mb-3">
+                                <label for="start_datetime" class="form-label">Início <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="start_datetime" 
+                                       name="start_datetime" required>
+                            </div>
+
+                            <!-- Data/Hora Fim -->
+                            <div class="col-md-6 mb-3">
+                                <label for="end_datetime" class="form-label">Término <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="end_datetime" 
+                                       name="end_datetime" required>
+                            </div>
+                        </div>
+
+                        <!-- Dia Inteiro -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="all_day" name="all_day">
+                                <label class="form-check-label" for="all_day">
+                                    Dia inteiro
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Tipo de Evento -->
+                            <div class="col-md-6 mb-3">
+                                <label for="event_type" class="form-label">Tipo de Evento <span class="text-danger">*</span></label>
+                                <select class="form-select" id="event_type" name="event_type" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="audiencia">🎤 Audiência</option>
+                                    <option value="prazo">⏰ Prazo Processual</option>
+                                    <option value="reuniao">👥 Reunião com Cliente</option>
+                                    <option value="despacho">📝 Despacho</option>
+                                    <option value="pericia">🔬 Perícia</option>
+                                    <option value="julgamento">⚖️ Julgamento</option>
+                                    <option value="protocolo">📤 Protocolo</option>
+                                    <option value="outro">📌 Outro</option>
+                                </select>
+                            </div>
+
+                            <!-- Prioridade -->
+                            <div class="col-md-6 mb-3">
+                                <label for="priority" class="form-label">Prioridade</label>
+                                <select class="form-select" id="priority" name="priority">
+                                    <option value="low">🟢 Baixa</option>
+                                    <option value="normal" selected>🟡 Normal</option>
+                                    <option value="high">🟠 Alta</option>
+                                    <option value="urgent">🔴 Urgente</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Local -->
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">Local</label>
+                                <input type="text" class="form-control" id="location" name="location"
+                                       placeholder="Ex: Fórum Central, Sala 201">
+                            </div>
+
+                            <!-- Link Virtual -->
+                            <div class="col-md-6 mb-3">
+                                <label for="virtual_link" class="form-label">Link da Reunião Virtual</label>
+                                <input type="url" class="form-control" id="virtual_link" name="virtual_link"
+                                       placeholder="https://meet.google.com/...">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Processo Vinculado -->
+                            <div class="col-md-6 mb-3">
+                                <label for="process_id" class="form-label">Processo Vinculado</label>
+                                <select class="form-select" id="process_id" name="process_id">
+                                    <option value="">Nenhum processo</option>
+                                    {% for process in processes %}
+                                    <option value="{{ process.id }}">{{ process.number }} - {{ process.title or 'Sem título' }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Cliente Vinculado -->
+                            <div class="col-md-6 mb-3">
+                                <label for="client_id" class="form-label">Cliente Vinculado</label>
+                                <select class="form-select" id="client_id" name="client_id">
+                                    <option value="">Nenhum cliente</option>
+                                    {% for client in clients %}
+                                    <option value="{{ client.id }}">{{ client.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Observações -->
+                        <div class="mb-4">
+                            <label for="notes" class="form-label">Observações</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2"
+                                      placeholder="Notas adicionais..."></textarea>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Salvar Evento
+                            </button>
+                            <a href="{{ url_for('advanced.calendar') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dicas Laterais -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Dicas</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Vincule eventos a processos para melhor organização</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Use prioridade "Urgente" para prazos fatais</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Adicione links de reunião para audiências virtuais</small>
+                        </li>
+                        <li>
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Eventos aparecem no calendário com cores por tipo</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-palette me-2"></i>Legenda de Cores</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge" style="background-color: #dc3545;">Audiência</span>
+                        <span class="badge" style="background-color: #ffc107; color: #000;">Prazo</span>
+                        <span class="badge" style="background-color: #28a745;">Reunião</span>
+                        <span class="badge" style="background-color: #17a2b8;">Despacho</span>
+                        <span class="badge" style="background-color: #6f42c1;">Perícia</span>
+                        <span class="badge" style="background-color: #fd7e14;">Julgamento</span>
+                        <span class="badge" style="background-color: #20c997;">Protocolo</span>
+                        <span class="badge" style="background-color: #6c757d;">Outro</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Definir data/hora atual como padrão
+    const now = new Date();
+    const startInput = document.getElementById('start_datetime');
+    const endInput = document.getElementById('end_datetime');
+    
+    // Formatar para datetime-local
+    const formatDateTime = (date) => {
+        const pad = (n) => n.toString().padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+    
+    // Data de início: próxima hora cheia
+    now.setMinutes(0);
+    now.setHours(now.getHours() + 1);
+    startInput.value = formatDateTime(now);
+    
+    // Data de término: 1 hora depois
+    const endDate = new Date(now);
+    endDate.setHours(endDate.getHours() + 1);
+    endInput.value = formatDateTime(endDate);
+    
+    // Atualizar hora de término automaticamente quando início mudar
+    startInput.addEventListener('change', function() {
+        const start = new Date(this.value);
+        const end = new Date(start);
+        end.setHours(end.getHours() + 1);
+        endInput.value = formatDateTime(end);
+    });
+    
+    // Checkbox dia inteiro
+    const allDayCheckbox = document.getElementById('all_day');
+    allDayCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            // Converter para apenas data
+            const startDate = new Date(startInput.value);
+            const endDate = new Date(endInput.value);
+            
+            startInput.type = 'date';
+            endInput.type = 'date';
+            
+            startInput.value = startDate.toISOString().split('T')[0];
+            endInput.value = endDate.toISOString().split('T')[0];
+        } else {
+            // Voltar para datetime-local
+            const startDate = new Date(startInput.value + 'T09:00');
+            const endDate = new Date(endInput.value + 'T10:00');
+            
+            startInput.type = 'datetime-local';
+            endInput.type = 'datetime-local';
+            
+            startInput.value = formatDateTime(startDate);
+            endInput.value = formatDateTime(endDate);
+        }
+    });
+});
+</script>
+{% endblock %}
