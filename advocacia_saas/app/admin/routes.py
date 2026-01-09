@@ -4103,27 +4103,43 @@ def petition_model_generate_template(model_id):
             # Buscar templates exemplares para few-shot learning
             # IMPORTANTE: Busca apenas exemplos do MESMO tipo de petição
             from app.models import TemplateExample
+
             examples = TemplateExample.get_best_examples(
-                petition_type_id=petition_model.petition_type_id,
-                limit=2
+                petition_type_id=petition_model.petition_type_id, limit=2
             )
-            
+
             # Obter informações do tipo
-            tipo_peticao = petition_model.petition_type.name if petition_model.petition_type else "Cível"
-            categoria_tipo = petition_model.petition_type.category if petition_model.petition_type else ""
-            
+            tipo_peticao = (
+                petition_model.petition_type.name
+                if petition_model.petition_type
+                else "Cível"
+            )
+            categoria_tipo = (
+                petition_model.petition_type.category
+                if petition_model.petition_type
+                else ""
+            )
+
             # Construir seção de exemplos para o prompt
             examples_section = ""
             if examples:
                 examples_section = "\n═══════════════════════════════════════════════════════════════\n"
-                examples_section += f"📚 EXEMPLOS DE TEMPLATES DO TIPO '{tipo_peticao.upper()}'\n"
-                examples_section += "═══════════════════════════════════════════════════════════════\n"
+                examples_section += (
+                    f"📚 EXEMPLOS DE TEMPLATES DO TIPO '{tipo_peticao.upper()}'\n"
+                )
+                examples_section += (
+                    "═══════════════════════════════════════════════════════════════\n"
+                )
                 examples_section += f"Estes são exemplos de templates APROVADOS do mesmo tipo ({tipo_peticao}).\n"
                 examples_section += "Use como REFERÊNCIA de estilo, estrutura e linguagem jurídica específica:\n"
-                
+
                 for i, ex in enumerate(examples, 1):
                     # Mostrar apenas os primeiros 1500 caracteres de cada exemplo
-                    preview = ex.template_content[:1500] + "..." if len(ex.template_content) > 1500 else ex.template_content
+                    preview = (
+                        ex.template_content[:1500] + "..."
+                        if len(ex.template_content) > 1500
+                        else ex.template_content
+                    )
                     examples_section += f"\n--- EXEMPLO {i}: {ex.name} ---\n{preview}\n"
                     ex.increment_usage()  # Incrementar contador de uso
 
@@ -4364,20 +4380,28 @@ def petition_model_generate_template_preview():
             examples_section = ""
             if petition_type_id:
                 from app.models import TemplateExample
+
                 examples = TemplateExample.get_best_examples(
-                    petition_type_id=petition_type_id,
-                    limit=2
+                    petition_type_id=petition_type_id, limit=2
                 )
                 if examples:
                     examples_section = "\n═══════════════════════════════════════════════════════════════\n"
-                    examples_section += f"📚 EXEMPLOS DE TEMPLATES DO TIPO '{tipo_peticao.upper()}'\n"
+                    examples_section += (
+                        f"📚 EXEMPLOS DE TEMPLATES DO TIPO '{tipo_peticao.upper()}'\n"
+                    )
                     examples_section += "═══════════════════════════════════════════════════════════════\n"
                     examples_section += f"Estes são exemplos de templates APROVADOS do mesmo tipo ({tipo_peticao}).\n"
                     examples_section += "Use como REFERÊNCIA de estilo, estrutura e linguagem jurídica específica:\n"
-                    
+
                     for i, ex in enumerate(examples, 1):
-                        preview = ex.template_content[:1500] + "..." if len(ex.template_content) > 1500 else ex.template_content
-                        examples_section += f"\n--- EXEMPLO {i}: {ex.name} ---\n{preview}\n"
+                        preview = (
+                            ex.template_content[:1500] + "..."
+                            if len(ex.template_content) > 1500
+                            else ex.template_content
+                        )
+                        examples_section += (
+                            f"\n--- EXEMPLO {i}: {ex.name} ---\n{preview}\n"
+                        )
                         ex.increment_usage()
 
             # Construir descrição das seções para o prompt
@@ -4839,8 +4863,7 @@ def petition_template_examples_list():
     from app.models import TemplateExample
 
     examples = TemplateExample.query.order_by(
-        TemplateExample.quality_score.desc(),
-        TemplateExample.usage_count.desc()
+        TemplateExample.quality_score.desc(), TemplateExample.usage_count.desc()
     ).all()
 
     return render_template(
@@ -4887,7 +4910,9 @@ def petition_template_example_new():
     )
 
 
-@bp.route("/petitions/templates/examples/<int:example_id>/edit", methods=["GET", "POST"])
+@bp.route(
+    "/petitions/templates/examples/<int:example_id>/edit", methods=["GET", "POST"]
+)
 @login_required
 def petition_template_example_edit(example_id):
     """Editar template exemplar"""
@@ -4934,15 +4959,15 @@ def petition_template_example_delete(example_id):
     try:
         db.session.delete(example)
         db.session.commit()
-        
+
         # Se for AJAX, retornar JSON
-        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+        if request.is_json or request.headers.get("Content-Type") == "application/json":
             return jsonify({"success": True})
-            
+
         flash("Template exemplar excluído com sucesso!", "success")
 
     except Exception as e:
-        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+        if request.is_json or request.headers.get("Content-Type") == "application/json":
             return jsonify({"success": False, "error": str(e)}), 500
         flash(f"Erro ao excluir template: {str(e)}", "error")
 
@@ -4964,14 +4989,14 @@ def petition_model_save_as_example(model_id):
 
     try:
         # Verificar se já existe um exemplo deste modelo
-        existing = TemplateExample.query.filter_by(
-            original_model_id=model_id
-        ).first()
+        existing = TemplateExample.query.filter_by(original_model_id=model_id).first()
 
         if existing:
             # Atualizar existente
             existing.template_content = petition_model.template_content
-            existing.quality_score = min(existing.quality_score + 1, 10)  # Aumentar score
+            existing.quality_score = min(
+                existing.quality_score + 1, 10
+            )  # Aumentar score
             flash("Template exemplar atualizado!", "success")
         else:
             # Criar novo
@@ -5138,37 +5163,40 @@ def audit_log_detail(log_id):
 def save_template_as_example(model_id):
     """Salvar um modelo de petição como template exemplar para few-shot learning"""
     _require_admin()
-    
+
     from app.models import TemplateExample
 
     petition_model = PetitionModel.query.get_or_404(model_id)
-    
+
     # Verificar se já existe um exemplo baseado neste modelo
-    existing = TemplateExample.query.filter_by(
-        original_model_id=model_id
-    ).first()
-    
+    existing = TemplateExample.query.filter_by(original_model_id=model_id).first()
+
     if existing:
-        return jsonify({
-            "success": False,
-            "error": "Este modelo já foi salvo como exemplo de referência."
-        }), 400
-    
+        return jsonify(
+            {
+                "success": False,
+                "error": "Este modelo já foi salvo como exemplo de referência.",
+            }
+        ), 400
+
     # Verificar se tem conteúdo de template
     if not petition_model.template_content:
-        return jsonify({
-            "success": False,
-            "error": "O modelo não possui conteúdo de template para salvar."
-        }), 400
-    
+        return jsonify(
+            {
+                "success": False,
+                "error": "O modelo não possui conteúdo de template para salvar.",
+            }
+        ), 400
+
     data = request.get_json() or {}
     quality_score = data.get("quality_score", 5.0)
     tags = data.get("tags", "")
-    
+
     # Criar o exemplo
     example = TemplateExample(
         name=petition_model.name,
-        description=petition_model.description or f"Template exemplar: {petition_model.name}",
+        description=petition_model.description
+        or f"Template exemplar: {petition_model.name}",
         template_content=petition_model.template_content,
         petition_type_id=petition_model.petition_type_id,
         tags=tags,
@@ -5176,19 +5204,23 @@ def save_template_as_example(model_id):
         source="approved_model",
         original_model_id=model_id,
         created_by=current_user.id,
-        is_active=True
+        is_active=True,
     )
-    
+
     db.session.add(example)
     db.session.commit()
-    
-    flash(f"Template '{petition_model.name}' salvo como exemplo de referência!", "success")
-    
-    return jsonify({
-        "success": True,
-        "message": "Template salvo como exemplo de referência para melhorar gerações futuras da IA.",
-        "example_id": example.id
-    })
+
+    flash(
+        f"Template '{petition_model.name}' salvo como exemplo de referência!", "success"
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Template salvo como exemplo de referência para melhorar gerações futuras da IA.",
+            "example_id": example.id,
+        }
+    )
 
 
 @bp.route("/petitions/models/<int:model_id>/ai_feedback", methods=["POST"])
@@ -5196,45 +5228,48 @@ def save_template_as_example(model_id):
 def save_ai_generation_feedback(model_id):
     """Salvar feedback sobre geração de template por IA"""
     _require_admin()
-    
+
     from app.models import AIGenerationFeedback
 
     petition_model = PetitionModel.query.get_or_404(model_id)
     data = request.get_json() or {}
-    
+
     # Validar dados
     rating = data.get("rating")
     if not rating or not (1 <= int(rating) <= 5):
-        return jsonify({
-            "success": False,
-            "error": "Rating deve ser um número entre 1 e 5."
-        }), 400
-    
+        return jsonify(
+            {"success": False, "error": "Rating deve ser um número entre 1 e 5."}
+        ), 400
+
     feedback = AIGenerationFeedback(
         petition_model_id=model_id,
         generated_template=data.get("generated_template", ""),
         rating=int(rating),
-        feedback_type=data.get("feedback_type", "general"),  # positive, negative, suggestion, general
+        feedback_type=data.get(
+            "feedback_type", "general"
+        ),  # positive, negative, suggestion, general
         feedback_text=data.get("feedback_text", ""),
         action_taken=data.get("action_taken", "none"),  # used, edited, discarded, none
         edited_template=data.get("edited_template"),
         prompt_used=data.get("prompt_used"),
         sections_used=data.get("sections_used"),
-        user_id=current_user.id
+        user_id=current_user.id,
     )
-    
+
     db.session.add(feedback)
     db.session.commit()
-    
+
     # Se feedback muito positivo (4-5 estrelas) e foi usado/editado, sugerir salvar como exemplo
     suggest_save = rating >= 4 and data.get("action_taken") in ["used", "edited"]
-    
-    return jsonify({
-        "success": True,
-        "message": "Obrigado pelo feedback! Isso nos ajuda a melhorar a IA.",
-        "feedback_id": feedback.id,
-        "suggest_save_as_example": suggest_save
-    })
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Obrigado pelo feedback! Isso nos ajuda a melhorar a IA.",
+            "feedback_id": feedback.id,
+            "suggest_save_as_example": suggest_save,
+        }
+    )
 
 
 @bp.route("/template-examples")
@@ -5242,18 +5277,15 @@ def save_ai_generation_feedback(model_id):
 def template_examples_list():
     """Lista todos os templates exemplares"""
     _require_admin()
-    
+
     from app.models import TemplateExample
-    
+
     examples = TemplateExample.query.order_by(
-        TemplateExample.quality_score.desc(),
-        TemplateExample.usage_count.desc()
+        TemplateExample.quality_score.desc(), TemplateExample.usage_count.desc()
     ).all()
-    
+
     return render_template(
-        "admin/template_examples.html",
-        title="Templates Exemplares",
-        examples=examples
+        "admin/template_examples.html", title="Templates Exemplares", examples=examples
     )
 
 
@@ -5262,20 +5294,17 @@ def template_examples_list():
 def toggle_template_example(example_id):
     """Ativar/desativar um template exemplar"""
     _require_admin()
-    
+
     from app.models import TemplateExample
-    
+
     example = TemplateExample.query.get_or_404(example_id)
     example.is_active = not example.is_active
     db.session.commit()
-    
+
     status = "ativado" if example.is_active else "desativado"
     flash(f"Template exemplar '{example.name}' {status}!", "success")
-    
-    return jsonify({
-        "success": True,
-        "is_active": example.is_active
-    })
+
+    return jsonify({"success": True, "is_active": example.is_active})
 
 
 @bp.route("/template-examples/<int:example_id>", methods=["DELETE"])
@@ -5283,31 +5312,31 @@ def toggle_template_example(example_id):
 def delete_template_example(example_id):
     """Excluir um template exemplar"""
     _require_admin()
-    
+
     from app.models import TemplateExample
-    
+
     example = TemplateExample.query.get_or_404(example_id)
     name = example.name
-    
+
     db.session.delete(example)
     db.session.commit()
-    
+
     flash(f"Template exemplar '{name}' excluído!", "success")
-    
+
     return jsonify({"success": True})
 
 
 @bp.route("/template-examples/<int:example_id>/update", methods=["POST"])
-@login_required  
+@login_required
 def update_template_example(example_id):
     """Atualizar dados de um template exemplar"""
     _require_admin()
-    
+
     from app.models import TemplateExample
-    
+
     example = TemplateExample.query.get_or_404(example_id)
     data = request.get_json() or {}
-    
+
     if "quality_score" in data:
         example.quality_score = min(max(float(data["quality_score"]), 1.0), 5.0)
     if "tags" in data:
@@ -5316,13 +5345,10 @@ def update_template_example(example_id):
         example.description = data["description"]
     if "is_active" in data:
         example.is_active = bool(data["is_active"])
-    
+
     db.session.commit()
-    
-    return jsonify({
-        "success": True,
-        "message": "Template exemplar atualizado!"
-    })
+
+    return jsonify({"success": True, "message": "Template exemplar atualizado!"})
 
 
 @bp.route("/audit-logs/entity/<entity_type>/<int:entity_id>")

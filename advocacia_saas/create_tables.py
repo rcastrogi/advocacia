@@ -1,10 +1,11 @@
 """Script para criar tabelas diretamente no banco"""
+
 from app import create_app, db
 from sqlalchemy import text
 
 app = create_app()
 with app.app_context():
-    sql1 = '''
+    sql1 = """
     CREATE TABLE IF NOT EXISTS template_examples (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -20,9 +21,9 @@ with app.app_context():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         created_by INTEGER REFERENCES "user"(id)
     );
-    '''
-    
-    sql2 = '''
+    """
+
+    sql2 = """
     CREATE TABLE IF NOT EXISTS ai_generation_feedback (
         id SERIAL PRIMARY KEY,
         petition_model_id INTEGER REFERENCES petition_models(id),
@@ -37,19 +38,19 @@ with app.app_context():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         user_id INTEGER REFERENCES "user"(id)
     );
-    '''
-    
+    """
+
     try:
         db.session.execute(text(sql1))
-        print('✅ Tabela template_examples criada')
+        print("✅ Tabela template_examples criada")
     except Exception as e:
-        print(f'❌ template_examples: {e}')
-    
+        print(f"❌ template_examples: {e}")
+
     try:
         db.session.execute(text(sql2))
-        print('✅ Tabela ai_generation_feedback criada')
+        print("✅ Tabela ai_generation_feedback criada")
     except Exception as e:
-        print(f'❌ ai_generation_feedback: {e}')
-    
+        print(f"❌ ai_generation_feedback: {e}")
+
     db.session.commit()
-    print('✅ Tabelas criadas com sucesso!')
+    print("✅ Tabelas criadas com sucesso!")
