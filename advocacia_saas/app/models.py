@@ -4798,3 +4798,128 @@ class AgendaBlock(db.Model):
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+class TemplateExample(db.Model):
+    """
+    Armazena templates exemplares aprovados para uso como referência na geração com IA.
+    Implementa few-shot learning - a IA aprende com exemplos de alta qualidade.
+    """
+
+    __tablename__ = "template_examples"
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Informações do template
+    name = db.Column(db.String(255), nullable=False)  # Nome descritivo
+    description = db.Column(db.Text)  # Descrição do tipo de petição
+    template_content = db.Column(db.Text, nullable=False)  # O template Jinja2
+    
+    # Categorização
+    petition_type_id = db.Column(db.Integer, db.ForeignKey("petition_types.id"), nullable=True)
+    petition_type = db.relationship("PetitionType")
+    
+    # Tags para busca (ex: "civel,cobranca,indenizacao")
+    tags = db.Column(db.String(500))
+    
+    # Qualidade e uso
+    quality_score = db.Column(db.Integer, default=5)  # 1-10
+    usage_count = db.Column(db.Integer, default=0)  # Quantas vezes foi usado como exemplo
+    is_active = db.Column(db.Boolean, default=True)
+    
+    # Origem
+    source = db.Column(db.String(50), default="manual")  # manual, ai_approved, imported
+    original_model_id = db.Column(db.Integer, db.ForeignKey("petition_models.id"), nullable=True)
+    
+    # Metadados
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    
+    creator = db.relationship("User", foreign_keys=[created_by])
+    original_model = db.relationship("PetitionModel", foreign_keys=[original_model_id])
+
+    @classmethod
+    def get_best_examples(cls, petition_type_id=None, tags=None, limit=2):
+        """
+        Retorna os melhores templates exemplares para uso no prompt.
+        Prioriza por: qualidade, uso recente, tipo de petição.
+        """
+        query = cls.query.filter(cls.is_active == True)
+        
+        # Filtrar por tipo se especificado
+        if petition_type_id:
+            # Primeiro tenta do mesmo tipo, depois genéricos
+            same_type = query.filter(cls.petition_type_id == petition_type_id)
+            if same_type.count() > 0:
+                query = same_type
+        
+        # Filtrar por tags se especificado
+        if tags:
+            for tag in tags[:3]:  # Máximo 3 tags
+                query = query.filter(cls.tags.ilike(f"%{tag}%"))
+        
+        # Ordenar por qualidade e retornar
+        return query.order_by(
+            cls.quality_score.desc(),
+            cls.usage_count.desc()
+        ).limit(limit).all()
+
+    def increment_usage(self):
+        """Incrementa contador de uso."""
+        self.usage_count += 1
+        db.session.commit()
+
+    def __repr__(self):
+        return f"<TemplateExample {self.name}>"
+
+
+class AIGenerationFeedback(db.Model):
+    """
+    Armazena feedback dos usuários sobre templates gerados pela IA.
+    Usado para melhorar a qualidade das gerações futuras.
+    """
+
+    __tablename__ = "ai_generation_feedback"
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Referência ao modelo (se aplicável)
+    petition_model_id = db.Column(db.Integer, db.ForeignKey("petition_models.id"), nullable=True)
+    
+    # O template gerado
+    generated_template = db.Column(db.Text, nullable=False)
+    
+    # Feedback do usuário
+    rating = db.Column(db.Integer, nullable=False)  # 1-5 estrelas
+    feedback_type = db.Column(db.String(20))  # positive, negative, neutral
+    feedback_text = db.Column(db.Text)  # Comentário opcional
+    
+    # O que o usuário fez depois
+    action_taken = db.Column(db.String(30))  # used_as_is, edited, discarded
+    edited_template = db.Column(db.Text)  # Se editou, qual foi o resultado
+    
+    # Contexto da geração
+    prompt_used = db.Column(db.Text)  # O prompt que gerou este template
+    sections_used = db.Column(db.JSON)  # IDs das seções usadas
+    
+    # Metadados
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    
+    user = db.relationship("User", foreign_keys=[user_id])
+    petition_model = db.relationship("PetitionModel", foreign_keys=[petition_model_id])
+
+    @classmethod
+    def get_average_rating(cls, petition_type_id=None):
+        """Retorna a média de avaliações."""
+        from sqlalchemy import func
+        query = db.session.query(func.avg(cls.rating))
+        if petition_type_id:
+            query = query.join(PetitionModel).filter(
+                PetitionModel.petition_type_id == petition_type_id
+            )
+        result = query.scalar()
+        return round(result, 1) if result else 0
+
+    def __repr__(self):
+        return f"<AIGenerationFeedback {self.id} rating={self.rating}>"

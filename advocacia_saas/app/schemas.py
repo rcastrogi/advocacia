@@ -149,9 +149,7 @@ class PetitionModelSchema(Schema):
     """Validação de modelos de petição"""
 
     class Meta:
-        unknown = (
-            EXCLUDE  # Ignora campos extras como section_order, use_dynamic_form, etc.
-        )
+        unknown = EXCLUDE  # Ignora campos extras como section_order, etc.
 
     id = fields.Int(dump_only=True)
     name = fields.Str(
@@ -168,9 +166,26 @@ class PetitionModelSchema(Schema):
         allow_none=True,
         load_default="",
     )
-    is_active = fields.Bool(dump_default=True)
+    is_active = fields.Bool(load_default=False)
+    use_dynamic_form = fields.Bool(load_default=False)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
+
+    @pre_load
+    def process_checkboxes(self, data, **kwargs):
+        """Converte valores de checkbox HTML para booleanos"""
+        # Checkboxes HTML enviam "on" quando marcados ou não enviam nada
+        for field in ["is_active", "use_dynamic_form"]:
+            if field in data:
+                value = data[field]
+                if value in ["on", "true", "1", True]:
+                    data[field] = True
+                else:
+                    data[field] = False
+            else:
+                # Se não enviou, checkbox não está marcado
+                data[field] = False
+        return data
 
 
 class PetitionSchema(Schema):

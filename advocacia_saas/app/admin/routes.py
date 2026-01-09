@@ -3803,7 +3803,7 @@ def petition_model_edit(model_id):
             current_app.logger.info(f"Template set to model {model_id}")
 
             # Atualizar seções do modelo
-            section_order_str = data.get("section_order", "")
+            section_order_str = request.form.get("section_order", "")
             if section_order_str:
                 # Parse da string de ordem: "order-1,order-2,order-3"
                 section_ids = []
@@ -4057,9 +4057,35 @@ def petition_model_generate_template(model_id):
 
         ai_service = AIService()
 
-        # Obter seções ordenadas
+        # Obter seções ordenadas com seus campos
         sections = petition_model.get_sections_ordered()
-        section_names = [ms.section.name for ms in sections if ms.section]
+        
+        # Construir informações detalhadas das seções
+        sections_info = []
+        all_fields = []
+        for ms in sections:
+            section = ms.section
+            if section:
+                section_data = {
+                    "name": section.name,
+                    "description": section.description or "",
+                    "fields": []
+                }
+                
+                # Extrair campos da seção
+                if section.fields_schema:
+                    fields = section.fields_schema if isinstance(section.fields_schema, list) else []
+                    for field in fields:
+                        field_info = {
+                            "name": field.get("name", ""),
+                            "label": field.get("label", ""),
+                            "type": field.get("type", "text"),
+                            "required": field.get("required", False)
+                        }
+                        section_data["fields"].append(field_info)
+                        all_fields.append(field_info)
+                
+                sections_info.append(section_data)
 
         # Se IA está configurada, usar para gerar template inteligente
         if ai_service.is_configured():
@@ -4070,31 +4096,90 @@ def petition_model_generate_template(model_id):
             if not has_credits:
                 return jsonify({"success": False, "error": error_msg}), 402
 
-            # Construir prompt para a IA
-            prompt = f"""Você é um especialista em petições jurídicas brasileiras. 
-Gere um template Jinja2 profissional para uma petição com as seguintes características:
+            # Construir descrição das seções para o prompt
+            sections_description = ""
+            for i, sec in enumerate(sections_info, 1):
+                sections_description += f"\n{i}. **{sec['name']}**"
+                if sec['description']:
+                    sections_description += f" - {sec['description']}"
+                if sec['fields']:
+                    sections_description += "\n   Campos disponíveis:"
+                    for f in sec['fields']:
+                        req = " (obrigatório)" if f['required'] else ""
+                        sections_description += f"\n   - {f['label']} ({f['name']}): tipo {f['type']}{req}"
 
-**Tipo de Petição:** {petition_model.name}
-**Descrição:** {petition_model.description or "Não especificada"}
+            # Construir prompt otimizado
+            prompt = f"""Você é um advogado sênior brasileiro especialista em redação de peças processuais.
+Crie um template Jinja2 COMPLETO e PROFISSIONAL para a seguinte petição:
 
-**Seções que devem estar presentes (na ordem):**
-{chr(10).join([f"- {name}" for name in section_names]) if section_names else "- Nenhuma seção definida ainda"}
+═══════════════════════════════════════════════════════════════
+📋 INFORMAÇÕES DO MODELO
+═══════════════════════════════════════════════════════════════
 
-**Instruções:**
-1. Use variáveis Jinja2 no formato {{ nome_variavel }}
-2. O cabeçalho deve ser formal e adequado ao tipo de petição
-3. Inclua variáveis para: vara, autor_nome, autor_qualificacao, reu_nome, reu_qualificacao
-4. Para cada seção, crie um título em maiúsculas e uma variável correspondente
-5. O rodapé deve ter local, data, advogado_nome e advogado_oab
-6. Use linguagem jurídica formal brasileira
-7. Retorne APENAS o template, sem explicações
+**Nome:** {petition_model.name}
+**Descrição:** {petition_model.description or "Petição jurídica padrão"}
+**Tipo:** {petition_model.petition_type.name if petition_model.petition_type else "Cível"}
 
-Gere o template completo:"""
+═══════════════════════════════════════════════════════════════
+📑 SEÇÕES E CAMPOS DISPONÍVEIS
+═══════════════════════════════════════════════════════════════
+{sections_description if sections_description else "Nenhuma seção definida - crie uma estrutura básica"}
+
+═══════════════════════════════════════════════════════════════
+📝 REQUISITOS DO TEMPLATE
+═══════════════════════════════════════════════════════════════
+
+1. **CABEÇALHO FORMAL:**
+   - Endereçamento correto ao juízo (usar {{{{ vara }}}})
+   - Qualificação completa do autor (nome, nacionalidade, estado civil, profissão, CPF, RG, endereço)
+   - Qualificação completa do réu
+
+2. **CORPO DA PETIÇÃO:**
+   - Para CADA seção listada acima, crie uma seção correspondente no template
+   - Use os nomes dos campos como variáveis Jinja2: {{{{ nome_do_campo }}}}
+   - Inclua títulos em MAIÚSCULAS para cada seção (ex: DOS FATOS, DO DIREITO)
+   - Conecte as seções com linguagem jurídica adequada
+
+3. **VARIÁVEIS OBRIGATÓRIAS:**
+   - {{{{ vara }}}} - Vara/Juízo
+   - {{{{ autor_nome }}}}, {{{{ autor_qualificacao }}}} - Dados do autor
+   - {{{{ reu_nome }}}}, {{{{ reu_qualificacao }}}} - Dados do réu
+   - {{{{ tipo_acao }}}} - Nome da ação
+   - {{{{ valor_causa }}}} - Valor da causa (se aplicável)
+   - {{{{ local }}}}, {{{{ data }}}} - Local e data
+   - {{{{ advogado_nome }}}}, {{{{ advogado_oab }}}} - Dados do advogado
+
+4. **ESTRUTURA E FORMATAÇÃO:**
+   - Use parágrafos bem estruturados
+   - Inclua marcadores/numeração onde apropriado
+   - Fundamentos jurídicos com citação de artigos
+   - Pedidos claros e objetivos
+   - Requerimentos finais (citação, provas, etc.)
+
+5. **LINGUAGEM:**
+   - Formal e técnica
+   - Termos jurídicos adequados
+   - Sem erros gramaticais
+   - Tom respeitoso ao juízo
+
+═══════════════════════════════════════════════════════════════
+⚠️ INSTRUÇÕES IMPORTANTES
+═══════════════════════════════════════════════════════════════
+
+- Retorne APENAS o template Jinja2, sem explicações ou comentários
+- Use {{{{ variavel }}}} para variáveis (duas chaves)
+- NÃO inclua blocos de código markdown (```)
+- O template deve estar pronto para uso imediato
+
+GERE O TEMPLATE COMPLETO:"""
 
             messages = [
                 {
                     "role": "system",
-                    "content": "Você é um assistente especializado em criar templates de petições jurídicas brasileiras no formato Jinja2.",
+                    "content": """Você é um assistente jurídico especializado em criar templates de petições no formato Jinja2.
+Suas petições são reconhecidas pela qualidade técnica, clareza e conformidade com as normas processuais brasileiras.
+Você domina o CPC, CDC, CC e demais legislações pertinentes.
+Sempre cria templates completos, profissionais e prontos para uso.""",
                 },
                 {"role": "user", "content": prompt},
             ]
@@ -4103,10 +4188,16 @@ Gere o template completo:"""
                 template_content, metadata = ai_service._call_openai(
                     messages=messages,
                     model="gpt-4o-mini",
-                    temperature=0.5,
-                    max_tokens=3000,
+                    temperature=0.3,  # Menor temperatura para mais consistência
+                    max_tokens=4000,  # Mais tokens para templates completos
                 )
 
+                # Limpar possíveis marcadores de código
+                template_content = template_content.strip()
+                if template_content.startswith("```"):
+                    lines = template_content.split("\n")
+                    template_content = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
+                
                 return jsonify(
                     {
                         "success": True,
@@ -4137,12 +4228,13 @@ Gere o template completo:"""
         template_parts.append("")
 
         # Adicionar seções dinâmicas
-        for model_section in sections:
-            section = model_section.section
-            if section:
-                section_name = section.name.upper().replace(" ", "_").replace("/", "_")
-                template_parts.append(f"{{{{ {section_name} }}}}")
-                template_parts.append("")
+        for sec in sections_info:
+            section_title = sec["name"].upper()
+            template_parts.append(section_title)
+            template_parts.append("")
+            for field in sec["fields"]:
+                template_parts.append(f"{{{{ {field['name']} }}}}")
+            template_parts.append("")
 
         # Rodapé
         template_parts.append("{{ local }}, {{ data }}")
@@ -4175,17 +4267,32 @@ def petition_model_generate_template_preview():
         model_description = data.get("description", "")
         section_ids = data.get("section_ids", [])
 
-        # Obter nomes das seções
-        section_names = []
+        # Obter seções com seus campos detalhados
+        sections_info = []
         if section_ids:
             sections = PetitionSection.query.filter(
                 PetitionSection.id.in_(section_ids)
             ).all()
-            # Manter a ordem original
-            section_map = {s.id: s.name for s in sections}
-            section_names = [
-                section_map.get(sid) for sid in section_ids if section_map.get(sid)
-            ]
+            # Manter a ordem original e extrair campos
+            section_map = {s.id: s for s in sections}
+            for sid in section_ids:
+                section = section_map.get(sid)
+                if section:
+                    section_data = {
+                        "name": section.name,
+                        "description": section.description or "",
+                        "fields": []
+                    }
+                    if section.fields_schema:
+                        fields = section.fields_schema if isinstance(section.fields_schema, list) else []
+                        for field in fields:
+                            section_data["fields"].append({
+                                "name": field.get("name", ""),
+                                "label": field.get("label", ""),
+                                "type": field.get("type", "text"),
+                                "required": field.get("required", False)
+                            })
+                    sections_info.append(section_data)
 
         ai_service = AIService()
 
@@ -4198,30 +4305,88 @@ def petition_model_generate_template_preview():
             if not has_credits:
                 return jsonify({"success": False, "error": error_msg}), 402
 
-            prompt = f"""Você é um especialista em petições jurídicas brasileiras. 
-Gere um template Jinja2 profissional para uma petição com as seguintes características:
+            # Construir descrição das seções para o prompt
+            sections_description = ""
+            for i, sec in enumerate(sections_info, 1):
+                sections_description += f"\n{i}. **{sec['name']}**"
+                if sec['description']:
+                    sections_description += f" - {sec['description']}"
+                if sec['fields']:
+                    sections_description += "\n   Campos disponíveis:"
+                    for f in sec['fields']:
+                        req = " (obrigatório)" if f['required'] else ""
+                        sections_description += f"\n   - {f['label']} ({f['name']}): tipo {f['type']}{req}"
 
-**Tipo de Petição:** {model_name}
-**Descrição:** {model_description or "Não especificada"}
+            prompt = f"""Você é um advogado sênior brasileiro especialista em redação de peças processuais.
+Crie um template Jinja2 COMPLETO e PROFISSIONAL para a seguinte petição:
 
-**Seções que devem estar presentes (na ordem):**
-{chr(10).join([f"- {name}" for name in section_names]) if section_names else "- Nenhuma seção definida ainda"}
+═══════════════════════════════════════════════════════════════
+📋 INFORMAÇÕES DO MODELO
+═══════════════════════════════════════════════════════════════
 
-**Instruções:**
-1. Use variáveis Jinja2 no formato {{ nome_variavel }}
-2. O cabeçalho deve ser formal e adequado ao tipo de petição
-3. Inclua variáveis para: vara, autor_nome, autor_qualificacao, reu_nome, reu_qualificacao
-4. Para cada seção, crie um título em maiúsculas e uma variável correspondente
-5. O rodapé deve ter local, data, advogado_nome e advogado_oab
-6. Use linguagem jurídica formal brasileira
-7. Retorne APENAS o template, sem explicações
+**Nome:** {model_name}
+**Descrição:** {model_description or "Petição jurídica padrão"}
 
-Gere o template completo:"""
+═══════════════════════════════════════════════════════════════
+📑 SEÇÕES E CAMPOS DISPONÍVEIS
+═══════════════════════════════════════════════════════════════
+{sections_description if sections_description else "Nenhuma seção definida - crie uma estrutura básica"}
+
+═══════════════════════════════════════════════════════════════
+📝 REQUISITOS DO TEMPLATE
+═══════════════════════════════════════════════════════════════
+
+1. **CABEÇALHO FORMAL:**
+   - Endereçamento correto ao juízo (usar {{{{ vara }}}})
+   - Qualificação completa do autor (nome, nacionalidade, estado civil, profissão, CPF, RG, endereço)
+   - Qualificação completa do réu
+
+2. **CORPO DA PETIÇÃO:**
+   - Para CADA seção listada acima, crie uma seção correspondente no template
+   - Use os nomes dos campos como variáveis Jinja2: {{{{ nome_do_campo }}}}
+   - Inclua títulos em MAIÚSCULAS para cada seção (ex: DOS FATOS, DO DIREITO)
+   - Conecte as seções com linguagem jurídica adequada
+
+3. **VARIÁVEIS OBRIGATÓRIAS:**
+   - {{{{ vara }}}} - Vara/Juízo
+   - {{{{ autor_nome }}}}, {{{{ autor_qualificacao }}}} - Dados do autor
+   - {{{{ reu_nome }}}}, {{{{ reu_qualificacao }}}} - Dados do réu
+   - {{{{ tipo_acao }}}} - Nome da ação
+   - {{{{ valor_causa }}}} - Valor da causa (se aplicável)
+   - {{{{ local }}}}, {{{{ data }}}} - Local e data
+   - {{{{ advogado_nome }}}}, {{{{ advogado_oab }}}} - Dados do advogado
+
+4. **ESTRUTURA E FORMATAÇÃO:**
+   - Use parágrafos bem estruturados
+   - Inclua marcadores/numeração onde apropriado
+   - Fundamentos jurídicos com citação de artigos
+   - Pedidos claros e objetivos
+   - Requerimentos finais (citação, provas, etc.)
+
+5. **LINGUAGEM:**
+   - Formal e técnica
+   - Termos jurídicos adequados
+   - Sem erros gramaticais
+   - Tom respeitoso ao juízo
+
+═══════════════════════════════════════════════════════════════
+⚠️ INSTRUÇÕES IMPORTANTES
+═══════════════════════════════════════════════════════════════
+
+- Retorne APENAS o template Jinja2, sem explicações ou comentários
+- Use {{{{ variavel }}}} para variáveis (duas chaves)
+- NÃO inclua blocos de código markdown (```)
+- O template deve estar pronto para uso imediato
+
+GERE O TEMPLATE COMPLETO:"""
 
             messages = [
                 {
                     "role": "system",
-                    "content": "Você é um assistente especializado em criar templates de petições jurídicas brasileiras no formato Jinja2.",
+                    "content": """Você é um assistente jurídico especializado em criar templates de petições no formato Jinja2.
+Suas petições são reconhecidas pela qualidade técnica, clareza e conformidade com as normas processuais brasileiras.
+Você domina o CPC, CDC, CC e demais legislações pertinentes.
+Sempre cria templates completos, profissionais e prontos para uso.""",
                 },
                 {"role": "user", "content": prompt},
             ]
@@ -4230,9 +4395,15 @@ Gere o template completo:"""
                 template_content, metadata = ai_service._call_openai(
                     messages=messages,
                     model="gpt-4o-mini",
-                    temperature=0.5,
-                    max_tokens=3000,
+                    temperature=0.3,  # Menor temperatura para mais consistência
+                    max_tokens=4000,  # Mais tokens para templates completos
                 )
+
+                # Limpar possíveis marcadores de código
+                template_content = template_content.strip()
+                if template_content.startswith("```"):
+                    lines = template_content.split("\n")
+                    template_content = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
 
                 return jsonify(
                     {
@@ -4254,14 +4425,17 @@ Gere o template completo:"""
         template_parts.append("")
         template_parts.append("{{ autor_nome }}, {{ autor_qualificacao }}, vem propor:")
         template_parts.append("")
-        template_parts.append(f"{{{{ tipo_acao }}}}")
+        template_parts.append("{{ tipo_acao }}")
         template_parts.append("")
         template_parts.append("em face de {{ reu_nome }}, {{ reu_qualificacao }}")
         template_parts.append("")
 
-        for name in section_names:
-            section_var = name.upper().replace(" ", "_").replace("/", "_")
-            template_parts.append(f"{{{{ {section_var} }}}}")
+        for sec in sections_info:
+            section_title = sec["name"].upper()
+            template_parts.append(section_title)
+            template_parts.append("")
+            for field in sec["fields"]:
+                template_parts.append(f"{{{{ {field['name']} }}}}")
             template_parts.append("")
 
         template_parts.append("{{ local }}, {{ data }}")
