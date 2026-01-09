@@ -22,7 +22,7 @@ with app.app_context():
         created_by INTEGER REFERENCES "user"(id)
     );
     """
-    
+
     # SQL para atualizar coluna caso tabela já exista
     sql1_alter = """
     ALTER TABLE template_examples 

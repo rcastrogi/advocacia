@@ -5221,7 +5221,8 @@ def save_template_as_example(model_id):
         db.session.commit()
 
         flash(
-            f"Template '{petition_model.name}' salvo como exemplo de referência!", "success"
+            f"Template '{petition_model.name}' salvo como exemplo de referência!",
+            "success",
         )
 
         return jsonify(
@@ -5252,10 +5253,8 @@ def save_ai_generation_feedback(model_id):
         # Validar dados
         rating = data.get("rating")
         if not rating:
-            return jsonify(
-                {"success": False, "error": "Rating é obrigatório."}
-            ), 400
-        
+            return jsonify({"success": False, "error": "Rating é obrigatório."}), 400
+
         try:
             rating_int = int(rating)
             if not (1 <= rating_int <= 5):
@@ -5267,13 +5266,17 @@ def save_ai_generation_feedback(model_id):
 
         feedback = AIGenerationFeedback(
             petition_model_id=model_id,
-            generated_template=data.get("generated_template", "")[:50000],  # Limitar tamanho
+            generated_template=data.get("generated_template", "")[
+                :50000
+            ],  # Limitar tamanho
             rating=rating_int,
             feedback_type=data.get(
                 "feedback_type", "general"
             ),  # positive, negative, suggestion, general
             feedback_text=data.get("feedback_text", "")[:1000],  # Limitar tamanho
-            action_taken=data.get("action_taken", "none"),  # used, edited, discarded, none
+            action_taken=data.get(
+                "action_taken", "none"
+            ),  # used, edited, discarded, none
             edited_template=data.get("edited_template"),
             prompt_used=data.get("prompt_used"),
             sections_used=data.get("sections_used"),
@@ -5284,7 +5287,10 @@ def save_ai_generation_feedback(model_id):
         db.session.commit()
 
         # Se feedback muito positivo (4-5 estrelas) e foi usado/editado, sugerir salvar como exemplo
-        suggest_save = rating_int >= 4 and data.get("action_taken") in ["used", "edited"]
+        suggest_save = rating_int >= 4 and data.get("action_taken") in [
+            "used",
+            "edited",
+        ]
 
         return jsonify(
             {
