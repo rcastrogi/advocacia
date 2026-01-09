@@ -4293,7 +4293,9 @@ def petition_sections_fields_by_ids():
         return jsonify({"fields": []})
 
     try:
-        sections = PetitionSection.query.filter(PetitionSection.id.in_(section_ids)).all()
+        sections = PetitionSection.query.filter(
+            PetitionSection.id.in_(section_ids)
+        ).all()
         all_fields = []
 
         for section in sections:
@@ -4301,13 +4303,16 @@ def petition_sections_fields_by_ids():
                 schema = section.fields_schema
                 if isinstance(schema, str):
                     import json
+
                     schema = json.loads(schema)
 
                 fields = schema.get("fields", [])
                 for field in fields:
                     field_data = {
                         "name": field.get("name", field.get("field_name", "")),
-                        "display_name": field.get("label", field.get("display_name", "")),
+                        "display_name": field.get(
+                            "label", field.get("display_name", "")
+                        ),
                         "category": section.name,
                     }
                     all_fields.append(field_data)
