@@ -6,7 +6,16 @@ Inclui calendário, automação e relatórios.
 import json
 from datetime import datetime, timedelta
 
-from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import current_user, login_required
 from sqlalchemy import and_, func, or_
 
@@ -45,7 +54,9 @@ def calendar():
             CalendarEvent.client_id.in_(client_ids), CalendarEvent.status == "requested"
         ).count()
 
-    return render_template("advanced/calendar.html", pending_requests_count=pending_requests_count)
+    return render_template(
+        "advanced/calendar.html", pending_requests_count=pending_requests_count
+    )
 
 
 @advanced_bp.route("/api/calendar/events")
@@ -61,7 +72,9 @@ def get_calendar_events():
     # Eventos relacionados aos clientes do advogado (incluindo solicitações)
     client_ids = [client.id for client in current_user.clients.all()]
     query2 = (
-        CalendarEvent.query.filter(CalendarEvent.client_id.in_(client_ids)) if client_ids else None
+        CalendarEvent.query.filter(CalendarEvent.client_id.in_(client_ids))
+        if client_ids
+        else None
     )
 
     # Combinar queries
@@ -74,7 +87,9 @@ def get_calendar_events():
 
     if start:
         start_date = datetime.fromisoformat(start.replace("Z", "+00:00"))
-        combined_query = combined_query.filter(CalendarEvent.start_datetime >= start_date)
+        combined_query = combined_query.filter(
+            CalendarEvent.start_datetime >= start_date
+        )
 
     if end:
         end_date = datetime.fromisoformat(end.replace("Z", "+00:00"))
@@ -121,20 +136,22 @@ def get_calendar_events():
     # Adicionar bloqueios de agenda
     try:
         from app.models import AgendaBlock
-        
+
         # Determinar período para gerar eventos de bloqueio
         if start:
             start_range = datetime.fromisoformat(start.replace("Z", "+00:00")).date()
         else:
             start_range = datetime.utcnow().date()
-        
+
         if end:
             end_range = datetime.fromisoformat(end.replace("Z", "+00:00")).date()
         else:
             end_range = start_range + timedelta(days=90)
-        
-        blocks = AgendaBlock.query.filter_by(user_id=current_user.id, is_active=True).all()
-        
+
+        blocks = AgendaBlock.query.filter_by(
+            user_id=current_user.id, is_active=True
+        ).all()
+
         for block in blocks:
             block_events = block.to_calendar_events(start_range, end_range)
             calendar_events.extend(block_events)
@@ -180,7 +197,9 @@ def adjust_color_brightness(hex_color, factor):
             else (
                 "#b8860b"
                 if hex_color == "#ffc107"
-                else "#00008b" if hex_color == "#007bff" else "#006400"
+                else "#00008b"
+                if hex_color == "#007bff"
+                else "#006400"
             )
         )
     return hex_color
@@ -238,31 +257,43 @@ def new_calendar_event():
     processes = Process.query.filter_by(user_id=current_user.id).all()
     clients = current_user.clients.all()
 
-    return render_template("advanced/new_event.html", processes=processes, clients=clients)
+    return render_template(
+        "advanced/new_event.html", processes=processes, clients=clients
+    )
 
 
 @advanced_bp.route("/calendar/event/<int:event_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_calendar_event(event_id):
     """Editar evento do calendário."""
-    event = CalendarEvent.query.filter_by(id=event_id, user_id=current_user.id).first_or_404()
+    event = CalendarEvent.query.filter_by(
+        id=event_id, user_id=current_user.id
+    ).first_or_404()
 
     if request.method == "POST":
         try:
             event.title = request.form.get("title")
             event.description = request.form.get("description")
-            event.start_datetime = datetime.fromisoformat(request.form.get("start_datetime"))
-            event.end_datetime = datetime.fromisoformat(request.form.get("end_datetime"))
+            event.start_datetime = datetime.fromisoformat(
+                request.form.get("start_datetime")
+            )
+            event.end_datetime = datetime.fromisoformat(
+                request.form.get("end_datetime")
+            )
             event.all_day = request.form.get("all_day") == "on"
             event.event_type = request.form.get("event_type")
             event.priority = request.form.get("priority", "normal")
             event.location = request.form.get("location")
             event.virtual_link = request.form.get("virtual_link")
             event.process_id = (
-                int(request.form.get("process_id")) if request.form.get("process_id") else None
+                int(request.form.get("process_id"))
+                if request.form.get("process_id")
+                else None
             )
             event.client_id = (
-                int(request.form.get("client_id")) if request.form.get("client_id") else None
+                int(request.form.get("client_id"))
+                if request.form.get("client_id")
+                else None
             )
             event.notes = request.form.get("notes")
 
@@ -287,7 +318,9 @@ def edit_calendar_event(event_id):
 @login_required
 def delete_calendar_event(event_id):
     """Excluir evento do calendário."""
-    event = CalendarEvent.query.filter_by(id=event_id, user_id=current_user.id).first_or_404()
+    event = CalendarEvent.query.filter_by(
+        id=event_id, user_id=current_user.id
+    ).first_or_404()
 
     try:
         db.session.delete(event)
@@ -333,7 +366,9 @@ def new_automation():
             if trigger_type == "movement":
                 trigger_condition["movement_type"] = request.form.get("movement_type")
             elif trigger_type == "deadline":
-                trigger_condition["days_before"] = int(request.form.get("days_before", 7))
+                trigger_condition["days_before"] = int(
+                    request.form.get("days_before", 7)
+                )
             elif trigger_type == "status_change":
                 trigger_condition["old_status"] = request.form.get("old_status")
                 trigger_condition["new_status"] = request.form.get("new_status")
@@ -442,8 +477,12 @@ def new_report():
             report_type = request.form.get("report_type")
             title = request.form.get("title")
             description = request.form.get("description")
-            start_date = datetime.strptime(request.form.get("start_date"), "%Y-%m-%d").date()
-            end_date = datetime.strptime(request.form.get("end_date"), "%Y-%m-%d").date()
+            start_date = datetime.strptime(
+                request.form.get("start_date"), "%Y-%m-%d"
+            ).date()
+            end_date = datetime.strptime(
+                request.form.get("end_date"), "%Y-%m-%d"
+            ).date()
 
             # Filtros
             filters = {}
@@ -483,7 +522,9 @@ def new_report():
 @login_required
 def view_report(report_id):
     """Visualizar relatório."""
-    report = ProcessReport.query.filter_by(id=report_id, user_id=current_user.id).first_or_404()
+    report = ProcessReport.query.filter_by(
+        id=report_id, user_id=current_user.id
+    ).first_or_404()
 
     return render_template("advanced/view_report.html", report=report)
 
@@ -492,7 +533,9 @@ def view_report(report_id):
 @login_required
 def delete_report(report_id):
     """Excluir relatório."""
-    report = ProcessReport.query.filter_by(id=report_id, user_id=current_user.id).first_or_404()
+    report = ProcessReport.query.filter_by(
+        id=report_id, user_id=current_user.id
+    ).first_or_404()
 
     try:
         db.session.delete(report)
@@ -514,12 +557,16 @@ def delete_report(report_id):
 @login_required
 def get_next_actions_suggestions(process_id):
     """API para obter sugestões de próximos atos processuais."""
-    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
+    process = Process.query.filter_by(
+        id=process_id, user_id=current_user.id
+    ).first_or_404()
 
     suggestions = []
 
     # Analisar status atual e histórico para sugerir próximos atos
-    last_movement = process.movements.order_by(ProcessMovement.movement_date.desc()).first()
+    last_movement = process.movements.order_by(
+        ProcessMovement.movement_date.desc()
+    ).first()
 
     if process.status == "distributed":
         suggestions.append(
@@ -604,7 +651,9 @@ def get_processes_metrics():
             for p in completed_processes
             if p.distribution_date
         )
-        avg_resolution_days = total_days // len(completed_processes) if total_days > 0 else 0
+        avg_resolution_days = (
+            total_days // len(completed_processes) if total_days > 0 else 0
+        )
 
     metrics = {
         "status_counts": dict(status_counts),
