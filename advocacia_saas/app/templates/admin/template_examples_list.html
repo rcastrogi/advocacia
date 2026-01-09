@@ -183,8 +183,8 @@ function deleteExample(id, name) {
         return;
     }
     
-    fetch(`/admin/petitions/templates/examples/${id}/delete`, {
-        method: 'POST',
+    fetch(`/admin/template-examples/${id}`, {
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
     })
     .then(response => response.json())

@@ -909,26 +909,39 @@ Valor da causa: R$ {{ valor_causa }}
     window.sendFeedback = function(rating, feedbackType) {
         const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
         
-        fetch('/admin/petitions/templates/feedback', {
+        // Se não tem model_id, não pode salvar feedback vinculado ao modelo
+        // Usa rota genérica ou simplesmente agradece
+        if (!petitionModelId) {
+            document.getElementById('ai-feedback-container').classList.add('d-none');
+            showToast('Obrigado pelo feedback!', 'success');
+            return;
+        }
+        
+        fetch(`/admin/petitions/models/${petitionModelId}/ai_feedback`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model_id: petitionModelId,
-                template: lastGeneratedTemplate,
+                generated_template: lastGeneratedTemplate,
                 rating: rating,
                 feedback_type: feedbackType,
-                action_taken: rating >= 4 ? 'used_as_is' : 'edited'
+                action_taken: rating >= 4 ? 'used' : 'edited'
             })
         })
         .then(response => response.json())
         .then(data => {
+            document.getElementById('ai-feedback-container').classList.add('d-none');
             if (data.success) {
-                document.getElementById('ai-feedback-container').classList.add('d-none');
                 showToast('Obrigado pelo feedback! Isso ajuda a melhorar a IA.', 'success');
+                if (data.suggest_save_as_example) {
+                    showToast('💡 Dica: Este template ficou bom! Considere salvá-lo como exemplo.', 'info');
+                }
+            } else {
+                showToast('Feedback registrado localmente.', 'info');
             }
         })
         .catch(error => {
             console.error('Erro ao enviar feedback:', error);
+            document.getElementById('ai-feedback-container').classList.add('d-none');
         });
     };
 

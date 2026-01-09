@@ -4825,7 +4825,7 @@ class TemplateExample(db.Model):
     tags = db.Column(db.String(500))
 
     # Qualidade e uso
-    quality_score = db.Column(db.Integer, default=5)  # 1-10
+    quality_score = db.Column(db.Float, default=5.0)  # 1.0-5.0 (estrelas)
     usage_count = db.Column(
         db.Integer, default=0
     )  # Quantas vezes foi usado como exemplo

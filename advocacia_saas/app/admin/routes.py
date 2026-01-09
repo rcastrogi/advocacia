@@ -5164,63 +5164,77 @@ def save_template_as_example(model_id):
     """Salvar um modelo de petição como template exemplar para few-shot learning"""
     _require_admin()
 
-    from app.models import TemplateExample
+    try:
+        from app.models import TemplateExample
 
-    petition_model = PetitionModel.query.get_or_404(model_id)
+        petition_model = PetitionModel.query.get_or_404(model_id)
 
-    # Verificar se já existe um exemplo baseado neste modelo
-    existing = TemplateExample.query.filter_by(original_model_id=model_id).first()
+        # Verificar se já existe um exemplo baseado neste modelo
+        existing = TemplateExample.query.filter_by(original_model_id=model_id).first()
 
-    if existing:
+        if existing:
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Este modelo já foi salvo como exemplo de referência.",
+                }
+            ), 400
+
+        # Verificar se tem conteúdo de template
+        if not petition_model.template_content:
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "O modelo não possui conteúdo de template para salvar.",
+                }
+            ), 400
+
+        # Verificar se tem tipo de petição (importante para few-shot)
+        if not petition_model.petition_type_id:
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "O modelo precisa ter um tipo de petição definido para ser salvo como exemplo.",
+                }
+            ), 400
+
+        data = request.get_json() or {}
+        quality_score = data.get("quality_score", 5.0)
+        tags = data.get("tags", "")
+
+        # Criar o exemplo
+        example = TemplateExample(
+            name=petition_model.name,
+            description=petition_model.description
+            or f"Template exemplar: {petition_model.name}",
+            template_content=petition_model.template_content,
+            petition_type_id=petition_model.petition_type_id,
+            tags=str(tags)[:500] if tags else "",  # Limitar tamanho das tags
+            quality_score=min(max(float(quality_score), 1.0), 5.0),  # Entre 1 e 5
+            source="approved_model",
+            original_model_id=model_id,
+            created_by=current_user.id,
+            is_active=True,
+        )
+
+        db.session.add(example)
+        db.session.commit()
+
+        flash(
+            f"Template '{petition_model.name}' salvo como exemplo de referência!", "success"
+        )
+
         return jsonify(
             {
-                "success": False,
-                "error": "Este modelo já foi salvo como exemplo de referência.",
+                "success": True,
+                "message": "Template salvo como exemplo de referência para melhorar gerações futuras da IA.",
+                "example_id": example.id,
             }
-        ), 400
-
-    # Verificar se tem conteúdo de template
-    if not petition_model.template_content:
-        return jsonify(
-            {
-                "success": False,
-                "error": "O modelo não possui conteúdo de template para salvar.",
-            }
-        ), 400
-
-    data = request.get_json() or {}
-    quality_score = data.get("quality_score", 5.0)
-    tags = data.get("tags", "")
-
-    # Criar o exemplo
-    example = TemplateExample(
-        name=petition_model.name,
-        description=petition_model.description
-        or f"Template exemplar: {petition_model.name}",
-        template_content=petition_model.template_content,
-        petition_type_id=petition_model.petition_type_id,
-        tags=tags,
-        quality_score=min(max(float(quality_score), 1.0), 5.0),  # Entre 1 e 5
-        source="approved_model",
-        original_model_id=model_id,
-        created_by=current_user.id,
-        is_active=True,
-    )
-
-    db.session.add(example)
-    db.session.commit()
-
-    flash(
-        f"Template '{petition_model.name}' salvo como exemplo de referência!", "success"
-    )
-
-    return jsonify(
-        {
-            "success": True,
-            "message": "Template salvo como exemplo de referência para melhorar gerações futuras da IA.",
-            "example_id": example.id,
-        }
-    )
+        )
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao salvar exemplo: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @bp.route("/petitions/models/<int:model_id>/ai_feedback", methods=["POST"])
@@ -5229,47 +5243,61 @@ def save_ai_generation_feedback(model_id):
     """Salvar feedback sobre geração de template por IA"""
     _require_admin()
 
-    from app.models import AIGenerationFeedback
+    try:
+        from app.models import AIGenerationFeedback
 
-    petition_model = PetitionModel.query.get_or_404(model_id)
-    data = request.get_json() or {}
+        petition_model = PetitionModel.query.get_or_404(model_id)
+        data = request.get_json() or {}
 
-    # Validar dados
-    rating = data.get("rating")
-    if not rating or not (1 <= int(rating) <= 5):
+        # Validar dados
+        rating = data.get("rating")
+        if not rating:
+            return jsonify(
+                {"success": False, "error": "Rating é obrigatório."}
+            ), 400
+        
+        try:
+            rating_int = int(rating)
+            if not (1 <= rating_int <= 5):
+                raise ValueError("Rating fora do intervalo")
+        except (ValueError, TypeError):
+            return jsonify(
+                {"success": False, "error": "Rating deve ser um número entre 1 e 5."}
+            ), 400
+
+        feedback = AIGenerationFeedback(
+            petition_model_id=model_id,
+            generated_template=data.get("generated_template", "")[:50000],  # Limitar tamanho
+            rating=rating_int,
+            feedback_type=data.get(
+                "feedback_type", "general"
+            ),  # positive, negative, suggestion, general
+            feedback_text=data.get("feedback_text", "")[:1000],  # Limitar tamanho
+            action_taken=data.get("action_taken", "none"),  # used, edited, discarded, none
+            edited_template=data.get("edited_template"),
+            prompt_used=data.get("prompt_used"),
+            sections_used=data.get("sections_used"),
+            user_id=current_user.id,
+        )
+
+        db.session.add(feedback)
+        db.session.commit()
+
+        # Se feedback muito positivo (4-5 estrelas) e foi usado/editado, sugerir salvar como exemplo
+        suggest_save = rating_int >= 4 and data.get("action_taken") in ["used", "edited"]
+
         return jsonify(
-            {"success": False, "error": "Rating deve ser um número entre 1 e 5."}
-        ), 400
-
-    feedback = AIGenerationFeedback(
-        petition_model_id=model_id,
-        generated_template=data.get("generated_template", ""),
-        rating=int(rating),
-        feedback_type=data.get(
-            "feedback_type", "general"
-        ),  # positive, negative, suggestion, general
-        feedback_text=data.get("feedback_text", ""),
-        action_taken=data.get("action_taken", "none"),  # used, edited, discarded, none
-        edited_template=data.get("edited_template"),
-        prompt_used=data.get("prompt_used"),
-        sections_used=data.get("sections_used"),
-        user_id=current_user.id,
-    )
-
-    db.session.add(feedback)
-    db.session.commit()
-
-    # Se feedback muito positivo (4-5 estrelas) e foi usado/editado, sugerir salvar como exemplo
-    suggest_save = rating >= 4 and data.get("action_taken") in ["used", "edited"]
-
-    return jsonify(
-        {
-            "success": True,
-            "message": "Obrigado pelo feedback! Isso nos ajuda a melhorar a IA.",
-            "feedback_id": feedback.id,
-            "suggest_save_as_example": suggest_save,
-        }
-    )
+            {
+                "success": True,
+                "message": "Obrigado pelo feedback! Isso nos ajuda a melhorar a IA.",
+                "feedback_id": feedback.id,
+                "suggest_save_as_example": suggest_save,
+            }
+        )
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao salvar feedback: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @bp.route("/template-examples")
@@ -5295,16 +5323,21 @@ def toggle_template_example(example_id):
     """Ativar/desativar um template exemplar"""
     _require_admin()
 
-    from app.models import TemplateExample
+    try:
+        from app.models import TemplateExample
 
-    example = TemplateExample.query.get_or_404(example_id)
-    example.is_active = not example.is_active
-    db.session.commit()
+        example = TemplateExample.query.get_or_404(example_id)
+        example.is_active = not example.is_active
+        db.session.commit()
 
-    status = "ativado" if example.is_active else "desativado"
-    flash(f"Template exemplar '{example.name}' {status}!", "success")
+        status = "ativado" if example.is_active else "desativado"
+        flash(f"Template exemplar '{example.name}' {status}!", "success")
 
-    return jsonify({"success": True, "is_active": example.is_active})
+        return jsonify({"success": True, "is_active": example.is_active})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao toggle exemplo: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @bp.route("/template-examples/<int:example_id>", methods=["DELETE"])
@@ -5313,17 +5346,22 @@ def delete_template_example(example_id):
     """Excluir um template exemplar"""
     _require_admin()
 
-    from app.models import TemplateExample
+    try:
+        from app.models import TemplateExample
 
-    example = TemplateExample.query.get_or_404(example_id)
-    name = example.name
+        example = TemplateExample.query.get_or_404(example_id)
+        name = example.name
 
-    db.session.delete(example)
-    db.session.commit()
+        db.session.delete(example)
+        db.session.commit()
 
-    flash(f"Template exemplar '{name}' excluído!", "success")
+        flash(f"Template exemplar '{name}' excluído!", "success")
 
-    return jsonify({"success": True})
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao excluir exemplo: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @bp.route("/template-examples/<int:example_id>/update", methods=["POST"])
@@ -5332,23 +5370,31 @@ def update_template_example(example_id):
     """Atualizar dados de um template exemplar"""
     _require_admin()
 
-    from app.models import TemplateExample
+    try:
+        from app.models import TemplateExample
 
-    example = TemplateExample.query.get_or_404(example_id)
-    data = request.get_json() or {}
+        example = TemplateExample.query.get_or_404(example_id)
+        data = request.get_json() or {}
 
-    if "quality_score" in data:
-        example.quality_score = min(max(float(data["quality_score"]), 1.0), 5.0)
-    if "tags" in data:
-        example.tags = data["tags"]
-    if "description" in data:
-        example.description = data["description"]
-    if "is_active" in data:
-        example.is_active = bool(data["is_active"])
+        if "quality_score" in data:
+            score = float(data["quality_score"])
+            example.quality_score = min(max(score, 1.0), 5.0)
+        if "tags" in data:
+            example.tags = str(data["tags"])[:500]  # Limitar tamanho
+        if "description" in data:
+            example.description = data["description"]
+        if "is_active" in data:
+            example.is_active = bool(data["is_active"])
 
-    db.session.commit()
+        db.session.commit()
 
-    return jsonify({"success": True, "message": "Template exemplar atualizado!"})
+        return jsonify({"success": True, "message": "Template exemplar atualizado!"})
+    except ValueError as e:
+        return jsonify({"success": False, "error": "Valor inválido fornecido"}), 400
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao atualizar exemplo: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @bp.route("/audit-logs/entity/<entity_type>/<int:entity_id>")

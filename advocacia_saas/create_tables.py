@@ -13,7 +13,7 @@ with app.app_context():
         template_content TEXT NOT NULL,
         petition_type_id INTEGER REFERENCES petition_types(id),
         tags VARCHAR(500),
-        quality_score INTEGER DEFAULT 5,
+        quality_score FLOAT DEFAULT 5.0,
         usage_count INTEGER DEFAULT 0,
         is_active BOOLEAN DEFAULT TRUE,
         source VARCHAR(50) DEFAULT 'manual',
@@ -21,6 +21,12 @@ with app.app_context():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         created_by INTEGER REFERENCES "user"(id)
     );
+    """
+    
+    # SQL para atualizar coluna caso tabela já exista
+    sql1_alter = """
+    ALTER TABLE template_examples 
+    ALTER COLUMN quality_score TYPE FLOAT USING quality_score::float;
     """
 
     sql2 = """
@@ -45,6 +51,13 @@ with app.app_context():
         print("✅ Tabela template_examples criada")
     except Exception as e:
         print(f"❌ template_examples: {e}")
+
+    # Tentar alterar tipo da coluna quality_score (caso já exista como INTEGER)
+    try:
+        db.session.execute(text(sql1_alter))
+        print("✅ Coluna quality_score alterada para FLOAT")
+    except Exception as e:
+        print(f"ℹ️ quality_score já é FLOAT ou tabela não existe: {e}")
 
     try:
         db.session.execute(text(sql2))
