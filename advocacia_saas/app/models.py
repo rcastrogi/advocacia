@@ -4697,7 +4697,7 @@ class AgendaBlock(db.Model):
                         "end": end_dt.isoformat(),
                         "allDay": self.all_day,
                         "color": self.color,
-                        "display": "background",
+                        "display": "block",
                         "classNames": ["agenda-block"],
                         "extendedProps": {
                             "type": "block",
@@ -4760,7 +4760,7 @@ class AgendaBlock(db.Model):
                             "end": end_dt.isoformat(),
                             "allDay": self.all_day,
                             "color": self.color,
-                            "display": "background",
+                            "display": "block",
                             "classNames": ["agenda-block"],
                             "extendedProps": {
                                 "type": "block",
@@ -4769,6 +4769,69 @@ class AgendaBlock(db.Model):
                             },
                         }
                     )
+
+                current += timedelta(days=1)
+
+        elif self.block_type == "period" and self.start_date:
+            # Bloqueio de período (férias, licença, etc.)
+            start = self.start_date
+            end = self.end_date or self.start_date
+
+            # Iterar por cada dia do período
+            current = max(start, start_range)
+            final = min(end, end_range)
+
+            while current <= final:
+                if self.all_day:
+                    start_dt = datetime.combine(current, datetime.min.time())
+                    end_dt = datetime.combine(
+                        current, datetime.max.time().replace(microsecond=0)
+                    )
+                elif self.day_period:
+                    periods = {
+                        "morning": (
+                            datetime.strptime("08:00", "%H:%M").time(),
+                            datetime.strptime("12:00", "%H:%M").time(),
+                        ),
+                        "afternoon": (
+                            datetime.strptime("12:00", "%H:%M").time(),
+                            datetime.strptime("18:00", "%H:%M").time(),
+                        ),
+                        "evening": (
+                            datetime.strptime("18:00", "%H:%M").time(),
+                            datetime.strptime("22:00", "%H:%M").time(),
+                        ),
+                    }
+                    period_times = periods.get(
+                        self.day_period, (datetime.min.time(), datetime.max.time())
+                    )
+                    start_dt = datetime.combine(current, period_times[0])
+                    end_dt = datetime.combine(current, period_times[1])
+                else:
+                    start_dt = datetime.combine(
+                        current, self.start_time or datetime.min.time()
+                    )
+                    end_dt = datetime.combine(
+                        current, self.end_time or datetime.max.time()
+                    )
+
+                events.append(
+                    {
+                        "id": f"block_{self.id}_{current.isoformat()}",
+                        "title": f"🚫 {self.title}",
+                        "start": start_dt.isoformat(),
+                        "end": end_dt.isoformat(),
+                        "allDay": self.all_day,
+                        "color": self.color,
+                        "display": "block",
+                        "classNames": ["agenda-block"],
+                        "extendedProps": {
+                            "type": "block",
+                            "block_id": self.id,
+                            "editable": False,
+                        },
+                    }
+                )
 
                 current += timedelta(days=1)
 
