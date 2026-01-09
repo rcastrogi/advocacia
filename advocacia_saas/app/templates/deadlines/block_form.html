@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Editar' if block else 'Novo' }} Bloqueio de Agenda - Petitio{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-{{ 'edit' if block else 'plus' }} text-primary me-2"></i>
+                        {{ 'Editar' if block else 'Novo' }} Bloqueio de Agenda
+                    </h1>
+                    <p class="text-muted mb-0">Configure um período de indisponibilidade na sua agenda</p>
+                </div>
+                <a href="{{ url_for('deadlines.blocks_list') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Voltar
+                </a>
+            </div>
+
+            <form method="post" id="blockForm">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informações Básicas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título do Bloqueio <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="title" 
+                                   name="title" 
+                                   value="{{ block.title if block else '' }}"
+                                   placeholder="Ex: Aulas na Faculdade, Reunião Semanal, Férias..."
+                                   required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição (opcional)</label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="2"
+                                      placeholder="Detalhes adicionais sobre este bloqueio">{{ block.description if block else '' }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="color" class="form-label">Cor no Calendário</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="color" 
+                                       class="form-control form-control-color" 
+                                       id="color" 
+                                       name="color" 
+                                       value="{{ block.color if block else '#6c757d' }}">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary color-preset" data-color="#6c757d">Cinza</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger color-preset" data-color="#dc3545">Vermelho</button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning color-preset" data-color="#ffc107">Amarelo</button>
+                                    <button type="button" class="btn btn-sm btn-outline-info color-preset" data-color="#17a2b8">Azul</button>
+                                    <button type="button" class="btn btn-sm btn-outline-dark color-preset" data-color="#343a40">Escuro</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Tipo de Bloqueio</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="form-check card p-3 h-100 {{ 'border-primary bg-light' if not block or block.block_type == 'recurring' else '' }}">
+                                    <input class="form-check-input" 
+                                           type="radio" 
+                                           name="block_type" 
+                                           id="type_recurring" 
+                                           value="recurring"
+                                           {{ 'checked' if not block or block.block_type == 'recurring' else '' }}>
+                                    <label class="form-check-label w-100" for="type_recurring">
+                                        <i class="fas fa-sync-alt text-info fa-2x mb-2 d-block"></i>
+                                        <strong>Recorrente</strong>
+                                        <p class="text-muted small mb-0">Repete toda semana nos mesmos dias</p>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check card p-3 h-100 {{ 'border-primary bg-light' if block and block.block_type == 'single' else '' }}">
+                                    <input class="form-check-input" 
+                                           type="radio" 
+                                           name="block_type" 
+                                           id="type_single" 
+                                           value="single"
+                                           {{ 'checked' if block and block.block_type == 'single' else '' }}>
+                                    <label class="form-check-label w-100" for="type_single">
+                                        <i class="fas fa-calendar-day text-warning fa-2x mb-2 d-block"></i>
+                                        <strong>Data Única</strong>
+                                        <p class="text-muted small mb-0">Apenas em uma data específica</p>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check card p-3 h-100 {{ 'border-primary bg-light' if block and block.block_type == 'period' else '' }}">
+                                    <input class="form-check-input" 
+                                           type="radio" 
+                                           name="block_type" 
+                                           id="type_period" 
+                                           value="period"
+                                           {{ 'checked' if block and block.block_type == 'period' else '' }}>
+                                    <label class="form-check-label w-100" for="type_period">
+                                        <i class="fas fa-calendar-week text-success fa-2x mb-2 d-block"></i>
+                                        <strong>Período</strong>
+                                        <p class="text-muted small mb-0">Intervalo de datas (férias, licença)</p>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dias da semana (para recorrente) -->
+                        <div id="weekdays_section" class="{{ 'd-none' if block and block.block_type != 'recurring' else '' }}">
+                            <label class="form-label">Dias da Semana <span class="text-danger">*</span></label>
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                {% set selected_weekdays = block.to_dict().weekdays if block else [] %}
+                                
+                                {% for day_num, day_name in [(0, 'Segunda'), (1, 'Terça'), (2, 'Quarta'), (3, 'Quinta'), (4, 'Sexta'), (5, 'Sábado'), (6, 'Domingo')] %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input weekday-check" 
+                                           type="checkbox" 
+                                           id="weekday_{{ day_num }}" 
+                                           name="weekdays" 
+                                           value="{{ day_num }}"
+                                           {{ 'checked' if day_num in selected_weekdays else '' }}>
+                                    <label class="form-check-label btn btn-outline-secondary weekday-label" for="weekday_{{ day_num }}">
+                                        {{ day_name }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Datas (para único/período) -->
+                        <div id="dates_section" class="{{ '' if block and block.block_type in ['single', 'period'] else 'd-none' }}">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="start_date" class="form-label">Data Início</label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="start_date" 
+                                           name="start_date"
+                                           value="{{ block.start_date.strftime('%Y-%m-%d') if block and block.start_date else '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3" id="end_date_section">
+                                    <label for="end_date" class="form-label">Data Fim</label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="end_date" 
+                                           name="end_date"
+                                           value="{{ block.end_date.strftime('%Y-%m-%d') if block and block.end_date else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Horário do Bloqueio</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="form-check card p-3 h-100">
+                                    <input class="form-check-input" 
+                                           type="radio" 
+                                           name="time_type" 
+                                           id="time_all_day" 
+                                           value="all_day"
+                                           {{ 'checked' if block and block.all_day else '' }}>
+                                    <label class="form-check-label w-100" for="time_all_day">
+                                        <i class="fas fa-sun text-warning me-2"></i>
+                                        <strong>Dia Inteiro</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check card p-3 h-100">
+                                    <input class="form-check-input" 
+                                           type="radio" 
+                                           name="time_type" 
+                                           id="time_period" 
+                                           value="period"
+                                           {{ 'checked' if block and block.day_period else '' if not block else '' }}
+                                           {{ 'checked' if not block else '' }}>
+                                    <label class="form-check-label w-100" for="time_period">
+                                        <i class="fas fa-clock text-info me-2"></i>
+                                        <strong>Período do Dia</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check card p-3 h-100">
+                                    <input class="form-check-input" 
+                                           type="radio" 
+                                           name="time_type" 
+                                           id="time_specific" 
+                                           value="specific"
+                                           {{ 'checked' if block and block.start_time and not block.day_period else '' }}>
+                                    <label class="form-check-label w-100" for="time_specific">
+                                        <i class="fas fa-stopwatch text-primary me-2"></i>
+                                        <strong>Horário Específico</strong>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Período do dia -->
+                        <div id="period_section" class="{{ '' if not block or block.day_period else 'd-none' }}">
+                            <label class="form-label">Selecione o Período</label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check card p-3">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="day_period" 
+                                               id="period_morning" 
+                                               value="morning"
+                                               {{ 'checked' if block and block.day_period == 'morning' else '' }}>
+                                        <label class="form-check-label w-100" for="period_morning">
+                                            <i class="fas fa-coffee text-warning me-2"></i>
+                                            <strong>Manhã</strong>
+                                            <br><small class="text-muted">08:00 - 12:00</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check card p-3">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="day_period" 
+                                               id="period_afternoon" 
+                                               value="afternoon"
+                                               {{ 'checked' if block and block.day_period == 'afternoon' else '' }}>
+                                        <label class="form-check-label w-100" for="period_afternoon">
+                                            <i class="fas fa-sun text-orange me-2"></i>
+                                            <strong>Tarde</strong>
+                                            <br><small class="text-muted">12:00 - 18:00</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check card p-3">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="day_period" 
+                                               id="period_evening" 
+                                               value="evening"
+                                               {{ 'checked' if block and block.day_period == 'evening' else '' }}>
+                                        <label class="form-check-label w-100" for="period_evening">
+                                            <i class="fas fa-moon text-dark me-2"></i>
+                                            <strong>Noite</strong>
+                                            <br><small class="text-muted">18:00 - 22:00</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Horário específico -->
+                        <div id="specific_time_section" class="d-none">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="start_time" class="form-label">Hora Início</label>
+                                    <input type="time" 
+                                           class="form-control" 
+                                           id="start_time" 
+                                           name="start_time"
+                                           value="{{ block.start_time.strftime('%H:%M') if block and block.start_time else '08:00' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="end_time" class="form-label">Hora Fim</label>
+                                    <input type="time" 
+                                           class="form-control" 
+                                           id="end_time" 
+                                           name="end_time"
+                                           value="{{ block.end_time.strftime('%H:%M') if block and block.end_time else '18:00' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview -->
+                <div class="card shadow-sm mb-4 border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Pré-visualização</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="preview" class="p-3 rounded" style="background-color: #f8f9fa;">
+                            <p class="mb-0" id="preview_text">
+                                <em class="text-muted">Configure o bloqueio para ver a pré-visualização</em>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('deadlines.blocks_list') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> {{ 'Salvar Alterações' if block else 'Criar Bloqueio' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('blockForm');
+    
+    // Tipo de bloqueio
+    const typeRadios = document.querySelectorAll('input[name="block_type"]');
+    const weekdaysSection = document.getElementById('weekdays_section');
+    const datesSection = document.getElementById('dates_section');
+    const endDateSection = document.getElementById('end_date_section');
+    
+    // Tipo de horário
+    const timeRadios = document.querySelectorAll('input[name="time_type"]');
+    const periodSection = document.getElementById('period_section');
+    const specificTimeSection = document.getElementById('specific_time_section');
+    
+    // Atualizar seções baseado no tipo de bloqueio
+    function updateBlockTypeUI() {
+        const selectedType = document.querySelector('input[name="block_type"]:checked')?.value;
+        
+        weekdaysSection.classList.toggle('d-none', selectedType !== 'recurring');
+        datesSection.classList.toggle('d-none', selectedType === 'recurring');
+        endDateSection.classList.toggle('d-none', selectedType === 'single');
+        
+        // Atualizar visual dos cards
+        document.querySelectorAll('input[name="block_type"]').forEach(radio => {
+            const card = radio.closest('.card');
+            card.classList.toggle('border-primary', radio.checked);
+            card.classList.toggle('bg-light', radio.checked);
+        });
+        
+        updatePreview();
+    }
+    
+    // Atualizar seções baseado no tipo de horário
+    function updateTimeTypeUI() {
+        const selectedTime = document.querySelector('input[name="time_type"]:checked')?.value;
+        
+        periodSection.classList.toggle('d-none', selectedTime !== 'period');
+        specificTimeSection.classList.toggle('d-none', selectedTime !== 'specific');
+        
+        updatePreview();
+    }
+    
+    // Atualizar pré-visualização
+    function updatePreview() {
+        const title = document.getElementById('title').value || 'Bloqueio';
+        const blockType = document.querySelector('input[name="block_type"]:checked')?.value;
+        const timeType = document.querySelector('input[name="time_type"]:checked')?.value;
+        
+        let previewText = `<strong>🚫 ${title}</strong><br>`;
+        
+        // Dias/Período
+        if (blockType === 'recurring') {
+            const selectedDays = [];
+            const dayNames = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+            document.querySelectorAll('input[name="weekdays"]:checked').forEach(cb => {
+                selectedDays.push(dayNames[parseInt(cb.value)]);
+            });
+            if (selectedDays.length > 0) {
+                previewText += `<span class="text-primary">📅 ${selectedDays.join(', ')}</span><br>`;
+            }
+        } else {
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            if (startDate) {
+                const formattedStart = new Date(startDate).toLocaleDateString('pt-BR');
+                if (blockType === 'period' && endDate) {
+                    const formattedEnd = new Date(endDate).toLocaleDateString('pt-BR');
+                    previewText += `<span class="text-primary">📅 ${formattedStart} a ${formattedEnd}</span><br>`;
+                } else {
+                    previewText += `<span class="text-primary">📅 ${formattedStart}</span><br>`;
+                }
+            }
+        }
+        
+        // Horário
+        if (timeType === 'all_day') {
+            previewText += `<span class="text-success">⏰ Dia inteiro</span>`;
+        } else if (timeType === 'period') {
+            const period = document.querySelector('input[name="day_period"]:checked')?.value;
+            const periodNames = {
+                'morning': 'Manhã (08:00 - 12:00)',
+                'afternoon': 'Tarde (12:00 - 18:00)',
+                'evening': 'Noite (18:00 - 22:00)'
+            };
+            if (period) {
+                previewText += `<span class="text-success">⏰ ${periodNames[period]}</span>`;
+            }
+        } else if (timeType === 'specific') {
+            const startTime = document.getElementById('start_time').value;
+            const endTime = document.getElementById('end_time').value;
+            if (startTime && endTime) {
+                previewText += `<span class="text-success">⏰ ${startTime} - ${endTime}</span>`;
+            }
+        }
+        
+        document.getElementById('preview_text').innerHTML = previewText;
+        
+        // Atualizar cor do preview
+        const color = document.getElementById('color').value;
+        document.getElementById('preview').style.borderLeft = `4px solid ${color}`;
+    }
+    
+    // Event listeners
+    typeRadios.forEach(radio => {
+        radio.addEventListener('change', updateBlockTypeUI);
+    });
+    
+    timeRadios.forEach(radio => {
+        radio.addEventListener('change', updateTimeTypeUI);
+    });
+    
+    // Preset de cores
+    document.querySelectorAll('.color-preset').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('color').value = this.dataset.color;
+            updatePreview();
+        });
+    });
+    
+    // Atualizar preview em mudanças
+    document.getElementById('title').addEventListener('input', updatePreview);
+    document.getElementById('color').addEventListener('change', updatePreview);
+    document.querySelectorAll('input[name="weekdays"]').forEach(cb => {
+        cb.addEventListener('change', updatePreview);
+    });
+    document.querySelectorAll('input[name="day_period"]').forEach(radio => {
+        radio.addEventListener('change', updatePreview);
+    });
+    document.getElementById('start_date').addEventListener('change', updatePreview);
+    document.getElementById('end_date').addEventListener('change', updatePreview);
+    document.getElementById('start_time').addEventListener('change', updatePreview);
+    document.getElementById('end_time').addEventListener('change', updatePreview);
+    
+    // Estilo visual para checkboxes de dias da semana
+    document.querySelectorAll('.weekday-check').forEach(cb => {
+        cb.addEventListener('change', function() {
+            this.nextElementSibling.classList.toggle('btn-primary', this.checked);
+            this.nextElementSibling.classList.toggle('btn-outline-secondary', !this.checked);
+            this.nextElementSibling.classList.toggle('text-white', this.checked);
+        });
+        // Inicializar estado
+        if (cb.checked) {
+            cb.nextElementSibling.classList.add('btn-primary', 'text-white');
+            cb.nextElementSibling.classList.remove('btn-outline-secondary');
+        }
+    });
+    
+    // Inicializar UI
+    updateBlockTypeUI();
+    updateTimeTypeUI();
+    updatePreview();
+});
+</script>
+
+<style>
+.form-check.card {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.form-check.card:hover {
+    border-color: var(--bs-primary) !important;
+}
+.form-check.card .form-check-input {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+.weekday-label {
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+.text-orange {
+    color: #fd7e14;
+}
+</style>
+{% endblock %}

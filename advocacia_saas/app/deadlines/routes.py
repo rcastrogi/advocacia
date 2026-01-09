@@ -274,3 +274,226 @@ def api_send_alerts():
     db.session.commit()
 
     return jsonify({"success": True, "alerts_sent": alerts_sent})
+
+
+# ==================== BLOQUEIOS DE AGENDA ====================
+
+@bp.route("/blocks")
+@login_required
+def blocks_list():
+    """Lista todos os bloqueios de agenda do usuário"""
+    from app.models import AgendaBlock
+    
+    blocks = AgendaBlock.query.filter_by(
+        user_id=current_user.id
+    ).order_by(AgendaBlock.created_at.desc()).all()
+    
+    return render_template("deadlines/blocks_list.html", blocks=blocks)
+
+
+@bp.route("/blocks/new", methods=["GET", "POST"])
+@login_required
+def block_new():
+    """Criar novo bloqueio de agenda"""
+    import json
+    from app.models import AgendaBlock
+    
+    if request.method == "POST":
+        try:
+            title = request.form.get("title")
+            description = request.form.get("description")
+            block_type = request.form.get("block_type", "recurring")
+            
+            # Dias da semana (para recorrente)
+            weekdays = request.form.getlist("weekdays")
+            weekdays_json = json.dumps([int(d) for d in weekdays]) if weekdays else None
+            
+            # Período do dia ou horário específico
+            time_type = request.form.get("time_type", "period")
+            
+            if time_type == "all_day":
+                all_day = True
+                day_period = None
+                start_time = None
+                end_time = None
+            elif time_type == "period":
+                all_day = False
+                day_period = request.form.get("day_period")
+                start_time = None
+                end_time = None
+            else:  # specific
+                all_day = False
+                day_period = None
+                start_time_str = request.form.get("start_time")
+                end_time_str = request.form.get("end_time")
+                start_time = datetime.strptime(start_time_str, "%H:%M").time() if start_time_str else None
+                end_time = datetime.strptime(end_time_str, "%H:%M").time() if end_time_str else None
+            
+            # Datas (para bloqueio único ou período)
+            start_date_str = request.form.get("start_date")
+            end_date_str = request.form.get("end_date")
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else None
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date() if end_date_str else None
+            
+            # Cor
+            color = request.form.get("color", "#6c757d")
+            
+            block = AgendaBlock(
+                user_id=current_user.id,
+                title=title,
+                description=description,
+                block_type=block_type,
+                weekdays=weekdays_json,
+                start_time=start_time,
+                end_time=end_time,
+                all_day=all_day,
+                day_period=day_period,
+                start_date=start_date,
+                end_date=end_date,
+                color=color,
+                is_active=True
+            )
+            
+            db.session.add(block)
+            db.session.commit()
+            
+            flash("Bloqueio de agenda criado com sucesso!", "success")
+            return redirect(url_for("deadlines.blocks_list"))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao criar bloqueio: {str(e)}", "danger")
+    
+    return render_template("deadlines/block_form.html", block=None)
+
+
+@bp.route("/blocks/<int:block_id>/edit", methods=["GET", "POST"])
+@login_required
+def block_edit(block_id):
+    """Editar bloqueio de agenda"""
+    import json
+    from app.models import AgendaBlock
+    
+    block = AgendaBlock.query.get_or_404(block_id)
+    
+    if block.user_id != current_user.id:
+        flash("Acesso negado", "danger")
+        return redirect(url_for("deadlines.blocks_list"))
+    
+    if request.method == "POST":
+        try:
+            block.title = request.form.get("title")
+            block.description = request.form.get("description")
+            block.block_type = request.form.get("block_type", "recurring")
+            
+            # Dias da semana
+            weekdays = request.form.getlist("weekdays")
+            block.weekdays = json.dumps([int(d) for d in weekdays]) if weekdays else None
+            
+            # Período do dia ou horário específico
+            time_type = request.form.get("time_type", "period")
+            
+            if time_type == "all_day":
+                block.all_day = True
+                block.day_period = None
+                block.start_time = None
+                block.end_time = None
+            elif time_type == "period":
+                block.all_day = False
+                block.day_period = request.form.get("day_period")
+                block.start_time = None
+                block.end_time = None
+            else:
+                block.all_day = False
+                block.day_period = None
+                start_time_str = request.form.get("start_time")
+                end_time_str = request.form.get("end_time")
+                block.start_time = datetime.strptime(start_time_str, "%H:%M").time() if start_time_str else None
+                block.end_time = datetime.strptime(end_time_str, "%H:%M").time() if end_time_str else None
+            
+            # Datas
+            start_date_str = request.form.get("start_date")
+            end_date_str = request.form.get("end_date")
+            block.start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else None
+            block.end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date() if end_date_str else None
+            
+            block.color = request.form.get("color", "#6c757d")
+            
+            db.session.commit()
+            
+            flash("Bloqueio atualizado com sucesso!", "success")
+            return redirect(url_for("deadlines.blocks_list"))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao atualizar bloqueio: {str(e)}", "danger")
+    
+    return render_template("deadlines/block_form.html", block=block)
+
+
+@bp.route("/blocks/<int:block_id>/delete", methods=["POST"])
+@login_required
+def block_delete(block_id):
+    """Excluir bloqueio de agenda"""
+    from app.models import AgendaBlock
+    
+    block = AgendaBlock.query.get_or_404(block_id)
+    
+    if block.user_id != current_user.id:
+        return jsonify({"success": False, "message": "Acesso negado"}), 403
+    
+    db.session.delete(block)
+    db.session.commit()
+    
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"success": True, "message": "Bloqueio excluído com sucesso"})
+    
+    flash("Bloqueio excluído com sucesso!", "success")
+    return redirect(url_for("deadlines.blocks_list"))
+
+
+@bp.route("/blocks/<int:block_id>/toggle", methods=["POST"])
+@login_required
+def block_toggle(block_id):
+    """Ativar/desativar bloqueio de agenda"""
+    from app.models import AgendaBlock
+    
+    block = AgendaBlock.query.get_or_404(block_id)
+    
+    if block.user_id != current_user.id:
+        return jsonify({"success": False, "message": "Acesso negado"}), 403
+    
+    block.is_active = not block.is_active
+    db.session.commit()
+    
+    status = "ativado" if block.is_active else "desativado"
+    return jsonify({"success": True, "message": f"Bloqueio {status}", "is_active": block.is_active})
+
+
+@bp.route("/api/blocks")
+@login_required
+def api_blocks():
+    """API: Retorna bloqueios para o calendário"""
+    from app.models import AgendaBlock
+    
+    # Período para gerar eventos
+    start_str = request.args.get("start")
+    end_str = request.args.get("end")
+    
+    try:
+        start_date = datetime.strptime(start_str[:10], "%Y-%m-%d").date() if start_str else datetime.utcnow().date()
+        end_date = datetime.strptime(end_str[:10], "%Y-%m-%d").date() if end_str else (datetime.utcnow() + timedelta(days=90)).date()
+    except:
+        start_date = datetime.utcnow().date()
+        end_date = (datetime.utcnow() + timedelta(days=90)).date()
+    
+    blocks = AgendaBlock.query.filter_by(
+        user_id=current_user.id,
+        is_active=True
+    ).all()
+    
+    events = []
+    for block in blocks:
+        events.extend(block.to_calendar_events(start_date, end_date))
+    
+    return jsonify(events)

@@ -144,6 +144,7 @@ def create_app(config_class=Config):
     # Import all models to ensure they're registered with SQLAlchemy
     # This MUST be done before any db.create_all() calls
     from app.models import (  # noqa: F401, E402
+        AgendaBlock,
         AIGeneration,
         AuditLog,
         BillingPlan,

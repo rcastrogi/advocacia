@@ -4,16 +4,10 @@
 
 {# Page Header #}
 {% set page_title = 'Seções de Petição' %}
-{% set page_icon = 'fas fa-puzzle-piece' %}
+{% set page_icon = 'puzzle-piece' %}
 {% set page_description = 'Gerencie as seções disponíveis para criação de petições dinâmicas' %}
-{% set page_actions = [
-    {
-        'label': 'Nova Seção',
-        'url': url_for('admin.petition_section_new'),
-        'icon': 'fas fa-plus',
-        'class': 'btn-primary'
-    }
-] %}
+{% set new_btn_url = url_for('admin.petition_section_new') %}
+{% set new_btn_label = 'Nova Seção' %}
 {% include 'components/list_header.html' %}
 
 {# Statistics #}

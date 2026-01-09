@@ -26,6 +26,9 @@
             <p class="text-muted">Visualize todos os seus prazos em um calendário</p>
         </div>
         <div class="d-flex gap-2">
+            <a href="{{ url_for('deadlines.blocks_list') }}" class="btn btn-outline-secondary" title="Gerenciar bloqueios de agenda">
+                <i class="fas fa-ban me-2"></i>Bloqueios
+            </a>
             <a href="{{ url_for('deadlines.index') }}" class="btn btn-outline-primary">
                 <i class="fas fa-list me-2"></i>Lista
             </a>
@@ -38,7 +41,7 @@
     <!-- Legenda -->
     <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <div class="d-flex gap-4">
+            <div class="d-flex gap-4 flex-wrap">
                 <div>
                     <span class="badge" style="background-color: #dc3545;">■</span>
                     <small>Urgente (até 3 dias)</small>
@@ -46,6 +49,10 @@
                 <div>
                     <span class="badge" style="background-color: #007bff;">■</span>
                     <small>Normal</small>
+                </div>
+                <div>
+                    <span class="badge" style="background-color: #6c757d;">■</span>
+                    <small>Bloqueio de Agenda</small>
                 </div>
             </div>
         </div>
@@ -82,7 +89,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const calendarEl = document.getElementById('calendar');
-    const events = {{ events|tojson }};
+    const deadlineEvents = {{ events|tojson }};
     
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
@@ -98,11 +105,30 @@ document.addEventListener('DOMContentLoaded', function() {
             week: 'Semana',
             list: 'Lista'
         },
-        events: events,
+        eventSources: [
+            // Eventos de prazos
+            {
+                events: deadlineEvents
+            },
+            // Bloqueios de agenda (carregados via API)
+            {
+                url: '/deadlines/api/blocks',
+                failure: function() {
+                    console.log('Erro ao carregar bloqueios de agenda');
+                }
+            }
+        ],
         eventClick: function(info) {
             info.jsEvent.preventDefault();
             
             const event = info.event;
+            
+            // Se for um bloqueio, ir para a página de bloqueios
+            if (event.extendedProps && event.extendedProps.type === 'block') {
+                window.location.href = '/deadlines/blocks';
+                return;
+            }
+            
             const modal = new bootstrap.Modal(document.getElementById('eventModal'));
             
             document.getElementById('eventModalTitle').textContent = event.title;
@@ -111,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${event.extendedProps.description ? `<p><strong>Descrição:</strong> ${event.extendedProps.description}</p>` : ''}
                 ${event.extendedProps.type ? `<p><strong>Tipo:</strong> <span class="badge bg-secondary">${event.extendedProps.type}</span></p>` : ''}
             `;
-            document.getElementById('eventViewBtn').href = event.url;
+            document.getElementById('eventViewBtn').href = event.url || '#';
             
             modal.show();
         },

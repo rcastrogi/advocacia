@@ -4566,3 +4566,208 @@ class DeanonymizationRequest(db.Model):
             "admin_notes": self.admin_notes,
             "rejection_reason": self.rejection_reason,
         }
+
+
+class AgendaBlock(db.Model):
+    """
+    Bloqueios de agenda do usuário.
+    Permite configurar horários/dias em que o usuário não está disponível.
+    Exemplos: Segunda, Quarta e Sexta ocupados / Sexta à tarde indisponível
+    """
+
+    __tablename__ = "agenda_blocks"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Nome do bloqueio (ex: "Aulas na Faculdade", "Reunião de Equipe")
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+
+    # Tipo de bloqueio
+    block_type = db.Column(
+        db.String(30), nullable=False, default="recurring"
+    )  # 'recurring' (recorrente), 'single' (único), 'period' (período)
+
+    # Para bloqueios recorrentes (semanais)
+    # Dias da semana: 0=Segunda, 1=Terça, 2=Quarta, 3=Quinta, 4=Sexta, 5=Sábado, 6=Domingo
+    weekdays = db.Column(db.String(50))  # JSON array: [0, 2, 4] = Seg, Qua, Sex
+
+    # Horário do bloqueio
+    start_time = db.Column(db.Time)  # Hora início (ex: 14:00)
+    end_time = db.Column(db.Time)  # Hora fim (ex: 18:00)
+    all_day = db.Column(db.Boolean, default=False)  # Dia inteiro
+
+    # Para bloqueios de período específico
+    start_date = db.Column(db.Date)  # Data início
+    end_date = db.Column(db.Date)  # Data fim
+
+    # Período do dia (alternativa ao horário específico)
+    day_period = db.Column(
+        db.String(20)
+    )  # 'morning' (manhã), 'afternoon' (tarde), 'evening' (noite), 'all_day'
+
+    # Cor para exibição no calendário
+    color = db.Column(db.String(20), default="#6c757d")
+
+    # Status
+    is_active = db.Column(db.Boolean, default=True)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relacionamentos
+    user = db.relationship(
+        "User", backref=db.backref("agenda_blocks", lazy="dynamic")
+    )
+
+    def __repr__(self):
+        return f"<AgendaBlock {self.title} user={self.user_id}>"
+
+    def get_weekdays_display(self):
+        """Retorna os dias da semana formatados."""
+        if not self.weekdays:
+            return ""
+        
+        import json
+        days_map = {
+            0: "Segunda",
+            1: "Terça",
+            2: "Quarta",
+            3: "Quinta",
+            4: "Sexta",
+            5: "Sábado",
+            6: "Domingo"
+        }
+        try:
+            days = json.loads(self.weekdays)
+            return ", ".join([days_map.get(d, "") for d in days])
+        except:
+            return ""
+
+    def get_period_display(self):
+        """Retorna o período do dia formatado."""
+        period_map = {
+            "morning": "Manhã (08:00 - 12:00)",
+            "afternoon": "Tarde (12:00 - 18:00)",
+            "evening": "Noite (18:00 - 22:00)",
+            "all_day": "Dia Inteiro"
+        }
+        return period_map.get(self.day_period, "")
+
+    def get_time_display(self):
+        """Retorna o horário formatado."""
+        if self.all_day:
+            return "Dia inteiro"
+        if self.day_period:
+            return self.get_period_display()
+        if self.start_time and self.end_time:
+            return f"{self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}"
+        return ""
+
+    def to_calendar_events(self, start_range, end_range):
+        """
+        Gera eventos de calendário para o período especificado.
+        Útil para exibir os bloqueios no FullCalendar.
+        """
+        import json
+        from datetime import datetime, timedelta
+
+        events = []
+        
+        if self.block_type == "single" and self.start_date:
+            # Bloqueio único
+            start_dt = datetime.combine(self.start_date, self.start_time or datetime.min.time())
+            end_dt = datetime.combine(self.end_date or self.start_date, self.end_time or datetime.max.time())
+            
+            if start_dt.date() >= start_range and start_dt.date() <= end_range:
+                events.append({
+                    "id": f"block_{self.id}",
+                    "title": f"🚫 {self.title}",
+                    "start": start_dt.isoformat(),
+                    "end": end_dt.isoformat(),
+                    "allDay": self.all_day,
+                    "color": self.color,
+                    "display": "background",
+                    "classNames": ["agenda-block"],
+                    "extendedProps": {
+                        "type": "block",
+                        "block_id": self.id,
+                        "editable": False
+                    }
+                })
+        
+        elif self.block_type == "recurring" and self.weekdays:
+            # Bloqueio recorrente
+            try:
+                weekdays = json.loads(self.weekdays)
+            except:
+                weekdays = []
+            
+            current = start_range
+            while current <= end_range:
+                # Python: weekday() retorna 0=Segunda, 6=Domingo
+                if current.weekday() in weekdays:
+                    # Determinar horários baseado no período ou horário específico
+                    if self.all_day:
+                        start_dt = datetime.combine(current, datetime.min.time())
+                        end_dt = datetime.combine(current, datetime.max.time().replace(microsecond=0))
+                    elif self.day_period:
+                        periods = {
+                            "morning": (datetime.strptime("08:00", "%H:%M").time(), datetime.strptime("12:00", "%H:%M").time()),
+                            "afternoon": (datetime.strptime("12:00", "%H:%M").time(), datetime.strptime("18:00", "%H:%M").time()),
+                            "evening": (datetime.strptime("18:00", "%H:%M").time(), datetime.strptime("22:00", "%H:%M").time()),
+                        }
+                        period_times = periods.get(self.day_period, (datetime.min.time(), datetime.max.time()))
+                        start_dt = datetime.combine(current, period_times[0])
+                        end_dt = datetime.combine(current, period_times[1])
+                    else:
+                        start_dt = datetime.combine(current, self.start_time or datetime.min.time())
+                        end_dt = datetime.combine(current, self.end_time or datetime.max.time())
+                    
+                    events.append({
+                        "id": f"block_{self.id}_{current.isoformat()}",
+                        "title": f"🚫 {self.title}",
+                        "start": start_dt.isoformat(),
+                        "end": end_dt.isoformat(),
+                        "allDay": self.all_day,
+                        "color": self.color,
+                        "display": "background",
+                        "classNames": ["agenda-block"],
+                        "extendedProps": {
+                            "type": "block",
+                            "block_id": self.id,
+                            "editable": False
+                        }
+                    })
+                
+                current += timedelta(days=1)
+        
+        return events
+
+    def to_dict(self):
+        import json
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "block_type": self.block_type,
+            "weekdays": json.loads(self.weekdays) if self.weekdays else [],
+            "weekdays_display": self.get_weekdays_display(),
+            "start_time": self.start_time.strftime("%H:%M") if self.start_time else None,
+            "end_time": self.end_time.strftime("%H:%M") if self.end_time else None,
+            "all_day": self.all_day,
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "day_period": self.day_period,
+            "period_display": self.get_period_display(),
+            "time_display": self.get_time_display(),
+            "color": self.color,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
