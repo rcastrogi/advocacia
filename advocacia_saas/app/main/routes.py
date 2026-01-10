@@ -352,24 +352,43 @@ def _build_plan_summary(user):
 def _get_public_plans():
     plans = (
         BillingPlan.query.filter_by(active=True)
-        .order_by(BillingPlan.plan_type, BillingPlan.name)
+        .order_by(BillingPlan.monthly_fee)
         .all()
     )
-    public = []
+    individual_plans = []
+    office_plans = []
+    
     for plan in plans:
-        public.append(
-            {
-                "name": plan.name,
-                "description": plan.description,
-                "plan_type_label": PLAN_TYPE_LABELS.get(
-                    plan.plan_type, plan.plan_type.title()
-                ),
-                "monthly_fee": _format_currency(plan.monthly_fee),
-                # usage_rate removido - sistema simplificado
-                "is_per_usage": plan.plan_type == "per_usage",
-            }
-        )
-    return public
+        # Verificar se é plano de escritório (tem multi_users com limite > 1)
+        multi_users_limit = plan.get_feature_limit('multi_users')
+        is_office_plan = multi_users_limit is not None and multi_users_limit > 1
+        
+        plan_data = {
+            "id": plan.id,
+            "name": plan.name,
+            "description": plan.description,
+            "plan_type_label": PLAN_TYPE_LABELS.get(
+                plan.plan_type, plan.plan_type.title()
+            ),
+            "monthly_fee": _format_currency(plan.monthly_fee),
+            "monthly_fee_raw": plan.monthly_fee or 0,
+            "is_per_usage": plan.plan_type == "per_usage",
+            "is_office_plan": is_office_plan,
+            "max_users": multi_users_limit or 1,
+            "features": plan.features,
+            "get_feature_limit": plan.get_feature_limit,
+        }
+        
+        if is_office_plan:
+            office_plans.append(plan_data)
+        else:
+            individual_plans.append(plan_data)
+    
+    return {
+        "individual": individual_plans,
+        "office": office_plans,
+        "all": individual_plans + office_plans,
+    }
 
 
 def _format_currency(value):

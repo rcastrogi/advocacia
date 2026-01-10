@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('office.dashboard') }}">{{ office.name }}</a></li>
+                        <li class="breadcrumb-item active">Configurações</li>
+                    </ol>
+                </nav>
+                <h1 class="text-white mt-2 mb-0">
+                    <i class="fas fa-cog me-2"></i>Configurações do Escritório
+                </h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="POST" action="{{ url_for('office.settings') }}" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+                
+                <!-- Informações Básicas -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0">
+                            <i class="fas fa-building me-2"></i>Informações Básicas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="name" class="form-label">Nome do Escritório <span class="text-danger">*</span></label>
+                                {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                                {% for error in form.name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cnpj" class="form-label">CNPJ</label>
+                                {{ form.cnpj(class="form-control") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="oab_number" class="form-label">OAB do Escritório</label>
+                                {{ form.oab_number(class="form-control") }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Telefone</label>
+                                {{ form.phone(class="form-control") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">E-mail</label>
+                                {{ form.email(class="form-control") }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="website" class="form-label">Website</label>
+                            {{ form.website(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Endereço -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>Endereço
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="cep" class="form-label">CEP</label>
+                                {{ form.cep(class="form-control", id="cep") }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-9 mb-3">
+                                <label for="street" class="form-label">Logradouro</label>
+                                {{ form.street(class="form-control", id="street") }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="number" class="form-label">Número</label>
+                                {{ form.number(class="form-control") }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="complement" class="form-label">Complemento</label>
+                                {{ form.complement(class="form-control") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="neighborhood" class="form-label">Bairro</label>
+                                {{ form.neighborhood(class="form-control", id="neighborhood") }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="city" class="form-label">Cidade</label>
+                                {{ form.city(class="form-control", id="city") }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="uf" class="form-label">Estado</label>
+                                {{ form.uf(class="form-select", id="uf") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Branding -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0">
+                            <i class="fas fa-palette me-2"></i>Personalização
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="primary_color" class="form-label">Cor Primária</label>
+                                <div class="input-group">
+                                    {{ form.primary_color(class="form-control form-control-color", style="width: 50px;") }}
+                                    <input type="text" class="form-control" id="colorHex" value="{{ office.primary_color or '#1a73e8' }}" readonly>
+                                </div>
+                                <small class="text-muted">Cor principal usada em documentos e relatórios.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('office.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Danger Zone -->
+            <div class="dashboard-card border-danger">
+                <div class="card-header-custom bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Zona de Perigo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Ações irreversíveis. Tenha cuidado.</p>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('office.transfer_ownership') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-exchange-alt me-2"></i>Transferir Propriedade
+                        </a>
+                        
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="fas fa-trash me-2"></i>Excluir Escritório
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Excluir Escritório -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-trash me-2"></i>Excluir Escritório
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Atenção!</strong> Esta ação é irreversível.
+                </div>
+                <p>Tem certeza que deseja excluir o escritório <strong>{{ office.name }}</strong>?</p>
+                <p class="text-muted">Todos os convites pendentes serão cancelados. Os membros serão desvinculados.</p>
+                
+                {% if office.get_member_count() > 1 %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-users me-2"></i>
+                    Você precisa remover todos os membros antes de excluir o escritório.
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for('office.delete_office') }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger" {% if office.get_member_count() > 1 %}disabled{% endif %}>
+                        <i class="fas fa-trash me-2"></i>Excluir Permanentemente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Busca CEP
+    const cepInput = document.getElementById('cep');
+    if (cepInput) {
+        cepInput.addEventListener('blur', function() {
+            const cep = this.value.replace(/\D/g, '');
+            if (cep.length === 8) {
+                fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.erro) {
+                            document.getElementById('street').value = data.logradouro || '';
+                            document.getElementById('neighborhood').value = data.bairro || '';
+                            document.getElementById('city').value = data.localidade || '';
+                            document.getElementById('uf').value = data.uf || '';
+                        }
+                    })
+                    .catch(err => console.log('Erro ao buscar CEP:', err));
+            }
+        });
+    }
+    
+    // Sincronizar cor
+    const colorInput = document.getElementById('primary_color');
+    const colorHex = document.getElementById('colorHex');
+    if (colorInput && colorHex) {
+        colorInput.addEventListener('input', function() {
+            colorHex.value = this.value;
+        });
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

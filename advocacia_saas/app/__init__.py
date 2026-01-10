@@ -1,4 +1,5 @@
 import os
+import hashlib
 import zoneinfo
 from datetime import datetime, timezone
 
@@ -35,6 +36,10 @@ cache = Cache()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    # Desabilitar cache de arquivos estáticos em desenvolvimento
+    if app.debug:
+        app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
     # Configure timezone for Brazil (São Paulo)
     app.config["TIMEZONE"] = zoneinfo.ZoneInfo("America/Sao_Paulo")
@@ -152,6 +157,9 @@ def create_app(config_class=Config):
         Client,
         CreditPackage,
         Feature,
+        Office,
+        OfficeInvite,
+        OFFICE_ROLES,
         Payment,
         PetitionModel,
         PetitionModelSection,
@@ -245,6 +253,10 @@ def create_app(config_class=Config):
     from app.lgpd import lgpd_bp
 
     app.register_blueprint(lgpd_bp)
+
+    from app.office import bp as office_bp
+
+    app.register_blueprint(office_bp, url_prefix="/office")
 
     from app.processes import bp as processes_bp
 
@@ -392,5 +404,30 @@ def create_app(config_class=Config):
     from app import cli
 
     cli.init_app(app)
+
+    # Cache busting para arquivos estáticos (resolve problema de cache em produção)
+    @app.context_processor
+    def inject_static_version():
+        """Adiciona função static_url que inclui hash do arquivo para cache busting"""
+        _file_hashes = {}
+        
+        def static_url(filename):
+            """Gera URL para arquivo estático com hash para cache busting"""
+            if filename in _file_hashes:
+                file_hash = _file_hashes[filename]
+            else:
+                filepath = os.path.join(app.static_folder, filename)
+                if os.path.exists(filepath):
+                    # Usa timestamp de modificação como versão
+                    mtime = os.path.getmtime(filepath)
+                    file_hash = str(int(mtime))
+                else:
+                    file_hash = "1"
+                _file_hashes[filename] = file_hash
+            
+            from flask import url_for
+            return f"{url_for('static', filename=filename)}?v={file_hash}"
+        
+        return {'static_url': static_url}
 
     return app

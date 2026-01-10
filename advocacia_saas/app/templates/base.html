@@ -12,7 +12,7 @@
     <link rel="canonical" href="{{ request.url_root[:-1] }}{{ request.path }}">
 
     <!-- Debug Console (FIRST SCRIPT - antes de tudo) -->
-    <script src="{{ url_for('static', filename='js/debug-console.js') }}?v={{ range(1, 10000) | random }}"></script>
+    <script src="{{ static_url('js/debug-console.js') }}"></script>
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -99,9 +99,9 @@
     <!-- ApexCharts -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.css">
     <!-- Custom CSS -->
-    <link href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1, 10000) | random }}" rel="stylesheet">
+    <link href="{{ static_url('css/style.css') }}" rel="stylesheet">
     <!-- Accessibility CSS -->
-    <link href="{{ url_for('static', filename='css/accessibility.css') }}?v={{ range(1, 10000) | random }}" rel="stylesheet">
+    <link href="{{ static_url('css/accessibility.css') }}" rel="stylesheet">
     <!-- Sistema Unificado de Notificações -->
     <!-- Intro.js CSS for guided tours -->
     <link href="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/minified/introjs.min.css" rel="stylesheet">
@@ -453,106 +453,69 @@
     
     <!-- Public Navbar (for non-authenticated pages) -->
     {% if not current_user.is_authenticated %}
-    <nav class="navbar navbar-expand-xl navbar-dark fixed-top" id="landingNav" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); transition: all 0.3s ease;">
+    <nav class="nav-custom fixed-top" id="landingNav" x-data="{ menuOpen: false }">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
-                <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}" 
-                     alt="Petitio" height="36" class="me-2">
-                <span>Petitio</span>
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#landingNavbar" aria-controls="landingNavbar" aria-expanded="false" aria-label="Alternar menu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="landingNavbar">
-                <!-- Header do Menu Mobile -->
-                <div class="mobile-menu-header d-xl-none">
-                    <span class="brand-text">
-                        <i class="fas fa-balance-scale me-2" style="color: var(--gold-color);"></i>
-                        Menu
-                    </span>
-                    <button type="button" class="btn-close-menu" data-bs-toggle="collapse" data-bs-target="#landingNavbar" aria-label="Fechar menu">
-                        <i class="fas fa-times"></i>
-                    </button>
+            <div class="nav-custom-inner">
+                <!-- Logo -->
+                <a class="nav-custom-brand" href="{{ url_for('main.index') }}">
+                    <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}" 
+                         alt="Petitio" height="36">
+                    <span>Petitio</span>
+                </a>
+                
+                <!-- Hamburger Button - aparece abaixo de 1400px -->
+                <button class="nav-custom-toggle" 
+                        @click="menuOpen = !menuOpen" 
+                        :class="{ 'active': menuOpen }"
+                        aria-label="Alternar menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
+                <!-- Menu -->
+                <div class="nav-custom-menu" :class="{ 'show': menuOpen }">
+                    {% if request.endpoint == 'main.recursos' %}
+                    <!-- Menu específico para página de Recursos -->
+                    <ul class="nav-custom-links">
+                        <li><a href="{{ url_for('main.index') }}" @click="menuOpen = false"><i class="fas fa-home"></i> <span>Início</span></a></li>
+                        <li><a href="#ia" @click="menuOpen = false"><i class="fas fa-robot"></i> <span>IA & Petições</span></a></li>
+                        <li><a href="#gestao" @click="menuOpen = false"><i class="fas fa-tasks"></i> <span>Gestão</span></a></li>
+                        <li><a href="#financeiro" @click="menuOpen = false"><i class="fas fa-dollar-sign"></i> <span>Financeiro</span></a></li>
+                        <li><a href="#analytics" @click="menuOpen = false"><i class="fas fa-chart-line"></i> <span>Analytics</span></a></li>
+                    </ul>
+                    {% else %}
+                    <!-- Menu padrão da página principal -->
+                    <ul class="nav-custom-links">
+                        <li><a href="#peticoes" @click="menuOpen = false"><i class="fas fa-file-alt"></i> <span>Petições</span></a></li>
+                        <li><a href="{{ url_for('main.recursos') }}" @click="menuOpen = false"><i class="fas fa-th-large"></i> <span>Recursos</span></a></li>
+                        <li><a href="{{ url_for('main.roadmap') }}" @click="menuOpen = false"><i class="fas fa-road"></i> <span>Roadmap</span></a></li>
+                        <li><a href="#acessibilidade" @click="menuOpen = false"><i class="fas fa-universal-access"></i> <span>Acessibilidade</span></a></li>
+                        <li><a href="#planos" @click="menuOpen = false"><i class="fas fa-tags"></i> <span>Planos</span></a></li>
+                        <li><a href="#depoimentos" @click="menuOpen = false"><i class="fas fa-comments"></i> <span>Depoimentos</span></a></li>
+                    </ul>
+                    {% endif %}
+                    
+                    <!-- Botões de ação -->
+                    <div class="nav-custom-actions">
+                        <a href="{{ url_for('portal.login') }}" class="btn btn-sm btn-light">
+                            <i class="fas fa-user-circle me-1"></i> Portal do Cliente
+                        </a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-sign-in-alt me-1"></i> Entrar
+                        </a>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-rocket me-1"></i> Começar Grátis
+                        </a>
+                    </div>
                 </div>
                 
-                {% if request.endpoint == 'main.recursos' %}
-                <!-- Menu específico para página de Recursos -->
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}">
-                            <i class="fas fa-home"></i> <span>Início</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#ia">
-                            <i class="fas fa-robot d-lg-none"></i> <span>IA & Petições</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#gestao">
-                            <i class="fas fa-tasks d-lg-none"></i> <span>Gestão</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#financeiro">
-                            <i class="fas fa-dollar-sign d-lg-none"></i> <span>Financeiro</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#analytics">
-                            <i class="fas fa-chart-line d-lg-none"></i> <span>Analytics</span>
-                        </a>
-                    </li>
-                </ul>
-                {% else %}
-                <!-- Menu padrão da página principal -->
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#peticoes">
-                            <i class="fas fa-file-alt d-lg-none"></i> <span>Petições</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.recursos') }}">
-                            <i class="fas fa-th-large d-lg-none"></i> <span>Recursos</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.roadmap') }}">
-                            <i class="fas fa-road d-lg-none"></i> <span>Roadmap</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#acessibilidade">
-                            <i class="fas fa-universal-access d-lg-none"></i> <span>Acessibilidade</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#planos">
-                            <i class="fas fa-tags d-lg-none"></i> <span>Planos</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#depoimentos">
-                            <i class="fas fa-comments d-lg-none"></i> <span>Depoimentos</span>
-                        </a>
-                    </li>
-                </ul>
-                {% endif %}
-                
-                <div class="d-flex gap-2 flex-column flex-xl-row">
-                    <a href="{{ url_for('portal.login') }}" class="btn btn-sm btn-light d-flex align-items-center justify-content-center">
-                        <i class="fas fa-user-circle me-1"></i> Portal do Cliente
-                    </a>
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-light d-flex align-items-center justify-content-center">
-                        <i class="fas fa-sign-in-alt me-1"></i> Entrar
-                    </a>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-warning d-flex align-items-center justify-content-center">
-                        <i class="fas fa-rocket me-1"></i> Começar Grátis
-                    </a>
-                </div>
+                <!-- Overlay para fechar menu -->
+                <div class="nav-custom-overlay" 
+                     x-show="menuOpen" 
+                     x-transition:enter="overlay-enter"
+                     x-transition:leave="overlay-leave"
+                     @click="menuOpen = false"></div>
             </div>
         </div>
     </nav>
@@ -560,7 +523,7 @@
     
     {% if current_user.is_authenticated %}
     <!-- Authenticated Layout -->
-    <nav class="navbar navbar-expand-xl navbar-dark" role="navigation" aria-label="Navegação principal" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color));">
+    <nav class="navbar navbar-expand-lg navbar-dark" role="navigation" aria-label="Navegação principal" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color));">
         <div class="container-fluid">
             <div class="d-flex align-items-center">
                 <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}" 
@@ -649,7 +612,7 @@
                             <i class="fas fa-bell"></i>
                             <span class="d-lg-none ms-2">Notificações</span>
                             {% if current_user.notifications.filter_by(read=False).count() > 0 %}
-                            <span class="badge rounded-pill bg-danger notification-badge-pulse ms-auto ms-xl-0 position-lg-absolute" 
+                            <span class="badge rounded-pill bg-danger notification-badge-pulse ms-auto ms-lg-0 position-lg-absolute" 
                                   style="font-size: 0.75rem;">
                                 {{ current_user.notifications.filter_by(read=False).count() }}
                             </span>
@@ -659,13 +622,13 @@
                     
                     <!-- Badge de Créditos IA (não exibir para master) -->
                     {% if current_user.user_type != 'master' %}
-                    <li class="nav-item me-xl-2">
+                    <li class="nav-item me-lg-2">
                         <a class="btn btn-sm btn-outline-light d-flex align-items-center" 
                            href="{{ url_for('ai.credits_dashboard') }}"
                            title="Créditos para usar a IA">
                             <i class="fas fa-robot"></i>
                             <span class="ms-2">Créditos IA</span>
-                            <span class="badge bg-warning text-dark ms-auto ms-xl-1" id="navbar-credits-badge">
+                            <span class="badge bg-warning text-dark ms-auto ms-lg-1" id="navbar-credits-badge">
                                 {{ current_user.credits.balance if current_user.credits else 0 }}
                             </span>
                         </a>
@@ -677,14 +640,18 @@
                            data-bs-toggle="dropdown">
                             <i class="fas fa-user"></i> 
                             <span class="ms-2">{{ current_user.full_name or current_user.username }}</span>
-                            {% if current_user.user_type == 'escritorio' %}
-                            <span class="badge badge-escritorio ms-auto ms-xl-1">Escritório</span>
+                            {% if current_user.office_id %}
+                            <span class="badge bg-info ms-auto ms-lg-1" title="Escritório: {{ current_user.office.name if current_user.office else '' }}">
+                                <i class="fas fa-building"></i>
+                            </span>
+                            {% elif current_user.user_type == 'escritorio' %}
+                            <span class="badge badge-escritorio ms-auto ms-lg-1">Escritório</span>
                             {% elif current_user.user_type == 'advogado' %}
-                            <span class="badge badge-advogado ms-auto ms-xl-1">Advogado</span>
+                            <span class="badge badge-advogado ms-auto ms-lg-1">Advogado</span>
                             {% elif current_user.user_type == 'master' %}
-                            <span class="badge bg-danger ms-auto ms-xl-1">👑 Master</span>
+                            <span class="badge bg-danger ms-auto ms-lg-1">👑 Master</span>
                             {% elif current_user.user_type == 'admin' %}
-                            <span class="badge bg-warning text-dark ms-auto ms-xl-1">🔧 Admin</span>
+                            <span class="badge bg-warning text-dark ms-auto ms-lg-1">🔧 Admin</span>
                             {% endif %}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
@@ -699,6 +666,14 @@
                             <li><a class="dropdown-item" href="{{ url_for('billing.portal') }}">
                                 <i class="fas fa-credit-card"></i> Minha assinatura
                             </a></li>
+                            {% if has_feature('multi_users') %}
+                            <li><a class="dropdown-item" href="{{ url_for('office.index') }}">
+                                <i class="fas fa-building"></i> Meu Escritório
+                                {% if current_user.office_id %}
+                                <span class="badge bg-success ms-2">Ativo</span>
+                                {% endif %}
+                            </a></li>
+                            {% endif %}
                             <li><a class="dropdown-item" href="{{ url_for('main.roadmap') }}">
                                 <i class="fas fa-road"></i> Roadmap
                             </a></li>
@@ -830,7 +805,7 @@
                 // Fechar ao clicar em links normais
                 navLinks.forEach(function(link) {
                     link.addEventListener('click', function() {
-                        if (window.innerWidth < 1200) {
+                        if (window.innerWidth < 1400) {
                             const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
                             if (bsCollapse) {
                                 bsCollapse.hide();
@@ -842,7 +817,7 @@
                 // Fechar ao clicar em itens do dropdown
                 dropdownItems.forEach(function(item) {
                     item.addEventListener('click', function() {
-                        if (window.innerWidth < 1200) {
+                        if (window.innerWidth < 1400) {
                             const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
                             if (bsCollapse) {
                                 bsCollapse.hide();
@@ -854,7 +829,7 @@
             
             // Fechar menu ao clicar no overlay (fora do menu)
             document.addEventListener('click', function(e) {
-                if (window.innerWidth < 1200) {
+                if (window.innerWidth < 1400) {
                     navbarCollapses.forEach(function(navbarCollapse) {
                         if (navbarCollapse.classList.contains('show')) {
                             const navbar = navbarCollapse.closest('.navbar');
@@ -1125,10 +1100,10 @@
     </script>
     
     <!-- Error Handling (deve ser carregado primeiro) -->
-    <script src="{{ url_for('static', filename='js/error-handling.js') }}?v={{ range(1, 10000) | random }}"></script>
+    <script src="{{ static_url('js/error-handling.js') }}"></script>
     
     <!-- Quill Editor Config -->
-    <script src="{{ url_for('static', filename='js/quill-config.js') }}?v={{ range(1, 10000) | random }}"></script>
+    <script src="{{ static_url('js/quill-config.js') }}"></script>
     
     <!-- jQuery (movido para depois dos scripts que podem depender dele) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

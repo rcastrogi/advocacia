@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('office.dashboard') }}">{{ office.name }}</a></li>
+                        <li class="breadcrumb-item active">Transferir Propriedade</li>
+                    </ol>
+                </nav>
+                <h1 class="text-white mt-2 mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i>Transferir Propriedade
+                </h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="dashboard-card">
+                <div class="card-header-custom bg-warning">
+                    <h5 class="mb-0 text-dark">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Transferir Propriedade do Escritório
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Atenção!</strong> Ao transferir a propriedade:
+                        <ul class="mb-0 mt-2">
+                            <li>O novo proprietário terá controle total sobre o escritório</li>
+                            <li>Você se tornará um membro administrador</li>
+                            <li>A responsabilidade pela assinatura será transferida</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('office.transfer_ownership') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            <label for="new_owner_id" class="form-label">
+                                <i class="fas fa-user me-1"></i>Novo Proprietário
+                            </label>
+                            {{ form.new_owner_id(class="form-select" + (" is-invalid" if form.new_owner_id.errors else "")) }}
+                            {% for error in form.new_owner_id.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted">
+                                Selecione o membro que assumirá a propriedade do escritório.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.confirm(class="form-check-input" + (" is-invalid" if form.confirm.errors else "")) }}
+                                <label class="form-check-label" for="confirm">
+                                    {{ form.confirm.label.text }}
+                                </label>
+                                {% for error in form.confirm.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('office.dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-exchange-alt me-2"></i>Transferir Propriedade
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

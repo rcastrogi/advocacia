@@ -129,6 +129,10 @@ class User(UserMixin, db.Model):
         db.DateTime
     )  # Bloqueado até esta data após múltiplas tentativas
 
+    # Office (Escritório) - Multi-users support
+    office_id = db.Column(db.Integer, db.ForeignKey('offices.id'), nullable=True)
+    office_role = db.Column(db.String(20), nullable=True)  # owner, admin, lawyer, secretary, intern
+
     # Relationships
     clients = db.relationship(
         "Client",
@@ -882,6 +886,363 @@ class User(UserMixin, db.Model):
     def count_remaining_backup_codes(self):
         """Retorna quantidade de códigos de backup não utilizados"""
         return len(self.get_backup_codes())
+
+    # =============================================================================
+    # OFFICE (ESCRITÓRIO) METHODS
+    # =============================================================================
+
+    def get_office(self):
+        """Retorna o escritório do usuário (se pertencer a um)"""
+        if self.office_id:
+            return Office.query.get(self.office_id)
+        return None
+
+    def is_office_owner(self):
+        """Verifica se é dono de algum escritório"""
+        return Office.query.filter_by(owner_id=self.id).first() is not None
+
+    def get_owned_office(self):
+        """Retorna o escritório que o usuário é dono"""
+        return Office.query.filter_by(owner_id=self.id).first()
+
+    def can_manage_office(self):
+        """Verifica se pode gerenciar o escritório (dono ou admin)"""
+        if self.is_master:
+            return True
+        return self.office_role in ['owner', 'admin']
+
+    def get_office_members(self):
+        """Retorna todos os membros do escritório do usuário"""
+        if not self.office_id:
+            return []
+        return User.query.filter_by(office_id=self.office_id, is_active=True).all()
+
+    def can_access_user_data(self, target_user_id):
+        """Verifica se pode acessar dados de outro usuário (mesmo escritório)"""
+        if self.is_master:
+            return True
+        if self.id == target_user_id:
+            return True
+        target_user = User.query.get(target_user_id)
+        if not target_user:
+            return False
+        # Mesmo escritório = pode acessar
+        return self.office_id and self.office_id == target_user.office_id
+
+
+# =============================================================================
+# OFFICE MODEL - Modelo de Escritório de Advocacia
+# =============================================================================
+
+class Office(db.Model):
+    """
+    Escritório de Advocacia.
+    
+    Agrupa usuários (advogados, secretárias, estagiários) em um escritório.
+    O plano de cobrança é vinculado ao escritório, não aos usuários individuais.
+    """
+    __tablename__ = 'offices'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(100), unique=True, nullable=False)
+    
+    # Dono do escritório (quem criou e é responsável pelo pagamento)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Informações do escritório
+    cnpj = db.Column(db.String(20))
+    oab_number = db.Column(db.String(50))  # OAB do escritório (se for sociedade)
+    phone = db.Column(db.String(20))
+    email = db.Column(db.String(120))
+    website = db.Column(db.String(200))
+    
+    # Endereço
+    cep = db.Column(db.String(10))
+    street = db.Column(db.String(200))
+    number = db.Column(db.String(20))
+    complement = db.Column(db.String(200))
+    neighborhood = db.Column(db.String(100))
+    city = db.Column(db.String(100))
+    uf = db.Column(db.String(2))
+    
+    # Branding
+    logo_filename = db.Column(db.String(200))
+    primary_color = db.Column(db.String(7), default='#1a73e8')  # Hex color
+    
+    # Configurações
+    settings = db.Column(db.Text, default='{}')  # JSON com configurações extras
+    
+    # Status
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), 
+                          onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Relacionamentos
+    owner = db.relationship('User', foreign_keys=[owner_id], backref='owned_offices')
+    members = db.relationship('User', foreign_keys='User.office_id', backref='office', lazy='dynamic')
+    invites = db.relationship('OfficeInvite', backref='office', lazy='dynamic', cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<Office {self.name}>'
+    
+    @staticmethod
+    def generate_slug(name):
+        """Gera slug único baseado no nome"""
+        import re
+        import unicodedata
+        
+        # Normalizar e remover acentos
+        slug = unicodedata.normalize('NFKD', name.lower())
+        slug = slug.encode('ASCII', 'ignore').decode('ASCII')
+        # Remover caracteres especiais
+        slug = re.sub(r'[^\w\s-]', '', slug)
+        # Substituir espaços por hífens
+        slug = re.sub(r'[\s_]+', '-', slug).strip('-')
+        
+        # Verificar unicidade
+        base_slug = slug
+        counter = 1
+        while Office.query.filter_by(slug=slug).first():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        
+        return slug
+    
+    def get_settings(self):
+        """Retorna configurações como dict"""
+        if not self.settings:
+            return {}
+        try:
+            return json.loads(self.settings)
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    
+    def set_settings(self, settings_dict):
+        """Define configurações a partir de dict"""
+        self.settings = json.dumps(settings_dict)
+    
+    def update_setting(self, key, value):
+        """Atualiza uma configuração específica"""
+        settings = self.get_settings()
+        settings[key] = value
+        self.set_settings(settings)
+    
+    def get_member_count(self):
+        """Retorna número de membros ativos"""
+        return self.members.filter_by(is_active=True).count()
+    
+    def get_max_members(self):
+        """Retorna limite de membros baseado no plano do dono"""
+        owner = User.query.get(self.owner_id)
+        if owner:
+            limit = owner.get_feature_limit('multi_users')
+            return limit if limit else 999  # None = ilimitado
+        return 1
+    
+    def can_add_member(self):
+        """Verifica se pode adicionar mais membros"""
+        current = self.get_member_count()
+        max_members = self.get_max_members()
+        return current < max_members
+    
+    def add_member(self, user, role='lawyer'):
+        """Adiciona um membro ao escritório"""
+        if not self.can_add_member():
+            raise ValueError(f"Limite de {self.get_max_members()} membros atingido. Faça upgrade do plano.")
+        
+        user.office_id = self.id
+        user.office_role = role
+        db.session.commit()
+        return True
+    
+    def remove_member(self, user):
+        """Remove um membro do escritório"""
+        if user.id == self.owner_id:
+            raise ValueError("Não é possível remover o dono do escritório")
+        
+        user.office_id = None
+        user.office_role = None
+        db.session.commit()
+        return True
+    
+    def transfer_ownership(self, new_owner):
+        """Transfere a propriedade do escritório para outro membro"""
+        if new_owner.office_id != self.id:
+            raise ValueError("Novo dono deve ser membro do escritório")
+        
+        # Atualiza roles
+        old_owner = User.query.get(self.owner_id)
+        if old_owner:
+            old_owner.office_role = 'admin'  # Rebaixa para admin
+        
+        new_owner.office_role = 'owner'
+        self.owner_id = new_owner.id
+        
+        db.session.commit()
+        return True
+    
+    def get_members_by_role(self, role):
+        """Retorna membros por role"""
+        return self.members.filter_by(office_role=role, is_active=True).all()
+    
+    def get_all_clients(self):
+        """Retorna todos os clientes do escritório (de todos os membros)"""
+        member_ids = [m.id for m in self.members.filter_by(is_active=True).all()]
+        return Client.query.filter(Client.lawyer_id.in_(member_ids)).all()
+
+
+class OfficeInvite(db.Model):
+    """
+    Convites para novos membros do escritório.
+    
+    Permite convidar advogados, secretárias, estagiários por email.
+    O convite expira em 7 dias por padrão.
+    """
+    __tablename__ = 'office_invites'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    office_id = db.Column(db.Integer, db.ForeignKey('offices.id'), nullable=False)
+    
+    # Quem está sendo convidado
+    email = db.Column(db.String(120), nullable=False)
+    role = db.Column(db.String(20), default='lawyer')  # owner, admin, lawyer, secretary, intern
+    
+    # Token para aceitar convite
+    token = db.Column(db.String(100), unique=True, nullable=False)
+    
+    # Quem convidou
+    invited_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Status
+    status = db.Column(db.String(20), default='pending')  # pending, accepted, expired, cancelled
+    
+    # Datas
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    expires_at = db.Column(db.DateTime, nullable=False)
+    accepted_at = db.Column(db.DateTime)
+    
+    # Relacionamentos
+    invited_by = db.relationship('User', foreign_keys=[invited_by_id])
+    
+    def __repr__(self):
+        return f'<OfficeInvite {self.email} -> {self.office_id}>'
+    
+    @staticmethod
+    def generate_token():
+        """Gera token único para o convite"""
+        import secrets
+        return secrets.token_urlsafe(32)
+    
+    @staticmethod
+    def create_invite(office, email, role, invited_by, days_valid=7):
+        """Cria um novo convite"""
+        # Verificar se já existe convite pendente
+        existing = OfficeInvite.query.filter_by(
+            office_id=office.id,
+            email=email,
+            status='pending'
+        ).first()
+        
+        if existing:
+            # Atualiza o convite existente
+            existing.token = OfficeInvite.generate_token()
+            existing.expires_at = datetime.now(timezone.utc) + timedelta(days=days_valid)
+            existing.role = role
+            existing.invited_by_id = invited_by.id
+            db.session.commit()
+            return existing
+        
+        # Cria novo convite
+        invite = OfficeInvite(
+            office_id=office.id,
+            email=email,
+            role=role,
+            token=OfficeInvite.generate_token(),
+            invited_by_id=invited_by.id,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=days_valid)
+        )
+        
+        db.session.add(invite)
+        db.session.commit()
+        return invite
+    
+    def is_expired(self):
+        """Verifica se convite expirou"""
+        return datetime.now(timezone.utc) > self.expires_at
+    
+    def is_valid(self):
+        """Verifica se convite ainda é válido"""
+        return self.status == 'pending' and not self.is_expired()
+    
+    def accept(self, user):
+        """Aceita o convite e adiciona usuário ao escritório"""
+        if not self.is_valid():
+            raise ValueError("Convite expirado ou já utilizado")
+        
+        office = Office.query.get(self.office_id)
+        if not office:
+            raise ValueError("Escritório não encontrado")
+        
+        if not office.can_add_member():
+            raise ValueError("Limite de membros do escritório atingido")
+        
+        # Adiciona ao escritório
+        user.office_id = self.office_id
+        user.office_role = self.role
+        
+        # Marca convite como aceito
+        self.status = 'accepted'
+        self.accepted_at = datetime.now(timezone.utc)
+        
+        db.session.commit()
+        return True
+    
+    def cancel(self):
+        """Cancela o convite"""
+        self.status = 'cancelled'
+        db.session.commit()
+    
+    def resend(self, days_valid=7):
+        """Reenvia o convite com novo token e data de expiração"""
+        if self.status != 'pending':
+            self.status = 'pending'
+        
+        self.token = OfficeInvite.generate_token()
+        self.expires_at = datetime.now(timezone.utc) + timedelta(days=days_valid)
+        db.session.commit()
+        return self
+
+
+# Roles disponíveis para membros de escritório
+OFFICE_ROLES = {
+    'owner': {
+        'name': 'Proprietário',
+        'description': 'Dono do escritório. Acesso total e responsável pelo pagamento.',
+        'permissions': ['all']
+    },
+    'admin': {
+        'name': 'Administrador',
+        'description': 'Pode gerenciar membros e configurações do escritório.',
+        'permissions': ['manage_members', 'manage_settings', 'view_reports', 'manage_clients', 'manage_processes']
+    },
+    'lawyer': {
+        'name': 'Advogado',
+        'description': 'Advogado do escritório. Acesso a clientes e processos.',
+        'permissions': ['manage_clients', 'manage_processes', 'create_petitions', 'view_calendar']
+    },
+    'secretary': {
+        'name': 'Secretária',
+        'description': 'Apoio administrativo. Agenda, clientes e documentos.',
+        'permissions': ['view_clients', 'manage_calendar', 'manage_documents', 'view_processes']
+    },
+    'intern': {
+        'name': 'Estagiário',
+        'description': 'Estagiário com acesso limitado.',
+        'permissions': ['view_clients', 'view_processes', 'view_calendar']
+    }
+}
 
 
 class Client(db.Model):

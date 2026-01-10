@@ -42,3 +42,31 @@ def subscription_required(view):
         return view(*args, **kwargs)
 
     return wrapped
+
+
+def feature_required(feature_key):
+    """
+    Decorator que verifica se o usuário tem acesso a uma feature específica.
+    
+    Usage:
+        @feature_required('multi_users')
+        def my_view():
+            pass
+    """
+    def decorator(view):
+        @wraps(view)
+        def wrapped(*args, **kwargs):
+            if not current_user.is_authenticated:
+                return redirect(url_for("auth.login"))
+            
+            # Verificar se o usuário tem a feature
+            if not current_user.has_feature(feature_key):
+                flash(
+                    f"Seu plano não inclui este recurso. Faça upgrade para acessar.",
+                    "warning",
+                )
+                return redirect(url_for("billing.plans"))
+            
+            return view(*args, **kwargs)
+        return wrapped
+    return decorator

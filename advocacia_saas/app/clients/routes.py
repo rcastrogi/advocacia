@@ -9,6 +9,7 @@ from app.clients import bp
 from app.clients.forms import ClientForm
 from app.decorators import lawyer_required
 from app.models import Client, Dependent, Estado, User
+from app.office.utils import filter_by_office_member, can_access_record
 from app.utils.audit import AuditManager
 
 
@@ -18,8 +19,9 @@ from app.utils.audit import AuditManager
 @subscription_required
 def index():
     page = request.args.get("page", 1, type=int)
+    # Filtrar por escritório se o usuário pertence a um
     clients = (
-        Client.query.filter_by(lawyer_id=current_user.id)
+        filter_by_office_member(Client, 'lawyer_id')
         .order_by(Client.created_at.desc())
         .paginate(page=page, per_page=10, error_out=False)
     )
@@ -114,7 +116,10 @@ def new():
 @login_required
 @subscription_required
 def view(id):
-    client = Client.query.filter_by(id=id, lawyer_id=current_user.id).first_or_404()
+    client = Client.query.get_or_404(id)
+    # Verificar se pode acessar (mesmo escritório ou dono)
+    if not can_access_record(client, 'lawyer_id'):
+        abort(403)
     return render_template("clients/view.html", title=f"Cliente: {client.full_name}", client=client)
 
 
@@ -122,7 +127,10 @@ def view(id):
 @login_required
 @subscription_required
 def edit(id):
-    client = Client.query.filter_by(id=id, lawyer_id=current_user.id).first_or_404()
+    client = Client.query.get_or_404(id)
+    # Verificar se pode acessar (mesmo escritório ou dono)
+    if not can_access_record(client, 'lawyer_id'):
+        abort(403)
     form = ClientForm(obj=client)
 
     # Populate estado choices from database

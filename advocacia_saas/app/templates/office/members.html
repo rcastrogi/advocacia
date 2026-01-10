@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="breadcrumb-custom">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('office.dashboard') }}">{{ office.name }}</a></li>
+                        <li class="breadcrumb-item active">Membros</li>
+                    </ol>
+                </nav>
+                <h1 class="text-white mt-2 mb-0">
+                    <i class="fas fa-users me-2"></i>Gerenciar Membros
+                </h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5 content-wrapper">
+    <div class="row">
+        <!-- Sidebar - Invite Form -->
+        {% if can_manage %}
+        <div class="col-lg-4 mb-4">
+            <div class="dashboard-card">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>Convidar Membro
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if can_add_member %}
+                    <form method="POST" action="{{ url_for('office.invite_member') }}">
+                        {{ invite_form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">E-mail</label>
+                            {{ invite_form.email(class="form-control" + (" is-invalid" if invite_form.email.errors else "")) }}
+                            {% for error in invite_form.email.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Função</label>
+                            {{ invite_form.role(class="form-select") }}
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-paper-plane me-2"></i>Enviar Convite
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-warning mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Limite atingido</strong>
+                        <p class="mb-0 mt-2">
+                            Seu plano permite até {{ max_members }} membros. 
+                            <a href="{{ url_for('billing.plans') }}">Faça upgrade</a> para adicionar mais.
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Roles Info -->
+            <div class="dashboard-card mt-4">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Funções
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for role_key, role_data in roles_info.items() %}
+                        <li class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <span class="badge me-2
+                                    {% if role_key == 'owner' %}bg-warning text-dark
+                                    {% elif role_key == 'admin' %}bg-danger
+                                    {% elif role_key == 'lawyer' %}bg-primary
+                                    {% elif role_key == 'secretary' %}bg-info
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ role_data.name }}
+                                </span>
+                            </div>
+                            <small class="text-muted">{{ role_data.description }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Main Content - Members List -->
+        <div class="{% if can_manage %}col-lg-8{% else %}col-12{% endif %}">
+            <!-- Active Members -->
+            <div class="dashboard-card mb-4">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Membros Ativos
+                        <span class="badge bg-primary ms-2">{{ members|length }}/{{ max_members }}</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Membro</th>
+                                    <th>Função</th>
+                                    <th>OAB</th>
+                                    <th>E-mail</th>
+                                    {% if can_manage %}
+                                    <th class="text-center">Ações</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in members %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                 style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); color: white; font-weight: 600;">
+                                                {{ (member.full_name or member.username)[0]|upper }}
+                                            </div>
+                                            <div>
+                                                <strong>{{ member.full_name or member.username }}</strong>
+                                                {% if member.id == office.owner_id %}
+                                                <span class="badge bg-warning text-dark ms-1" title="Proprietário">
+                                                    <i class="fas fa-crown"></i>
+                                                </span>
+                                                {% endif %}
+                                                {% if member.id == current_user.id %}
+                                                <span class="badge bg-info ms-1">Você</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% set role_info = roles_info.get(member.office_role, {}) %}
+                                        <span class="badge 
+                                            {% if member.office_role == 'owner' %}bg-warning text-dark
+                                            {% elif member.office_role == 'admin' %}bg-danger
+                                            {% elif member.office_role == 'lawyer' %}bg-primary
+                                            {% elif member.office_role == 'secretary' %}bg-info
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ role_info.get('name', member.office_role) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if member.oab_number %}
+                                        <small>{{ member.oab_number }}</small>
+                                        {% else %}
+                                        <small class="text-muted">-</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ member.email }}</small>
+                                    </td>
+                                    {% if can_manage %}
+                                    <td class="text-center">
+                                        {% if member.office_role != 'owner' %}
+                                        <div class="btn-group btn-group-sm">
+                                            <!-- Alterar Função -->
+                                            <button type="button" class="btn btn-outline-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#roleModal{{ member.id }}"
+                                                    title="Alterar função">
+                                                <i class="fas fa-user-tag"></i>
+                                            </button>
+                                            
+                                            <!-- Remover -->
+                                            {% if member.id != current_user.id %}
+                                            {% if is_owner or member.office_role not in ['admin'] %}
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#removeModal{{ member.id }}"
+                                                    title="Remover">
+                                                <i class="fas fa-user-minus"></i>
+                                            </button>
+                                            {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pending Invites -->
+            {% if pending_invites %}
+            <div class="dashboard-card">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Convites Pendentes
+                        <span class="badge bg-warning text-dark ms-2">{{ pending_invites|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>E-mail</th>
+                                    <th>Função</th>
+                                    <th>Convidado por</th>
+                                    <th>Data</th>
+                                    <th>Expira em</th>
+                                    {% if can_manage %}
+                                    <th class="text-center">Ações</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invite in pending_invites %}
+                                <tr>
+                                    <td>{{ invite.email }}</td>
+                                    <td>
+                                        {% set role_info = roles_info.get(invite.role, {}) %}
+                                        <span class="badge bg-secondary">
+                                            {{ role_info.get('name', invite.role) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% set inviter_user = inviter_users.get(invite.invited_by_id) %}
+                                        <small>{{ inviter_user.full_name or inviter_user.username if inviter_user else '-' }}</small>
+                                    </td>
+                                    <td>
+                                        <small>{{ invite.created_at|local_datetime('%d/%m/%Y') }}</small>
+                                    </td>
+                                    <td>
+                                        {% if invite.expires_at %}
+                                        <small class="{% if invite.is_valid() %}text-success{% else %}text-danger{% endif %}">
+                                            {{ invite.expires_at|local_datetime('%d/%m/%Y') }}
+                                        </small>
+                                        {% else %}
+                                        <small class="text-muted">-</small>
+                                        {% endif %}
+                                    </td>
+                                    {% if can_manage %}
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <form action="{{ url_for('office.resend_invite', invite_id=invite.id) }}" method="POST" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-outline-primary" title="Reenviar">
+                                                    <i class="fas fa-redo"></i>
+                                                </button>
+                                            </form>
+                                            <form action="{{ url_for('office.cancel_invite', invite_id=invite.id) }}" method="POST" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-outline-danger" title="Cancelar">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modals for each member -->
+{% if can_manage %}
+{% for member in members %}
+{% if member.office_role != 'owner' %}
+
+<!-- Modal Alterar Função -->
+<div class="modal fade" id="roleModal{{ member.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-tag text-primary me-2"></i>Alterar Função
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('office.change_member_role', member_id=member.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <p>Alterar função de <strong>{{ member.full_name or member.username }}</strong>:</p>
+                    
+                    <div class="mb-3">
+                        <select name="role" class="form-select">
+                            {% for role_key, role_data in roles_info.items() %}
+                            {% if role_key != 'owner' %}
+                            {% if is_owner or role_key != 'admin' %}
+                            <option value="{{ role_key }}" {% if member.office_role == role_key %}selected{% endif %}>
+                                {{ role_data.name }}
+                            </option>
+                            {% endif %}
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Remover Membro -->
+{% if member.id != current_user.id %}
+{% if is_owner or member.office_role not in ['admin'] %}
+<div class="modal fade" id="removeModal{{ member.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-minus text-danger me-2"></i>Remover Membro
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja remover <strong>{{ member.full_name or member.username }}</strong> do escritório?</p>
+                <p class="text-muted">O usuário perderá acesso aos clientes e processos compartilhados.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for('office.remove_member', member_id=member.id) }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-user-minus me-2"></i>Remover
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endblock %}

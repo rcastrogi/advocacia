@@ -829,47 +829,184 @@
             <div class="col-lg-8 mx-auto">
                 <h2 class="section-title">Planos e Pagamentos</h2>
                 <p class="section-subtitle">
-                    Escolha o modelo ideal para o seu escritório e só pague pelo que usar.
+                    Escolha o modelo ideal para você ou seu escritório.
                 </p>
             </div>
         </div>
 
-        <div class="row g-4">
-            {% if pricing_plans %}
-                {% for plan in pricing_plans %}
-                    <div class="col-lg-4 col-md-6">
-                        <div class="dashboard-card h-100">
-                            <div class="card-icon bg-primary mb-3">
-                                <i class="fas fa-credit-card"></i>
+        {% if pricing_plans %}
+        <!-- Tabs para Planos Individuais e Escritório -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-auto">
+                <ul class="nav nav-pills nav-pricing" id="pricingTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="individual-tab" data-bs-toggle="pill" 
+                                data-bs-target="#individual-plans" type="button" role="tab">
+                            <i class="fas fa-user me-2"></i>Advogado Individual
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="office-tab" data-bs-toggle="pill" 
+                                data-bs-target="#office-plans" type="button" role="tab">
+                            <i class="fas fa-building me-2"></i>Escritório
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="tab-content" id="pricingTabContent">
+            <!-- Planos Individuais -->
+            <div class="tab-pane fade show active" id="individual-plans" role="tabpanel">
+                <div class="row g-4 justify-content-center">
+                    {% if pricing_plans.individual %}
+                        {% for plan in pricing_plans.individual %}
+                            <div class="col-lg-4 col-md-6">
+                                <div class="pricing-card h-100 d-flex flex-column {% if loop.index == 2 %}office-plan featured{% endif %}">
+                                    {% if loop.index == 2 %}
+                                    <div class="pricing-badge">Mais Popular</div>
+                                    {% endif %}
+                                    <div class="pricing-header">
+                                        <h4 class="pricing-title {% if loop.index == 2 %}text-success{% endif %}">{{ plan.name }}</h4>
+                                        <span class="badge {% if loop.index == 2 %}bg-success{% else %}bg-primary{% endif %} mb-3">{{ plan.plan_type_label }}</span>
+                                        <div class="pricing-price">
+                                            <span class="price-currency">R$</span>
+                                            <span class="price-value">{{ plan.monthly_fee_raw|int }}</span>
+                                            <span class="price-period">/mês</span>
+                                        </div>
+                                        <p class="pricing-description">{{ plan.description or 'Ideal para advogados autônomos' }}</p>
+                                    </div>
+                                    <div class="pricing-body flex-grow-1">
+                                        <ul class="pricing-features">
+                                            {% if plan.features %}
+                                                {% for feature in plan.features|sort(attribute='display_order') %}
+                                                    {% if feature.is_active and feature.slug not in ['documents_ocr', 'api_access', 'white_label', 'multi_users'] %}
+                                                    <li>
+                                                        <i class="{{ feature.icon or 'fas fa-check' }} text-success me-2"></i>
+                                                        {{ feature.name }}
+                                                        {% if feature.feature_type == 'limit' %}
+                                                            {% set limit = plan.get_feature_limit(feature.slug) %}
+                                                            {% if limit %}<span class="badge bg-light text-dark ms-1">{{ limit }}</span>{% endif %}
+                                                        {% elif feature.feature_type == 'credits' %}
+                                                            {% set limit = plan.get_feature_limit(feature.slug) %}
+                                                            {% if limit %}<span class="badge bg-info ms-1">{{ limit }}/mês</span>{% endif %}
+                                                        {% endif %}
+                                                    </li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                <li><i class="fas fa-check text-success me-2"></i>Gestão de clientes</li>
+                                                <li><i class="fas fa-check text-success me-2"></i>Dashboard completo</li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                    <div class="pricing-footer">
+                                        <a href="{{ url_for('auth.register', plan=plan.id) }}" 
+                                           class="btn {% if loop.index == 2 %}btn-success{% else %}btn-outline-primary{% endif %} w-100">
+                                            <i class="fas fa-rocket me-2"></i>Começar Agora
+                                        </a>
+                                        <p class="text-muted small mt-2 mb-0">Sem fidelidade. Cancele quando quiser.</p>
+                                    </div>
+                                </div>
                             </div>
-                            <h4 class="mb-2">{{ plan.name }}</h4>
-                            <span class="badge bg-primary mb-3">{{ plan.plan_type_label }}</span>
-                            <p class="text-muted mb-3">{{ plan.description or 'Plano flexível para escritórios em crescimento que valorizam suporte dedicado.' }}</p>
-                            <div class="pricing-highlight mb-3">
-                                <span class="display-6 fw-bold text-primary">{{ plan.monthly_fee }}</span>
-                                <small class="text-muted ms-2">/ mês</small>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12 text-center">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Em breve teremos planos individuais disponíveis.
                             </div>
-                            <p class="text-muted small mb-3">Sem fidelidade. Cancele quando quiser.</p>
-                            <ul class="list-unstyled mb-4 text-muted">
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Gestão completa de clientes</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Peticionador com modelos prontos</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Dashboard e relatórios</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Suporte prioritário</li>
-                            </ul>
-                            <a href="{{ url_for('auth.register', plan=plan.id) }}" class="btn btn-primary w-100 mt-auto">
-                                <i class="fas fa-rocket me-2"></i>Começar Agora
-                            </a>
                         </div>
-                    </div>
-                {% endfor %}
-            {% else %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Planos de Escritório -->
+            <div class="tab-pane fade" id="office-plans" role="tabpanel">
+                <div class="text-center mb-4">
+                    <span class="badge bg-success px-3 py-2">
+                        <i class="fas fa-users me-2"></i>Ideal para escritórios com múltiplos advogados
+                    </span>
+                </div>
+                <div class="row g-4 justify-content-center">
+                    {% if pricing_plans.office %}
+                        {% for plan in pricing_plans.office %}
+                            <div class="col-lg-4 col-md-6">
+                                <div class="pricing-card h-100 d-flex flex-column office-plan {% if loop.index == 2 %}featured{% endif %}">
+                                    {% if loop.index == 2 %}
+                                    <div class="pricing-badge">Recomendado</div>
+                                    {% endif %}
+                                    <div class="pricing-header">
+                                        <h4 class="pricing-title">{{ plan.name }}</h4>
+                                        <span class="badge bg-success mb-3">
+                                            <i class="fas fa-building me-1"></i>Escritório
+                                        </span>
+                                        <div class="pricing-price">
+                                            <span class="price-currency">R$</span>
+                                            <span class="price-value">{{ plan.monthly_fee_raw|int }}</span>
+                                            <span class="price-period">/mês</span>
+                                        </div>
+                                        <p class="pricing-description">{{ plan.description or 'Para escritórios em crescimento' }}</p>
+                                    </div>
+                                    <div class="pricing-body flex-grow-1">
+                                        <ul class="pricing-features">
+                                            <li class="feature-highlight">
+                                                <i class="fas fa-users text-success me-2"></i>
+                                                <strong>Até {{ plan.max_users }} usuários</strong>
+                                            </li>
+                                            <li class="feature-highlight">
+                                                <i class="fas fa-share-alt text-primary me-2"></i>
+                                                <strong>Clientes e processos compartilhados</strong>
+                                            </li>
+                                            {% if plan.features %}
+                                                {% for feature in plan.features|sort(attribute='display_order') %}
+                                                    {% if feature.is_active and feature.slug not in ['documents_ocr', 'api_access', 'white_label', 'multi_users'] %}
+                                                    <li>
+                                                        <i class="{{ feature.icon or 'fas fa-check' }} text-success me-2"></i>
+                                                        {{ feature.name }}
+                                                        {% if feature.feature_type == 'limit' %}
+                                                            {% set limit = plan.get_feature_limit(feature.slug) %}
+                                                            {% if limit %}<span class="badge bg-light text-dark ms-1">{{ limit }}</span>{% endif %}
+                                                        {% elif feature.feature_type == 'credits' %}
+                                                            {% set limit = plan.get_feature_limit(feature.slug) %}
+                                                            {% if limit %}<span class="badge bg-info ms-1">{{ limit }}/mês</span>{% endif %}
+                                                        {% endif %}
+                                                    </li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                    <div class="pricing-footer">
+                                        <a href="{{ url_for('auth.register', plan=plan.id) }}" 
+                                           class="btn {% if loop.index == 2 %}btn-success{% else %}btn-outline-success{% endif %} w-100">
+                                            <i class="fas fa-building me-2"></i>Criar Escritório
+                                        </a>
+                                        <p class="text-muted small mt-2 mb-0">Gerencie sua equipe em um só lugar.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12 text-center">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Em breve teremos planos para escritórios disponíveis.
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+            <div class="row">
                 <div class="col-12">
                     <div class="alert alert-info text-center">
                         Estamos preparando novos planos para você. Entre em contato para ser avisado assim que estiverem disponíveis.
                     </div>
                 </div>
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
     </div>
 </section>
 
