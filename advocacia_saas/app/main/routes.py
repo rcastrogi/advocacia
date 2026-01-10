@@ -351,18 +351,16 @@ def _build_plan_summary(user):
 
 def _get_public_plans():
     plans = (
-        BillingPlan.query.filter_by(active=True)
-        .order_by(BillingPlan.monthly_fee)
-        .all()
+        BillingPlan.query.filter_by(active=True).order_by(BillingPlan.monthly_fee).all()
     )
     individual_plans = []
     office_plans = []
-    
+
     for plan in plans:
         # Verificar se é plano de escritório (tem multi_users com limite > 1)
-        multi_users_limit = plan.get_feature_limit('multi_users')
+        multi_users_limit = plan.get_feature_limit("multi_users")
         is_office_plan = multi_users_limit is not None and multi_users_limit > 1
-        
+
         plan_data = {
             "id": plan.id,
             "name": plan.name,
@@ -378,12 +376,12 @@ def _get_public_plans():
             "features": plan.features,
             "get_feature_limit": plan.get_feature_limit,
         }
-        
+
         if is_office_plan:
             office_plans.append(plan_data)
         else:
             individual_plans.append(plan_data)
-    
+
     return {
         "individual": individual_plans,
         "office": office_plans,

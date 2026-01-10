@@ -1,5 +1,5 @@
-import os
 import hashlib
+import os
 import zoneinfo
 from datetime import datetime, timezone
 
@@ -39,7 +39,7 @@ def create_app(config_class=Config):
 
     # Desabilitar cache de arquivos estáticos em desenvolvimento
     if app.debug:
-        app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+        app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
     # Configure timezone for Brazil (São Paulo)
     app.config["TIMEZONE"] = zoneinfo.ZoneInfo("America/Sao_Paulo")
@@ -150,6 +150,7 @@ def create_app(config_class=Config):
     # Import all models to ensure they're registered with SQLAlchemy
     # This MUST be done before any db.create_all() calls
     from app.models import (  # noqa: F401, E402
+        OFFICE_ROLES,
         AgendaBlock,
         AIGeneration,
         AuditLog,
@@ -159,7 +160,6 @@ def create_app(config_class=Config):
         Feature,
         Office,
         OfficeInvite,
-        OFFICE_ROLES,
         Payment,
         PetitionModel,
         PetitionModelSection,
@@ -410,7 +410,7 @@ def create_app(config_class=Config):
     def inject_static_version():
         """Adiciona função static_url que inclui hash do arquivo para cache busting"""
         _file_hashes = {}
-        
+
         def static_url(filename):
             """Gera URL para arquivo estático com hash para cache busting"""
             if filename in _file_hashes:
@@ -424,10 +424,11 @@ def create_app(config_class=Config):
                 else:
                     file_hash = "1"
                 _file_hashes[filename] = file_hash
-            
+
             from flask import url_for
+
             return f"{url_for('static', filename=filename)}?v={file_hash}"
-        
-        return {'static_url': static_url}
+
+        return {"static_url": static_url}
 
     return app

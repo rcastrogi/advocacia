@@ -9,7 +9,7 @@ from app.clients import bp
 from app.clients.forms import ClientForm
 from app.decorators import lawyer_required
 from app.models import Client, Dependent, Estado, User
-from app.office.utils import filter_by_office_member, can_access_record
+from app.office.utils import can_access_record, filter_by_office_member
 from app.utils.audit import AuditManager
 
 
@@ -21,7 +21,7 @@ def index():
     page = request.args.get("page", 1, type=int)
     # Filtrar por escritório se o usuário pertence a um
     clients = (
-        filter_by_office_member(Client, 'lawyer_id')
+        filter_by_office_member(Client, "lawyer_id")
         .order_by(Client.created_at.desc())
         .paginate(page=page, per_page=10, error_out=False)
     )
@@ -65,7 +65,9 @@ def new():
             lgbt_declared=form.lgbt_declared.data,
             has_disability=form.has_disability.data,
             disability_types=(
-                ",".join(form.disability_types.data) if form.disability_types.data else None
+                ",".join(form.disability_types.data)
+                if form.disability_types.data
+                else None
             ),
             is_pregnant_postpartum=form.is_pregnant_postpartum.data,
             delivery_date=form.delivery_date.data,
@@ -118,9 +120,11 @@ def new():
 def view(id):
     client = Client.query.get_or_404(id)
     # Verificar se pode acessar (mesmo escritório ou dono)
-    if not can_access_record(client, 'lawyer_id'):
+    if not can_access_record(client, "lawyer_id"):
         abort(403)
-    return render_template("clients/view.html", title=f"Cliente: {client.full_name}", client=client)
+    return render_template(
+        "clients/view.html", title=f"Cliente: {client.full_name}", client=client
+    )
 
 
 @bp.route("/<int:id>/edit", methods=["GET", "POST"])
@@ -129,7 +133,7 @@ def view(id):
 def edit(id):
     client = Client.query.get_or_404(id)
     # Verificar se pode acessar (mesmo escritório ou dono)
-    if not can_access_record(client, 'lawyer_id'):
+    if not can_access_record(client, "lawyer_id"):
         abort(403)
     form = ClientForm(obj=client)
 
@@ -201,7 +205,9 @@ def edit(id):
 
         # Log de auditoria
         if changed_fields:
-            AuditManager.log_client_change(client, "update", old_values, new_values, changed_fields)
+            AuditManager.log_client_change(
+                client, "update", old_values, new_values, changed_fields
+            )
 
         return redirect(url_for("clients.view", id=client.id))
 

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """Script para reestruturar planos com precos e features coerentes."""
-import sys
+
 import os
-os.chdir(r'f:\PROJETOS\advocacia\advocacia_saas')
+import sys
+
+os.chdir(r"f:\PROJETOS\advocacia\advocacia_saas")
 sys.path.insert(0, os.getcwd())
 
 from app import create_app, db
@@ -27,7 +29,7 @@ PLANOS = {
             "processes_management": 10,
             "documents_storage": 100,
             "multi_users": 1,
-        }
+        },
     },
     "individual_basico": {
         "name": "Individual Basico",
@@ -48,7 +50,7 @@ PLANOS = {
             "documents_storage": 500,
             "financial_basic": 1,
             "multi_users": 1,
-        }
+        },
     },
     "individual_profissional": {
         "name": "Individual Profissional",
@@ -79,9 +81,8 @@ PLANOS = {
             "financial_invoices": 1,
             "multi_users": 1,
             "priority_support": 1,
-        }
+        },
     },
-    
     # === PLANOS ESCRITORIO ===
     "escritorio_starter": {
         "name": "Escritorio Starter",
@@ -115,7 +116,7 @@ PLANOS = {
             "financial_reports": 1,
             "multi_users": 3,
             "priority_support": 1,
-        }
+        },
     },
     "escritorio_profissional": {
         "name": "Escritorio Profissional",
@@ -152,7 +153,7 @@ PLANOS = {
             "audit_logs": 1,
             "priority_support": 1,
             "custom_reports": 1,
-        }
+        },
     },
     "escritorio_enterprise": {
         "name": "Escritorio Enterprise",
@@ -194,7 +195,7 @@ PLANOS = {
             "white_label": 1,
             "priority_support": 1,
             "custom_reports": 1,
-        }
+        },
     },
 }
 
@@ -202,37 +203,42 @@ with app.app_context():
     print("=" * 80)
     print("REESTRUTURANDO PLANOS")
     print("=" * 80)
-    
+
     # Desativar planos antigos
     old_plans = BillingPlan.query.filter(
-        BillingPlan.slug.in_([
-            'plano_basico', 'plano_profissional', 
-            'escritorio_pequeno', 'escritorio_medio', 'escritorio_grande'
-        ])
+        BillingPlan.slug.in_(
+            [
+                "plano_basico",
+                "plano_profissional",
+                "escritorio_pequeno",
+                "escritorio_medio",
+                "escritorio_grande",
+            ]
+        )
     ).all()
-    
+
     for plan in old_plans:
         plan.active = False
         print(f"  Desativado: {plan.name}")
-    
+
     db.session.commit()
-    
+
     # Criar/Atualizar novos planos
     print("\n>>> CRIANDO NOVOS PLANOS:")
     print("-" * 80)
-    
+
     for slug, plan_data in PLANOS.items():
         features_config = plan_data.pop("features")
-        
+
         existing = BillingPlan.query.filter_by(slug=slug).first()
-        
+
         if existing:
             # Atualiza plano existente
             for key, value in plan_data.items():
                 setattr(existing, key, value)
             existing.active = True
             plan = existing
-            
+
             # Remover features antigas
             db.session.execute(
                 plan_features.delete().where(plan_features.c.plan_id == existing.id)
@@ -245,7 +251,7 @@ with app.app_context():
             db.session.add(plan)
             db.session.flush()
             print(f"  Criado: {plan_data['name']}")
-        
+
         # Adicionar features ao plano
         for feature_slug, value in features_config.items():
             feature = Feature.query.filter_by(slug=feature_slug).first()
@@ -258,30 +264,30 @@ with app.app_context():
                     limit_value = None
                 db.session.execute(
                     plan_features.insert().values(
-                        plan_id=plan.id,
-                        feature_id=feature.id,
-                        limit_value=limit_value
+                        plan_id=plan.id, feature_id=feature.id, limit_value=limit_value
                     )
                 )
             else:
                 print(f"    [AVISO] Feature nao encontrada: {feature_slug}")
-    
+
     db.session.commit()
-    
+
     # Mostrar resultado final
     print("\n" + "=" * 80)
     print(">>> PLANOS ATIVOS APOS REESTRUTURACAO:")
     print("=" * 80)
-    
-    plans = BillingPlan.query.filter_by(active=True).order_by(BillingPlan.monthly_fee).all()
-    
+
+    plans = (
+        BillingPlan.query.filter_by(active=True).order_by(BillingPlan.monthly_fee).all()
+    )
+
     for plan in plans:
-        multi_users = plan.get_feature_limit('multi_users') or 1
-        ai_credits = plan.get_feature_limit('ai_credits_monthly') or 0
+        multi_users = plan.get_feature_limit("multi_users") or 1
+        ai_credits = plan.get_feature_limit("ai_credits_monthly") or 0
         plan_type = "ESCRITORIO" if multi_users > 1 else "INDIVIDUAL"
-        
+
         users_label = "Ilimitados" if multi_users >= 999 else str(multi_users)
-        
+
         print(f"\n[{plan_type}] {plan.name}")
         print(f"  Preco: R${plan.monthly_fee:.2f}/mes")
         print(f"  Usuarios: {users_label}")

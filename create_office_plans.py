@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """Script para criar planos de escritorio."""
-import sys
+
 import os
-os.chdir(r'f:\PROJETOS\advocacia\advocacia_saas')
+import sys
+
+os.chdir(r"f:\PROJETOS\advocacia\advocacia_saas")
 sys.path.insert(0, os.getcwd())
 
 from app import create_app, db
@@ -30,7 +32,7 @@ OFFICE_PLANS = [
             "documents_storage": 1000,
             "financial_basic": True,
             "multi_users": 3,
-        }
+        },
     },
     {
         "slug": "escritorio_medio",
@@ -64,7 +66,7 @@ OFFICE_PLANS = [
             "financial_reports": True,
             "multi_users": 10,
             "priority_support": True,
-        }
+        },
     },
     {
         "slug": "escritorio_grande",
@@ -100,7 +102,7 @@ OFFICE_PLANS = [
             "api_access": True,
             "white_label": True,
             "priority_support": True,
-        }
+        },
     },
 ]
 
@@ -108,15 +110,15 @@ with app.app_context():
     created = 0
     updated = 0
     skipped = 0
-    
+
     print("Inicializando planos de escritorio...")
     print("-" * 50)
-    
+
     for plan_data in OFFICE_PLANS:
         features_config = plan_data.pop("features")
-        
+
         existing = BillingPlan.query.filter_by(slug=plan_data["slug"]).first()
-        
+
         if existing:
             skipped += 1
             print(f"   Ja existe: {plan_data['name']}")
@@ -125,7 +127,7 @@ with app.app_context():
             plan = BillingPlan(**plan_data, active=True)
             db.session.add(plan)
             db.session.flush()  # Para obter o ID
-            
+
             # Adicionar features ao plano
             for feature_slug, value in features_config.items():
                 feature = Feature.query.filter_by(slug=feature_slug).first()
@@ -141,37 +143,43 @@ with app.app_context():
                         plan_features.insert().values(
                             plan_id=plan.id,
                             feature_id=feature.id,
-                            limit_value=limit_value
+                            limit_value=limit_value,
                         )
                     )
-            
+
             created += 1
             print(f"   Criado: {plan_data['name']}")
-    
+
     db.session.commit()
-    
+
     print("-" * 50)
     print(f"Resultado:")
     print(f"   Criados: {created}")
     print(f"   Atualizados: {updated}")
     print(f"   Ignorados: {skipped}")
-    
+
     # Verificar todos os planos
     print("\n" + "=" * 50)
     print("TODOS OS PLANOS ATIVOS:")
     print("=" * 50)
-    
-    plans = BillingPlan.query.filter_by(active=True).order_by(BillingPlan.monthly_fee).all()
+
+    plans = (
+        BillingPlan.query.filter_by(active=True).order_by(BillingPlan.monthly_fee).all()
+    )
     for p in plans:
         # Get multi_users feature
         from sqlalchemy import select
-        stmt = select(plan_features.c.limit_value).where(
-            plan_features.c.plan_id == p.id
-        ).join(Feature, Feature.id == plan_features.c.feature_id).where(
-            Feature.slug == 'multi_users'
+
+        stmt = (
+            select(plan_features.c.limit_value)
+            .where(plan_features.c.plan_id == p.id)
+            .join(Feature, Feature.id == plan_features.c.feature_id)
+            .where(Feature.slug == "multi_users")
         )
         result = db.session.execute(stmt).scalar()
         multi_users = result if result else 1
-        
+
         plan_type = "ESCRITORIO" if multi_users > 1 else "INDIVIDUAL"
-        print(f"[{plan_type}] {p.name} - R${p.monthly_fee:.2f} ({multi_users} usuarios)")
+        print(
+            f"[{plan_type}] {p.name} - R${p.monthly_fee:.2f} ({multi_users} usuarios)"
+        )
