@@ -2336,3 +2336,332 @@ textarea.form-control {
         margin: 0 1rem 1rem 1rem;
     }
 }
+/* ===== NAVBAR RESPONSIVO PROFISSIONAL ===== */
+
+/* Navbar base - melhorias */
+.navbar {
+    transition: all 0.3s ease;
+    z-index: 1030;
+}
+
+.navbar .container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+/* Navbar toggler - botão hamburger profissional */
+.navbar-toggler {
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-toggler:hover,
+.navbar-toggler:focus {
+    border-color: var(--gold-color);
+    background: rgba(201, 168, 92, 0.2);
+    box-shadow: none;
+    outline: none;
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 3px rgba(201, 168, 92, 0.3);
+}
+
+.navbar-toggler-icon {
+    width: 1.2em;
+    height: 1.2em;
+}
+
+/* Menu collapse - mobile e tablet */
+@media (max-width: 1199.98px) {
+    .navbar-collapse {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 85%;
+        max-width: 320px;
+        height: 100vh;
+        background: linear-gradient(180deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        padding: 1rem;
+        transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1050;
+        overflow-y: auto;
+        box-shadow: -5px 0 30px rgba(0, 0, 0, 0.4);
+    }
+    
+    .navbar-collapse.show,
+    .navbar-collapse.collapsing.show {
+        right: 0;
+    }
+    
+    /* Overlay quando menu aberto */
+    .navbar-collapse::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: -100vw;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        z-index: -1;
+    }
+    
+    .navbar-collapse.show::before {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    /* Header do menu mobile */
+    .navbar-collapse .mobile-menu-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        margin-bottom: 1rem;
+    }
+    
+    .navbar-collapse .mobile-menu-header .brand-text {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #fff;
+    }
+    
+    .navbar-collapse .btn-close-menu {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .navbar-collapse .btn-close-menu:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: rotate(90deg);
+    }
+    
+    /* Nav items mobile */
+    .navbar-nav {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .navbar-nav .nav-item {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .navbar-nav .nav-item:last-child {
+        border-bottom: none;
+    }
+    
+    .navbar-nav .nav-link {
+        padding: 0.85rem 1rem !important;
+        font-size: 0.95rem !important;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .navbar-nav .nav-link:hover,
+    .navbar-nav .nav-link:focus {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--gold-color) !important;
+    }
+    
+    .navbar-nav .nav-link i {
+        width: 20px;
+        text-align: center;
+        font-size: 1rem;
+    }
+    
+    /* Dropdown mobile */
+    .navbar-nav .dropdown-menu {
+        position: static !important;
+        float: none;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.2);
+        border: none;
+        border-radius: 8px;
+        margin: 0.25rem 0 0.5rem;
+        padding: 0.5rem;
+        box-shadow: none;
+    }
+    
+    .navbar-nav .dropdown-item {
+        color: rgba(255, 255, 255, 0.9);
+        padding: 0.7rem 1rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+    }
+    
+    .navbar-nav .dropdown-item:hover,
+    .navbar-nav .dropdown-item:focus {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--gold-color);
+    }
+    
+    .navbar-nav .dropdown-item i {
+        width: 20px;
+        text-align: center;
+    }
+    
+    .navbar-nav .dropdown-divider {
+        border-color: rgba(255, 255, 255, 0.1);
+        margin: 0.25rem 0;
+    }
+    
+    /* Botões de ação mobile (notificações, créditos, perfil) */
+    .navbar-nav.align-items-center {
+        flex-direction: column;
+        align-items: stretch !important;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        gap: 0.5rem;
+    }
+    
+    .navbar-nav.align-items-center .nav-item {
+        border-bottom: none;
+    }
+    
+    .navbar-nav.align-items-center .nav-item .btn {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+    }
+    
+    /* Badge ajuste mobile */
+    .navbar-nav .btn .badge {
+        margin-left: auto;
+    }
+    
+    /* User dropdown mobile */
+    .navbar-nav.align-items-center .dropdown > .nav-link {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        margin-top: 0.5rem;
+    }
+    
+    /* Esconde texto duplicado em mobile */
+    .navbar-nav .d-none.d-md-inline {
+        display: inline !important;
+    }
+}
+
+/* Tablets - ajustes intermediários */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .navbar-collapse {
+        max-width: 350px;
+    }
+    
+    .navbar-nav .nav-link {
+        font-size: 1rem !important;
+    }
+}
+
+/* Desktop grande - garantir layout horizontal */
+@media (min-width: 1200px) {
+    .navbar-collapse {
+        position: static;
+        width: auto;
+        height: auto;
+        background: transparent;
+        padding: 0;
+        box-shadow: none;
+        overflow: visible;
+    }
+    
+    .navbar-collapse::before {
+        display: none;
+    }
+    
+    .navbar-nav {
+        flex-direction: row;
+        gap: 0;
+    }
+    
+    .navbar-nav .nav-item {
+        border-bottom: none;
+    }
+    
+    .navbar-nav .nav-link {
+        padding: 0.5rem 0.75rem !important;
+    }
+    
+    .navbar-nav.align-items-center {
+        flex-direction: row;
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+    }
+    
+    .navbar-nav .dropdown-menu {
+        position: absolute !important;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .navbar-nav .dropdown-item {
+        color: var(--dark-color);
+    }
+    
+    .navbar-nav .dropdown-item:hover {
+        background: #f8f9fa;
+        color: var(--primary-color);
+    }
+}
+
+/* Landing page navbar - não autenticado */
+#landingNav .navbar-collapse {
+    background: transparent;
+}
+
+@media (max-width: 1199.98px) {
+    #landingNav .navbar-collapse {
+        background: linear-gradient(180deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    }
+    
+    #landingNav .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    
+    #landingNav .d-flex.gap-2 .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Animação suave para o ícone do toggler */
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23c9a85c' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M6 6L24 24M6 24L24 6'/%3e%3c/svg%3e");
+}
+
+/* Transição suave ao abrir/fechar */
+.navbar-toggler .navbar-toggler-icon {
+    transition: transform 0.3s ease;
+}
+
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+    transform: rotate(180deg);
+}
