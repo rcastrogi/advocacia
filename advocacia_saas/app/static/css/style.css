@@ -831,6 +831,35 @@ textarea.form-control {
     transform: scale(1.02) translateY(-10px);
 }
 
+/* Planos Individuais - Tema Azul */
+.pricing-card.individual-plan {
+    border-color: var(--primary-color);
+}
+
+.pricing-card.individual-plan:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 15px 40px rgba(var(--primary-rgb), 0.2);
+}
+
+.pricing-card.individual-plan.featured {
+    background: linear-gradient(135deg, #f0f5ff 0%, #ffffff 100%);
+    border-color: var(--primary-color);
+    transform: scale(1.02);
+}
+
+.pricing-card.individual-plan .pricing-badge {
+    background: var(--primary-color);
+}
+
+.pricing-card.individual-plan .price-value {
+    color: var(--primary-color);
+}
+
+.pricing-card.individual-plan .pricing-features li.feature-highlight {
+    background: rgba(var(--primary-rgb), 0.08);
+}
+
+/* Planos Escritório - Tema Verde */
 .pricing-card.office-plan {
     border-color: #198754;
 }
@@ -842,6 +871,10 @@ textarea.form-control {
 
 .pricing-card.office-plan.featured {
     background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+}
+
+.pricing-card.office-plan .pricing-title {
+    color: #198754;
 }
 
 .pricing-badge {

@@ -862,13 +862,13 @@
                     {% if pricing_plans.individual %}
                         {% for plan in pricing_plans.individual %}
                             <div class="col-lg-4 col-md-6">
-                                <div class="pricing-card h-100 d-flex flex-column {% if loop.index == 2 %}office-plan featured{% endif %}">
+                                <div class="pricing-card h-100 d-flex flex-column individual-plan {% if loop.index == 2 %}featured{% endif %}">
                                     {% if loop.index == 2 %}
                                     <div class="pricing-badge">Mais Popular</div>
                                     {% endif %}
                                     <div class="pricing-header">
-                                        <h4 class="pricing-title {% if loop.index == 2 %}text-success{% endif %}">{{ plan.name }}</h4>
-                                        <span class="badge {% if loop.index == 2 %}bg-success{% else %}bg-primary{% endif %} mb-3">{{ plan.plan_type_label }}</span>
+                                        <h4 class="pricing-title">{{ plan.name }}</h4>
+                                        <span class="badge bg-primary mb-3">{{ plan.plan_type_label }}</span>
                                         <div class="pricing-price">
                                             <span class="price-currency">R$</span>
                                             <span class="price-value">{{ plan.monthly_fee_raw|int }}</span>
@@ -902,7 +902,7 @@
                                     </div>
                                     <div class="pricing-footer">
                                         <a href="{{ url_for('auth.register', plan=plan.id) }}" 
-                                           class="btn {% if loop.index == 2 %}btn-success{% else %}btn-outline-primary{% endif %} w-100">
+                                           class="btn {% if loop.index == 2 %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
                                             <i class="fas fa-rocket me-2"></i>Começar Agora
                                         </a>
                                         <p class="text-muted small mt-2 mb-0">Sem fidelidade. Cancele quando quiser.</p>

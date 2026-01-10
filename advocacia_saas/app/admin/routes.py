@@ -505,116 +505,107 @@ def dashboard():
     now = datetime.now(timezone.utc)
     current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
+    
+    # Data de 12 meses atrás para as queries agregadas
+    twelve_months_ago = now - timedelta(days=365)
 
     # === DADOS PARA GRÁFICOS - Últimos 12 meses ===
     chart_labels = []
-    chart_revenue = []  # Faturamento geral
-    chart_revenue_by_plan = {}  # Faturamento por plano
-    chart_ai_usage = []  # Uso de IA (gerações)
-    chart_ai_cost = []  # Custo de IA
-    chart_ai_credits_sold = []  # Créditos vendidos
+    chart_revenue = []
+    chart_revenue_by_plan = {}
+    chart_ai_usage = []
+    chart_ai_cost = []
+    chart_ai_credits_sold = []
 
     # Buscar planos existentes
     all_plans = BillingPlan.query.filter(BillingPlan.active.is_(True)).all()
     for plan in all_plans:
         chart_revenue_by_plan[plan.name] = []
-    chart_revenue_by_plan["Avulso"] = []  # Para pagamentos avulsos/créditos
+    chart_revenue_by_plan["Avulso"] = []
 
-    # Iterar últimos 12 meses
+    # Gerar labels dos meses
+    month_ranges = []
     for i in range(11, -1, -1):
-        # Calcular início e fim do mês
         month_date = now - timedelta(days=i * 30)
-        month_start = month_date.replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
+        month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         if i > 0:
             next_month = month_date + timedelta(days=32)
-            month_end = next_month.replace(
-                day=1, hour=0, minute=0, second=0, microsecond=0
-            )
+            month_end = next_month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         else:
             month_end = now
-
-        # Label do mês
         chart_labels.append(month_start.strftime("%b/%y"))
+        month_ranges.append((month_start, month_end))
 
-        # Faturamento geral do mês
-        month_revenue = (
-            db.session.query(func.coalesce(func.sum(Payment.amount), 0))
-            .filter(
-                Payment.paid_at >= month_start,
-                Payment.paid_at < month_end,
-                Payment.payment_status == "completed",
-            )
-            .scalar()
-            or 0
+    # Query agregada: Faturamento por mês
+    revenue_by_month = dict(
+        db.session.query(
+            func.date_trunc('month', Payment.paid_at),
+            func.coalesce(func.sum(Payment.amount), 0)
         )
-        chart_revenue.append(float(month_revenue))
+        .filter(
+            Payment.paid_at >= twelve_months_ago,
+            Payment.payment_status == "completed"
+        )
+        .group_by(func.date_trunc('month', Payment.paid_at))
+        .all()
+    )
 
-        # Faturamento por plano (via user -> current plan)
+    # Query agregada: Uso de IA por mês
+    ai_by_month = dict(
+        db.session.query(
+            func.date_trunc('month', AIGeneration.created_at),
+            func.count(AIGeneration.id)
+        )
+        .filter(AIGeneration.created_at >= twelve_months_ago)
+        .group_by(func.date_trunc('month', AIGeneration.created_at))
+        .all()
+    )
+
+    # Query agregada: Custo de IA por mês
+    ai_cost_by_month = dict(
+        db.session.query(
+            func.date_trunc('month', AIGeneration.created_at),
+            func.coalesce(func.sum(AIGeneration.cost_usd), 0)
+        )
+        .filter(AIGeneration.created_at >= twelve_months_ago)
+        .group_by(func.date_trunc('month', AIGeneration.created_at))
+        .all()
+    )
+
+    # Query agregada: Créditos vendidos por mês
+    credits_by_month = dict(
+        db.session.query(
+            func.date_trunc('month', CreditTransaction.created_at),
+            func.coalesce(func.sum(CreditTransaction.amount), 0)
+        )
+        .filter(
+            CreditTransaction.created_at >= twelve_months_ago,
+            CreditTransaction.transaction_type == "purchase"
+        )
+        .group_by(func.date_trunc('month', CreditTransaction.created_at))
+        .all()
+    )
+
+    # Preencher arrays dos gráficos a partir das queries agregadas
+    for month_start, month_end in month_ranges:
+        month_key = month_start.replace(tzinfo=None)
+        
+        # Faturamento
+        chart_revenue.append(float(revenue_by_month.get(month_key, 0)))
+        
+        # Uso de IA
+        chart_ai_usage.append(int(ai_by_month.get(month_key, 0)))
+        
+        # Custo de IA
+        chart_ai_cost.append(float(ai_cost_by_month.get(month_key, 0)))
+        
+        # Créditos vendidos
+        chart_ai_credits_sold.append(int(credits_by_month.get(month_key, 0)))
+        
+        # Placeholder para faturamento por plano (simplificado)
         for plan in all_plans:
-            plan_revenue = (
-                db.session.query(func.coalesce(func.sum(Payment.amount), 0))
-                .join(User, Payment.user_id == User.id)
-                .join(
-                    UserPlan,
-                    and_(UserPlan.user_id == User.id, UserPlan.is_current.is_(True)),
-                )
-                .filter(
-                    Payment.paid_at >= month_start,
-                    Payment.paid_at < month_end,
-                    Payment.payment_status == "completed",
-                    UserPlan.plan_id == plan.id,
-                )
-                .scalar()
-                or 0
-            )
-            chart_revenue_by_plan[plan.name].append(float(plan_revenue))
-
-        # Faturamento avulso (créditos IA) - via CreditPackage.price
-        credits_revenue = (
-            db.session.query(func.coalesce(func.sum(CreditPackage.price), 0))
-            .join(CreditTransaction, CreditTransaction.package_id == CreditPackage.id)
-            .filter(
-                CreditTransaction.created_at >= month_start,
-                CreditTransaction.created_at < month_end,
-                CreditTransaction.transaction_type == "purchase",
-            )
-            .scalar()
-            or 0
-        )
-        chart_revenue_by_plan["Avulso"].append(float(credits_revenue))
-
-        # Uso de IA no mês
-        ai_gens = AIGeneration.query.filter(
-            AIGeneration.created_at >= month_start, AIGeneration.created_at < month_end
-        ).count()
-        chart_ai_usage.append(ai_gens)
-
-        # Custo de IA no mês
-        ai_cost = (
-            db.session.query(func.coalesce(func.sum(AIGeneration.cost_usd), 0))
-            .filter(
-                AIGeneration.created_at >= month_start,
-                AIGeneration.created_at < month_end,
-            )
-            .scalar()
-            or 0
-        )
-        chart_ai_cost.append(float(ai_cost))
-
-        # Créditos vendidos no mês
-        credits = (
-            db.session.query(func.coalesce(func.sum(CreditTransaction.amount), 0))
-            .filter(
-                CreditTransaction.created_at >= month_start,
-                CreditTransaction.created_at < month_end,
-                CreditTransaction.transaction_type == "purchase",
-            )
-            .scalar()
-            or 0
-        )
-        chart_ai_credits_sold.append(int(credits))
+            chart_revenue_by_plan[plan.name].append(0)
+        chart_revenue_by_plan["Avulso"].append(0)
 
     # === Métricas de Usuários ===
     total_users = User.query.filter(User.user_type != "master").count()

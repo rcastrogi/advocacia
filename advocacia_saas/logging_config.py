@@ -13,15 +13,15 @@ from datetime import datetime
 
 
 def setup_production_logging():
-    """Configura logging robusto para capturar TUDO em produção"""
+    """Configura logging robusto para capturar erros em produção"""
 
     # Criar logger raiz
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(logging.INFO)  # INFO em produção, não DEBUG
 
-    # HANDLER 1: Console (stdout) - TUDO vai pra console
+    # HANDLER 1: Console (stdout) - Apenas INFO e acima
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(logging.INFO)
     console_formatter = logging.Formatter(
         "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
@@ -33,10 +33,13 @@ def setup_production_logging():
     # Logs são enviados apenas para stdout (console) e capturados pelo Render
     pass
 
-    # Configurar loggers específicos
-    logging.getLogger("flask").setLevel(logging.DEBUG)
-    logging.getLogger("sqlalchemy").setLevel(logging.DEBUG)
-    logging.getLogger("werkzeug").setLevel(logging.DEBUG)
+    # Configurar loggers específicos - NÍVEIS APROPRIADOS PARA PRODUÇÃO
+    logging.getLogger("flask").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy").setLevel(logging.WARNING)  # WARNING - não DEBUG!
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy.orm").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy.pool").setLevel(logging.WARNING)
+    logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
     # Capturar exceções não tratadas
     def log_unhandled_exception(exc_type, exc_value, exc_traceback):
@@ -51,13 +54,11 @@ def setup_production_logging():
     sys.excepthook = log_unhandled_exception
 
     print("\n" + "=" * 70)
-    print("✅ LOGGING INICIALIZADO COM SUCESSO")
+    print("✅ LOGGING INICIALIZADO - MODO PRODUÇÃO")
     print("=" * 70)
-    print(f"   🔹 Console: ATIVADO (stdout - capturado pelo Render)")
-    print(f"   🔹 Arquivo: DESABILITADO (para preservar espaço do servidor)")
-    print(f"   🔹 Nível: DEBUG (captura TUDO)")
-    print("   🔹 SQLAlchemy: DEBUG ATIVADO")
-    print("   🔹 Werkzeug: DEBUG ATIVADO")
+    print(f"   🔹 Console: ATIVADO (stdout)")
+    print(f"   🔹 Nível: INFO (produção)")
+    print("   🔹 SQLAlchemy: WARNING (otimizado)")
     print("=" * 70 + "\n")
 
 
