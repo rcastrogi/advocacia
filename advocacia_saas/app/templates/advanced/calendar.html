@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
         events: {
             url: '{{ url_for("advanced.get_calendar_events") }}',
             failure: function() {
-                alert('Erro ao carregar eventos do calendário');
+                showToast('Erro ao carregar eventos do calendário', 'error');
             }
         },
         eventClick: function(info) {

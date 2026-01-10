@@ -145,7 +145,7 @@ document.getElementById('payment-form').addEventListener('submit', async functio
         
     } catch (error) {
         console.error('Erro:', error);
-        alert('Erro ao processar pagamento: ' + error.message);
+        showToast('Erro ao processar pagamento: ' + error.message, 'error');
         
         button.disabled = false;
         button.innerHTML = '<i class="fas fa-credit-card me-2"></i>Pagar R$ {{ "%.2f"|format(package.price) }}';

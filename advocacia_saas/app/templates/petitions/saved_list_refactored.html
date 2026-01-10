@@ -363,10 +363,10 @@ async function cancelPetition() {
         if (data.success) {
             window.location.reload();
         } else {
-            alert(data.error || 'Erro ao cancelar petição');
+            showToast(data.error || 'Erro ao cancelar petição', 'error');
         }
     } catch (error) {
-        alert('Erro ao cancelar petição');
+        showToast('Erro ao cancelar petição', 'error');
     }
     
     actionsModal.hide();
@@ -382,10 +382,10 @@ async function restorePetition() {
         if (data.success) {
             window.location.reload();
         } else {
-            alert(data.error || 'Erro ao restaurar petição');
+            showToast(data.error || 'Erro ao restaurar petição', 'error');
         }
     } catch (error) {
-        alert('Erro ao restaurar petição');
+        showToast('Erro ao restaurar petição', 'error');
     }
     
     actionsModal.hide();
@@ -410,10 +410,10 @@ async function deletePetition() {
         if (data.success) {
             window.location.reload();
         } else {
-            alert(data.error || 'Erro ao excluir petição');
+            showToast(data.error || 'Erro ao excluir petição', 'error');
         }
     } catch (error) {
-        alert('Erro ao excluir petição');
+        showToast('Erro ao excluir petição', 'error');
     }
     
     actionsModal.hide();

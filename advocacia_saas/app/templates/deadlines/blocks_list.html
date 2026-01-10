@@ -239,12 +239,12 @@ function toggleBlock(blockId) {
         if (data.success) {
             location.reload();
         } else {
-            alert(data.message || 'Erro ao alterar status');
+            showToast(data.message || 'Erro ao alterar status', 'error');
         }
     })
     .catch(error => {
         console.error('Erro:', error);
-        alert('Erro ao processar requisição');
+        showToast('Erro ao processar requisição', 'error');
     });
 }
 

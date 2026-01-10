@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (feeValue === 0) {
                     e.preventDefault();
-                    alert('Por favor, informe o valor mensal do plano.');
+                    showToast('Por favor, informe o valor mensal do plano.', 'warning');
                     return false;
                 }
             }
@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const limitValue = parseInt(limitField.value) || 0;
                 if (limitValue <= 0) {
                     e.preventDefault();
-                    alert('Por favor, informe um limite válido de petições para planos limitados.');
+                    showToast('Por favor, informe um limite válido de petições para planos limitados.', 'warning');
                     return false;
                 }
             }

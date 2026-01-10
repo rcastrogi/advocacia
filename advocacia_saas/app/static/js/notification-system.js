@@ -32,7 +32,7 @@ class NotificationSystem {
             // Compatibilidade com código existente
             window.showToast = window.showNotification;
             window.showAlert = (message, type = 'info') => {
-                this.show(message, type, 0); // 0 = não auto-fechar
+                this.show(message, type, 7000); // Alertas fecham após 7 segundos
             };
         });
     }
@@ -82,9 +82,8 @@ class NotificationSystem {
             if (response.ok) {
                 const messages = await response.json();
                 messages.forEach(msg => {
-                    // Erros não fecham automaticamente, apenas sucesso/info/warning
-                    const duration = msg.type === 'error' ? 0 : 5000;
-                    this.show(msg.message, msg.type, duration);
+                    // Todos os tipos fecham automaticamente (5 segundos)
+                    this.show(msg.message, msg.type, 5000);
                 });
             }
         } catch (error) {

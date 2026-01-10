@@ -327,16 +327,16 @@ document.getElementById('consent-form').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(result => {
         if (result.error) {
-            alert('Erro: ' + result.error);
+            showToast('Erro: ' + result.error, 'error');
         } else {
-            alert('Consentimento registrado com sucesso!');
+            showToast('Consentimento registrado com sucesso!', 'success');
             $('#consentModal').modal('hide');
             loadConsents();
         }
     })
     .catch(error => {
         console.error('Erro:', error);
-        alert('Erro ao registrar consentimento');
+        showToast('Erro ao registrar consentimento', 'error');
     });
 });
 
@@ -365,16 +365,16 @@ document.getElementById('deletion-form').addEventListener('submit', async functi
     .then(response => response.json())
     .then(result => {
         if (result.error) {
-            alert('Erro: ' + result.error);
+            showToast('Erro: ' + result.error, 'error');
         } else {
-            alert('Solicitação de exclusão registrada! Você será notificado sobre o andamento.');
+            showToast('Solicitação de exclusão registrada! Você será notificado sobre o andamento.', 'success');
             $('#deletionModal').modal('hide');
             loadRequestsStatus();
         }
     })
     .catch(error => {
         console.error('Erro:', error);
-        alert('Erro ao registrar solicitação');
+        showToast('Erro ao registrar solicitação', 'error');
     });
 });
 
@@ -394,16 +394,16 @@ document.getElementById('anonymization-form').addEventListener('submit', functio
     .then(response => response.json())
     .then(result => {
         if (result.error) {
-            alert('Erro: ' + result.error);
+            showToast('Erro: ' + result.error, 'error');
         } else {
-            alert('Solicitação de anonimização registrada! Você será notificado sobre o andamento.');
+            showToast('Solicitação de anonimização registrada! Você será notificado sobre o andamento.', 'success');
             $('#anonymizationModal').modal('hide');
             loadRequestsStatus();
         }
     })
     .catch(error => {
         console.error('Erro:', error);
-        alert('Erro ao registrar solicitação');
+        showToast('Erro ao registrar solicitação', 'error');
     });
 });
 </script>

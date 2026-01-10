@@ -1499,6 +1499,120 @@
                     confirmText: 'Confirmar'
                 });
             };
+            
+            /**
+             * Mostra modal de alerta padronizado (substitui window.alert)
+             * @param {Object|string} options - Opções ou mensagem simples
+             * @param {string} options.message - Mensagem principal
+             * @param {string} options.title - Título do modal (padrão: 'Aviso')
+             * @param {string} options.type - Tipo: 'danger', 'warning', 'info', 'success' (padrão: 'info')
+             * @param {string} options.buttonText - Texto do botão OK (padrão: 'OK')
+             * @returns {Promise<void>} - Resolve quando o modal for fechado
+             */
+            window.showAlertModal = function(options) {
+                return new Promise(function(resolve) {
+                    // Se passou string simples, converte para objeto
+                    if (typeof options === 'string') {
+                        options = { message: options };
+                    }
+                    
+                    const defaults = {
+                        title: 'Aviso',
+                        type: 'info',
+                        buttonText: 'OK'
+                    };
+                    
+                    const settings = Object.assign({}, defaults, options);
+                    
+                    // Detectar tipo automaticamente baseado em palavras-chave
+                    if (settings.type === 'info') {
+                        const msg = settings.message.toLowerCase();
+                        if (msg.includes('erro') || msg.includes('falha') || msg.includes('error')) {
+                            settings.type = 'danger';
+                            settings.title = settings.title === 'Aviso' ? 'Erro' : settings.title;
+                        } else if (msg.includes('sucesso') || msg.includes('success')) {
+                            settings.type = 'success';
+                            settings.title = settings.title === 'Aviso' ? 'Sucesso' : settings.title;
+                        } else if (msg.includes('atenção') || msg.includes('cuidado') || msg.includes('warning')) {
+                            settings.type = 'warning';
+                            settings.title = settings.title === 'Aviso' ? 'Atenção' : settings.title;
+                        }
+                    }
+                    
+                    // Usar toast para mensagens curtas (menos de 100 caracteres)
+                    if (settings.message.length < 100 && typeof showToast === 'function') {
+                        const toastType = settings.type === 'danger' ? 'error' : settings.type;
+                        showToast(settings.message, toastType);
+                        resolve();
+                        return;
+                    }
+                    
+                    // Reutilizar o modal de confirmação para alertas
+                    const typeConfig = {
+                        danger: { icon: 'fa-exclamation-circle', iconBg: 'bg-danger bg-opacity-10', iconColor: 'text-danger', btnClass: 'btn-danger' },
+                        warning: { icon: 'fa-exclamation-triangle', iconBg: 'bg-warning bg-opacity-10', iconColor: 'text-warning', btnClass: 'btn-warning' },
+                        info: { icon: 'fa-info-circle', iconBg: 'bg-info bg-opacity-10', iconColor: 'text-info', btnClass: 'btn-info' },
+                        success: { icon: 'fa-check-circle', iconBg: 'bg-success bg-opacity-10', iconColor: 'text-success', btnClass: 'btn-success' }
+                    };
+                    
+                    const config = typeConfig[settings.type] || typeConfig.info;
+                    
+                    // Atualizar elementos do modal
+                    document.getElementById('confirmModalLabel').textContent = settings.title;
+                    document.getElementById('confirmModalMessage').innerHTML = settings.message.replace(/\n/g, '<br>');
+                    
+                    // Ícone
+                    const iconEl = document.getElementById('confirmModalIcon');
+                    iconEl.className = 'rounded-circle d-flex align-items-center justify-content-center ' + config.iconBg;
+                    iconEl.style.width = '48px';
+                    iconEl.style.height = '48px';
+                    iconEl.innerHTML = '<i class="fas ' + config.icon + ' fa-lg ' + config.iconColor + '"></i>';
+                    
+                    // Esconder botão cancelar e ajustar botão confirmar
+                    const confirmBtn = document.getElementById('confirmModalConfirm');
+                    const cancelBtn = document.getElementById('confirmModalCancel');
+                    
+                    cancelBtn.style.display = 'none';
+                    confirmBtn.className = 'btn ' + config.btnClass;
+                    confirmBtn.innerHTML = '<i class="fas fa-check me-1"></i> ' + settings.buttonText;
+                    
+                    // Resolver ao fechar o modal
+                    const modalEl = document.getElementById('confirmModal');
+                    const handleHidden = function() {
+                        cancelBtn.style.display = ''; // Restaurar botão cancelar
+                        modalEl.removeEventListener('hidden.bs.modal', handleHidden);
+                        resolve();
+                    };
+                    modalEl.addEventListener('hidden.bs.modal', handleHidden);
+                    
+                    // Mostrar modal
+                    if (confirmModal) {
+                        confirmModal.show();
+                        setTimeout(function() { confirmBtn.focus(); }, 150);
+                    } else {
+                        // Fallback para alert nativo
+                        window.alert(settings.message);
+                        resolve();
+                    }
+                });
+            };
+            
+            // Atalhos para tipos de alerta
+            window.showError = function(message, title) {
+                return showAlertModal({ message: message, title: title || 'Erro', type: 'danger' });
+            };
+            
+            window.showSuccess = function(message, title) {
+                return showAlertModal({ message: message, title: title || 'Sucesso', type: 'success' });
+            };
+            
+            window.showWarning = function(message, title) {
+                return showAlertModal({ message: message, title: title || 'Atenção', type: 'warning' });
+            };
+            
+            window.showInfo = function(message, title) {
+                return showAlertModal({ message: message, title: title || 'Informação', type: 'info' });
+            };
         })();
     </script>
 </body>

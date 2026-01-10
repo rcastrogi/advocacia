@@ -258,12 +258,12 @@ function toggleExample(id) {
         if (data.success) {
             location.reload();
         } else {
-            alert('Erro ao alterar status: ' + (data.error || 'Erro desconhecido'));
+            showToast('Erro ao alterar status: ' + (data.error || 'Erro desconhecido'), 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Erro ao processar requisição');
+        showToast('Erro ao processar requisição', 'error');
     });
 }
 
@@ -287,12 +287,12 @@ async function deleteExample(id, name) {
                 location.reload();
             }
         } else {
-            alert('Erro ao excluir: ' + (data.error || 'Erro desconhecido'));
+            showToast('Erro ao excluir: ' + (data.error || 'Erro desconhecido'), 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Erro ao processar requisição');
+        showToast('Erro ao processar requisição', 'error');
     });
 }
 </script>

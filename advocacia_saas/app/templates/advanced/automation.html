@@ -314,12 +314,12 @@ function toggleAutomation(automationId) {
         if (data.success) {
             location.reload();
         } else {
-            alert('Erro ao alterar status da automação');
+            showToast('Erro ao alterar status da automação', 'error');
         }
     })
     .catch(error => {
         console.error('Erro:', error);
-        alert('Erro ao alterar status da automação');
+        showToast('Erro ao alterar status da automação', 'error');
     });
 }
 
@@ -345,12 +345,12 @@ function deleteAutomation(automationId) {
                 modal.hide();
                 location.reload();
             } else {
-                alert('Erro ao excluir automação');
+                showToast('Erro ao excluir automação', 'error');
             }
         })
         .catch(error => {
             console.error('Erro:', error);
-            alert('Erro ao excluir automação');
+            showToast('Erro ao excluir automação', 'error');
         });
     };
 

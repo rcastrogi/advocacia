@@ -318,7 +318,7 @@ document.getElementById('roadmapForm').addEventListener('submit', function(e) {
 
     if (visibleToUsers && internalOnly) {
         e.preventDefault();
-        alert('Um item não pode ser visível aos usuários E ser apenas para uso interno ao mesmo tempo.');
+        showToast('Um item não pode ser visível aos usuários E ser apenas para uso interno ao mesmo tempo.', 'warning');
         return false;
     }
 });

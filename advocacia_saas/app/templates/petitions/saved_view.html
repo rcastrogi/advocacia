@@ -415,10 +415,10 @@ async function cancelPetition() {
         if (data.success) {
             window.location.reload();
         } else {
-            alert(data.error || 'Erro ao cancelar');
+            showToast(data.error || 'Erro ao cancelar', 'error');
         }
     } catch (e) {
-        alert('Erro ao cancelar petição');
+        showToast('Erro ao cancelar petição', 'error');
     }
 }
 
@@ -429,10 +429,10 @@ async function restorePetition() {
         if (data.success) {
             window.location.reload();
         } else {
-            alert(data.error || 'Erro ao restaurar');
+            showToast(data.error || 'Erro ao restaurar', 'error');
         }
     } catch (e) {
-        alert('Erro ao restaurar petição');
+        showToast('Erro ao restaurar petição', 'error');
     }
 }
 
@@ -452,10 +452,10 @@ async function deletePetition() {
         if (data.success) {
             window.location.href = '{{ url_for("petitions.saved_list") }}';
         } else {
-            alert(data.error || 'Erro ao excluir');
+            showToast(data.error || 'Erro ao excluir', 'error');
         }
     } catch (e) {
-        alert('Erro ao excluir petição');
+        showToast('Erro ao excluir petição', 'error');
     }
 }
 
@@ -475,10 +475,10 @@ async function completePetition() {
         if (data.success) {
             window.location.reload();
         } else {
-            alert(data.error || 'Erro ao finalizar');
+            showToast(data.error || 'Erro ao finalizar', 'error');
         }
     } catch (e) {
-        alert('Erro ao finalizar petição');
+        showToast('Erro ao finalizar petição', 'error');
     }
 }
 
@@ -500,10 +500,10 @@ async function uploadFile() {
         if (data.success) {
             window.location.reload();
         } else {
-            alert(data.error || 'Erro ao enviar arquivo');
+            showToast(data.error || 'Erro ao enviar arquivo', 'error');
         }
     } catch (e) {
-        alert('Erro ao enviar arquivo');
+        showToast('Erro ao enviar arquivo', 'error');
     }
 }
 </script>

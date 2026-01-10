@@ -398,11 +398,7 @@ document.getElementById('searchCep').addEventListener('click', function() {
                 
                 if (data.error) {
                     // Mostrar aviso amigável para CEP não encontrado
-                    if (window.showWarningToast) {
-                        window.showWarningToast('CEP não encontrado. Verifique se está correto.');
-                    } else {
-                        alert('CEP não encontrado. Verifique se está correto.');
-                    }
+                    showToast('CEP não encontrado. Verifique se está correto.', 'warning');
                 } else {
                     
                     // Fill fields
@@ -431,7 +427,7 @@ document.getElementById('searchCep').addEventListener('click', function() {
                             e.preventDefault();
                             e.stopPropagation();
                             e.stopImmediatePropagation();
-                            alert('⛔ Este campo foi preenchido pelo CEP e não pode ser alterado!\nAltere o CEP para desbloquear.');
+                            showToast('Este campo foi preenchido pelo CEP e não pode ser alterado. Altere o CEP para desbloquear.', 'warning');
                             return false;
                         };
                         
@@ -519,14 +515,10 @@ document.getElementById('searchCep').addEventListener('click', function() {
             })
             .catch(error => {
                 console.error('❌ Erro ao buscar CEP:', error);
-                if (window.showErrorToast) {
-                    window.showErrorToast('Erro ao buscar CEP. Verifique sua conexão.');
-                } else {
-                    alert('Erro ao buscar CEP');
-                }
+                showToast('Erro ao buscar CEP. Verifique sua conexão.', 'error');
             });
     } else {
-        alert('CEP deve conter 8 dígitos');
+        showToast('CEP deve conter 8 dígitos', 'warning');
     }
 });
 
@@ -593,7 +585,7 @@ document.getElementById('cep').addEventListener('input', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
-                        alert(data.error);
+                        showToast(data.error, 'error');
                         citySelect.innerHTML = '<option value="">Erro ao carregar cidades</option>';
                     } else {
                         citySelect.innerHTML = '<option value="">Selecione...</option>';
@@ -608,7 +600,7 @@ document.getElementById('cep').addEventListener('input', function() {
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Erro ao carregar cidades');
+                    showToast('Erro ao carregar cidades', 'error');
                     citySelect.innerHTML = '<option value="">Erro ao carregar cidades</option>';
                 });
         });

@@ -531,7 +531,7 @@ function setLast90Days() {
 
 function exportReport() {
     if (!currentReportData) {
-        alert('Nenhum relatório para exportar');
+        showToast('Nenhum relatório para exportar', 'warning');
         return;
     }
 

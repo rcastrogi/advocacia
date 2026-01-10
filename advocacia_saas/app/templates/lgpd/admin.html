@@ -378,9 +378,9 @@ function processRequest(type, requestId, action) {
     .then(response => response.json())
     .then(result => {
         if (result.error) {
-            alert('Erro: ' + result.error);
+            showToast('Erro: ' + result.error, 'error');
         } else {
-            alert(`Solicitação ${action === 'approve' ? 'aprovada' : 'rejeitada'} com sucesso!`);
+            showToast(`Solicitação ${action === 'approve' ? 'aprovada' : 'rejeitada'} com sucesso!`, 'success');
             $('#requestDetailsModal').modal('hide');
 
             // Atualizar tabelas
@@ -393,7 +393,7 @@ function processRequest(type, requestId, action) {
     })
     .catch(error => {
         console.error('Erro:', error);
-        alert('Erro ao processar solicitação');
+        showToast('Erro ao processar solicitação', 'error');
     });
 }
 </script>

@@ -282,7 +282,7 @@
 document.querySelectorAll('.roadmap-item-badge').forEach(badge => {
     badge.addEventListener('click', function() {
         const title = this.getAttribute('title');
-        alert('Item: ' + title + '\n\nClique em "Ver Lista" para editar detalhes');
+        showToast('Item: ' + title + ' - Clique em "Ver Lista" para editar detalhes', 'info');
     });
 });
 </script>

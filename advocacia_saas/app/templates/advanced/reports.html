@@ -467,12 +467,12 @@ function deleteReport(reportId) {
                 modal.hide();
                 location.reload();
             } else {
-                alert('Erro ao excluir relatório');
+                showToast('Erro ao excluir relatório', 'error');
             }
         })
         .catch(error => {
             console.error('Erro:', error);
-            alert('Erro ao excluir relatório');
+            showToast('Erro ao excluir relatório', 'error');
         });
     };
 

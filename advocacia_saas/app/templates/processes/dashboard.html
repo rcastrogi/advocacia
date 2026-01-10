@@ -315,12 +315,12 @@ function markAsRead(notificationId) {
             // Recarregar a página para atualizar as notificações
             location.reload();
         } else {
-            alert('Erro ao marcar notificação como lida');
+            showToast('Erro ao marcar notificação como lida', 'error');
         }
     })
     .catch(error => {
         console.error('Erro:', error);
-        alert('Erro ao marcar notificação como lida');
+        showToast('Erro ao marcar notificação como lida', 'error');
     });
 }
 

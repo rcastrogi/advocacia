@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Erro ao marcar notificação:', error);
-            alert('Erro ao marcar notificação como lida.');
+            showToast('Erro ao marcar notificação como lida.', 'error');
         });
     }
     
@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Erro ao marcar notificações:', error);
-            alert('Erro ao marcar notificações como lidas.');
+            showToast('Erro ao marcar notificações como lidas.', 'error');
         });
     }
     
