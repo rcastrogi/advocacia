@@ -128,21 +128,55 @@ class BillingPlanSchema(Schema):
 class PetitionTypeSchema(Schema):
     """Validação de tipos de petição"""
 
+    class Meta:
+        unknown = EXCLUDE  # Ignora campos extras
+
     id = fields.Int(dump_only=True)
     name = fields.Str(
         required=True,
-        validate=validate.Length(min=2, max=255),
+        validate=validate.Length(min=2, max=180),
         error_messages={"required": "Nome do tipo é obrigatório"},
     )
-    code = fields.Str(
+    slug = fields.Str(
         required=True,
-        validate=validate.Length(min=2, max=100),
-        error_messages={"required": "Código é obrigatório"},
+        validate=validate.Length(min=2, max=80),
+        error_messages={"required": "Slug é obrigatório"},
     )
     description = fields.Str(allow_none=True)
-    is_active = fields.Bool(dump_default=True)
+    category = fields.Str(
+        load_default="civel",
+        validate=validate.Length(max=50),
+    )
+    icon = fields.Str(
+        load_default="fa-file-alt",
+        validate=validate.Length(max=50),
+    )
+    color = fields.Str(
+        load_default="primary",
+        validate=validate.Length(max=20),
+    )
+    base_price = fields.Decimal(load_default=0, allow_none=True)
+    is_billable = fields.Bool(load_default=True)
+    is_implemented = fields.Bool(load_default=False)
+    is_active = fields.Bool(load_default=True)
+    use_dynamic_form = fields.Bool(load_default=False)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
+
+    @pre_load
+    def process_checkboxes(self, data, **kwargs):
+        """Converte valores de checkbox HTML para booleanos"""
+        for field in ["is_active", "is_billable", "is_implemented", "use_dynamic_form"]:
+            if field in data:
+                value = data[field]
+                if value in ["on", "true", "1", True, 1]:
+                    data[field] = True
+                elif value in ["off", "false", "0", False, 0, "", None]:
+                    data[field] = False
+            else:
+                # Checkbox não marcado não envia nada, então é False
+                data[field] = False
+        return data
 
 
 class PetitionModelSchema(Schema):
