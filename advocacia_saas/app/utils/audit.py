@@ -141,6 +141,238 @@ class AuditManager:
             description=description,
         )
 
+    # =========================================================================
+    # AUDITORIA DE PAGAMENTOS E ASSINATURAS
+    # =========================================================================
+
+    @staticmethod
+    def log_payment_created(payment, user=None):
+        """Registra criação de pagamento"""
+        user_email = user.email if user else "N/A"
+        description = f"Pagamento criado - {payment.payment_method} - R$ {payment.amount}"
+        AuditManager.log_change(
+            entity_type="payment",
+            entity_id=payment.id,
+            action="payment_created",
+            new_values={
+                "amount": str(payment.amount),
+                "currency": payment.currency,
+                "payment_method": payment.payment_method,
+                "payment_type": payment.payment_type,
+                "gateway": payment.gateway,
+                "gateway_payment_id": payment.gateway_payment_id,
+                "status": payment.status,
+            },
+            description=description,
+            additional_metadata={
+                "user_email": user_email,
+                "gateway": payment.gateway,
+            },
+            user_id=payment.user_id,
+        )
+
+    @staticmethod
+    def log_payment_status_change(payment, old_status, new_status, reason=None):
+        """Registra mudança de status do pagamento"""
+        description = f"Status do pagamento alterado: {old_status} → {new_status}"
+        if reason:
+            description += f" ({reason})"
+        AuditManager.log_change(
+            entity_type="payment",
+            entity_id=payment.id,
+            action="payment_status_changed",
+            old_values={"status": old_status},
+            new_values={"status": new_status},
+            changed_fields=["status"],
+            description=description,
+            additional_metadata={
+                "reason": reason,
+                "gateway_payment_id": payment.gateway_payment_id,
+            },
+            user_id=payment.user_id,
+        )
+
+    @staticmethod
+    def log_payment_completed(payment):
+        """Registra pagamento concluído/aprovado"""
+        description = f"Pagamento aprovado - R$ {payment.amount} via {payment.payment_method}"
+        AuditManager.log_change(
+            entity_type="payment",
+            entity_id=payment.id,
+            action="payment_completed",
+            new_values={
+                "status": "completed",
+                "paid_at": payment.paid_at.isoformat() if payment.paid_at else None,
+            },
+            description=description,
+            additional_metadata={
+                "gateway": payment.gateway,
+                "gateway_payment_id": payment.gateway_payment_id,
+                "amount": str(payment.amount),
+            },
+            user_id=payment.user_id,
+        )
+
+    @staticmethod
+    def log_payment_failed(payment, error_message=None):
+        """Registra falha no pagamento"""
+        description = f"Pagamento falhou - R$ {payment.amount}"
+        if error_message:
+            description += f" - {error_message}"
+        AuditManager.log_change(
+            entity_type="payment",
+            entity_id=payment.id,
+            action="payment_failed",
+            new_values={"status": "failed"},
+            description=description,
+            additional_metadata={
+                "error_message": error_message,
+                "gateway": payment.gateway,
+            },
+            user_id=payment.user_id,
+        )
+
+    @staticmethod
+    def log_payment_refunded(payment, refund_amount, reason=None):
+        """Registra reembolso de pagamento"""
+        description = f"Reembolso processado - R$ {refund_amount}"
+        if reason:
+            description += f" - Motivo: {reason}"
+        AuditManager.log_change(
+            entity_type="payment",
+            entity_id=payment.id,
+            action="payment_refunded",
+            old_values={"status": payment.status},
+            new_values={"status": "refunded", "refund_amount": str(refund_amount)},
+            description=description,
+            additional_metadata={
+                "refund_amount": str(refund_amount),
+                "reason": reason,
+                "gateway": payment.gateway,
+            },
+            user_id=payment.user_id,
+        )
+
+    @staticmethod
+    def log_subscription_created(subscription, user=None):
+        """Registra criação de assinatura"""
+        user_email = user.email if user else "N/A"
+        description = f"Assinatura criada - {subscription.plan_type} - R$ {subscription.amount}"
+        AuditManager.log_change(
+            entity_type="subscription",
+            entity_id=subscription.id,
+            action="subscription_created",
+            new_values={
+                "plan_type": subscription.plan_type,
+                "billing_period": subscription.billing_period,
+                "amount": str(subscription.amount),
+                "status": subscription.status,
+                "gateway": subscription.gateway,
+            },
+            description=description,
+            additional_metadata={
+                "user_email": user_email,
+                "gateway": subscription.gateway,
+            },
+            user_id=subscription.user_id,
+        )
+
+    @staticmethod
+    def log_subscription_activated(subscription):
+        """Registra ativação de assinatura"""
+        description = f"Assinatura ativada - {subscription.plan_type}"
+        AuditManager.log_change(
+            entity_type="subscription",
+            entity_id=subscription.id,
+            action="subscription_activated",
+            old_values={"status": "pending"},
+            new_values={
+                "status": "active",
+                "started_at": subscription.started_at.isoformat() if subscription.started_at else None,
+                "renewal_date": subscription.renewal_date.isoformat() if subscription.renewal_date else None,
+            },
+            changed_fields=["status", "started_at", "renewal_date"],
+            description=description,
+            user_id=subscription.user_id,
+        )
+
+    @staticmethod
+    def log_subscription_cancelled(subscription, reason=None, immediate=False):
+        """Registra cancelamento de assinatura"""
+        cancel_type = "imediato" if immediate else "ao fim do período"
+        description = f"Assinatura cancelada ({cancel_type})"
+        if reason:
+            description += f" - Motivo: {reason}"
+        AuditManager.log_change(
+            entity_type="subscription",
+            entity_id=subscription.id,
+            action="subscription_cancelled",
+            old_values={"status": subscription.status},
+            new_values={
+                "status": "cancelled",
+                "cancelled_at": subscription.cancelled_at.isoformat() if subscription.cancelled_at else None,
+            },
+            changed_fields=["status", "cancelled_at"],
+            description=description,
+            additional_metadata={
+                "reason": reason,
+                "immediate": immediate,
+            },
+            user_id=subscription.user_id,
+        )
+
+    @staticmethod
+    def log_subscription_renewed(subscription, old_renewal_date, new_renewal_date):
+        """Registra renovação de assinatura"""
+        description = f"Assinatura renovada até {new_renewal_date.strftime('%d/%m/%Y')}"
+        AuditManager.log_change(
+            entity_type="subscription",
+            entity_id=subscription.id,
+            action="subscription_renewed",
+            old_values={"renewal_date": old_renewal_date.isoformat() if old_renewal_date else None},
+            new_values={"renewal_date": new_renewal_date.isoformat()},
+            changed_fields=["renewal_date"],
+            description=description,
+            user_id=subscription.user_id,
+        )
+
+    @staticmethod
+    def log_subscription_status_change(subscription, old_status, new_status, reason=None):
+        """Registra mudança de status da assinatura"""
+        description = f"Status da assinatura alterado: {old_status} → {new_status}"
+        if reason:
+            description += f" ({reason})"
+        AuditManager.log_change(
+            entity_type="subscription",
+            entity_id=subscription.id,
+            action="subscription_status_changed",
+            old_values={"status": old_status},
+            new_values={"status": new_status},
+            changed_fields=["status"],
+            description=description,
+            additional_metadata={"reason": reason},
+            user_id=subscription.user_id,
+        )
+
+    @staticmethod
+    def log_credits_transaction(user, transaction_type, amount, balance_before, balance_after, description=None):
+        """Registra transação de créditos"""
+        desc = description or f"Transação de créditos: {transaction_type}"
+        AuditManager.log_change(
+            entity_type="credits",
+            entity_id=user.id,
+            action=f"credits_{transaction_type}",
+            old_values={"balance": balance_before},
+            new_values={"balance": balance_after},
+            changed_fields=["balance"],
+            description=desc,
+            additional_metadata={
+                "transaction_type": transaction_type,
+                "amount": amount,
+            },
+            user_id=user.id,
+        )
+
     @staticmethod
     def get_audit_logs(
         entity_type: str = None,
@@ -188,7 +420,10 @@ class AuditManager:
                 if not ip:
                     ip = request.remote_addr
                 return ip
-        except:
+        except RuntimeError:
+            # Fora do contexto de requisição
+            pass
+        except Exception:
             pass
         return None
 
@@ -198,7 +433,10 @@ class AuditManager:
         try:
             if request:
                 return request.headers.get("User-Agent", "")
-        except:
+        except RuntimeError:
+            # Fora do contexto de requisição
+            pass
+        except Exception:
             pass
         return None
 
@@ -208,7 +446,10 @@ class AuditManager:
         try:
             if session:
                 return session.get("_id", "")
-        except:
+        except RuntimeError:
+            # Fora do contexto de requisição/sessão
+            pass
+        except Exception:
             pass
         return None
 

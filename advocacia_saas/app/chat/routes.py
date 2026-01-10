@@ -20,11 +20,13 @@ from werkzeug.utils import secure_filename
 
 from app import db
 from app.chat import bp
+from app.decorators import require_feature
 from app.models import ChatRoom, Client, Message
 
 
 @bp.route("/")
 @login_required
+@require_feature('client_chat')
 def index():
     """Página principal do chat - lista de conversas"""
     # Buscar todas as salas de chat do usuário
@@ -43,6 +45,7 @@ def index():
 
 @bp.route("/room/<int:room_id>")
 @login_required
+@require_feature('client_chat')
 def room(room_id):
     """Sala de chat específica"""
     chat_room = ChatRoom.query.get_or_404(room_id)

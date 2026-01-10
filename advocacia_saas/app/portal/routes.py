@@ -187,9 +187,15 @@ def login():
             portal_logger.info(
                 f"Login bem-sucedido para cliente: {email} (ID: {user.id})"
             )
+            # Validação de Open Redirect - só permite URLs internas
             next_page = request.args.get("next")
             if next_page:
-                return redirect(next_page)
+                from urllib.parse import urlparse
+                parsed = urlparse(next_page)
+                # Só redireciona se for URL relativa (sem domínio externo)
+                if not parsed.netloc and not parsed.scheme:
+                    return redirect(next_page)
+                portal_logger.warning(f"Tentativa de Open Redirect bloqueada: {next_page}")
             return redirect(url_for("portal.index"))
 
         portal_logger.debug("Página de login do portal acessada")

@@ -1,0 +1,211 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Features - {{ plan.name }}{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    {# Header #}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-puzzle-piece me-2"></i>
+                Features do Plano: {{ plan.name }}
+            </h2>
+            <p class="text-muted mb-0">Selecione quais features este plano terá acesso e configure os limites</p>
+        </div>
+        <div>
+            <a href="{{ url_for('billing.plans') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Voltar aos Planos
+            </a>
+        </div>
+    </div>
+
+    {# Plan Info Card #}
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="mb-1">{{ plan.name }}</h5>
+                    <p class="text-muted mb-0">{{ plan.description or 'Sem descrição' }}</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="badge bg-{{ 'success' if plan.active else 'secondary' }} me-2">
+                        {{ 'Ativo' if plan.active else 'Inativo' }}
+                    </span>
+                    <span class="badge bg-primary">
+                        {% if plan.monthly_fee and plan.monthly_fee > 0 %}
+                            R$ {{ "%.2f"|format(plan.monthly_fee) }}/mês
+                        {% else %}
+                            Gratuito
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Features Form #}
+    <form method="POST" id="features-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="row">
+            {% for module_name, module_items in modules.items() %}
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-{{ loop.cycle('primary', 'success', 'info', 'warning', 'secondary', 'dark', 'danger') }} text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-folder me-2"></i>
+                            {{ module_name|upper }}
+                        </h5>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-light select-all-module" data-module="{{ module_name }}">
+                                <i class="fas fa-check-double"></i> Todos
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            {% for item in module_items %}
+                            {% set feature = item.feature %}
+                            {% set is_selected = item.selected %}
+                            {% set current_limit = item.limit %}
+                            <li class="list-group-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="form-check me-3">
+                                        <input type="checkbox" 
+                                               class="form-check-input feature-checkbox" 
+                                               name="features" 
+                                               value="{{ feature.id }}"
+                                               id="feature_{{ feature.id }}"
+                                               data-module="{{ module_name }}"
+                                               {% if is_selected %}checked{% endif %}>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <label for="feature_{{ feature.id }}" class="form-check-label fw-bold d-block cursor-pointer">
+                                            <i class="{{ feature.icon }} me-1 text-muted"></i>
+                                            {{ feature.name }}
+                                        </label>
+                                        <small class="text-muted d-block">{{ feature.description or feature.slug }}</small>
+                                        
+                                        {% if feature.feature_type in ['limit', 'credits'] %}
+                                        <div class="mt-2 limit-input" id="limit_container_{{ feature.id }}" {% if not is_selected %}style="display:none"{% endif %}>
+                                            <div class="input-group input-group-sm" style="max-width: 200px;">
+                                                <span class="input-group-text">
+                                                    {% if feature.feature_type == 'credits' %}
+                                                        <i class="fas fa-coins"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-sliders-h"></i>
+                                                    {% endif %}
+                                                </span>
+                                                <input type="number" 
+                                                       class="form-control" 
+                                                       name="limit_{{ feature.id }}"
+                                                       placeholder="{{ feature.default_limit or 'Ilimitado' }}"
+                                                       value="{{ current_limit if current_limit else '' }}"
+                                                       min="0">
+                                                <span class="input-group-text">
+                                                    {% if feature.feature_type == 'credits' and feature.is_monthly_renewable %}
+                                                        /mês
+                                                    {% elif feature.slug == 'max_storage_mb' %}
+                                                        MB
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                            <small class="text-muted">
+                                                Deixe vazio para 
+                                                {% if feature.default_limit %}
+                                                    padrão ({{ feature.default_limit }})
+                                                {% else %}
+                                                    ilimitado
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        {% if feature.feature_type == 'boolean' %}
+                                            <span class="badge bg-secondary">On/Off</span>
+                                        {% elif feature.feature_type == 'limit' %}
+                                            <span class="badge bg-warning text-dark">Limite</span>
+                                        {% elif feature.feature_type == 'credits' %}
+                                            <span class="badge bg-success">
+                                                Créditos{% if feature.is_monthly_renewable %} 🔄{% endif %}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {# Submit Button #}
+        <div class="card shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <span id="selected-count">{{ current_features|length }}</span> features selecionadas
+                    </span>
+                </div>
+                <div>
+                    <a href="{{ url_for('billing.plans') }}" class="btn btn-outline-secondary me-2">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Salvar Features
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+.cursor-pointer { cursor: pointer; }
+.list-group-item:hover { background-color: #f8f9fa; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle limit input visibility
+    document.querySelectorAll('.feature-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            const limitContainer = document.getElementById('limit_container_' + this.value);
+            if (limitContainer) {
+                limitContainer.style.display = this.checked ? 'block' : 'none';
+            }
+            updateCount();
+        });
+    });
+    
+    // Select all in module
+    document.querySelectorAll('.select-all-module').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const module = this.dataset.module;
+            const checkboxes = document.querySelectorAll('.feature-checkbox[data-module="' + module + '"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach(function(cb) {
+                cb.checked = !allChecked;
+                const limitContainer = document.getElementById('limit_container_' + cb.value);
+                if (limitContainer) {
+                    limitContainer.style.display = cb.checked ? 'block' : 'none';
+                }
+            });
+            updateCount();
+        });
+    });
+    
+    // Update selected count
+    function updateCount() {
+        const count = document.querySelectorAll('.feature-checkbox:checked').length;
+        document.getElementById('selected-count').textContent = count;
+    }
+});
+</script>
+{% endblock %}

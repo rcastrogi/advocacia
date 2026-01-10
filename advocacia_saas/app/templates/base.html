@@ -579,9 +579,11 @@
                             <li><a class="dropdown-item" href="{{ url_for('advanced.automation') }}">
                                 <i class="fas fa-robot me-2"></i>Automação de Processos
                             </a></li>
+                            {% if has_feature('custom_reports') %}
                             <li><a class="dropdown-item" href="{{ url_for('advanced.reports') }}">
                                 <i class="fas fa-chart-bar me-2"></i>Relatórios Avançados
                             </a></li>
+                            {% endif %}
                         </ul>
                     </li>
                     <li class="nav-item">

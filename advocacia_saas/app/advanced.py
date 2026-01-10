@@ -20,7 +20,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import and_, func, or_
 
 from app import db
-from app.decorators import master_required
+from app.decorators import master_required, require_feature
 from app.models import (
     CalendarEvent,
     Notification,
@@ -457,6 +457,7 @@ def delete_automation(automation_id):
 
 @advanced_bp.route("/reports")
 @login_required
+@require_feature('custom_reports')
 def reports():
     """Página de relatórios."""
     reports_list = (
@@ -470,6 +471,7 @@ def reports():
 
 @advanced_bp.route("/reports/new", methods=["GET", "POST"])
 @login_required
+@require_feature('custom_reports')
 def new_report():
     """Criar novo relatório."""
     if request.method == "POST":
@@ -520,6 +522,7 @@ def new_report():
 
 @advanced_bp.route("/reports/<int:report_id>")
 @login_required
+@require_feature('custom_reports')
 def view_report(report_id):
     """Visualizar relatório."""
     report = ProcessReport.query.filter_by(
@@ -531,6 +534,7 @@ def view_report(report_id):
 
 @advanced_bp.route("/reports/<int:report_id>/delete", methods=["POST"])
 @login_required
+@require_feature('custom_reports')
 def delete_report(report_id):
     """Excluir relatório."""
     report = ProcessReport.query.filter_by(
@@ -555,6 +559,7 @@ def delete_report(report_id):
 
 @advanced_bp.route("/api/suggestions/next-actions/<int:process_id>")
 @login_required
+@require_feature('ai_suggestions')
 def get_next_actions_suggestions(process_id):
     """API para obter sugestões de próximos atos processuais."""
     process = Process.query.filter_by(

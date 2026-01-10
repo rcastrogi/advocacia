@@ -1,4 +1,6 @@
 import os
+import secrets
+import warnings
 
 from dotenv import load_dotenv
 
@@ -7,7 +9,18 @@ load_dotenv(os.path.join(basedir, ".env"))
 
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-key-change-in-production"
+    # SECRET_KEY - Gera automaticamente se não definido (com warning em produção)
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    if not SECRET_KEY:
+        SECRET_KEY = secrets.token_hex(32)  # Gera chave segura de 64 caracteres
+        if os.environ.get("FLASK_ENV") == "production":
+            warnings.warn(
+                "⚠️  SECRET_KEY não definido em produção! "
+                "Uma chave temporária foi gerada, mas sessões serão perdidas no restart. "
+                "Defina SECRET_KEY nas variáveis de ambiente do Render."
+            )
+        else:
+            warnings.warn("⚠️  SECRET_KEY não definido. Usando chave temporária para desenvolvimento.")
 
     # Database configuration
     DATABASE_URL = os.environ.get("DATABASE_URL") or "sqlite:///" + os.path.join(
@@ -38,8 +51,9 @@ class Config:
     UPLOAD_FOLDER = os.path.join(basedir, "app", "static", "uploads")
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
 
-    # CSRF Protection - Disabled in development for easier testing
-    WTF_CSRF_ENABLED = False
+    # CSRF Protection - Habilitado em produção, desabilitado em desenvolvimento
+    WTF_CSRF_ENABLED = os.environ.get("WTF_CSRF_ENABLED", "True").lower() in ["true", "on", "1"]
+    WTF_CSRF_TIME_LIMIT = 3600  # Token válido por 1 hora
 
     # Mail settings
     MAIL_SERVER = os.environ.get("MAIL_SERVER")
@@ -78,8 +92,9 @@ class Config:
     )  # 5 minutos
     CACHE_KEY_PREFIX = os.environ.get("CACHE_KEY_PREFIX", "petitio")
 
-    # Rate limiting (desabilitado em desenvolvimento)
-    RATELIMIT_ENABLED = False
+    # Rate limiting - Habilitado por padrão em produção
+    RATELIMIT_ENABLED = os.environ.get("RATELIMIT_ENABLED", "True").lower() in ["true", "on", "1"]
+    RATELIMIT_STORAGE_URL = os.environ.get("REDIS_URL", "memory://")
 
     # OpenAI API
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")

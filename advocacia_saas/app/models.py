@@ -22,6 +22,16 @@ client_lawyers = db.Table(
     db.Column("is_primary", db.Boolean, default=False),  # advogado principal do cliente
 )
 
+# Tabela de associação para relação muitos-para-muitos entre planos e features
+plan_features = db.Table(
+    "plan_features",
+    db.Column("plan_id", db.Integer, db.ForeignKey("billing_plans.id"), primary_key=True),
+    db.Column("feature_id", db.Integer, db.ForeignKey("features.id"), primary_key=True),
+    db.Column("limit_value", db.Integer, nullable=True),  # Limite específico (ex: 100 créditos, 50 processos)
+    db.Column("config_json", db.Text, nullable=True),  # Configurações extras em JSON
+    db.Column("created_at", db.DateTime, default=lambda: datetime.now(timezone.utc)),
+)
+
 LEGACY_QUICK_ACTION_KEYS = {
     "petitions_civil": "petition:peticao-inicial-civel",
     "petitions_family": "petition:peticao-familia-divorcio",
@@ -522,6 +532,100 @@ class User(UserMixin, db.Model):
         ).first()
 
         return consent and consent.is_valid() if consent else False
+
+    # =============================================================================
+    # FEATURE ACCESS METHODS (Sistema Modular)
+    # =============================================================================
+
+    def get_current_plan(self):
+        """Retorna o plano atual do usuário"""
+        user_plan = self.plans.filter_by(is_current=True, status="active").first()
+        if user_plan:
+            return user_plan.plan
+        return None
+
+    def has_feature(self, feature_slug):
+        """
+        Verifica se o usuário tem acesso a uma feature específica.
+        
+        Master users têm acesso a todas as features.
+        Usuários normais dependem do plano ativo.
+        
+        Args:
+            feature_slug: Slug da feature (ex: 'ai_petitions', 'portal_cliente')
+            
+        Returns:
+            bool: True se tem acesso à feature
+        """
+        # Master sempre tem acesso total
+        if self.is_master:
+            return True
+        
+        # Buscar plano atual
+        plan = self.get_current_plan()
+        if not plan:
+            return False
+        
+        return plan.has_feature(feature_slug)
+
+    def get_feature_limit(self, feature_slug):
+        """
+        Obtém o limite de uma feature para o usuário.
+        
+        Args:
+            feature_slug: Slug da feature
+            
+        Returns:
+            int ou None: Limite da feature (None = ilimitado ou não aplicável)
+        """
+        # Master não tem limites
+        if self.is_master:
+            return None  # Ilimitado
+        
+        plan = self.get_current_plan()
+        if not plan:
+            return 0
+        
+        return plan.get_feature_limit(feature_slug)
+
+    def get_monthly_credits(self, feature_slug):
+        """
+        Retorna os créditos mensais que o usuário tem direito por uma feature.
+        Útil para features do tipo 'credits' que renovam mensalmente.
+        
+        Args:
+            feature_slug: Slug da feature de créditos (ex: 'ai_credits_monthly')
+            
+        Returns:
+            int: Quantidade de créditos mensais (0 se não tem a feature)
+        """
+        if self.is_master:
+            return -1  # Ilimitado (representado por -1)
+        
+        plan = self.get_current_plan()
+        if not plan or not plan.has_feature(feature_slug):
+            return 0
+        
+        return plan.get_feature_limit(feature_slug) or 0
+
+    def get_all_features(self):
+        """
+        Retorna todas as features disponíveis para o usuário.
+        
+        Returns:
+            list: Lista de dicts com feature e configuração
+        """
+        if self.is_master:
+            # Master vê todas as features ativas
+            from app.models import Feature
+            features = Feature.query.filter_by(is_active=True).all()
+            return [{"feature": f, "limit": None, "config": {}} for f in features]
+        
+        plan = self.get_current_plan()
+        if not plan:
+            return []
+        
+        return plan.get_all_features_with_limits()
 
     def is_admin(self):
         """
@@ -1050,6 +1154,77 @@ class PetitionType(db.Model):
         return f"<PetitionType {self.slug}>"
 
 
+class Feature(db.Model):
+    """
+    Features/Módulos do sistema que podem ser habilitados por plano.
+    Exemplos: ai_petitions, portal_cliente, multi_users, api_access
+    """
+    __tablename__ = "features"
+
+    id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String(80), unique=True, nullable=False)  # ex: 'ai_petitions'
+    name = db.Column(db.String(120), nullable=False)  # ex: 'Petições com IA'
+    description = db.Column(db.Text)
+    
+    # Categorização
+    module = db.Column(db.String(50), nullable=False, default="core")  # core, prazos, documentos, ia, portal, financeiro, avancado
+    
+    # Tipo de feature
+    feature_type = db.Column(db.String(20), default="boolean")  # boolean, limit, credits
+    # boolean: habilitado/desabilitado
+    # limit: tem um limite numérico (ex: 50 processos)
+    # credits: créditos consumíveis (ex: créditos IA mensais)
+    
+    # Valores padrão
+    default_limit = db.Column(db.Integer)  # Limite padrão se feature_type = 'limit'
+    default_enabled = db.Column(db.Boolean, default=False)  # Se fica habilitado por padrão
+    
+    # Para créditos mensais
+    is_monthly_renewable = db.Column(db.Boolean, default=False)  # Renova mensalmente?
+    
+    # Controle
+    is_active = db.Column(db.Boolean, default=True)
+    display_order = db.Column(db.Integer, default=0)  # Ordem de exibição
+    icon = db.Column(db.String(50), default="fas fa-check")  # Ícone FontAwesome
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    # Relacionamentos
+    plans = db.relationship(
+        "BillingPlan",
+        secondary=plan_features,
+        back_populates="features",
+    )
+
+    def __repr__(self):
+        return f"<Feature {self.slug}>"
+
+    @classmethod
+    def get_by_slug(cls, slug):
+        """Busca feature por slug"""
+        return cls.query.filter_by(slug=slug, is_active=True).first()
+    
+    @classmethod
+    def get_all_by_module(cls, module):
+        """Busca todas features de um módulo"""
+        return cls.query.filter_by(module=module, is_active=True).order_by(cls.display_order).all()
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "slug": self.slug,
+            "name": self.name,
+            "description": self.description,
+            "module": self.module,
+            "feature_type": self.feature_type,
+            "default_limit": self.default_limit,
+            "is_monthly_renewable": self.is_monthly_renewable,
+            "icon": self.icon,
+        }
+
+
 class BillingPlan(db.Model):
     __tablename__ = "billing_plans"
 
@@ -1085,9 +1260,75 @@ class BillingPlan(db.Model):
         lazy="dynamic",
         cascade="all, delete-orphan",
     )
+    features = db.relationship(
+        "Feature",
+        secondary=plan_features,
+        back_populates="plans",
+    )
 
     def includes_petition(self, petition_type):
         return petition_type in self.petition_types
+
+    def has_feature(self, feature_slug):
+        """Verifica se o plano tem uma feature específica"""
+        for feature in self.features:
+            if feature.slug == feature_slug:
+                return True
+        return False
+
+    def get_feature_limit(self, feature_slug):
+        """Obtém o limite de uma feature para este plano"""
+        from sqlalchemy import select
+        
+        # Buscar na tabela de associação
+        stmt = select(plan_features.c.limit_value).where(
+            plan_features.c.plan_id == self.id,
+            plan_features.c.feature_id == Feature.id,
+            Feature.slug == feature_slug
+        )
+        result = db.session.execute(stmt).first()
+        
+        if result and result[0] is not None:
+            return result[0]
+        
+        # Se não tem limite específico, retorna o default da feature
+        feature = Feature.get_by_slug(feature_slug)
+        return feature.default_limit if feature else None
+
+    def get_feature_config(self, feature_slug):
+        """Obtém configuração extra de uma feature para este plano"""
+        from sqlalchemy import select
+        
+        stmt = select(plan_features.c.config_json).where(
+            plan_features.c.plan_id == self.id,
+            plan_features.c.feature_id == Feature.id,
+            Feature.slug == feature_slug
+        )
+        result = db.session.execute(stmt).first()
+        
+        if result and result[0]:
+            return json.loads(result[0])
+        return {}
+
+    def get_all_features_with_limits(self):
+        """Retorna todas as features do plano com seus limites"""
+        from sqlalchemy import select
+        
+        features_data = []
+        for feature in self.features:
+            stmt = select(plan_features.c.limit_value, plan_features.c.config_json).where(
+                plan_features.c.plan_id == self.id,
+                plan_features.c.feature_id == feature.id
+            )
+            result = db.session.execute(stmt).first()
+            
+            features_data.append({
+                "feature": feature,
+                "limit": result[0] if result else feature.default_limit,
+                "config": json.loads(result[1]) if result and result[1] else {}
+            })
+        
+        return features_data
 
     def get_price_for_period(self, period=None):
         """Calcula o preço para o período do plano com desconto"""

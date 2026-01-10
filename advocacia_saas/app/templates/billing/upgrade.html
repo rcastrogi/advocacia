@@ -131,7 +131,7 @@
                     {% endif %}
 
                     <div class="mt-auto">
-                        <a href="{{ url_for('checkout.create_checkout_session', plan_id=plan.id) }}"
+                        <a href="{{ url_for('payments.subscribe', plan_slug=plan.slug, billing_period='1m') }}"
                            class="btn btn-primary w-100">
                             <i class="fas fa-arrow-up"></i> Fazer Upgrade
                         </a>

@@ -151,6 +151,7 @@ def create_app(config_class=Config):
         BillingPlan,
         Client,
         CreditPackage,
+        Feature,
         Payment,
         PetitionModel,
         PetitionModelSection,
@@ -356,5 +357,39 @@ def create_app(config_class=Config):
 
     app.jinja_env.globals["entity_badge_config"] = get_entity_badge_config
     app.jinja_env.globals["action_badge_config"] = get_action_badge_config
+
+    # Context processor para funções de features modulares
+    @app.context_processor
+    def inject_feature_helpers():
+        """Disponibiliza helpers de features nos templates"""
+        from flask_login import current_user
+        
+        def has_feature(feature_slug):
+            """Verifica se o usuário atual tem acesso a uma feature"""
+            if not current_user.is_authenticated:
+                return False
+            return current_user.has_feature(feature_slug)
+        
+        def get_feature_limit(feature_slug):
+            """Retorna o limite de uma feature para o usuário atual"""
+            if not current_user.is_authenticated:
+                return 0
+            return current_user.get_feature_limit(feature_slug)
+        
+        def get_monthly_credits(feature_slug):
+            """Retorna os créditos mensais do usuário para uma feature"""
+            if not current_user.is_authenticated:
+                return 0
+            return current_user.get_monthly_credits(feature_slug)
+        
+        return {
+            'has_feature': has_feature,
+            'get_feature_limit': get_feature_limit,
+            'get_monthly_credits': get_monthly_credits,
+        }
+
+    # Registrar comandos CLI
+    from app import cli
+    cli.init_app(app)
 
     return app

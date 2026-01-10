@@ -156,6 +156,11 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
+                                        <a href="{{ url_for('billing.plan_features', plan_id=plan.id) }}" 
+                                           class="btn btn-sm btn-outline-success" 
+                                           title="Gerenciar features">
+                                            <i class="fas fa-puzzle-piece"></i>
+                                        </a>
                                         <a href="{{ url_for('billing.edit_plan', plan_id=plan.id) }}" 
                                            class="btn btn-sm btn-outline-primary" 
                                            title="Editar plano">

@@ -29,6 +29,7 @@ from app.models import BillingPlan, Payment, Subscription, User
 from app.payments import bp
 from app.rate_limits import ADMIN_API_LIMIT
 from app.schemas import PaymentSchema, SubscriptionSchema, WebhookSchema
+from app.utils.audit import AuditManager
 from app.utils.error_messages import format_error_for_user
 
 # Configurar Mercado Pago
@@ -168,6 +169,9 @@ def create_pix_payment():
         db.session.add(payment)
         db.session.commit()
 
+        # Auditoria: pagamento criado
+        AuditManager.log_payment_created(payment, current_user)
+
         return jsonify(
             {
                 "success": True,
@@ -243,6 +247,9 @@ def create_mercadopago_subscription():
         )
         db.session.add(subscription)
         db.session.commit()
+
+        # Auditoria: assinatura criada
+        AuditManager.log_subscription_created(subscription, current_user)
 
         return jsonify(
             {
@@ -361,6 +368,7 @@ def _handle_payment_webhook(payment_id):
         payment = Payment.query.filter_by(gateway_payment_id=str(payment_id)).first()
 
         if payment and payment.status == "pending":
+            old_status = payment.status
             payment.mark_as_paid()
 
             # Para pay-per-use, ativar plano imediatamente
@@ -369,7 +377,18 @@ def _handle_payment_webhook(payment_id):
                 user.billing_status = "active"
                 db.session.commit()
 
+            # Auditoria: pagamento aprovado
+            AuditManager.log_payment_completed(payment)
+
             current_app.logger.info(f"✅ Pagamento Mercado Pago aprovado: {payment_id}")
+
+    elif payment_data["status"] in ["rejected", "cancelled"]:
+        payment = Payment.query.filter_by(gateway_payment_id=str(payment_id)).first()
+        if payment and payment.status == "pending":
+            payment.status = "failed"
+            db.session.commit()
+            # Auditoria: pagamento falhou
+            AuditManager.log_payment_failed(payment, f"Status: {payment_data['status']}")
 
 
 def _handle_preapproval_webhook(preapproval_id):
@@ -387,6 +406,8 @@ def _handle_preapproval_webhook(preapproval_id):
         current_app.logger.warning(f"Preapproval não encontrado: {preapproval_id}")
         return
 
+    old_status = subscription.status
+
     if preapproval_data["status"] == "authorized":
         # Assinatura aprovada - ativar
         subscription.status = "active"
@@ -403,11 +424,16 @@ def _handle_preapproval_webhook(preapproval_id):
         user.billing_status = "active"
 
         db.session.commit()
+
+        # Auditoria: assinatura ativada
+        AuditManager.log_subscription_activated(subscription)
+
         current_app.logger.info(f"✅ Assinatura Mercado Pago ativada: {preapproval_id}")
 
     elif preapproval_data["status"] == "cancelled":
         # Assinatura cancelada
         subscription.status = "cancelled"
+        subscription.cancelled_at = datetime.now(timezone.utc)
 
         # Desativar usuário se não tiver outras assinaturas ativas
         user = subscription.user
@@ -419,6 +445,10 @@ def _handle_preapproval_webhook(preapproval_id):
             user.billing_status = "inactive"
 
         db.session.commit()
+
+        # Auditoria: assinatura cancelada
+        AuditManager.log_subscription_cancelled(subscription, reason="Cancelamento via gateway")
+
         current_app.logger.info(
             f"❌ Assinatura Mercado Pago cancelada: {preapproval_id}"
         )
@@ -430,6 +460,10 @@ def _handle_preapproval_webhook(preapproval_id):
         user.billing_status = "inactive"
 
         db.session.commit()
+
+        # Auditoria: status alterado
+        AuditManager.log_subscription_status_change(subscription, old_status, "paused", "Pausada via gateway")
+
         current_app.logger.warning(
             f"⏸️ Assinatura Mercado Pago pausada: {preapproval_id}"
         )
@@ -441,6 +475,10 @@ def _handle_preapproval_webhook(preapproval_id):
         user.billing_status = "inactive"
 
         db.session.commit()
+
+        # Auditoria: status alterado
+        AuditManager.log_subscription_status_change(subscription, old_status, "expired", "Expirada")
+
         current_app.logger.warning(
             f"⏰ Assinatura Mercado Pago expirada: {preapproval_id}"
         )
@@ -492,7 +530,12 @@ def cancel_subscription():
             return jsonify({"error": "Assinatura não encontrada"}), 404
 
         immediate = request.json.get("immediate", False) if request.is_json else False
+        reason = request.json.get("reason", "Solicitado pelo usuário") if request.is_json else "Solicitado pelo usuário"
+        
         subscription.cancel(immediate=immediate)
+
+        # Auditoria: assinatura cancelada pelo usuário
+        AuditManager.log_subscription_cancelled(subscription, reason=reason, immediate=immediate)
 
         flash("Assinatura cancelada com sucesso", "success")
         return jsonify({"success": True})

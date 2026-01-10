@@ -148,3 +148,148 @@ def validate_with_schema(schema_class, location="json"):
         return decorated_function
 
     return decorator
+
+
+def require_feature(feature_slug, redirect_to=None, message=None):
+    """
+    Decorator que verifica se o usuário tem acesso a uma feature específica.
+    
+    Usuários master sempre têm acesso.
+    Outros usuários dependem do plano ativo ter a feature.
+    
+    Args:
+        feature_slug: Slug da feature requerida (ex: 'ai_petitions', 'portal_cliente')
+        redirect_to: Rota para redirecionar se não tiver acesso (default: billing.plans)
+        message: Mensagem customizada para exibir
+    
+    Uso:
+        @app.route('/ai/generate')
+        @login_required
+        @require_feature('ai_petitions')
+        def generate_petition():
+            ...
+    
+    Ou com parâmetros:
+        @require_feature('portal_cliente', redirect_to='main.dashboard', 
+                         message='Atualize seu plano para acessar o Portal do Cliente')
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                return redirect(url_for("auth.login"))
+            
+            # Verificar acesso à feature
+            if not current_user.has_feature(feature_slug):
+                # Mensagem padrão ou customizada
+                default_message = f"Seu plano atual não inclui este recurso. Faça upgrade para acessar."
+                flash_message = message or default_message
+                flash(flash_message, "warning")
+                
+                # Para requisições AJAX/JSON
+                if request.is_json or request.accept_mimetypes.best == "application/json":
+                    return jsonify({
+                        "status": "error",
+                        "error": "feature_not_available",
+                        "message": flash_message,
+                        "feature": feature_slug,
+                        "upgrade_url": url_for("payments.plans", _external=True)
+                    }), 403
+                
+                # Redirecionar para página de planos ou rota customizada
+                target = redirect_to or "payments.plans"
+                return redirect(url_for(target))
+            
+            return f(*args, **kwargs)
+        
+        return decorated_function
+    
+    return decorator
+
+
+def check_feature_limit(feature_slug, current_count=None):
+    """
+    Decorator que verifica se o usuário atingiu o limite de uma feature.
+    
+    Útil para features com limite numérico (ex: máximo de processos, clientes).
+    
+    Args:
+        feature_slug: Slug da feature com limite
+        current_count: Função que retorna a contagem atual (ou None para calcular automaticamente)
+    
+    Uso:
+        @app.route('/processes/new')
+        @login_required
+        @check_feature_limit('max_processes')
+        def new_process():
+            ...
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                return redirect(url_for("auth.login"))
+            
+            # Master não tem limites
+            if current_user.is_master:
+                return f(*args, **kwargs)
+            
+            # Obter limite da feature
+            limit = current_user.get_feature_limit(feature_slug)
+            
+            # Se não tem limite (None ou -1), permitir
+            if limit is None or limit == -1:
+                return f(*args, **kwargs)
+            
+            # Calcular contagem atual se não fornecida
+            if current_count is None:
+                # Tentar calcular automaticamente baseado no feature_slug
+                count = _get_automatic_count(feature_slug)
+            else:
+                count = current_count() if callable(current_count) else current_count
+            
+            # Verificar se atingiu limite
+            if count >= limit:
+                message = f"Você atingiu o limite de {limit} para este recurso. Faça upgrade para aumentar o limite."
+                flash(message, "warning")
+                
+                if request.is_json or request.accept_mimetypes.best == "application/json":
+                    return jsonify({
+                        "status": "error",
+                        "error": "limit_reached",
+                        "message": message,
+                        "feature": feature_slug,
+                        "limit": limit,
+                        "current": count,
+                        "upgrade_url": url_for("payments.plans", _external=True)
+                    }), 403
+                
+                return redirect(url_for("payments.plans"))
+            
+            return f(*args, **kwargs)
+        
+        return decorated_function
+    
+    return decorator
+
+
+def _get_automatic_count(feature_slug):
+    """
+    Calcula automaticamente a contagem para features conhecidas.
+    """
+    from flask_login import current_user
+    
+    if feature_slug == "max_processes":
+        from app.models import Process
+        return Process.query.filter_by(lawyer_id=current_user.id).count()
+    
+    elif feature_slug == "max_clients":
+        from app.models import Client
+        return Client.query.filter_by(lawyer_id=current_user.id).count()
+    
+    elif feature_slug == "max_documents":
+        from app.models import Document
+        return Document.query.filter_by(user_id=current_user.id).count()
+    
+    # Se não souber calcular, retorna 0 (permite)
+    return 0
