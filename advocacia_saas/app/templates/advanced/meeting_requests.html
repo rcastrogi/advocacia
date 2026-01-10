@@ -124,9 +124,15 @@
 </div>
 
 <script>
-function handleRequest(eventId, action) {
+async function handleRequest(eventId, action) {
     if (action === 'approve') {
-        if (confirm('Tem certeza que deseja aprovar esta solicitação de reunião?')) {
+        const confirmed = await showConfirmModal({
+            title: 'Aprovar Reunião',
+            message: 'Tem certeza que deseja aprovar esta solicitação de reunião?',
+            type: 'success',
+            confirmText: 'Aprovar'
+        });
+        if (confirmed) {
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = `{{ url_for('advanced.handle_meeting_request', event_id=0, action='approve') }}`.replace('0', eventId);

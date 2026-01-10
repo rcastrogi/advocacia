@@ -275,9 +275,8 @@ async function confirmComplete() {
 }
 
 async function deleteDeadline() {
-    if (!confirm('Tem certeza que deseja excluir este prazo? Esta ação não pode ser desfeita.')) {
-        return;
-    }
+    const confirmed = await confirmDelete('este prazo');
+    if (!confirmed) return;
     
     try {
         const response = await fetch(`/deadlines/{{ deadline.id }}/delete`, {

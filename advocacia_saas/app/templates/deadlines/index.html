@@ -196,7 +196,13 @@
 
 <script>
 async function completeDeadline(deadlineId) {
-    if (!confirm('Marcar este prazo como cumprido?')) return;
+    const confirmed = await showConfirmModal({
+        title: 'Marcar como Cumprido',
+        message: 'Tem certeza que deseja marcar este prazo como cumprido?',
+        type: 'success',
+        confirmText: 'Marcar como Cumprido'
+    });
+    if (!confirmed) return;
     
     try {
         const response = await fetch(`/deadlines/${deadlineId}/complete`, {

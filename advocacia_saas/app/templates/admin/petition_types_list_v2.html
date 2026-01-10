@@ -92,8 +92,8 @@
                                 <form 
                                     method="post"
                                     action="{{ url_for('admin.petition_type_delete', type_id=petition_type.id) }}"
-                                    class="d-inline"
-                                    onsubmit="return confirm('Tem certeza que deseja excluir este tipo de petição?')">
+                                    class="d-inline delete-form"
+                                    data-item-name="{{ petition_type.name }}">
                                     <button 
                                         type="submit" 
                                         class="btn btn-sm btn-outline-danger"
@@ -111,4 +111,19 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.delete-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const itemName = this.dataset.itemName || 'este item';
+        const confirmed = await confirmDelete(itemName);
+        if (confirmed) {
+            this.submit();
+        }
+    });
+});
+</script>
 {% endblock %}

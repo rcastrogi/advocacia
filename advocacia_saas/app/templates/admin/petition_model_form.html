@@ -867,7 +867,7 @@ Valor da causa: R$ {{ valor_causa }}
     };
 
     // Salvar template como exemplo de alta qualidade
-    window.saveAsExample = function() {
+    window.saveAsExample = async function() {
         const petitionModelId = {% if petition_model %}{{ petition_model.id }}{% else %}null{% endif %};
         
         if (!petitionModelId) {
@@ -881,9 +881,13 @@ Valor da causa: R$ {{ valor_causa }}
             return;
         }
 
-        if (!confirm('Salvar este template como exemplo de alta qualidade?\n\nTemplates exemplares são usados pela IA para melhorar futuras gerações.')) {
-            return;
-        }
+        const confirmed = await showConfirmModal({
+            title: 'Salvar como Exemplo',
+            message: 'Salvar este template como exemplo de alta qualidade?<br><br><small class="text-muted">Templates exemplares são usados pela IA para melhorar futuras gerações.</small>',
+            type: 'success',
+            confirmText: 'Salvar como Exemplo'
+        });
+        if (!confirmed) return;
 
         fetch(`/admin/petitions/models/${petitionModelId}/save_as_example`, {
             method: 'POST',

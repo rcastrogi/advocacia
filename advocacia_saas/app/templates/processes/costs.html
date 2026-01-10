@@ -143,9 +143,8 @@
                                         <td>
                                             {% if cost.payment_status == 'pending' %}
                                                 <form method="POST" action="{{ url_for('process_management.mark_cost_paid', cost_id=cost.id) }}"
-                                                      style="display: inline;">
-                                                    <button type="submit" class="btn btn-sm btn-success"
-                                                            onclick="return confirm('Marcar este custo como pago?')">
+                                                      style="display: inline;" class="confirm-form" data-message="Marcar este custo como pago?" data-type="success" data-confirm-text="Marcar como Pago">
+                                                    <button type="submit" class="btn btn-sm btn-success">
                                                         <i class="fas fa-check"></i> Pagar
                                                     </button>
                                                 </form>
@@ -178,4 +177,27 @@
         </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.confirm-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const message = this.dataset.message || 'Confirmar esta ação?';
+        const type = this.dataset.type || 'warning';
+        const confirmText = this.dataset.confirmText || 'Confirmar';
+        
+        const confirmed = await showConfirmModal({
+            title: 'Confirmar',
+            message: message,
+            type: type,
+            confirmText: confirmText
+        });
+        if (confirmed) {
+            this.submit();
+        }
+    });
+});
+</script>
 {% endblock %}

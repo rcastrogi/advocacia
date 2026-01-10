@@ -340,12 +340,17 @@ document.getElementById('consent-form').addEventListener('submit', function(e) {
     });
 });
 
-document.getElementById('deletion-form').addEventListener('submit', function(e) {
+document.getElementById('deletion-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    if (!confirm('Tem certeza que deseja solicitar a exclusão permanente de todos os seus dados? Esta ação não pode ser desfeita.')) {
-        return;
-    }
+    const confirmed = await showConfirmModal({
+        title: 'Excluir Dados Pessoais',
+        message: '<strong>ATENÇÃO:</strong> Esta ação é irreversível!<br><br>Tem certeza que deseja solicitar a exclusão permanente de <strong>todos os seus dados</strong>?',
+        type: 'danger',
+        confirmText: 'Solicitar Exclusão',
+        confirmClass: 'btn-danger'
+    });
+    if (!confirmed) return;
 
     const formData = new FormData(this);
     const data = Object.fromEntries(formData);

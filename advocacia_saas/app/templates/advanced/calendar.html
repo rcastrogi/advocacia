@@ -425,8 +425,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Função global para deletar evento
-    window.deleteEvent = function(eventId) {
-        if (confirm('Tem certeza que deseja excluir este evento?')) {
+    window.deleteEvent = async function(eventId) {
+        const confirmed = await confirmDelete('este evento');
+        if (confirmed) {
             fetch(`/advanced/calendar/event/${eventId}/delete`, {
                 method: 'POST',
                 headers: {
@@ -438,14 +439,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (response.ok) {
                     calendar.refetchEvents();
                     bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-                    alert('Evento excluído com sucesso!');
+                    showToast('Evento excluído com sucesso!', 'success');
                 } else {
-                    alert('Erro ao excluir evento.');
+                    showToast('Erro ao excluir evento.', 'error');
                 }
             })
             .catch(error => {
                 console.error('Erro:', error);
-                alert('Erro ao excluir evento.');
+                showToast('Erro ao excluir evento.', 'error');
             });
         }
     };

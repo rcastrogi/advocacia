@@ -154,8 +154,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Marcar todas as notificações como lidas
     const markAllBtn = document.getElementById('markAllReadBtn');
     if (markAllBtn) {
-        markAllBtn.addEventListener('click', function() {
-            if (confirm('Deseja marcar todas as notificações como lidas?')) {
+        markAllBtn.addEventListener('click', async function() {
+            const confirmed = await showConfirmModal({
+                title: 'Marcar Todas como Lidas',
+                message: 'Deseja marcar todas as notificações como lidas?',
+                type: 'info',
+                confirmText: 'Marcar Todas'
+            });
+            if (confirmed) {
                 markAllAsRead();
             }
         });

@@ -1168,8 +1168,14 @@ document.addEventListener('alpine:init', () => {
             }
         },
         
-        clearForm() {
-            if (!confirm('Tem certeza que deseja limpar todo o formulário?')) return;
+        async clearForm() {
+            const confirmed = await showConfirmModal({
+                title: 'Limpar Formulário',
+                message: 'Tem certeza que deseja limpar todo o formulário?<br><br><small class="text-muted">Todos os dados preenchidos serão perdidos.</small>',
+                type: 'warning',
+                confirmText: 'Limpar'
+            });
+            if (!confirmed) return;
             
             this.formData = {};
             this.petitionId = null;
@@ -1318,7 +1324,8 @@ document.addEventListener('alpine:init', () => {
         },
         
         async deleteAttachment(attachmentId) {
-            if (!confirm('Tem certeza que deseja remover este arquivo?')) return;
+            const confirmed = await confirmDelete('este arquivo');
+            if (!confirmed) return;
             
             try {
                 const response = await fetch(`/petitions/api/attachments/${attachmentId}`, {
@@ -1486,9 +1493,13 @@ document.addEventListener('alpine:init', () => {
 
             // Confirmação se já tem conteúdo
             if (existingContent && existingContent.length > 50) {
-                if (!confirm('Este campo já tem conteúdo. Deseja substituir pelo conteúdo gerado?')) {
-                    return;
-                }
+                const confirmed = await showConfirmModal({
+                    title: 'Substituir Conteúdo',
+                    message: 'Este campo já tem conteúdo. Deseja substituir pelo conteúdo gerado pela IA?',
+                    type: 'info',
+                    confirmText: 'Substituir'
+                });
+                if (!confirmed) return;
             }
 
             try {

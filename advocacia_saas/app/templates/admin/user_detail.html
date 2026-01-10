@@ -16,10 +16,9 @@
     </div>
     <div>
         {% if user.user_type not in ["master", "admin"] %}
-        <form action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" method="POST" class="d-inline">
+        <form action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" method="POST" class="d-inline" id="toggle-user-form">
             {% if user.is_active %}
-            <button type="submit" class="btn btn-outline-danger" 
-                    onclick="return confirm('Deseja realmente desativar este usuário?')">
+            <button type="button" class="btn btn-outline-danger" onclick="confirmToggleUser(false)">
                 <i class="fas fa-user-slash me-2"></i>Desativar Usuário
             </button>
             {% else %}
@@ -246,9 +245,9 @@
                             {% else %}
                             <!-- Encerrar Trial -->
                             <div class="col-md-6">
-                                <form action="{{ url_for('admin.manage_user_trial', user_id=user.id) }}" method="POST">
+                                <form action="{{ url_for('admin.manage_user_trial', user_id=user.id) }}" method="POST" id="end-trial-form">
                                     <input type="hidden" name="action" value="end">
-                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Deseja realmente encerrar o trial deste usuário?')">
+                                    <button type="button" class="btn btn-danger" onclick="confirmEndTrial()">
                                         <i class="fas fa-stop me-1"></i>Encerrar Trial
                                     </button>
                                 </form>
@@ -600,4 +599,32 @@
     font-weight: bold;
 }
 </style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function confirmToggleUser(isActive) {
+    const confirmed = await showConfirmModal({
+        title: 'Desativar Usuário',
+        message: 'Tem certeza que deseja desativar este usuário?<br><br><small class="text-muted">O usuário perderá acesso à plataforma.</small>',
+        type: 'warning',
+        confirmText: 'Desativar'
+    });
+    if (confirmed) {
+        document.getElementById('toggle-user-form').submit();
+    }
+}
+
+async function confirmEndTrial() {
+    const confirmed = await showConfirmModal({
+        title: 'Encerrar Trial',
+        message: 'Tem certeza que deseja encerrar o trial deste usuário?<br><br><small class="text-muted">O usuário perderá os benefícios do período de teste.</small>',
+        type: 'warning',
+        confirmText: 'Encerrar Trial'
+    });
+    if (confirmed) {
+        document.getElementById('end-trial-form').submit();
+    }
+}
+</script>
 {% endblock %}

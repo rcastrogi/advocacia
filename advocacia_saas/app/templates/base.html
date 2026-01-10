@@ -1028,15 +1028,13 @@
                     });
                 },
                 
-                // Confirm dialog
-                async confirm(message, title = 'Confirmar') {
-                    return new Promise((resolve) => {
-                        if (window.confirm(message)) {
-                            resolve(true);
-                        } else {
-                            resolve(false);
-                        }
-                    });
+                // Confirm dialog (usa modal padronizado)
+                async confirm(message, title = 'Confirmar', type = 'warning') {
+                    if (typeof showConfirmModal === 'function') {
+                        return showConfirmModal({ message, title, type });
+                    }
+                    // Fallback para confirm nativo
+                    return window.confirm(message);
                 }
             };
         }
@@ -1319,5 +1317,189 @@
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/accessibility.js') }}"></script>
     <script src="{{ url_for('static', filename='js/notification-system.js') }}"></script>
+    
+    <!-- Modal de Confirmação Global -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <div id="confirmModalIcon" class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-question fa-lg"></i>
+                        </div>
+                        <h5 class="modal-title mb-0" id="confirmModalLabel">Confirmar</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <p id="confirmModalMessage" class="mb-0 text-secondary"></p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" id="confirmModalCancel">
+                        <i class="fas fa-times me-1"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="confirmModalConfirm">
+                        <i class="fas fa-check me-1"></i> Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sistema de Confirmação Global -->
+    <script>
+        (function() {
+            // Estado global do modal de confirmação
+            let confirmResolve = null;
+            let confirmModal = null;
+            
+            // Inicializa quando o DOM estiver pronto
+            document.addEventListener('DOMContentLoaded', function() {
+                const modalEl = document.getElementById('confirmModal');
+                if (modalEl) {
+                    confirmModal = new bootstrap.Modal(modalEl);
+                    
+                    // Quando o modal for fechado sem confirmar
+                    modalEl.addEventListener('hidden.bs.modal', function() {
+                        if (confirmResolve) {
+                            confirmResolve(false);
+                            confirmResolve = null;
+                        }
+                    });
+                    
+                    // Botão de confirmar
+                    document.getElementById('confirmModalConfirm').addEventListener('click', function() {
+                        if (confirmResolve) {
+                            confirmResolve(true);
+                            confirmResolve = null;
+                        }
+                        confirmModal.hide();
+                    });
+                    
+                    // Botão de cancelar
+                    document.getElementById('confirmModalCancel').addEventListener('click', function() {
+                        if (confirmResolve) {
+                            confirmResolve(false);
+                            confirmResolve = null;
+                        }
+                    });
+                }
+            });
+            
+            /**
+             * Mostra modal de confirmação padronizado
+             * @param {Object|string} options - Opções ou mensagem simples
+             * @param {string} options.message - Mensagem principal
+             * @param {string} options.title - Título do modal (padrão: 'Confirmar')
+             * @param {string} options.type - Tipo: 'danger', 'warning', 'info', 'success' (padrão: 'warning')
+             * @param {string} options.confirmText - Texto do botão confirmar (padrão: 'Confirmar')
+             * @param {string} options.cancelText - Texto do botão cancelar (padrão: 'Cancelar')
+             * @param {string} options.confirmClass - Classe do botão confirmar (padrão: baseado no type)
+             * @returns {Promise<boolean>} - Resolve true se confirmou, false se cancelou
+             */
+            window.showConfirmModal = function(options) {
+                return new Promise(function(resolve) {
+                    // Se passou string simples, converte para objeto
+                    if (typeof options === 'string') {
+                        options = { message: options };
+                    }
+                    
+                    const defaults = {
+                        title: 'Confirmar',
+                        type: 'warning',
+                        confirmText: 'Confirmar',
+                        cancelText: 'Cancelar'
+                    };
+                    
+                    const settings = Object.assign({}, defaults, options);
+                    
+                    // Configuração de cores/ícones por tipo
+                    const typeConfig = {
+                        danger: {
+                            icon: 'fa-exclamation-triangle',
+                            iconBg: 'bg-danger bg-opacity-10',
+                            iconColor: 'text-danger',
+                            btnClass: 'btn-danger'
+                        },
+                        warning: {
+                            icon: 'fa-exclamation-circle',
+                            iconBg: 'bg-warning bg-opacity-10',
+                            iconColor: 'text-warning',
+                            btnClass: 'btn-warning'
+                        },
+                        info: {
+                            icon: 'fa-info-circle',
+                            iconBg: 'bg-info bg-opacity-10',
+                            iconColor: 'text-info',
+                            btnClass: 'btn-info'
+                        },
+                        success: {
+                            icon: 'fa-check-circle',
+                            iconBg: 'bg-success bg-opacity-10',
+                            iconColor: 'text-success',
+                            btnClass: 'btn-success'
+                        }
+                    };
+                    
+                    const config = typeConfig[settings.type] || typeConfig.warning;
+                    
+                    // Atualizar elementos do modal
+                    document.getElementById('confirmModalLabel').textContent = settings.title;
+                    document.getElementById('confirmModalMessage').innerHTML = settings.message.replace(/\n/g, '<br>');
+                    
+                    // Ícone
+                    const iconEl = document.getElementById('confirmModalIcon');
+                    iconEl.className = 'rounded-circle d-flex align-items-center justify-content-center ' + config.iconBg;
+                    iconEl.style.width = '48px';
+                    iconEl.style.height = '48px';
+                    iconEl.innerHTML = '<i class="fas ' + config.icon + ' fa-lg ' + config.iconColor + '"></i>';
+                    
+                    // Botões
+                    const confirmBtn = document.getElementById('confirmModalConfirm');
+                    const cancelBtn = document.getElementById('confirmModalCancel');
+                    
+                    confirmBtn.className = 'btn ' + (settings.confirmClass || config.btnClass);
+                    confirmBtn.innerHTML = '<i class="fas fa-check me-1"></i> ' + settings.confirmText;
+                    cancelBtn.innerHTML = '<i class="fas fa-times me-1"></i> ' + settings.cancelText;
+                    
+                    // Guardar resolver e mostrar modal
+                    confirmResolve = resolve;
+                    
+                    if (confirmModal) {
+                        confirmModal.show();
+                        // Focar no botão confirmar para acessibilidade
+                        setTimeout(function() {
+                            confirmBtn.focus();
+                        }, 150);
+                    } else {
+                        // Fallback para confirm nativo se modal não inicializou
+                        resolve(window.confirm(settings.message));
+                    }
+                });
+            };
+            
+            // Atalhos para tipos comuns
+            window.confirmDelete = function(itemName) {
+                return showConfirmModal({
+                    title: 'Excluir',
+                    message: itemName 
+                        ? 'Tem certeza que deseja excluir <strong>"' + itemName + '"</strong>?<br><br><small class="text-muted">Esta ação não pode ser desfeita.</small>'
+                        : 'Tem certeza que deseja excluir este item?<br><br><small class="text-muted">Esta ação não pode ser desfeita.</small>',
+                    type: 'danger',
+                    confirmText: 'Excluir',
+                    confirmClass: 'btn-danger'
+                });
+            };
+            
+            window.confirmAction = function(message, title) {
+                return showConfirmModal({
+                    title: title || 'Confirmar ação',
+                    message: message,
+                    type: 'warning',
+                    confirmText: 'Confirmar'
+                });
+            };
+        })();
+    </script>
 </body>
 </html>

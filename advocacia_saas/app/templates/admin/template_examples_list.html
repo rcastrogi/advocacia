@@ -178,10 +178,9 @@ function toggleExample(id) {
     });
 }
 
-function deleteExample(id, name) {
-    if (!confirm(`Tem certeza que deseja excluir o exemplo "${name}"?\n\nEsta ação não pode ser desfeita.`)) {
-        return;
-    }
+async function deleteExample(id, name) {
+    const confirmed = await confirmDelete(name);
+    if (!confirmed) return;
     
     fetch(`/admin/template-examples/${id}`, {
         method: 'DELETE',

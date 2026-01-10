@@ -306,7 +306,8 @@
                                     {% if lawyer.id != client.lawyer_id %}
                                     <form method="POST" action="{{ url_for('clients.remove_lawyer', id=client.id, lawyer_id=lawyer.id) }}" 
                                           style="display: inline;" 
-                                          onsubmit="return confirm('Tem certeza que deseja remover este advogado?');">
+                                          class="delete-form"
+                                          data-item-name="{{ lawyer.full_name or lawyer.username }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger ms-2" title="Remover advogado">
                                             <i class="fas fa-times"></i>
                                         </button>
@@ -416,4 +417,19 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.delete-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const itemName = this.dataset.itemName || 'este item';
+        const confirmed = await confirmDelete(itemName);
+        if (confirmed) {
+            this.submit();
+        }
+    });
+});
+</script>
 {% endblock %}

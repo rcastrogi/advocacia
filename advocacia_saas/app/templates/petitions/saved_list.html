@@ -346,7 +346,13 @@ function showPetitionActions(petitionId, status) {
 }
 
 async function cancelPetition() {
-    if (!confirm('Tem certeza que deseja cancelar esta petição?')) return;
+    const confirmed = await showConfirmModal({
+        title: 'Cancelar Petição',
+        message: 'Tem certeza que deseja cancelar esta petição?',
+        type: 'warning',
+        confirmText: 'Cancelar Petição'
+    });
+    if (!confirmed) return;
     
     try {
         const response = await fetch(`/petitions/api/saved/${currentPetitionId}/cancel`, {
@@ -386,7 +392,14 @@ async function restorePetition() {
 }
 
 async function deletePetition() {
-    if (!confirm('ATENÇÃO: Esta ação é irreversível!\n\nTem certeza que deseja excluir permanentemente esta petição e todos os seus anexos?')) return;
+    const confirmed = await showConfirmModal({
+        title: 'Excluir Permanentemente',
+        message: '<strong>ATENÇÃO:</strong> Esta ação é irreversível!<br><br>A petição e todos os seus anexos serão excluídos permanentemente.',
+        type: 'danger',
+        confirmText: 'Excluir',
+        confirmClass: 'btn-danger'
+    });
+    if (!confirmed) return;
     
     try {
         const response = await fetch(`/petitions/api/saved/${currentPetitionId}/delete`, {

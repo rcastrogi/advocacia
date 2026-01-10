@@ -135,8 +135,9 @@
     </div>
 
 <script>
-function removeSection(sectionId, sectionName) {
-    if (confirm(`Tem certeza que deseja remover a seção "${sectionName}"?`)) {
+async function removeSection(sectionId, sectionName) {
+    const confirmed = await confirmDelete(sectionName);
+    if (confirmed) {
         const form = document.createElement('form');
         form.method = 'post';
         form.action = `{{ url_for('admin.petition_type_section_remove', type_id=petition_type.id, section_id=0) }}`.replace('0', sectionId);

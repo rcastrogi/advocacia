@@ -499,9 +499,13 @@ function petitionForm() {
                                  (pedidosTextarea._quill && pedidosTextarea._quill.getText().trim());
                 
                 if (hasContent) {
-                    if (!confirm('Os campos já possuem conteúdo. Deseja substituir pelo texto do modelo?')) {
-                        return;
-                    }
+                    const confirmed = await showConfirmModal({
+                        title: 'Substituir Conteúdo',
+                        message: 'Os campos já possuem conteúdo. Deseja substituir pelo texto do modelo?',
+                        type: 'info',
+                        confirmText: 'Substituir'
+                    });
+                    if (!confirmed) return;
                 }
                 
                 // Preenche os editores

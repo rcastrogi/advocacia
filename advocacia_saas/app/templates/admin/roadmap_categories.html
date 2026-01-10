@@ -56,7 +56,7 @@
                             <td>{{ category.items.count() }}</td>
                             <td>
                                 <a href="{{ url_for('admin.edit_roadmap_category', category_id=category.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="fas fa-edit"></i></a>
-                                <form method="POST" action="{{ url_for('admin.delete_roadmap_category', category_id=category.id) }}" class="d-inline" onsubmit="return confirm('Deseja realmente excluir esta categoria?')">
+                                <form method="POST" action="{{ url_for('admin.delete_roadmap_category', category_id=category.id) }}" class="d-inline delete-form" data-item-name="{{ category.name }}">
                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="fas fa-trash"></i></button>
                                 </form>
                             </td>
@@ -79,6 +79,18 @@
 
 {% block scripts %}{{ super() }}
 <!-- Initialization is handled by table_prefs.js automatically for tables with data-table-view -->
+<script>
+document.querySelectorAll('.delete-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const itemName = this.dataset.itemName || 'este item';
+        const confirmed = await confirmDelete(itemName);
+        if (confirmed) {
+            this.submit();
+        }
+    });
+});
+</script>
 {% endblock %}
 
 {% endblock %}

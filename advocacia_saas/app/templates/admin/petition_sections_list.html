@@ -89,8 +89,8 @@
                                 </a>
                                 <form method="post"
                                       action="{{ url_for('admin.petition_section_delete', section_id=section.id) }}"
-                                      class="d-inline"
-                                      onsubmit="return confirm('Tem certeza que deseja excluir esta seção?')">
+                                      class="d-inline delete-form"
+                                      data-item-name="{{ section.name }}">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -106,4 +106,19 @@
 </div>
 
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.delete-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const itemName = this.dataset.itemName || 'este item';
+        const confirmed = await confirmDelete(itemName);
+        if (confirmed) {
+            this.submit();
+        }
+    });
+});
+</script>
 {% endblock %}

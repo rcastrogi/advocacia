@@ -69,8 +69,8 @@
                         <a href="{{ url_for('main.edit_testimonial', testimonial_id=t.id) }}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-edit"></i> Editar
                         </a>
-                        <form method="post" action="{{ url_for('main.delete_testimonial', testimonial_id=t.id) }}" class="d-inline">
-                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja excluir este depoimento?')">
+                        <form method="post" action="{{ url_for('main.delete_testimonial', testimonial_id=t.id) }}" class="d-inline" id="delete-testimonial-{{ t.id }}">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteTestimonial({{ t.id }})">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
@@ -94,4 +94,15 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function confirmDeleteTestimonial(id) {
+    const confirmed = await confirmDelete('este depoimento');
+    if (confirmed) {
+        document.getElementById('delete-testimonial-' + id).submit();
+    }
+}
+</script>
 {% endblock %}

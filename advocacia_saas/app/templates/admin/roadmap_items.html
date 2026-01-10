@@ -232,13 +232,13 @@
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <form method="POST" action="{{ url_for('admin.toggle_roadmap_item_visibility', item_id=item.id) }}"
-                                          class="d-inline" onsubmit="return confirm('Alterar visibilidade?')">
+                                          class="d-inline confirm-form" data-message="Alterar a visibilidade deste item?" data-type="info" data-confirm-text="Alterar">
                                         <button type="submit" class="btn btn-sm btn-outline-warning" title="Alternar Visibilidade">
                                             <i class="fas fa-eye{% if not item.visible_to_users %}-slash{% endif %}"></i>
                                         </button>
                                     </form>
                                     <form method="POST" action="{{ url_for('admin.delete_roadmap_item', item_id=item.id) }}"
-                                          class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir este item?')">
+                                          class="d-inline delete-form" data-item-name="{{ item.title }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -272,16 +272,56 @@
 
 <script>
 // ============================================
+// Delete Form Handler
+// ============================================
+document.querySelectorAll('.delete-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const itemName = this.dataset.itemName || 'este item';
+        const confirmed = await confirmDelete(itemName);
+        if (confirmed) {
+            this.submit();
+        }
+    });
+});
+
+// ============================================
+// Confirm Form Handler
+// ============================================
+document.querySelectorAll('.confirm-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const message = this.dataset.message || 'Confirmar esta ação?';
+        const type = this.dataset.type || 'warning';
+        const confirmText = this.dataset.confirmText || 'Confirmar';
+        
+        const confirmed = await showConfirmModal({
+            title: 'Confirmar',
+            message: message,
+            type: type,
+            confirmText: confirmText
+        });
+        if (confirmed) {
+            this.submit();
+        }
+    });
+});
+
+// ============================================
 // Toggle Visibility com AJAX
 // ============================================
-document.querySelectorAll('form[action*="toggle-visibility"]').forEach(form => {
+document.querySelectorAll('form[action*="toggle-visibility"]:not(.confirm-form)').forEach(form => {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         // Perguntar confirmação
-        if (!confirm('Alterar visibilidade?')) {
-            return; // Cancelado - não fazer nada
-        }
+        const confirmed = await showConfirmModal({
+            title: 'Alterar Visibilidade',
+            message: 'Alterar a visibilidade deste item?',
+            type: 'info',
+            confirmText: 'Alterar'
+        });
+        if (!confirmed) return;
         
         const btn = this.querySelector('button[type="submit"]');
         
@@ -302,13 +342,13 @@ document.querySelectorAll('form[action*="toggle-visibility"]').forEach(form => {
                 setTimeout(() => location.reload(), 500);
             } else {
                 // Erro
-                alert('Erro ao alterar visibilidade');
+                showToast('Erro ao alterar visibilidade', 'error');
                 btn.disabled = false;
                 btn.classList.remove('disabled');
             }
         } catch (error) {
             console.error('Erro:', error);
-            alert('Erro ao conectar com o servidor');
+            showToast('Erro ao conectar com o servidor', 'error');
             btn.disabled = false;
             btn.classList.remove('disabled');
         }

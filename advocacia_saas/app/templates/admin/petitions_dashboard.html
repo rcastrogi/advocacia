@@ -198,7 +198,7 @@
                                     <a href="{{ url_for('admin.petition_type_sections', type_id=petition_type.id) }}" class="btn btn-sm btn-outline-info" title="Gerenciar Seções">
                                         <i class="fas fa-puzzle-piece"></i>
                                     </a>
-                                    <form method="post" action="{{ url_for('admin.petition_type_delete', type_id=petition_type.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este tipo de petição?')">
+                                    <form method="post" action="{{ url_for('admin.petition_type_delete', type_id=petition_type.id) }}" style="display: inline;" class="delete-form" data-item-name="{{ petition_type.name }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -223,4 +223,19 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.delete-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const itemName = this.dataset.itemName || 'este item';
+        const confirmed = await confirmDelete(itemName);
+        if (confirmed) {
+            this.submit();
+        }
+    });
+});
+</script>
 {% endblock %}
