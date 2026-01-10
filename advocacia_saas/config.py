@@ -20,7 +20,9 @@ class Config:
                 "Defina SECRET_KEY nas variáveis de ambiente do Render."
             )
         else:
-            warnings.warn("⚠️  SECRET_KEY não definido. Usando chave temporária para desenvolvimento.")
+            warnings.warn(
+                "⚠️  SECRET_KEY não definido. Usando chave temporária para desenvolvimento."
+            )
 
     # Database configuration
     DATABASE_URL = os.environ.get("DATABASE_URL") or "sqlite:///" + os.path.join(
@@ -52,7 +54,11 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
 
     # CSRF Protection - Habilitado em produção, desabilitado em desenvolvimento
-    WTF_CSRF_ENABLED = os.environ.get("WTF_CSRF_ENABLED", "True").lower() in ["true", "on", "1"]
+    WTF_CSRF_ENABLED = os.environ.get("WTF_CSRF_ENABLED", "True").lower() in [
+        "true",
+        "on",
+        "1",
+    ]
     WTF_CSRF_TIME_LIMIT = 3600  # Token válido por 1 hora
 
     # Mail settings
@@ -93,7 +99,11 @@ class Config:
     CACHE_KEY_PREFIX = os.environ.get("CACHE_KEY_PREFIX", "petitio")
 
     # Rate limiting - Habilitado por padrão em produção
-    RATELIMIT_ENABLED = os.environ.get("RATELIMIT_ENABLED", "True").lower() in ["true", "on", "1"]
+    RATELIMIT_ENABLED = os.environ.get("RATELIMIT_ENABLED", "True").lower() in [
+        "true",
+        "on",
+        "1",
+    ]
     RATELIMIT_STORAGE_URL = os.environ.get("REDIS_URL", "memory://")
 
     # OpenAI API

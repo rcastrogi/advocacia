@@ -149,7 +149,9 @@ class AuditManager:
     def log_payment_created(payment, user=None):
         """Registra criação de pagamento"""
         user_email = user.email if user else "N/A"
-        description = f"Pagamento criado - {payment.payment_method} - R$ {payment.amount}"
+        description = (
+            f"Pagamento criado - {payment.payment_method} - R$ {payment.amount}"
+        )
         AuditManager.log_change(
             entity_type="payment",
             entity_id=payment.id,
@@ -195,7 +197,9 @@ class AuditManager:
     @staticmethod
     def log_payment_completed(payment):
         """Registra pagamento concluído/aprovado"""
-        description = f"Pagamento aprovado - R$ {payment.amount} via {payment.payment_method}"
+        description = (
+            f"Pagamento aprovado - R$ {payment.amount} via {payment.payment_method}"
+        )
         AuditManager.log_change(
             entity_type="payment",
             entity_id=payment.id,
@@ -257,7 +261,9 @@ class AuditManager:
     def log_subscription_created(subscription, user=None):
         """Registra criação de assinatura"""
         user_email = user.email if user else "N/A"
-        description = f"Assinatura criada - {subscription.plan_type} - R$ {subscription.amount}"
+        description = (
+            f"Assinatura criada - {subscription.plan_type} - R$ {subscription.amount}"
+        )
         AuditManager.log_change(
             entity_type="subscription",
             entity_id=subscription.id,
@@ -288,8 +294,12 @@ class AuditManager:
             old_values={"status": "pending"},
             new_values={
                 "status": "active",
-                "started_at": subscription.started_at.isoformat() if subscription.started_at else None,
-                "renewal_date": subscription.renewal_date.isoformat() if subscription.renewal_date else None,
+                "started_at": subscription.started_at.isoformat()
+                if subscription.started_at
+                else None,
+                "renewal_date": subscription.renewal_date.isoformat()
+                if subscription.renewal_date
+                else None,
             },
             changed_fields=["status", "started_at", "renewal_date"],
             description=description,
@@ -310,7 +320,9 @@ class AuditManager:
             old_values={"status": subscription.status},
             new_values={
                 "status": "cancelled",
-                "cancelled_at": subscription.cancelled_at.isoformat() if subscription.cancelled_at else None,
+                "cancelled_at": subscription.cancelled_at.isoformat()
+                if subscription.cancelled_at
+                else None,
             },
             changed_fields=["status", "cancelled_at"],
             description=description,
@@ -329,7 +341,11 @@ class AuditManager:
             entity_type="subscription",
             entity_id=subscription.id,
             action="subscription_renewed",
-            old_values={"renewal_date": old_renewal_date.isoformat() if old_renewal_date else None},
+            old_values={
+                "renewal_date": old_renewal_date.isoformat()
+                if old_renewal_date
+                else None
+            },
             new_values={"renewal_date": new_renewal_date.isoformat()},
             changed_fields=["renewal_date"],
             description=description,
@@ -337,7 +353,9 @@ class AuditManager:
         )
 
     @staticmethod
-    def log_subscription_status_change(subscription, old_status, new_status, reason=None):
+    def log_subscription_status_change(
+        subscription, old_status, new_status, reason=None
+    ):
         """Registra mudança de status da assinatura"""
         description = f"Status da assinatura alterado: {old_status} → {new_status}"
         if reason:
@@ -355,7 +373,9 @@ class AuditManager:
         )
 
     @staticmethod
-    def log_credits_transaction(user, transaction_type, amount, balance_before, balance_after, description=None):
+    def log_credits_transaction(
+        user, transaction_type, amount, balance_before, balance_after, description=None
+    ):
         """Registra transação de créditos"""
         desc = description or f"Transação de créditos: {transaction_type}"
         AuditManager.log_change(

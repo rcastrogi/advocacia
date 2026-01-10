@@ -386,25 +386,26 @@ def assign_plan(user_id):
 # GESTÃO DE FEATURES MODULARES
 # =====================================
 
+
 @bp.route("/features")
 @login_required
 @master_required
 def features_list():
     """Lista todas as features disponíveis"""
     features = Feature.query.order_by(Feature.module, Feature.display_order).all()
-    
+
     # Agrupar por módulo
     modules = {}
     for feature in features:
         if feature.module not in modules:
             modules[feature.module] = []
         modules[feature.module].append(feature)
-    
+
     return render_template(
         "billing/features_list.html",
         title="Features Modulares",
         modules=modules,
-        features=features
+        features=features,
     )
 
 
@@ -414,66 +415,76 @@ def features_list():
 def plan_features(plan_id):
     """Gerenciar features de um plano específico"""
     plan = BillingPlan.query.get_or_404(plan_id)
-    
+
     if request.method == "POST":
         # Obter features selecionadas
         selected_features = request.form.getlist("features")
-        
+
         # Limpar features existentes do plano
         from app.models import plan_features as pf_table
-        db.session.execute(
-            pf_table.delete().where(pf_table.c.plan_id == plan_id)
-        )
-        
+
+        db.session.execute(pf_table.delete().where(pf_table.c.plan_id == plan_id))
+
         # Adicionar novas features
         for feature_id in selected_features:
             feature = Feature.query.get(int(feature_id))
             if feature:
                 limit_value = request.form.get(f"limit_{feature_id}")
-                limit_value = int(limit_value) if limit_value and limit_value.isdigit() else None
-                
+                limit_value = (
+                    int(limit_value) if limit_value and limit_value.isdigit() else None
+                )
+
                 db.session.execute(
                     pf_table.insert().values(
                         plan_id=plan_id,
                         feature_id=int(feature_id),
-                        limit_value=limit_value
+                        limit_value=limit_value,
                     )
                 )
-        
+
         db.session.commit()
         flash(f"Features do plano '{plan.name}' atualizadas com sucesso!", "success")
         return redirect(url_for("billing.plan_features", plan_id=plan_id))
-    
+
     # GET: Mostrar formulário
-    all_features = Feature.query.filter_by(is_active=True).order_by(Feature.module, Feature.display_order).all()
-    
+    all_features = (
+        Feature.query.filter_by(is_active=True)
+        .order_by(Feature.module, Feature.display_order)
+        .all()
+    )
+
     # Features atuais do plano com limites
     current_features = {}
     from app.models import plan_features as pf_table
+
     result = db.session.execute(
-        text("SELECT feature_id, limit_value FROM plan_features WHERE plan_id = :plan_id"),
-        {"plan_id": plan_id}
+        text(
+            "SELECT feature_id, limit_value FROM plan_features WHERE plan_id = :plan_id"
+        ),
+        {"plan_id": plan_id},
     )
     for row in result:
         current_features[row[0]] = row[1]
-    
+
     # Agrupar por módulo
     modules = {}
     for feature in all_features:
         if feature.module not in modules:
             modules[feature.module] = []
-        modules[feature.module].append({
-            "feature": feature,
-            "selected": feature.id in current_features,
-            "limit": current_features.get(feature.id)
-        })
-    
+        modules[feature.module].append(
+            {
+                "feature": feature,
+                "selected": feature.id in current_features,
+                "limit": current_features.get(feature.id),
+            }
+        )
+
     return render_template(
         "billing/plan_features.html",
         title=f"Features - {plan.name}",
         plan=plan,
         modules=modules,
-        current_features=current_features
+        current_features=current_features,
     )
 
 
@@ -482,7 +493,11 @@ def plan_features(plan_id):
 @master_required
 def api_features_list():
     """API: Lista todas as features"""
-    features = Feature.query.filter_by(is_active=True).order_by(Feature.module, Feature.display_order).all()
+    features = (
+        Feature.query.filter_by(is_active=True)
+        .order_by(Feature.module, Feature.display_order)
+        .all()
+    )
     return jsonify([f.to_dict() for f in features])
 
 
@@ -493,11 +508,13 @@ def api_plan_features(plan_id):
     """API: Lista features de um plano"""
     plan = BillingPlan.query.get_or_404(plan_id)
     features_data = plan.get_all_features_with_limits()
-    return jsonify([
-        {
-            "feature": fd["feature"].to_dict(),
-            "limit": fd["limit"],
-            "config": fd["config"]
-        }
-        for fd in features_data
-    ])
+    return jsonify(
+        [
+            {
+                "feature": fd["feature"].to_dict(),
+                "limit": fd["limit"],
+                "config": fd["config"],
+            }
+            for fd in features_data
+        ]
+    )

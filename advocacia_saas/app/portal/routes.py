@@ -191,11 +191,14 @@ def login():
             next_page = request.args.get("next")
             if next_page:
                 from urllib.parse import urlparse
+
                 parsed = urlparse(next_page)
                 # Só redireciona se for URL relativa (sem domínio externo)
                 if not parsed.netloc and not parsed.scheme:
                     return redirect(next_page)
-                portal_logger.warning(f"Tentativa de Open Redirect bloqueada: {next_page}")
+                portal_logger.warning(
+                    f"Tentativa de Open Redirect bloqueada: {next_page}"
+                )
             return redirect(url_for("portal.index"))
 
         portal_logger.debug("Página de login do portal acessada")

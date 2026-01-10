@@ -388,7 +388,9 @@ def _handle_payment_webhook(payment_id):
             payment.status = "failed"
             db.session.commit()
             # Auditoria: pagamento falhou
-            AuditManager.log_payment_failed(payment, f"Status: {payment_data['status']}")
+            AuditManager.log_payment_failed(
+                payment, f"Status: {payment_data['status']}"
+            )
 
 
 def _handle_preapproval_webhook(preapproval_id):
@@ -447,7 +449,9 @@ def _handle_preapproval_webhook(preapproval_id):
         db.session.commit()
 
         # Auditoria: assinatura cancelada
-        AuditManager.log_subscription_cancelled(subscription, reason="Cancelamento via gateway")
+        AuditManager.log_subscription_cancelled(
+            subscription, reason="Cancelamento via gateway"
+        )
 
         current_app.logger.info(
             f"❌ Assinatura Mercado Pago cancelada: {preapproval_id}"
@@ -462,7 +466,9 @@ def _handle_preapproval_webhook(preapproval_id):
         db.session.commit()
 
         # Auditoria: status alterado
-        AuditManager.log_subscription_status_change(subscription, old_status, "paused", "Pausada via gateway")
+        AuditManager.log_subscription_status_change(
+            subscription, old_status, "paused", "Pausada via gateway"
+        )
 
         current_app.logger.warning(
             f"⏸️ Assinatura Mercado Pago pausada: {preapproval_id}"
@@ -477,7 +483,9 @@ def _handle_preapproval_webhook(preapproval_id):
         db.session.commit()
 
         # Auditoria: status alterado
-        AuditManager.log_subscription_status_change(subscription, old_status, "expired", "Expirada")
+        AuditManager.log_subscription_status_change(
+            subscription, old_status, "expired", "Expirada"
+        )
 
         current_app.logger.warning(
             f"⏰ Assinatura Mercado Pago expirada: {preapproval_id}"
@@ -530,12 +538,18 @@ def cancel_subscription():
             return jsonify({"error": "Assinatura não encontrada"}), 404
 
         immediate = request.json.get("immediate", False) if request.is_json else False
-        reason = request.json.get("reason", "Solicitado pelo usuário") if request.is_json else "Solicitado pelo usuário"
-        
+        reason = (
+            request.json.get("reason", "Solicitado pelo usuário")
+            if request.is_json
+            else "Solicitado pelo usuário"
+        )
+
         subscription.cancel(immediate=immediate)
 
         # Auditoria: assinatura cancelada pelo usuário
-        AuditManager.log_subscription_cancelled(subscription, reason=reason, immediate=immediate)
+        AuditManager.log_subscription_cancelled(
+            subscription, reason=reason, immediate=immediate
+        )
 
         flash("Assinatura cancelada com sucesso", "success")
         return jsonify({"success": True})

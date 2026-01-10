@@ -26,7 +26,7 @@ from app.models import ChatRoom, Client, Message
 
 @bp.route("/")
 @login_required
-@require_feature('client_chat')
+@require_feature("client_chat")
 def index():
     """Página principal do chat - lista de conversas"""
     # Buscar todas as salas de chat do usuário
@@ -45,7 +45,7 @@ def index():
 
 @bp.route("/room/<int:room_id>")
 @login_required
-@require_feature('client_chat')
+@require_feature("client_chat")
 def room(room_id):
     """Sala de chat específica"""
     chat_room = ChatRoom.query.get_or_404(room_id)
@@ -93,7 +93,9 @@ def start_chat(client_id):
     client = Client.query.get_or_404(client_id)
 
     # Verificar se já existe sala de chat
-    chat_room = ChatRoom.query.filter_by(lawyer_id=current_user.id, client_id=client_id).first()
+    chat_room = ChatRoom.query.filter_by(
+        lawyer_id=current_user.id, client_id=client_id
+    ).first()
 
     if not chat_room:
         # Criar nova sala
@@ -144,7 +146,9 @@ def send_message():
     db.session.commit()
 
     # Atualizar chat room
-    chat_room = ChatRoom.query.filter_by(lawyer_id=current_user.id, client_id=client_id).first()
+    chat_room = ChatRoom.query.filter_by(
+        lawyer_id=current_user.id, client_id=client_id
+    ).first()
 
     if chat_room:
         chat_room.update_last_message(message)
