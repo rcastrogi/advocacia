@@ -4582,16 +4582,24 @@ def petition_sections_fields_by_ids():
 
                     schema = json.loads(schema)
 
-                fields = schema.get("fields", [])
+                # schema pode ser uma lista de campos diretamente ou um dict com "fields"
+                if isinstance(schema, list):
+                    fields = schema
+                elif isinstance(schema, dict):
+                    fields = schema.get("fields", [])
+                else:
+                    fields = []
+                    
                 for field in fields:
-                    field_data = {
-                        "name": field.get("name", field.get("field_name", "")),
-                        "display_name": field.get(
-                            "label", field.get("display_name", "")
-                        ),
-                        "category": section.name,
-                    }
-                    all_fields.append(field_data)
+                    if isinstance(field, dict):
+                        field_data = {
+                            "name": field.get("name", field.get("field_name", "")),
+                            "display_name": field.get(
+                                "label", field.get("display_name", "")
+                            ),
+                            "category": section.name,
+                        }
+                        all_fields.append(field_data)
 
         return jsonify({"fields": all_fields})
 

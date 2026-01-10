@@ -730,20 +730,26 @@ def _generate_dynamic_fallback(petition_model, petition_type, form_data):
             # Adicionar cabeçalho da seção
             template_content += f"<h2>{section.name}</h2>\n"
 
-            for field in section.fields_schema:
-                field_name = f"{section.slug}_{field['name']}"
+            # Garantir que fields_schema é uma lista
+            fields_list = section.fields_schema if isinstance(section.fields_schema, list) else []
+            
+            for field in fields_list:
+                if not isinstance(field, dict):
+                    continue
+                field_name = f"{section.slug}_{field.get('name', '')}"
                 field_value = form_data.get(field_name, "").strip()
 
                 if field_value:  # Só incluir campos preenchidos
                     field_label = field.get(
-                        "label", field["name"].replace("_", " ").title()
+                        "label", field.get("name", "").replace("_", " ").title()
                     )
+                    field_type = field.get("type", "text")
 
                     # Formatar o conteúdo baseado no tipo de campo
-                    if field["type"] == "editor":
+                    if field_type == "editor":
                         # Para campos de editor, o conteúdo já vem em HTML
                         template_content += f"<div>{field_value}</div>\n\n"
-                    elif field["type"] == "textarea":
+                    elif field_type == "textarea":
                         # Para textarea, converter quebras de linha em parágrafos
                         paragraphs = field_value.split("\n\n")
                         for para in paragraphs:
