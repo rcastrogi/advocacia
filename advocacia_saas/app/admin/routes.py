@@ -505,7 +505,7 @@ def dashboard():
     now = datetime.now(timezone.utc)
     current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
-    
+
     # Data de 12 meses atrás para as queries agregadas
     twelve_months_ago = now - timedelta(days=365)
 
@@ -527,10 +527,14 @@ def dashboard():
     month_ranges = []
     for i in range(11, -1, -1):
         month_date = now - timedelta(days=i * 30)
-        month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        month_start = month_date.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
         if i > 0:
             next_month = month_date + timedelta(days=32)
-            month_end = next_month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            month_end = next_month.replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
         else:
             month_end = now
         chart_labels.append(month_start.strftime("%b/%y"))
@@ -539,69 +543,68 @@ def dashboard():
     # Query agregada: Faturamento por mês
     revenue_by_month = dict(
         db.session.query(
-            func.date_trunc('month', Payment.paid_at),
-            func.coalesce(func.sum(Payment.amount), 0)
+            func.date_trunc("month", Payment.paid_at),
+            func.coalesce(func.sum(Payment.amount), 0),
         )
         .filter(
-            Payment.paid_at >= twelve_months_ago,
-            Payment.payment_status == "completed"
+            Payment.paid_at >= twelve_months_ago, Payment.payment_status == "completed"
         )
-        .group_by(func.date_trunc('month', Payment.paid_at))
+        .group_by(func.date_trunc("month", Payment.paid_at))
         .all()
     )
 
     # Query agregada: Uso de IA por mês
     ai_by_month = dict(
         db.session.query(
-            func.date_trunc('month', AIGeneration.created_at),
-            func.count(AIGeneration.id)
+            func.date_trunc("month", AIGeneration.created_at),
+            func.count(AIGeneration.id),
         )
         .filter(AIGeneration.created_at >= twelve_months_ago)
-        .group_by(func.date_trunc('month', AIGeneration.created_at))
+        .group_by(func.date_trunc("month", AIGeneration.created_at))
         .all()
     )
 
     # Query agregada: Custo de IA por mês
     ai_cost_by_month = dict(
         db.session.query(
-            func.date_trunc('month', AIGeneration.created_at),
-            func.coalesce(func.sum(AIGeneration.cost_usd), 0)
+            func.date_trunc("month", AIGeneration.created_at),
+            func.coalesce(func.sum(AIGeneration.cost_usd), 0),
         )
         .filter(AIGeneration.created_at >= twelve_months_ago)
-        .group_by(func.date_trunc('month', AIGeneration.created_at))
+        .group_by(func.date_trunc("month", AIGeneration.created_at))
         .all()
     )
 
     # Query agregada: Créditos vendidos por mês
     credits_by_month = dict(
         db.session.query(
-            func.date_trunc('month', CreditTransaction.created_at),
-            func.coalesce(func.sum(CreditTransaction.amount), 0)
+            func.date_trunc("month", CreditTransaction.created_at),
+            func.coalesce(func.sum(CreditTransaction.amount), 0),
         )
         .filter(
             CreditTransaction.created_at >= twelve_months_ago,
-            CreditTransaction.transaction_type == "purchase"
+            CreditTransaction.transaction_type == "purchase",
         )
-        .group_by(func.date_trunc('month', CreditTransaction.created_at))
+        .group_by(func.date_trunc("month", CreditTransaction.created_at))
         .all()
     )
 
     # Preencher arrays dos gráficos a partir das queries agregadas
     for month_start, month_end in month_ranges:
         month_key = month_start.replace(tzinfo=None)
-        
+
         # Faturamento
         chart_revenue.append(float(revenue_by_month.get(month_key, 0)))
-        
+
         # Uso de IA
         chart_ai_usage.append(int(ai_by_month.get(month_key, 0)))
-        
+
         # Custo de IA
         chart_ai_cost.append(float(ai_cost_by_month.get(month_key, 0)))
-        
+
         # Créditos vendidos
         chart_ai_credits_sold.append(int(credits_by_month.get(month_key, 0)))
-        
+
         # Placeholder para faturamento por plano (simplificado)
         for plan in all_plans:
             chart_revenue_by_plan[plan.name].append(0)
