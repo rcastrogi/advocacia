@@ -4589,7 +4589,7 @@ def petition_sections_fields_by_ids():
                     fields = schema.get("fields", [])
                 else:
                     fields = []
-                    
+
                 for field in fields:
                     if isinstance(field, dict):
                         field_data = {

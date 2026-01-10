@@ -731,8 +731,10 @@ def _generate_dynamic_fallback(petition_model, petition_type, form_data):
             template_content += f"<h2>{section.name}</h2>\n"
 
             # Garantir que fields_schema é uma lista
-            fields_list = section.fields_schema if isinstance(section.fields_schema, list) else []
-            
+            fields_list = (
+                section.fields_schema if isinstance(section.fields_schema, list) else []
+            )
+
             for field in fields_list:
                 if not isinstance(field, dict):
                     continue
