@@ -354,6 +354,43 @@
                                placeholder="00.000.000/0000-00"
                                {% if field.required %}required{% endif %}>
                         
+                        {% elif field.type == 'cpf_cnpj' %}
+                        <!-- Campo de CPF/CNPJ com validação dinâmica -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control cpf-cnpj-mask" 
+                                   name="{{ section_config.section.slug }}_{{ field.name }}"
+                                   x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']"
+                                   @input="formatCpfCnpj($event)"
+                                   @blur="validateCpfCnpj('{{ section_config.section.slug }}_{{ field.name }}')"
+                                   placeholder="CPF ou CNPJ"
+                                   maxlength="18"
+                                   {% if field.required %}required{% endif %}>
+                            <span class="input-group-text" 
+                                  x-show="cpfCnpjStatus['{{ section_config.section.slug }}_{{ field.name }}'] === 'valid'"
+                                  style="color: #28a745;">
+                                <i class="fas fa-check-circle"></i>
+                            </span>
+                            <span class="input-group-text" 
+                                  x-show="cpfCnpjStatus['{{ section_config.section.slug }}_{{ field.name }}'] === 'invalid'"
+                                  style="color: #dc3545;">
+                                <i class="fas fa-times-circle"></i>
+                            </span>
+                        </div>
+                        <small class="form-text" 
+                               x-show="cpfCnpjStatus['{{ section_config.section.slug }}_{{ field.name }}'] === 'invalid'"
+                               style="color: #dc3545;">
+                            CPF ou CNPJ inválido
+                        </small>
+                        {% if field.linked_section_id %}
+                        <small class="form-text text-info" 
+                               x-show="linkedSectionTriggers['{{ section_config.section.slug }}_{{ field.name }}'] === 'cnpj'">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Pessoa Jurídica detectada. Preencha os dados do representante legal abaixo.
+                        </small>
+                        {% endif %}
+                        
                         {% elif field.type == 'phone' %}
                         <!-- Campo de Telefone -->
                         <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
@@ -852,6 +889,166 @@ document.addEventListener('alpine:init', () => {
             $('.cep-mask').mask('00000-000');
             $('.money-mask').mask('#.##0,00', {reverse: true});
             $('.processo-mask').mask('0000000-00.0000.0.00.0000');
+            // CPF/CNPJ usa máscara dinâmica no formatCpfCnpj()
+        },
+        
+        // Status de validação CPF/CNPJ
+        cpfCnpjStatus: {},
+        
+        // Formatar CPF ou CNPJ dinamicamente
+        formatCpfCnpj(event) {
+            let value = event.target.value.replace(/\D/g, '');
+            
+            if (value.length <= 11) {
+                // Formato CPF: 000.000.000-00
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            } else {
+                // Formato CNPJ: 00.000.000/0000-00
+                value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+                value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                value = value.replace(/(\d{4})(\d)/, '$1-$2');
+            }
+            
+            event.target.value = value;
+            // Atualizar o model do Alpine
+            const fieldName = event.target.name;
+            this.formData[fieldName] = value;
+        },
+        
+        // Validar CPF
+        validarCPF(cpf) {
+            cpf = cpf.replace(/\D/g, '');
+            if (cpf.length !== 11) return false;
+            
+            // Verifica se todos os dígitos são iguais
+            if (/^(\d)\1+$/.test(cpf)) return false;
+            
+            // Validação dos dígitos verificadores
+            let soma = 0;
+            for (let i = 0; i < 9; i++) {
+                soma += parseInt(cpf.charAt(i)) * (10 - i);
+            }
+            let resto = (soma * 10) % 11;
+            if (resto === 10 || resto === 11) resto = 0;
+            if (resto !== parseInt(cpf.charAt(9))) return false;
+            
+            soma = 0;
+            for (let i = 0; i < 10; i++) {
+                soma += parseInt(cpf.charAt(i)) * (11 - i);
+            }
+            resto = (soma * 10) % 11;
+            if (resto === 10 || resto === 11) resto = 0;
+            if (resto !== parseInt(cpf.charAt(10))) return false;
+            
+            return true;
+        },
+        
+        // Validar CNPJ
+        validarCNPJ(cnpj) {
+            cnpj = cnpj.replace(/\D/g, '');
+            if (cnpj.length !== 14) return false;
+            
+            // Verifica se todos os dígitos são iguais
+            if (/^(\d)\1+$/.test(cnpj)) return false;
+            
+            // Validação do primeiro dígito verificador
+            let tamanho = cnpj.length - 2;
+            let numeros = cnpj.substring(0, tamanho);
+            let digitos = cnpj.substring(tamanho);
+            let soma = 0;
+            let pos = tamanho - 7;
+            
+            for (let i = tamanho; i >= 1; i--) {
+                soma += numeros.charAt(tamanho - i) * pos--;
+                if (pos < 2) pos = 9;
+            }
+            
+            let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+            if (resultado !== parseInt(digitos.charAt(0))) return false;
+            
+            // Validação do segundo dígito verificador
+            tamanho = tamanho + 1;
+            numeros = cnpj.substring(0, tamanho);
+            soma = 0;
+            pos = tamanho - 7;
+            
+            for (let i = tamanho; i >= 1; i--) {
+                soma += numeros.charAt(tamanho - i) * pos--;
+                if (pos < 2) pos = 9;
+            }
+            
+            resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+            if (resultado !== parseInt(digitos.charAt(1))) return false;
+            
+            return true;
+        },
+        
+        // Validar CPF ou CNPJ
+        validateCpfCnpj(fieldName) {
+            const value = this.formData[fieldName];
+            if (!value) {
+                this.cpfCnpjStatus[fieldName] = null;
+                this.updateLinkedSectionVisibility(fieldName, null);
+                return;
+            }
+            
+            const numbers = value.replace(/\D/g, '');
+            
+            if (numbers.length === 11) {
+                this.cpfCnpjStatus[fieldName] = this.validarCPF(numbers) ? 'valid' : 'invalid';
+                this.updateLinkedSectionVisibility(fieldName, 'cpf');
+            } else if (numbers.length === 14) {
+                this.cpfCnpjStatus[fieldName] = this.validarCNPJ(numbers) ? 'valid' : 'invalid';
+                this.updateLinkedSectionVisibility(fieldName, 'cnpj');
+            } else if (numbers.length > 0) {
+                this.cpfCnpjStatus[fieldName] = 'invalid';
+                this.updateLinkedSectionVisibility(fieldName, null);
+            } else {
+                this.cpfCnpjStatus[fieldName] = null;
+                this.updateLinkedSectionVisibility(fieldName, null);
+            }
+        },
+        
+        // Controlar visibilidade de seções vinculadas (representante legal para CNPJ)
+        linkedSectionTriggers: {},  // fieldName -> 'cpf' | 'cnpj' | null
+        
+        updateLinkedSectionVisibility(fieldName, documentType) {
+            this.linkedSectionTriggers[fieldName] = documentType;
+            
+            // Encontrar o campo que disparou a atualização
+            this.sections.forEach(s => {
+                const fields = s.section.fields_schema || [];
+                fields.forEach(field => {
+                    const fullFieldName = s.section.slug + '_' + field.name;
+                    if (fullFieldName === fieldName && field.linked_section_id) {
+                        // Encontrar a seção vinculada
+                        const linkedSection = this.sections.find(
+                            ls => ls.section.id === field.linked_section_id
+                        );
+                        
+                        if (linkedSection) {
+                            // Mostrar/expandir seção se for CNPJ
+                            const trigger = field.linked_section_trigger || 'cnpj';
+                            const shouldShow = documentType === trigger;
+                            
+                            if (shouldShow) {
+                                this.sectionExpanded[linkedSection.section.slug] = true;
+                            }
+                        }
+                    }
+                });
+            });
+        },
+        
+        // Verificar se algum campo cpf_cnpj tem CNPJ (para seções vinculadas)
+        hasAnyCnpj() {
+            for (const [fieldName, trigger] of Object.entries(this.linkedSectionTriggers)) {
+                if (trigger === 'cnpj') return true;
+            }
+            return false;
         },
         
         toggleSection(slug) {
@@ -899,8 +1096,32 @@ document.addEventListener('alpine:init', () => {
         },
         
         shouldShowSection(slug) {
+            // Encontrar a seção pelo slug
+            const section = this.sections.find(s => s.section.slug === slug);
+            
+            if (!section) return true;
+            
+            // Se é uma seção vinculada (representante legal)
+            if (section.is_linked_section) {
+                // Verificar se algum campo cpf_cnpj está com CNPJ
+                for (const s of this.sections) {
+                    for (const field of (s.section.fields_schema || [])) {
+                        if (field.linked_section_id === section.section.id) {
+                            const fieldName = s.section.slug + '_' + field.name;
+                            const trigger = field.linked_section_trigger || 'cnpj';
+                            
+                            // Mostrar se o documento corresponde ao trigger
+                            if (this.linkedSectionTriggers[fieldName] === trigger) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                // Esconder se nenhum campo cpf_cnpj tem CNPJ
+                return false;
+            }
+            
             // Por padrão, mostrar todas as seções
-            // Pode ser customizado para esconder seções baseado em condições
             return true;
         },
         

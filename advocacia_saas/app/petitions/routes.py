@@ -574,11 +574,19 @@ def dynamic_form(slug):
     # Buscar seções configuradas para o modelo
     sections_config = petition_model.get_sections_ordered()
 
+    # Coletar IDs de seções vinculadas (linked_section_id) para incluir automaticamente
+    linked_section_ids = set()
+    
     # Montar estrutura para o template
     sections = []
     for config in sections_config:
         section = config.section
         if section and section.is_active:
+            # Verificar se algum campo tem seção vinculada
+            for field in (section.fields_schema or []):
+                if field.get("linked_section_id"):
+                    linked_section_ids.add(field.get("linked_section_id"))
+            
             sections.append(
                 {
                     "section": {
@@ -595,6 +603,31 @@ def dynamic_form(slug):
                     "field_overrides": config.field_overrides or {},
                 }
             )
+    
+    # Adicionar seções vinculadas que não estão no modelo
+    for linked_id in linked_section_ids:
+        # Verificar se a seção já está incluída
+        if not any(s["section"]["id"] == linked_id for s in sections):
+            linked_section = PetitionSection.query.get(linked_id)
+            if linked_section and linked_section.is_active:
+                sections.append(
+                    {
+                        "section": {
+                            "id": linked_section.id,
+                            "name": linked_section.name,
+                            "slug": linked_section.slug,
+                            "description": linked_section.description,
+                            "icon": linked_section.icon,
+                            "color": linked_section.color,
+                            "fields_schema": linked_section.fields_schema or [],
+                        },
+                        "is_required": False,  # Seções vinculadas não são obrigatórias por padrão
+                        "is_expanded": False,  # Começa recolhida
+                        "field_overrides": {},
+                        "is_linked_section": True,  # Marcador para seções vinculadas
+                        "linked_to_fields": [],  # Será preenchido pelo frontend
+                    }
+                )
 
     # Serializar seções para JSON (para Alpine.js)
     sections_json = json.dumps(sections, ensure_ascii=False)

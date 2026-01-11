@@ -137,10 +137,10 @@ class PetitionTypeSchema(Schema):
         validate=validate.Length(min=2, max=500),
         error_messages={"required": "Nome do tipo é obrigatório"},
     )
+    # Slug é gerado automaticamente a partir do nome, não é obrigatório na entrada
     slug = fields.Str(
-        required=True,
-        validate=validate.Length(min=2, max=120),
-        error_messages={"required": "Slug é obrigatório"},
+        load_default=None,
+        validate=validate.Length(max=120),
     )
     description = fields.Str(allow_none=True)
     category = fields.Str(

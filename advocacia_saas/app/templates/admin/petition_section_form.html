@@ -218,7 +218,17 @@ waitForJQuery(function() {
             case 'date':
                 return `<input type="date" class="form-control" name="${name}" readonly>`;
             case 'tel':
-                return `<input type="tel" class="form-control" name="${name}" readonly>`;
+                return `<input type="tel" class="form-control" name="${name}" placeholder="(00) 00000-0000" readonly>`;
+            case 'cpf_cnpj':
+                return `<input type="text" class="form-control" name="${name}" placeholder="CPF ou CNPJ" readonly>`;
+            case 'cpf':
+                return `<input type="text" class="form-control" name="${name}" placeholder="000.000.000-00" readonly>`;
+            case 'cnpj':
+                return `<input type="text" class="form-control" name="${name}" placeholder="00.000.000/0000-00" readonly>`;
+            case 'cep':
+                return `<input type="text" class="form-control" name="${name}" placeholder="00000-000" readonly>`;
+            case 'currency':
+                return `<input type="text" class="form-control" name="${name}" placeholder="R$ 0,00" readonly>`;
             default:
                 return `<input type="text" class="form-control" name="${name}" readonly>`;
         }
@@ -243,7 +253,7 @@ waitForJQuery(function() {
         const safeField = {
             name: (field.name || '').toString(),
             label: (field.label || '').toString(),
-            type: ['text', 'textarea', 'select', 'email', 'number', 'date', 'tel'].includes(field.type) ? field.type : 'text',
+            type: ['text', 'textarea', 'select', 'email', 'number', 'date', 'tel', 'cpf_cnpj', 'cpf', 'cnpj', 'cep', 'currency'].includes(field.type) ? field.type : 'text',
             required: Boolean(field.required),
             size: ['col-md-3', 'col-md-4', 'col-md-6', 'col-md-8', 'col-md-12'].includes(field.size) ? field.size : 'col-md-6',
             placeholder: (field.placeholder || '').toString(),
@@ -288,6 +298,11 @@ waitForJQuery(function() {
                                     <option value="number" ${safeField.type === 'number' ? 'selected' : ''}>Número</option>
                                     <option value="date" ${safeField.type === 'date' ? 'selected' : ''}>Data</option>
                                     <option value="tel" ${safeField.type === 'tel' ? 'selected' : ''}>Telefone</option>
+                                    <option value="cpf_cnpj" ${safeField.type === 'cpf_cnpj' ? 'selected' : ''}>CPF/CNPJ</option>
+                                    <option value="cpf" ${safeField.type === 'cpf' ? 'selected' : ''}>CPF</option>
+                                    <option value="cnpj" ${safeField.type === 'cnpj' ? 'selected' : ''}>CNPJ</option>
+                                    <option value="cep" ${safeField.type === 'cep' ? 'selected' : ''}>CEP</option>
+                                    <option value="currency" ${safeField.type === 'currency' ? 'selected' : ''}>Valor Monetário</option>
                                 </select>
                             </div>
                         </div>

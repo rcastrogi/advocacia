@@ -117,6 +117,118 @@ def validate_phone(phone: str) -> Tuple[bool, str]:
     return True, ""
 
 
+def validate_cpf(cpf: str) -> Tuple[bool, str]:
+    """
+    Valida CPF brasileiro.
+
+    Args:
+        cpf: CPF a ser validado (com ou sem formatação)
+
+    Returns:
+        Tupla (is_valid, error_message)
+    """
+    if not cpf:
+        return True, ""  # CPF é opcional
+
+    # Remove caracteres não numéricos
+    cpf = re.sub(r"\D", "", cpf)
+
+    # Deve ter 11 dígitos
+    if len(cpf) != 11:
+        return False, "CPF deve ter 11 dígitos"
+
+    # Verifica se todos os dígitos são iguais (ex: 111.111.111-11)
+    if len(set(cpf)) == 1:
+        return False, "CPF inválido"
+
+    # Calcula o primeiro dígito verificador
+    soma = sum(int(cpf[i]) * (10 - i) for i in range(9))
+    resto = (soma * 10) % 11
+    if resto == 10 or resto == 11:
+        resto = 0
+    if resto != int(cpf[9]):
+        return False, "CPF inválido"
+
+    # Calcula o segundo dígito verificador
+    soma = sum(int(cpf[i]) * (11 - i) for i in range(10))
+    resto = (soma * 10) % 11
+    if resto == 10 or resto == 11:
+        resto = 0
+    if resto != int(cpf[10]):
+        return False, "CPF inválido"
+
+    return True, ""
+
+
+def validate_cnpj(cnpj: str) -> Tuple[bool, str]:
+    """
+    Valida CNPJ brasileiro.
+
+    Args:
+        cnpj: CNPJ a ser validado (com ou sem formatação)
+
+    Returns:
+        Tupla (is_valid, error_message)
+    """
+    if not cnpj:
+        return True, ""  # CNPJ é opcional
+
+    # Remove caracteres não numéricos
+    cnpj = re.sub(r"\D", "", cnpj)
+
+    # Deve ter 14 dígitos
+    if len(cnpj) != 14:
+        return False, "CNPJ deve ter 14 dígitos"
+
+    # Verifica se todos os dígitos são iguais
+    if len(set(cnpj)) == 1:
+        return False, "CNPJ inválido"
+
+    # Calcula o primeiro dígito verificador
+    pesos1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    soma = sum(int(cnpj[i]) * pesos1[i] for i in range(12))
+    resto = soma % 11
+    digito1 = 0 if resto < 2 else 11 - resto
+    if digito1 != int(cnpj[12]):
+        return False, "CNPJ inválido"
+
+    # Calcula o segundo dígito verificador
+    pesos2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    soma = sum(int(cnpj[i]) * pesos2[i] for i in range(13))
+    resto = soma % 11
+    digito2 = 0 if resto < 2 else 11 - resto
+    if digito2 != int(cnpj[13]):
+        return False, "CNPJ inválido"
+
+    return True, ""
+
+
+def validate_cpf_cnpj(value: str) -> Tuple[bool, str]:
+    """
+    Valida CPF ou CNPJ brasileiro.
+    Detecta automaticamente se é CPF (11 dígitos) ou CNPJ (14 dígitos).
+
+    Args:
+        value: CPF ou CNPJ a ser validado (com ou sem formatação)
+
+    Returns:
+        Tupla (is_valid, error_message)
+    """
+    if not value:
+        return True, ""  # Valor é opcional
+
+    # Remove caracteres não numéricos
+    digits = re.sub(r"\D", "", value)
+
+    # Determina se é CPF ou CNPJ pelo tamanho
+    if len(digits) == 11:
+        return validate_cpf(digits)
+    elif len(digits) == 14:
+        return validate_cnpj(digits)
+    else:
+        return False, "Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido"
+
+
 def sanitize_filename(filename: str) -> str:
     """
     Remove caracteres perigosos de nomes de arquivo.
