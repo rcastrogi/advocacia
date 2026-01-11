@@ -151,11 +151,11 @@ def check_petition_balance(user, petition_type: PetitionType) -> dict:
     """
     Verifica se o usuário tem saldo suficiente para gerar a petição.
     Retorna dict com informações sobre o saldo e se pode gerar.
-    
+
     Para planos per_usage:
     - Verifica saldo em R$ do usuário
     - Compara com base_price da petição
-    
+
     Para outros planos:
     - Verifica limite mensal se aplicável
     """
@@ -235,12 +235,12 @@ def record_petition_usage(
 ) -> PetitionUsage:
     """
     Registra o uso de uma petição e cobra do saldo se for per_usage.
-    
+
     Para planos per_usage:
     - Verifica saldo
     - Cobra do saldo
     - Registra transação
-    
+
     Para outros planos:
     - Apenas registra o uso
     """
@@ -325,13 +325,13 @@ def add_petition_balance(
 ) -> UserPetitionBalance:
     """
     Adiciona saldo à conta do usuário para petições.
-    
+
     Args:
         user: Usuário
         amount: Valor a adicionar
         source: 'deposit', 'bonus', 'refund'
         payment_id: ID do pagamento (se houver)
-    
+
     Returns:
         UserPetitionBalance atualizado
     """
@@ -345,7 +345,9 @@ def add_petition_balance(
         transaction_type=source,
         amount=amount,  # Positivo = entrada
         balance_after=balance_record.balance,
-        description=f"Depósito via {source}" if source == "deposit" else f"Bônus: {source}",
+        description=f"Depósito via {source}"
+        if source == "deposit"
+        else f"Bônus: {source}",
         payment_id=payment_id,
     )
     db.session.add(transaction)

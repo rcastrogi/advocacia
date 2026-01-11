@@ -2456,9 +2456,7 @@ class PetitionBalanceTransaction(db.Model):
     amount = db.Column(
         db.Numeric(10, 2), nullable=False
     )  # Positivo = entrada, Negativo = saída
-    balance_after = db.Column(
-        db.Numeric(10, 2), nullable=False
-    )  # Saldo após transação
+    balance_after = db.Column(db.Numeric(10, 2), nullable=False)  # Saldo após transação
 
     # Detalhes
     description = db.Column(db.String(255))

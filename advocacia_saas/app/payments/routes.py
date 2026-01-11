@@ -433,7 +433,7 @@ def _process_balance_deposit(payment):
     from app.billing.utils import add_petition_balance
 
     extra_data = payment.extra_data or {}
-    
+
     # Verificar se já foi processado
     if extra_data.get("balance_credited"):
         current_app.logger.info(f"Depósito já processado: payment={payment.id}")
@@ -462,10 +462,11 @@ def _process_balance_deposit(payment):
             f"✅ Depósito de saldo processado: user={payment.user_id}, "
             f"amount=R${payment.amount}, new_balance=R${balance.balance}"
         )
-        
+
         # Criar notificação para o usuário
         try:
             from app.models import Notification
+
             notification = Notification(
                 user_id=user.id,
                 type="payment",
@@ -692,7 +693,7 @@ def balance_dashboard():
 
     # Obter saldo atual
     balance_info = get_user_petition_balance(current_user)
-    
+
     # Buscar histórico de transações (últimas 50)
     transactions = (
         PetitionBalanceTransaction.query.filter_by(user_id=current_user.id)
@@ -714,7 +715,7 @@ def balance_deposit():
     """Página para adicionar saldo"""
     # Valores sugeridos para depósito
     suggested_amounts = [50, 100, 200, 500, 1000]
-    
+
     return render_template(
         "payments/balance_deposit.html",
         suggested_amounts=suggested_amounts,
@@ -748,8 +749,12 @@ def create_balance_pix():
             "payment_method_id": "pix",
             "payer": {
                 "email": current_user.email,
-                "first_name": current_user.name.split()[0] if current_user.name else "Usuario",
-                "last_name": " ".join(current_user.name.split()[1:]) if current_user.name and len(current_user.name.split()) > 1 else "Petitio",
+                "first_name": current_user.name.split()[0]
+                if current_user.name
+                else "Usuario",
+                "last_name": " ".join(current_user.name.split()[1:])
+                if current_user.name and len(current_user.name.split()) > 1
+                else "Petitio",
             },
             "metadata": {
                 "user_id": current_user.id,
@@ -773,8 +778,12 @@ def create_balance_pix():
             currency="BRL",
             status="pending",
             description="Depósito de saldo para petições",
-            pix_code=payment_response["point_of_interaction"]["transaction_data"]["qr_code"],
-            pix_qr_code=payment_response["point_of_interaction"]["transaction_data"]["qr_code_base64"],
+            pix_code=payment_response["point_of_interaction"]["transaction_data"][
+                "qr_code"
+            ],
+            pix_qr_code=payment_response["point_of_interaction"]["transaction_data"][
+                "qr_code_base64"
+            ],
             pix_expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
             extra_data={
                 "type": "balance_deposit",
@@ -784,14 +793,16 @@ def create_balance_pix():
         db.session.add(payment)
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "payment_id": payment.id,
-            "pix_code": payment.pix_code,
-            "pix_qr_code": payment.pix_qr_code,
-            "expires_at": payment.pix_expires_at.isoformat(),
-            "amount": float(amount),
-        })
+        return jsonify(
+            {
+                "success": True,
+                "payment_id": payment.id,
+                "pix_code": payment.pix_code,
+                "pix_qr_code": payment.pix_qr_code,
+                "expires_at": payment.pix_expires_at.isoformat(),
+                "amount": float(amount),
+            }
+        )
 
     except Exception as e:
         current_app.logger.error(f"Erro ao criar PIX para depósito: {str(e)}")
