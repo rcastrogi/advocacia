@@ -576,17 +576,17 @@ def dynamic_form(slug):
 
     # Coletar IDs de seções vinculadas (linked_section_id) para incluir automaticamente
     linked_section_ids = set()
-    
+
     # Montar estrutura para o template
     sections = []
     for config in sections_config:
         section = config.section
         if section and section.is_active:
             # Verificar se algum campo tem seção vinculada
-            for field in (section.fields_schema or []):
+            for field in section.fields_schema or []:
                 if field.get("linked_section_id"):
                     linked_section_ids.add(field.get("linked_section_id"))
-            
+
             sections.append(
                 {
                     "section": {
@@ -603,7 +603,7 @@ def dynamic_form(slug):
                     "field_overrides": config.field_overrides or {},
                 }
             )
-    
+
     # Adicionar seções vinculadas que não estão no modelo
     for linked_id in linked_section_ids:
         # Verificar se a seção já está incluída

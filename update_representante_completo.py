@@ -4,9 +4,10 @@
 Atualiza a seção de representante legal com todos os campos necessários.
 """
 
-import sys
 import json
-sys.path.insert(0, 'F:/PROJETOS/advocacia/advocacia_saas')
+import sys
+
+sys.path.insert(0, "F:/PROJETOS/advocacia/advocacia_saas")
 
 from app import create_app, db
 from app.models import PetitionSection
@@ -23,7 +24,7 @@ campos_representante = [
         "type": "text",
         "required": True,
         "size": "col-md-6",
-        "placeholder": "Nome completo do representante legal"
+        "placeholder": "Nome completo do representante legal",
     },
     {
         "name": "representante_cpf",
@@ -31,7 +32,7 @@ campos_representante = [
         "type": "cpf",
         "required": True,
         "size": "col-md-3",
-        "placeholder": "000.000.000-00"
+        "placeholder": "000.000.000-00",
     },
     {
         "name": "representante_rg",
@@ -39,7 +40,7 @@ campos_representante = [
         "type": "text",
         "required": False,
         "size": "col-md-3",
-        "placeholder": "00.000.000-0"
+        "placeholder": "00.000.000-0",
     },
     # Dados pessoais
     {
@@ -48,7 +49,7 @@ campos_representante = [
         "type": "text",
         "required": False,
         "size": "col-md-4",
-        "placeholder": "Brasileiro(a)"
+        "placeholder": "Brasileiro(a)",
     },
     {
         "name": "representante_estado_civil",
@@ -62,8 +63,8 @@ campos_representante = [
             {"value": "divorciado", "label": "Divorciado(a)"},
             {"value": "viuvo", "label": "Viúvo(a)"},
             {"value": "separado", "label": "Separado(a)"},
-            {"value": "uniao_estavel", "label": "União Estável"}
-        ]
+            {"value": "uniao_estavel", "label": "União Estável"},
+        ],
     },
     {
         "name": "representante_profissao",
@@ -71,7 +72,7 @@ campos_representante = [
         "type": "text",
         "required": False,
         "size": "col-md-4",
-        "placeholder": "Ex: Empresário, Administrador"
+        "placeholder": "Ex: Empresário, Administrador",
     },
     # Cargo na empresa
     {
@@ -80,14 +81,14 @@ campos_representante = [
         "type": "text",
         "required": False,
         "size": "col-md-6",
-        "placeholder": "Ex: Sócio-administrador, Diretor, Procurador"
+        "placeholder": "Ex: Sócio-administrador, Diretor, Procurador",
     },
     {
         "name": "representante_data_nascimento",
         "label": "Data de Nascimento",
         "type": "date",
         "required": False,
-        "size": "col-md-3"
+        "size": "col-md-3",
     },
     {
         "name": "representante_orgao_emissor",
@@ -95,7 +96,7 @@ campos_representante = [
         "type": "text",
         "required": False,
         "size": "col-md-3",
-        "placeholder": "SSP/SP"
+        "placeholder": "SSP/SP",
     },
     # Endereço completo
     {
@@ -104,7 +105,7 @@ campos_representante = [
         "type": "cep",
         "required": False,
         "size": "col-md-3",
-        "placeholder": "00000-000"
+        "placeholder": "00000-000",
     },
     {
         "name": "representante_logradouro",
@@ -112,7 +113,7 @@ campos_representante = [
         "type": "text",
         "required": False,
         "size": "col-md-6",
-        "placeholder": "Rua, Avenida, etc."
+        "placeholder": "Rua, Avenida, etc.",
     },
     {
         "name": "representante_numero",
@@ -120,7 +121,7 @@ campos_representante = [
         "type": "text",
         "required": False,
         "size": "col-md-3",
-        "placeholder": "Nº"
+        "placeholder": "Nº",
     },
     {
         "name": "representante_complemento",
@@ -128,7 +129,7 @@ campos_representante = [
         "type": "text",
         "required": False,
         "size": "col-md-4",
-        "placeholder": "Apto, Sala, Bloco"
+        "placeholder": "Apto, Sala, Bloco",
     },
     {
         "name": "representante_bairro",
@@ -136,7 +137,7 @@ campos_representante = [
         "type": "text",
         "required": False,
         "size": "col-md-4",
-        "placeholder": "Bairro"
+        "placeholder": "Bairro",
     },
     {
         "name": "representante_cidade",
@@ -144,7 +145,7 @@ campos_representante = [
         "type": "text",
         "required": False,
         "size": "col-md-4",
-        "placeholder": "Cidade"
+        "placeholder": "Cidade",
     },
     {
         "name": "representante_estado",
@@ -179,8 +180,8 @@ campos_representante = [
             {"value": "SC", "label": "Santa Catarina"},
             {"value": "SP", "label": "São Paulo"},
             {"value": "SE", "label": "Sergipe"},
-            {"value": "TO", "label": "Tocantins"}
-        ]
+            {"value": "TO", "label": "Tocantins"},
+        ],
     },
     # Contato
     {
@@ -189,7 +190,7 @@ campos_representante = [
         "type": "tel",
         "required": False,
         "size": "col-md-3",
-        "placeholder": "(00) 0000-0000"
+        "placeholder": "(00) 0000-0000",
     },
     {
         "name": "representante_celular",
@@ -197,7 +198,7 @@ campos_representante = [
         "type": "tel",
         "required": False,
         "size": "col-md-3",
-        "placeholder": "(00) 00000-0000"
+        "placeholder": "(00) 00000-0000",
     },
     {
         "name": "representante_email",
@@ -205,30 +206,30 @@ campos_representante = [
         "type": "email",
         "required": False,
         "size": "col-md-6",
-        "placeholder": "email@exemplo.com"
-    }
+        "placeholder": "email@exemplo.com",
+    },
 ]
 
 with app.app_context():
-    rep = PetitionSection.query.filter_by(slug='representante-legal').first()
-    
+    rep = PetitionSection.query.filter_by(slug="representante-legal").first()
+
     if rep:
         print(f"Atualizando secao '{rep.name}' (ID: {rep.id})")
         print(f"Campos anteriores: {len(rep.fields_schema)}")
-        
+
         # Atualizar via SQL direto para garantir persistência
         fields_json = json.dumps(campos_representante, ensure_ascii=False)
-        
+
         db.session.execute(
             text("UPDATE petition_sections SET fields_schema = :fields WHERE id = :id"),
-            {"fields": fields_json, "id": rep.id}
+            {"fields": fields_json, "id": rep.id},
         )
         db.session.commit()
-        
+
         # Verificar
         db.session.expire_all()
-        rep = PetitionSection.query.filter_by(slug='representante-legal').first()
-        
+        rep = PetitionSection.query.filter_by(slug="representante-legal").first()
+
         print(f"Campos atuais: {len(rep.fields_schema)}")
         print("\nCampos:")
         for i, f in enumerate(rep.fields_schema, 1):
