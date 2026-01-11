@@ -37,6 +37,24 @@ mp_access_token = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
 mp_sdk = mercadopago.SDK(mp_access_token) if mp_access_token else None
 
 
+def _process_referral_conversion(user_id, payment_id, payment_amount):
+    """
+    Processa conversão de indicação quando um pagamento é confirmado.
+    Só concede créditos na primeira compra do usuário indicado.
+    """
+    try:
+        from app.referral.routes import process_referral_conversion
+        referral = process_referral_conversion(user_id, payment_id, payment_amount)
+        if referral and referral.reward_granted:
+            current_app.logger.info(
+                f"🎁 Referral conversion: user={user_id}, referrer={referral.referrer_id}, "
+                f"credits={referral.referrer_reward_credits}+{referral.referred_reward_credits}"
+            )
+    except Exception as e:
+        # Não falhar o pagamento por erro na indicação
+        current_app.logger.error(f"Erro ao processar indicação: {str(e)}")
+
+
 # Planos disponíveis (carregados dinamicamente do banco)
 def get_plans():
     """Carrega planos ativos do banco de dados"""
@@ -377,6 +395,9 @@ def _handle_payment_webhook(payment_id):
                 user.billing_status = "active"
                 db.session.commit()
 
+            # Processar conversão de indicação (primeiro pagamento)
+            _process_referral_conversion(payment.user_id, payment.id, payment.amount)
+
             # Auditoria: pagamento aprovado
             AuditManager.log_payment_completed(payment)
 
@@ -426,6 +447,9 @@ def _handle_preapproval_webhook(preapproval_id):
         user.billing_status = "active"
 
         db.session.commit()
+
+        # Processar conversão de indicação (primeiro pagamento)
+        _process_referral_conversion(subscription.user_id, None, subscription.price)
 
         # Auditoria: assinatura ativada
         AuditManager.log_subscription_activated(subscription)

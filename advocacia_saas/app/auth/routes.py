@@ -399,6 +399,12 @@ def register():
 
         db.session.commit()
 
+        # Processar indicação (se houver)
+        from app.referral.routes import process_referral_registration
+        referral = process_referral_registration(user.email, user.id)
+        if referral:
+            current_app.logger.info(f"User {user.id} registered via referral from {referral.referrer_id}")
+
         # Iniciar período de trial automaticamente para novos usuários
         from flask import current_app
 
@@ -409,10 +415,17 @@ def register():
         # Auto-login the new user
         login_user(user)
 
-        flash(
-            f"Cadastro realizado com sucesso! Você tem {trial_days} dias gratuitos para testar o sistema.",
-            "success",
-        )
+        # Mensagem de sucesso (inclui bônus se foi indicado)
+        if referral:
+            flash(
+                f"Cadastro realizado com sucesso! Você foi indicado e ganhará créditos bônus ao assinar. Você tem {trial_days} dias gratuitos para testar o sistema.",
+                "success",
+            )
+        else:
+            flash(
+                f"Cadastro realizado com sucesso! Você tem {trial_days} dias gratuitos para testar o sistema.",
+                "success",
+            )
 
         # If a plan was selected, redirect to checkout
         if plan_id:

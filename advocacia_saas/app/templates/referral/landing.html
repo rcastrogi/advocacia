@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Você foi convidado! - Petitio{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-8">
+                <div class="card border-0 shadow-lg">
+                    <div class="card-body p-5 text-center">
+                        <!-- Ícone de presente -->
+                        <div class="mb-4">
+                            <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center" 
+                                 style="width: 100px; height: 100px;">
+                                <i class="fas fa-gift text-warning" style="font-size: 3rem;"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Título -->
+                        <h1 class="h2 fw-bold mb-3">Você foi convidado!</h1>
+                        
+                        <!-- Quem convidou -->
+                        <p class="text-muted mb-4">
+                            <strong>{{ referrer.full_name or referrer.username }}</strong> está te convidando para conhecer o Petitio
+                        </p>
+                        
+                        <!-- Bônus -->
+                        <div class="alert alert-success border-0 mb-4">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="fas fa-coins fa-2x text-warning me-3"></i>
+                                <div class="text-start">
+                                    <div class="fw-bold">Ganhe {{ bonus_credits }} créditos de bônus!</div>
+                                    <small>Ao se cadastrar e assinar qualquer plano</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- O que é o Petitio -->
+                        <div class="bg-light rounded p-4 mb-4 text-start">
+                            <h5 class="mb-3">
+                                <img src="{{ url_for('static', filename='images/logo.png') }}" 
+                                     alt="Petitio" 
+                                     style="height: 30px;"
+                                     onerror="this.outerHTML='<i class=\'fas fa-balance-scale text-primary me-2\'></i>Petitio'">
+                            </h5>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Geração de petições com Inteligência Artificial
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Controle de prazos e audiências
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Gestão completa de clientes e processos
+                                </li>
+                                <li>
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Controle financeiro integrado
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Código de indicação -->
+                        <div class="mb-4">
+                            <small class="text-muted">Código de indicação:</small>
+                            <div class="h4 fw-bold text-primary mb-0">{{ referral_code }}</div>
+                        </div>
+                        
+                        <!-- Botão de ação -->
+                        <a href="{{ url_for('auth.register', ref=referral_code) }}" class="btn btn-primary btn-lg w-100 mb-3">
+                            <i class="fas fa-rocket me-2"></i>
+                            Criar Minha Conta Grátis
+                        </a>
+                        
+                        <p class="small text-muted mb-0">
+                            Já tem uma conta? 
+                            <a href="{{ url_for('auth.login') }}">Faça login</a>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Como funciona -->
+                <div class="text-center mt-4 text-white">
+                    <h5 class="mb-3">Como funciona:</h5>
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <div class="bg-white bg-opacity-10 rounded p-3">
+                                <div class="h4 mb-2">1</div>
+                                <small>Crie sua conta gratuitamente</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bg-white bg-opacity-10 rounded p-3">
+                                <div class="h4 mb-2">2</div>
+                                <small>Assine qualquer plano</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bg-white bg-opacity-10 rounded p-3">
+                                <div class="h4 mb-2">3</div>
+                                <small>Receba seus créditos!</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

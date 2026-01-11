@@ -822,6 +822,110 @@
     </div>
 </section>
 
+<!-- Referral Program Section -->
+<section class="section scroll-animate" id="indicacao" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); position: relative; overflow: hidden;">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6 text-white mb-4 mb-lg-0">
+                <span class="badge bg-white text-danger mb-3 px-3 py-2">
+                    <i class="fas fa-gift me-1"></i> Programa de Indicação
+                </span>
+                <h2 class="display-5 fw-bold mb-4">
+                    Indique e Ganhe<br>
+                    <span style="background: linear-gradient(90deg, #fff 0%, #ffd700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        50 Créditos de IA!
+                    </span>
+                </h2>
+                <p class="lead opacity-90 mb-4">
+                    Convide seus colegas advogados para conhecer o Petitio. Quando eles assinarem, 
+                    você ganha <strong>50 créditos</strong> e seu amigo ganha <strong>20 créditos de bônus</strong>!
+                </p>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="bg-white bg-opacity-10 rounded-3 p-3 text-center">
+                            <div class="h2 fw-bold mb-0">50</div>
+                            <small class="opacity-75">Créditos para você</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-white bg-opacity-10 rounded-3 p-3 text-center">
+                            <div class="h2 fw-bold mb-0">20</div>
+                            <small class="opacity-75">Bônus para seu amigo</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-3 flex-wrap">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('referral.dashboard') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-share-alt me-2"></i>
+                        Meu Link de Indicação
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-rocket me-2"></i>
+                        Criar Conta e Participar
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('referral.how_it_works') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Como Funciona
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="position-relative">
+                    <!-- Card de ilustração -->
+                    <div class="bg-white rounded-4 shadow-lg p-4" style="transform: rotate(-2deg);">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="rounded-circle bg-success d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 50px; height: 50px;">
+                                <i class="fas fa-check text-white fa-lg"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">Indicação Convertida!</div>
+                                <small class="text-muted">Seu amigo assinou o plano Professional</small>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient rounded-3 p-3 mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="d-flex align-items-center text-white">
+                                <div class="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px;">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">+50 Créditos</div>
+                                    <small class="opacity-75">Adicionados à sua conta</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center justify-content-between text-muted small">
+                            <span><i class="fas fa-users me-1"></i> 5 indicações este mês</span>
+                            <span><i class="fas fa-trophy me-1 text-warning"></i> 250 créditos ganhos</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Decorações -->
+                    <div class="position-absolute" style="top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                    <div class="position-absolute" style="bottom: -30px; left: -30px; width: 80px; height: 80px; background: rgba(255,255,255,0.15); border-radius: 50%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ícones de decoração -->
+    <div style="position: absolute; top: 20%; left: 5%; font-size: 4rem; opacity: 0.1; transform: rotate(-15deg);">
+        <i class="fas fa-gift"></i>
+    </div>
+    <div style="position: absolute; bottom: 10%; right: 10%; font-size: 3rem; opacity: 0.1; transform: rotate(15deg);">
+        <i class="fas fa-coins"></i>
+    </div>
+</section>
+
 <!-- Pricing Section -->
 <section class="section scroll-animate" id="planos">
     <div class="container">

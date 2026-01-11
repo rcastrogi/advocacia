@@ -1522,8 +1522,8 @@ class PetitionType(db.Model):
     __tablename__ = "petition_types"
 
     id = db.Column(db.Integer, primary_key=True)
-    slug = db.Column(db.String(80), unique=True, nullable=False)
-    name = db.Column(db.String(180), nullable=False)
+    slug = db.Column(db.String(120), unique=True, nullable=False)  # Slug truncado automaticamente
+    name = db.Column(db.String(500), nullable=False)  # Nomes de petições podem ser longos
     description = db.Column(db.Text)
     category = db.Column(db.String(50), default="civel")
     icon = db.Column(db.String(50), default="fa-file-alt")  # Ícone FontAwesome
@@ -3941,8 +3941,8 @@ class PetitionModel(db.Model):
     __tablename__ = "petition_models"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(180), nullable=False)
-    slug = db.Column(db.String(80), unique=True, nullable=False)
+    name = db.Column(db.String(500), nullable=False)  # Nomes de petições podem ser longos
+    slug = db.Column(db.String(120), unique=True, nullable=False)  # Slug truncado automaticamente
     description = db.Column(db.Text)
 
     # Relacionamento com o tipo de petição (classificação)
@@ -5660,3 +5660,293 @@ class AIGenerationFeedback(db.Model):
 
     def __repr__(self):
         return f"<AIGenerationFeedback {self.id} rating={self.rating}>"
+
+
+class Referral(db.Model):
+    """
+    Programa de Indicação - Rastreia indicações entre usuários.
+    
+    Créditos só são concedidos quando o indicado faz o primeiro pagamento,
+    como proteção anti-fraude contra criação de contas falsas.
+    """
+    
+    __tablename__ = "referrals"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Quem indicou
+    referrer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    
+    # Quem foi indicado
+    referred_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)  # null até criar conta
+    referred_email = db.Column(db.String(120), nullable=False)  # Email usado no link
+    
+    # Código de indicação usado
+    referral_code = db.Column(db.String(20), nullable=False)
+    
+    # Status da indicação
+    status = db.Column(db.String(20), default="pending")  # pending, registered, converted, expired, invalid
+    
+    # Datas importantes
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    registered_at = db.Column(db.DateTime, nullable=True)  # Quando o indicado criou conta
+    converted_at = db.Column(db.DateTime, nullable=True)  # Quando o indicado pagou
+    
+    # Recompensas
+    referrer_reward_credits = db.Column(db.Integer, default=0)  # Créditos dados ao indicador
+    referred_reward_credits = db.Column(db.Integer, default=0)  # Créditos dados ao indicado
+    reward_granted = db.Column(db.Boolean, default=False)  # Se a recompensa já foi dada
+    
+    # Informações de conversão
+    first_payment_id = db.Column(db.Integer, db.ForeignKey("payments.id"), nullable=True)
+    first_payment_amount = db.Column(db.Numeric(10, 2), nullable=True)
+    
+    # Proteção anti-fraude
+    referred_ip = db.Column(db.String(45), nullable=True)
+    referred_user_agent = db.Column(db.String(500), nullable=True)
+    
+    # Relacionamentos
+    referrer = db.relationship("User", foreign_keys=[referrer_id], backref="referrals_made")
+    referred = db.relationship("User", foreign_keys=[referred_id], backref="referral_received")
+    first_payment = db.relationship("Payment", foreign_keys=[first_payment_id])
+    
+    # Configurações do programa (valores padrão)
+    REFERRER_REWARD_CREDITS = 50  # Créditos para quem indica
+    REFERRED_BONUS_CREDITS = 20   # Créditos extras para quem é indicado
+    MAX_REFERRALS_PER_MONTH = 20  # Limite mensal de indicações com recompensa
+    
+    @classmethod
+    def generate_referral_code(cls, user):
+        """Gera um código de indicação único para o usuário."""
+        import secrets
+        import re
+        
+        # Tenta usar parte do nome do usuário
+        if user.full_name:
+            name_part = re.sub(r'[^a-zA-Z]', '', user.full_name.split()[0].upper())[:4]
+        else:
+            name_part = user.username[:4].upper()
+        
+        # Adiciona números aleatórios
+        random_part = secrets.token_hex(2).upper()
+        
+        code = f"{name_part}{random_part}"
+        
+        # Garante unicidade
+        while cls.query.filter_by(referral_code=code).first():
+            random_part = secrets.token_hex(2).upper()
+            code = f"{name_part}{random_part}"
+        
+        return code
+    
+    @classmethod
+    def get_user_referral_code(cls, user):
+        """Obtém ou cria o código de indicação do usuário."""
+        # Verifica se usuário já tem um código
+        existing = cls.query.filter_by(referrer_id=user.id).first()
+        if existing:
+            return existing.referral_code
+        
+        # Se não tem, gera um novo
+        return cls.generate_referral_code(user)
+    
+    @classmethod
+    def get_referrer_by_code(cls, code):
+        """Encontra o usuário que possui um código de indicação."""
+        referral = cls.query.filter_by(referral_code=code.upper()).first()
+        if referral:
+            return referral.referrer
+        
+        # Busca por código armazenado no User (se implementado)
+        user = User.query.filter(User.id == cls.query.filter_by(referral_code=code.upper()).with_entities(cls.referrer_id).scalar()).first()
+        return user
+    
+    @classmethod
+    def create_referral(cls, referrer_id, referred_email, referral_code, ip=None, user_agent=None):
+        """Cria um registro de indicação quando alguém usa um link de indicação."""
+        # Verifica se já existe indicação para este email
+        existing = cls.query.filter_by(referred_email=referred_email.lower()).first()
+        if existing:
+            return existing
+        
+        referral = cls(
+            referrer_id=referrer_id,
+            referred_email=referred_email.lower(),
+            referral_code=referral_code.upper(),
+            status="pending",
+            referred_ip=ip,
+            referred_user_agent=user_agent
+        )
+        db.session.add(referral)
+        db.session.commit()
+        return referral
+    
+    @classmethod
+    def mark_as_registered(cls, email, user_id):
+        """Marca a indicação como registrada quando o usuário cria conta."""
+        referral = cls.query.filter_by(
+            referred_email=email.lower(),
+            status="pending"
+        ).first()
+        
+        if referral:
+            referral.status = "registered"
+            referral.referred_id = user_id
+            referral.registered_at = datetime.now(timezone.utc)
+            db.session.commit()
+            return referral
+        return None
+    
+    @classmethod
+    def process_conversion(cls, user_id, payment_id, payment_amount):
+        """
+        Processa a conversão quando o indicado faz o primeiro pagamento.
+        Concede créditos ao indicador e bônus ao indicado.
+        """
+        referral = cls.query.filter_by(
+            referred_id=user_id,
+            status="registered",
+            reward_granted=False
+        ).first()
+        
+        if not referral:
+            return None
+        
+        # Verifica limite mensal do indicador
+        month_start = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        month_conversions = cls.query.filter(
+            cls.referrer_id == referral.referrer_id,
+            cls.converted_at >= month_start,
+            cls.reward_granted == True
+        ).count()
+        
+        if month_conversions >= cls.MAX_REFERRALS_PER_MONTH:
+            referral.status = "converted"
+            referral.converted_at = datetime.now(timezone.utc)
+            referral.first_payment_id = payment_id
+            referral.first_payment_amount = payment_amount
+            # Não concede recompensa, mas marca como convertido
+            db.session.commit()
+            return referral
+        
+        # Concede créditos ao indicador
+        referrer_credits = UserCredits.get_or_create(referral.referrer_id)
+        referrer_credits.add_credits(
+            cls.REFERRER_REWARD_CREDITS,
+            source="referral_reward",
+            description=f"Indicação convertida: {referral.referred_email}"
+        )
+        
+        # Concede bônus ao indicado
+        referred_credits = UserCredits.get_or_create(user_id)
+        referred_credits.add_credits(
+            cls.REFERRED_BONUS_CREDITS,
+            source="referral_bonus",
+            description="Bônus de boas-vindas por indicação"
+        )
+        
+        # Atualiza registro
+        referral.status = "converted"
+        referral.converted_at = datetime.now(timezone.utc)
+        referral.first_payment_id = payment_id
+        referral.first_payment_amount = payment_amount
+        referral.referrer_reward_credits = cls.REFERRER_REWARD_CREDITS
+        referral.referred_reward_credits = cls.REFERRED_BONUS_CREDITS
+        referral.reward_granted = True
+        
+        db.session.commit()
+        return referral
+    
+    @classmethod
+    def get_user_stats(cls, user_id):
+        """Retorna estatísticas de indicação do usuário."""
+        total = cls.query.filter_by(referrer_id=user_id).count()
+        registered = cls.query.filter_by(referrer_id=user_id, status="registered").count()
+        converted = cls.query.filter_by(referrer_id=user_id, status="converted").count()
+        
+        total_credits = db.session.query(
+            db.func.coalesce(db.func.sum(cls.referrer_reward_credits), 0)
+        ).filter(
+            cls.referrer_id == user_id,
+            cls.reward_granted == True
+        ).scalar()
+        
+        return {
+            "total_referrals": total,
+            "pending": total - registered - converted,
+            "registered": registered,
+            "converted": converted,
+            "total_credits_earned": int(total_credits or 0),
+            "conversion_rate": round((converted / total * 100) if total > 0 else 0, 1)
+        }
+    
+    def __repr__(self):
+        return f"<Referral {self.id} {self.referrer_id} -> {self.referred_email} ({self.status})>"
+
+
+class ReferralCode(db.Model):
+    """
+    Armazena códigos de indicação únicos para cada usuário.
+    Separado do Referral para permitir códigos permanentes.
+    """
+    
+    __tablename__ = "referral_codes"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
+    code = db.Column(db.String(20), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    is_active = db.Column(db.Boolean, default=True)
+    
+    # Estatísticas rápidas
+    total_clicks = db.Column(db.Integer, default=0)
+    total_registrations = db.Column(db.Integer, default=0)
+    total_conversions = db.Column(db.Integer, default=0)
+    
+    user = db.relationship("User", backref=db.backref("referral_code_obj", uselist=False))
+    
+    @classmethod
+    def get_or_create(cls, user):
+        """Obtém ou cria o código de indicação do usuário."""
+        existing = cls.query.filter_by(user_id=user.id).first()
+        if existing:
+            return existing
+        
+        # Gera código único
+        import secrets
+        import re
+        
+        if user.full_name:
+            name_part = re.sub(r'[^a-zA-Z]', '', user.full_name.split()[0].upper())[:4]
+        else:
+            name_part = user.username[:4].upper()
+        
+        random_part = secrets.token_hex(2).upper()
+        code = f"{name_part}{random_part}"
+        
+        while cls.query.filter_by(code=code).first():
+            random_part = secrets.token_hex(2).upper()
+            code = f"{name_part}{random_part}"
+        
+        new_code = cls(user_id=user.id, code=code)
+        db.session.add(new_code)
+        db.session.commit()
+        return new_code
+    
+    def increment_clicks(self):
+        """Incrementa contador de cliques."""
+        self.total_clicks += 1
+        db.session.commit()
+    
+    def increment_registrations(self):
+        """Incrementa contador de registros."""
+        self.total_registrations += 1
+        db.session.commit()
+    
+    def increment_conversions(self):
+        """Incrementa contador de conversões."""
+        self.total_conversions += 1
+        db.session.commit()
+    
+    def __repr__(self):
+        return f"<ReferralCode {self.code} user={self.user_id}>"

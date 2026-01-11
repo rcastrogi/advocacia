@@ -276,6 +276,11 @@ def create_app(config_class=Config):
 
     app.register_blueprint(logs_bp)
 
+    # Register referral program routes
+    from app.referral import bp as referral_bp
+
+    app.register_blueprint(referral_bp)
+
     # Register error handlers
     from app.error_handlers import init_logging, register_error_handlers
 

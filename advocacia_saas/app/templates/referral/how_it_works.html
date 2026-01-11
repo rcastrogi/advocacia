@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Como Funciona o Programa de Indicação - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-4" 
+                 style="width: 80px; height: 80px;">
+                <i class="fas fa-gift text-primary fa-2x"></i>
+            </div>
+            <h1 class="fw-bold mb-3">Programa de Indicação</h1>
+            <p class="lead text-muted">
+                Indique colegas advogados e ganhe créditos para usar nossa IA!
+            </p>
+        </div>
+    </div>
+
+    <!-- Recompensas -->
+    <div class="row mb-5">
+        <div class="col-lg-10 mx-auto">
+            <div class="card border-0 shadow-lg overflow-hidden">
+                <div class="row g-0">
+                    <div class="col-md-6 bg-gradient-primary text-white p-5">
+                        <h3 class="mb-4">
+                            <i class="fas fa-user me-2"></i>
+                            Você ganha
+                        </h3>
+                        <div class="display-4 fw-bold mb-2">{{ rewards.referrer }}</div>
+                        <p class="h5 opacity-75">créditos de IA</p>
+                        <hr class="my-4 opacity-25">
+                        <p class="mb-0 opacity-75">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Por cada indicado que fizer o primeiro pagamento
+                        </p>
+                    </div>
+                    <div class="col-md-6 p-5">
+                        <h3 class="mb-4 text-primary">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Seu amigo ganha
+                        </h3>
+                        <div class="display-4 fw-bold text-primary mb-2">{{ rewards.referred }}</div>
+                        <p class="h5 text-muted">créditos de bônus</p>
+                        <hr class="my-4">
+                        <p class="mb-0 text-muted">
+                            <i class="fas fa-gift me-2"></i>
+                            Créditos extras ao assinar qualquer plano
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Como funciona -->
+    <div class="row mb-5">
+        <div class="col-lg-10 mx-auto">
+            <h2 class="text-center mb-5">Como funciona</h2>
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <span class="h4 mb-0">1</span>
+                        </div>
+                        <h5>Compartilhe seu link</h5>
+                        <p class="text-muted small">
+                            Copie seu link único de indicação e compartilhe com colegas advogados
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <span class="h4 mb-0">2</span>
+                        </div>
+                        <h5>Amigo se cadastra</h5>
+                        <p class="text-muted small">
+                            Seu colega cria uma conta usando seu link de indicação
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <span class="h4 mb-0">3</span>
+                        </div>
+                        <h5>Amigo assina</h5>
+                        <p class="text-muted small">
+                            Quando ele faz o primeiro pagamento, a recompensa é liberada
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="fas fa-check fa-lg"></i>
+                        </div>
+                        <h5>Vocês ganham!</h5>
+                        <p class="text-muted small">
+                            Você ganha {{ rewards.referrer }} créditos e seu amigo {{ rewards.referred }} de bônus
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Regras -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="fas fa-book me-2 text-primary"></i>
+                        Regras do Programa
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                O que conta
+                            </h6>
+                            <ul class="text-muted small">
+                                <li>Indicado deve ser novo usuário do Petitio</li>
+                                <li>Indicado precisa verificar o e-mail</li>
+                                <li>Indicado deve fazer o primeiro pagamento</li>
+                                <li>Pagamento deve ser confirmado pelo sistema</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-danger">
+                                <i class="fas fa-times-circle me-2"></i>
+                                O que não conta
+                            </h6>
+                            <ul class="text-muted small">
+                                <li>Auto-indicação (usar próprio código)</li>
+                                <li>Contas duplicadas ou fake</li>
+                                <li>Indicações que não completam pagamento</li>
+                                <li>Mais de {{ rewards.max_monthly }} conversões por mês</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto">
+            <h2 class="text-center mb-4">Perguntas Frequentes</h2>
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                            Quando recebo meus créditos?
+                        </button>
+                    </h2>
+                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Os créditos são creditados automaticamente assim que seu indicado faz o primeiro pagamento confirmado no sistema. Isso pode ser uma assinatura de plano ou compra de pacote de créditos.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                            Existe limite de indicações?
+                        </button>
+                    </h2>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Você pode compartilhar seu link com quantas pessoas quiser! Porém, o limite de recompensas é de {{ rewards.max_monthly }} conversões por mês. Após esse limite, as indicações ainda são válidas mas você não recebe créditos adicionais naquele mês.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                            Para que servem os créditos?
+                        </button>
+                    </h2>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Os créditos são usados para gerar petições com nossa Inteligência Artificial. Cada geração consome créditos, e com o programa de indicação você pode acumular créditos extras gratuitamente!
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item border-0 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                            Meu código de indicação pode mudar?
+                        </button>
+                    </h2>
+                    <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Não, seu código de indicação é permanente e único. Você pode compartilhá-lo quantas vezes quiser, ele sempre estará associado à sua conta.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="row">
+        <div class="col-lg-6 mx-auto text-center">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('referral.dashboard') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-share-alt me-2"></i>
+                Acessar Meu Painel de Indicações
+            </a>
+            {% else %}
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-rocket me-2"></i>
+                Criar Minha Conta
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+</style>
+{% endblock %}

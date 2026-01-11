@@ -10,12 +10,13 @@ from sqlalchemy.orm import Query
 from app import db
 
 
-def slugify(value: str) -> str:
+def slugify(value: str, max_length: int = 100) -> str:
     """
     Converte uma string em um slug válido.
 
     Args:
         value: String a ser convertida
+        max_length: Tamanho máximo do slug (default: 100)
 
     Returns:
         Slug válido (letras minúsculas, números e hífens)
@@ -30,7 +31,15 @@ def slugify(value: str) -> str:
     value = re.sub(r"[^a-z0-9]+", "-", value)
 
     # Remover hífens do início e fim
-    return value.strip("-")
+    slug = value.strip("-")
+
+    # Truncar se necessário, garantindo que não corte no meio de uma palavra
+    if len(slug) > max_length:
+        slug = slug[:max_length]
+        # Remover hífen no final se ficou truncado
+        slug = slug.rstrip("-")
+
+    return slug
 
 
 def generate_unique_slug(base_name: str, model_class: Type, existing_slug: str = None) -> str:

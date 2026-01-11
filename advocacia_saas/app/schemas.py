@@ -134,12 +134,12 @@ class PetitionTypeSchema(Schema):
     id = fields.Int(dump_only=True)
     name = fields.Str(
         required=True,
-        validate=validate.Length(min=2, max=180),
+        validate=validate.Length(min=2, max=500),
         error_messages={"required": "Nome do tipo é obrigatório"},
     )
     slug = fields.Str(
         required=True,
-        validate=validate.Length(min=2, max=80),
+        validate=validate.Length(min=2, max=120),
         error_messages={"required": "Slug é obrigatório"},
     )
     description = fields.Str(allow_none=True)

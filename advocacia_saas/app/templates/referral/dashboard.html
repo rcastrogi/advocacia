@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}Programa de Indicação - Petitio{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-gift text-primary me-2"></i>
+                        Programa de Indicação
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Indique colegas e ganhe créditos quando eles assinarem!
+                    </p>
+                </div>
+                <a href="{{ url_for('referral.how_it_works') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-question-circle me-1"></i>
+                    Como funciona?
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 60px; height: 60px;">
+                        <i class="fas fa-link text-primary fa-lg"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">{{ stats.total_referrals }}</h3>
+                    <p class="text-muted small mb-0">Links Compartilhados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-info bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 60px; height: 60px;">
+                        <i class="fas fa-user-plus text-info fa-lg"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">{{ stats.registered }}</h3>
+                    <p class="text-muted small mb-0">Cadastros Realizados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 60px; height: 60px;">
+                        <i class="fas fa-check-circle text-success fa-lg"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">{{ stats.converted }}</h3>
+                    <p class="text-muted small mb-0">Conversões</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm bg-gradient-primary text-white">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-white bg-opacity-25 d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 60px; height: 60px;">
+                        <i class="fas fa-coins text-white fa-lg"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">{{ stats.total_credits_earned }}</h3>
+                    <p class="small mb-0 opacity-75">Créditos Ganhos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seu Link de Indicação -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="fas fa-share-alt text-primary me-2"></i>
+                        Seu Link de Indicação
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8 mb-3 mb-md-0">
+                            <label class="form-label small text-muted">Compartilhe este link com seus colegas:</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-link"></i>
+                                </span>
+                                <input type="text" 
+                                       id="referral-link" 
+                                       class="form-control bg-light" 
+                                       value="{{ share_url }}" 
+                                       readonly>
+                                <button class="btn btn-primary" 
+                                        type="button" 
+                                        onclick="copyReferralLink()"
+                                        id="copy-btn">
+                                    <i class="fas fa-copy me-1"></i>
+                                    Copiar
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <span class="badge bg-light text-dark border me-2">
+                                    <i class="fas fa-code me-1"></i>
+                                    Código: <strong>{{ referral_code.code }}</strong>
+                                </span>
+                                <span class="badge bg-light text-muted">
+                                    <i class="fas fa-eye me-1"></i>
+                                    {{ referral_code.total_clicks }} cliques
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="small text-muted mb-2">Compartilhar via:</p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="https://wa.me/?text={{ 'Conheça o Petitio! Use meu código ' ~ referral_code.code ~ ' e ganhe créditos: ' ~ share_url | urlencode }}" 
+                                   target="_blank"
+                                   class="btn btn-success btn-sm"
+                                   onclick="trackShare('whatsapp')">
+                                    <i class="fab fa-whatsapp me-1"></i>
+                                    WhatsApp
+                                </a>
+                                <a href="https://t.me/share/url?url={{ share_url | urlencode }}&text={{ 'Use meu código ' ~ referral_code.code ~ ' e ganhe créditos!' | urlencode }}" 
+                                   target="_blank"
+                                   class="btn btn-info btn-sm text-white"
+                                   onclick="trackShare('telegram')">
+                                    <i class="fab fa-telegram me-1"></i>
+                                    Telegram
+                                </a>
+                                <a href="mailto:?subject=Conheça o Petitio&body={{ 'Olá! Estou usando o Petitio para gerenciar meus processos e petições. Use meu código ' ~ referral_code.code ~ ' para se cadastrar e ganhar créditos: ' ~ share_url | urlencode }}" 
+                                   class="btn btn-secondary btn-sm"
+                                   onclick="trackShare('email')">
+                                    <i class="fas fa-envelope me-1"></i>
+                                    E-mail
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recompensas -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="fas fa-gift text-warning me-2"></i>
+                        Recompensas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3 p-2 bg-light rounded">
+                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3" 
+                             style="width: 40px; height: 40px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">Você ganha</div>
+                            <div class="text-success">
+                                <strong>{{ rewards.referrer }} créditos</strong>
+                                <small class="text-muted">por conversão</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center p-2 bg-light rounded">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" 
+                             style="width: 40px; height: 40px;">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">Seu amigo ganha</div>
+                            <div class="text-primary">
+                                <strong>{{ rewards.referred }} créditos</strong>
+                                <small class="text-muted">de bônus</small>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <p class="small text-muted mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Créditos são concedidos quando seu indicado faz o primeiro pagamento.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Histórico de Indicações -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history text-primary me-2"></i>
+                        Histórico de Indicações
+                    </h5>
+                    <span class="badge bg-primary">{{ stats.total_referrals }} total</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if referrals %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Indicado</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                    <th>Conversão</th>
+                                    <th>Créditos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for referral in referrals %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-2" 
+                                                 style="width: 32px; height: 32px;">
+                                                <i class="fas fa-user text-muted"></i>
+                                            </div>
+                                            <div>
+                                                {% if referral.referred %}
+                                                    <span>{{ referral.referred.full_name or referral.referred.username }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">{{ referral.referred_email }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if referral.status == 'pending' %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-clock me-1"></i>Pendente
+                                            </span>
+                                        {% elif referral.status == 'registered' %}
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-user-check me-1"></i>Cadastrado
+                                            </span>
+                                        {% elif referral.status == 'converted' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle me-1"></i>Convertido
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>{{ referral.status }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ referral.created_at.strftime('%d/%m/%Y') }}</small>
+                                    </td>
+                                    <td>
+                                        {% if referral.converted_at %}
+                                            <small class="text-success">
+                                                {{ referral.converted_at.strftime('%d/%m/%Y') }}
+                                            </small>
+                                        {% else %}
+                                            <small class="text-muted">-</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if referral.reward_granted %}
+                                            <span class="text-success fw-bold">
+                                                +{{ referral.referrer_reward_credits }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-share-alt text-muted fa-2x"></i>
+                        </div>
+                        <h5 class="text-muted">Nenhuma indicação ainda</h5>
+                        <p class="text-muted mb-3">Compartilhe seu link e comece a ganhar créditos!</p>
+                        <button class="btn btn-primary" onclick="copyReferralLink()">
+                            <i class="fas fa-copy me-1"></i>
+                            Copiar Link de Indicação
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+</style>
+
+<script>
+function copyReferralLink() {
+    const input = document.getElementById('referral-link');
+    input.select();
+    input.setSelectionRange(0, 99999);
+    
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>Copiado!';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        showToast('Link copiado para a área de transferência!', 'success');
+        
+        setTimeout(() => {
+            btn.innerHTML = '<i class="fas fa-copy me-1"></i>Copiar';
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 2000);
+    });
+}
+
+function trackShare(platform) {
+    fetch('{{ url_for("referral.api_share") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ platform: platform })
+    });
+}
+</script>
+{% endblock %}
