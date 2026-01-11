@@ -242,14 +242,20 @@ def get_user_petition_usage(user) -> dict:
 
 def ensure_default_plan():
     """Guarantee at least one billing plan exists."""
-    plan = BillingPlan.query.filter_by(slug="per-usage").first()
+    # Procura por qualquer plano per_usage ativo primeiro
+    plan = BillingPlan.query.filter_by(plan_type="per_usage", active=True).first()
     if not plan:
+        # Se não há plano per_usage ativo, procura por qualquer plano per_usage
+        plan = BillingPlan.query.filter_by(plan_type="per_usage").first()
+    if not plan:
+        # Só cria se realmente não existir nenhum plano per_usage
         plan = BillingPlan(
             slug="per-usage",
             name="Pay per use",
             plan_type="per_usage",
             monthly_fee=Decimal("0.00"),
             description="Cobrança por petição billable.",
+            active=True,
         )
         db.session.add(plan)
         db.session.commit()
