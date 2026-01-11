@@ -1,17 +1,23 @@
+# Schemas e scripts de migração temporários
 schema_local.json
-validate_sql.py
-generate_migration.py
-extract_local_schema.py
-decode_schema.py
-compare_schemas.py
+*_schema.py
+*_migration.py
 
 # Local debug log
 advocacia_saas/debug.log
 
-# Scripts de teste e desenvolvimento (não necessários em produção)
-test_admin_layouts.py
-test_sections.py
-test_template.py
-test_toasts.py
-check_sections.py
-activate_indenizatoria_model.py
+# Scripts de teste e desenvolvimento (padrões)
+test_*.py
+check_*.py
+fix_*.py
+validate_*.py
+analyze_*.py
+list_*.py
+update_*.py
+criar_*.py
+validar_*.py
+compare_*.py
+extract_*.py
+decode_*.py
+generate_*.py
+activate_*.py
