@@ -138,6 +138,7 @@ def create_pix_payment():
         amount = float(data.get("amount"))
         plan_id = data.get("plan_id")
         description = data.get("description", "Pagamento via PIX")
+        billing_period = data.get("billing_period", "1m")
 
         if plan_id:
             plan = BillingPlan.query.get_or_404(plan_id)
@@ -148,11 +149,12 @@ def create_pix_payment():
                     {"error": "PIX disponível apenas para planos pay-per-use"}
                 ), 400
             amount = max(amount, float(plan.monthly_fee))
+            description = f"Petitio - {plan.name} ({billing_period})"
 
         # Criar pagamento no Mercado Pago
         payment_data = {
             "transaction_amount": amount,
-            "description": f"Petitio - {plan.name} ({billing_period})",
+            "description": description,
             "payment_method_id": "pix",
             "payer": {
                 "email": current_user.email,
@@ -217,6 +219,7 @@ def create_mercadopago_subscription():
         plan_id = data.get("plan_id")
         card_token = data.get("card_token")
         auto_recurring = data.get("auto_recurring", True)
+        billing_period = data.get("billing_period", "monthly")
 
         plan = BillingPlan.query.get_or_404(plan_id)
         if not plan.active:
@@ -383,18 +386,26 @@ def _handle_payment_webhook(payment_id):
     payment_data = payment_info["response"]
 
     if payment_data["status"] == "approved":
-        # Encontrar pagamento no banco
+        # Tentar encontrar por gateway_payment_id ou external_id
         payment = Payment.query.filter_by(gateway_payment_id=str(payment_id)).first()
+        if not payment:
+            payment = Payment.query.filter_by(external_id=str(payment_id)).first()
 
         if payment and payment.status == "pending":
             old_status = payment.status
             payment.mark_as_paid()
 
-            # Para pay-per-use, ativar plano imediatamente
-            if payment.payment_type == "one_time":
-                user = db.session.get(User, payment.user_id)
-                user.billing_status = "active"
-                db.session.commit()
+            # Verificar se é depósito de saldo
+            extra_data = payment.extra_data or {}
+            if extra_data.get("type") == "balance_deposit":
+                # Processar depósito de saldo
+                _process_balance_deposit(payment)
+            else:
+                # Para pay-per-use, ativar plano imediatamente
+                if payment.payment_type == "one_time":
+                    user = db.session.get(User, payment.user_id)
+                    user.billing_status = "active"
+                    db.session.commit()
 
             # Processar conversão de indicação (primeiro pagamento)
             _process_referral_conversion(payment.user_id, payment.id, payment.amount)
@@ -406,6 +417,8 @@ def _handle_payment_webhook(payment_id):
 
     elif payment_data["status"] in ["rejected", "cancelled"]:
         payment = Payment.query.filter_by(gateway_payment_id=str(payment_id)).first()
+        if not payment:
+            payment = Payment.query.filter_by(external_id=str(payment_id)).first()
         if payment and payment.status == "pending":
             payment.status = "failed"
             db.session.commit()
@@ -413,6 +426,63 @@ def _handle_payment_webhook(payment_id):
             AuditManager.log_payment_failed(
                 payment, f"Status: {payment_data['status']}"
             )
+
+
+def _process_balance_deposit(payment):
+    """Processa depósito de saldo quando pagamento PIX é confirmado."""
+    from app.billing.utils import add_petition_balance
+
+    extra_data = payment.extra_data or {}
+    
+    # Verificar se já foi processado
+    if extra_data.get("balance_credited"):
+        current_app.logger.info(f"Depósito já processado: payment={payment.id}")
+        return True
+
+    try:
+        # Buscar usuário
+        user = db.session.get(User, payment.user_id)
+        if not user:
+            current_app.logger.error(f"Usuário não encontrado: {payment.user_id}")
+            return False
+
+        # Adicionar saldo
+        balance = add_petition_balance(
+            user,
+            payment.amount,
+            source="deposit",
+            payment_id=payment.id,
+        )
+
+        # Marcar como processado
+        payment.extra_data = {**extra_data, "balance_credited": True}
+        db.session.commit()
+
+        current_app.logger.info(
+            f"✅ Depósito de saldo processado: user={payment.user_id}, "
+            f"amount=R${payment.amount}, new_balance=R${balance.balance}"
+        )
+        
+        # Criar notificação para o usuário
+        try:
+            from app.models import Notification
+            notification = Notification(
+                user_id=user.id,
+                type="payment",
+                title="Depósito confirmado!",
+                message=f"Seu depósito de R$ {payment.amount:.2f} foi confirmado. Saldo atual: R$ {balance.balance:.2f}",
+                data={"payment_id": payment.id, "amount": float(payment.amount)},
+            )
+            db.session.add(notification)
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.warning(f"Erro ao criar notificação: {e}")
+
+        return True
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao processar depósito de saldo: {str(e)}")
+        return False
 
 
 def _handle_preapproval_webhook(preapproval_id):
@@ -606,3 +676,144 @@ def payment_status(payment_id):
 def cancellation_policy():
     """Página da política de cancelamento e reembolso"""
     return render_template("payments/cancellation_policy.html")
+
+
+# =============================================================================
+# SISTEMA DE SALDO PARA PETIÇÕES (PAY PER USE)
+# =============================================================================
+
+
+@bp.route("/balance")
+@login_required
+def balance_dashboard():
+    """Dashboard de saldo do usuário para petições"""
+    from app.billing.utils import get_user_petition_balance
+    from app.models import PetitionBalanceTransaction, UserPetitionBalance
+
+    # Obter saldo atual
+    balance_info = get_user_petition_balance(current_user)
+    
+    # Buscar histórico de transações (últimas 50)
+    transactions = (
+        PetitionBalanceTransaction.query.filter_by(user_id=current_user.id)
+        .order_by(PetitionBalanceTransaction.created_at.desc())
+        .limit(50)
+        .all()
+    )
+
+    return render_template(
+        "payments/balance_dashboard.html",
+        balance=balance_info,
+        transactions=transactions,
+    )
+
+
+@bp.route("/balance/deposit")
+@login_required
+def balance_deposit():
+    """Página para adicionar saldo"""
+    # Valores sugeridos para depósito
+    suggested_amounts = [50, 100, 200, 500, 1000]
+    
+    return render_template(
+        "payments/balance_deposit.html",
+        suggested_amounts=suggested_amounts,
+    )
+
+
+@bp.route("/balance/create-pix", methods=["POST"])
+@login_required
+@limiter.limit("5 per minute")
+def create_balance_pix():
+    """Criar pagamento PIX para adicionar saldo"""
+    from app.models import UserPetitionBalance
+
+    if not mp_sdk:
+        return jsonify({"error": "Sistema de pagamento não configurado"}), 500
+
+    try:
+        data = request.get_json()
+        amount = Decimal(str(data.get("amount", 0)))
+
+        # Validar valor mínimo e máximo
+        if amount < Decimal("10.00"):
+            return jsonify({"error": "Valor mínimo para depósito é R$ 10,00"}), 400
+        if amount > Decimal("10000.00"):
+            return jsonify({"error": "Valor máximo para depósito é R$ 10.000,00"}), 400
+
+        # Criar pagamento no Mercado Pago
+        payment_data = {
+            "transaction_amount": float(amount),
+            "description": f"Depósito de saldo - Petitio",
+            "payment_method_id": "pix",
+            "payer": {
+                "email": current_user.email,
+                "first_name": current_user.name.split()[0] if current_user.name else "Usuario",
+                "last_name": " ".join(current_user.name.split()[1:]) if current_user.name and len(current_user.name.split()) > 1 else "Petitio",
+            },
+            "metadata": {
+                "user_id": current_user.id,
+                "type": "balance_deposit",
+            },
+        }
+
+        payment_response = mp_sdk.payment().create(payment_data)
+
+        if payment_response["status"] != 201:
+            return jsonify({"error": "Erro ao criar pagamento PIX"}), 500
+
+        payment_response = payment_response["response"]
+
+        # Salvar pagamento no banco
+        payment = Payment(
+            user_id=current_user.id,
+            external_id=str(payment_response["id"]),
+            payment_method="pix",
+            amount=amount,
+            currency="BRL",
+            status="pending",
+            description="Depósito de saldo para petições",
+            pix_code=payment_response["point_of_interaction"]["transaction_data"]["qr_code"],
+            pix_qr_code=payment_response["point_of_interaction"]["transaction_data"]["qr_code_base64"],
+            pix_expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+            extra_data={
+                "type": "balance_deposit",
+                "mp_response": payment_response,
+            },
+        )
+        db.session.add(payment)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "payment_id": payment.id,
+            "pix_code": payment.pix_code,
+            "pix_qr_code": payment.pix_qr_code,
+            "expires_at": payment.pix_expires_at.isoformat(),
+            "amount": float(amount),
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao criar PIX para depósito: {str(e)}")
+        return jsonify({"error": "Erro ao processar pagamento"}), 500
+
+
+@bp.route("/balance/history")
+@login_required
+def balance_history():
+    """Histórico completo de transações de saldo"""
+    from app.models import PetitionBalanceTransaction
+
+    page = request.args.get("page", 1, type=int)
+    per_page = 20
+
+    transactions = (
+        PetitionBalanceTransaction.query.filter_by(user_id=current_user.id)
+        .order_by(PetitionBalanceTransaction.created_at.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+
+    return render_template(
+        "payments/balance_history.html",
+        transactions=transactions,
+    )

@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Saldo - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-wallet text-primary me-2"></i>
+                Meu Saldo
+            </h1>
+            <p class="text-muted mb-0">Gerencie seu saldo para geração de petições</p>
+        </div>
+        <a href="{{ url_for('payments.balance_deposit') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Adicionar Saldo
+        </a>
+    </div>
+
+    <!-- Cards de Resumo -->
+    <div class="row g-4 mb-4">
+        <!-- Saldo Atual -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                                <i class="fas fa-wallet text-primary fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Saldo Disponível</h6>
+                            <h2 class="mb-0 text-primary">R$ {{ "%.2f"|format(balance.balance) }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Depositado -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                                <i class="fas fa-arrow-down text-success fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Depositado</h6>
+                            <h2 class="mb-0 text-success">R$ {{ "%.2f"|format(balance.total_deposited) }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Gasto -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-danger bg-opacity-10 p-3">
+                                <i class="fas fa-arrow-up text-danger fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Gasto</h6>
+                            <h2 class="mb-0 text-danger">R$ {{ "%.2f"|format(balance.total_spent) }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Como Funciona -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent">
+            <h5 class="mb-0">
+                <i class="fas fa-info-circle text-info me-2"></i>
+                Como funciona o Pay per Use
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                1
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6>Adicione Saldo</h6>
+                            <p class="text-muted small mb-0">Deposite via PIX qualquer valor a partir de R$ 10,00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                2
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6>Gere Petições</h6>
+                            <p class="text-muted small mb-0">Cada tipo de petição tem um preço fixo descontado do saldo</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                3
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6>Edite Livremente</h6>
+                            <p class="text-muted small mb-0">Após gerar, edite quantas vezes quiser sem custo adicional</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Histórico de Transações -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-history me-2"></i>
+                Últimas Transações
+            </h5>
+            <a href="{{ url_for('payments.balance_history') }}" class="btn btn-sm btn-outline-secondary">
+                Ver todas <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="card-body p-0">
+            {% if transactions %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Valor</th>
+                            <th class="text-end">Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in transactions %}
+                        <tr>
+                            <td>
+                                <small class="text-muted">
+                                    {{ tx.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                </small>
+                            </td>
+                            <td>{{ tx.description or '-' }}</td>
+                            <td>
+                                {% if tx.transaction_type == 'deposit' %}
+                                <span class="badge bg-success">Depósito</span>
+                                {% elif tx.transaction_type == 'charge' %}
+                                <span class="badge bg-danger">Cobrança</span>
+                                {% elif tx.transaction_type == 'refund' %}
+                                <span class="badge bg-info">Reembolso</span>
+                                {% elif tx.transaction_type == 'bonus' %}
+                                <span class="badge bg-warning text-dark">Bônus</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ tx.transaction_type }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if tx.amount > 0 %}
+                                <span class="text-success fw-bold">+R$ {{ "%.2f"|format(tx.amount) }}</span>
+                                {% else %}
+                                <span class="text-danger fw-bold">R$ {{ "%.2f"|format(tx.amount) }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <span class="text-muted">R$ {{ "%.2f"|format(tx.balance_after) }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                <p class="text-muted mb-3">Nenhuma transação ainda</p>
+                <a href="{{ url_for('payments.balance_deposit') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Fazer primeiro depósito
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

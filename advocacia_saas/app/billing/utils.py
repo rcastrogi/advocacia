@@ -5,7 +5,14 @@ from decimal import Decimal
 from flask import current_app
 
 from app import db
-from app.models import BillingPlan, Notification, PetitionType, PetitionUsage
+from app.models import (
+    BillingPlan,
+    Notification,
+    PetitionBalanceTransaction,
+    PetitionType,
+    PetitionUsage,
+    UserPetitionBalance,
+)
 
 DEFAULT_PETITION_TYPES = (
     {
@@ -140,7 +147,103 @@ def current_billing_cycle() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m")
 
 
-def record_petition_usage(user, petition_type: PetitionType) -> PetitionUsage:
+def check_petition_balance(user, petition_type: PetitionType) -> dict:
+    """
+    Verifica se o usuário tem saldo suficiente para gerar a petição.
+    Retorna dict com informações sobre o saldo e se pode gerar.
+    
+    Para planos per_usage:
+    - Verifica saldo em R$ do usuário
+    - Compara com base_price da petição
+    
+    Para outros planos:
+    - Verifica limite mensal se aplicável
+    """
+    plan = user.get_active_plan()
+    if not plan or plan.status != "active":
+        return {
+            "can_generate": False,
+            "error": "Sua assinatura não está ativa.",
+            "balance": Decimal("0.00"),
+            "price": Decimal("0.00"),
+        }
+
+    if user.is_delinquent:
+        return {
+            "can_generate": False,
+            "error": "Assinatura inadimplente.",
+            "balance": Decimal("0.00"),
+            "price": Decimal("0.00"),
+        }
+
+    # Para planos per_usage, verificar saldo em R$
+    if plan.plan.plan_type == "per_usage" and petition_type.is_billable:
+        price = petition_type.base_price or Decimal("0.00")
+        balance_record = UserPetitionBalance.get_or_create(user.id)
+        balance = balance_record.balance
+
+        if balance < price:
+            return {
+                "can_generate": False,
+                "error": f"Saldo insuficiente. Você precisa de R$ {price:.2f} mas tem R$ {balance:.2f}.",
+                "balance": balance,
+                "price": price,
+                "missing": price - balance,
+            }
+
+        return {
+            "can_generate": True,
+            "balance": balance,
+            "price": price,
+            "balance_after": balance - price,
+        }
+
+    # Para planos mensais com limite
+    if (
+        petition_type.is_billable
+        and plan.plan.plan_type == "monthly"
+        and plan.plan.monthly_petition_limit is not None
+    ):
+        current_cycle = current_billing_cycle()
+        used_this_month = PetitionUsage.query.filter_by(
+            user_id=user.id,
+            billing_cycle=current_cycle,
+            billable=True,
+        ).count()
+
+        if used_this_month >= plan.plan.monthly_petition_limit:
+            return {
+                "can_generate": False,
+                "error": f"Você atingiu o limite de {plan.plan.monthly_petition_limit} petições para o plano {plan.plan.name}.",
+                "used": used_this_month,
+                "limit": plan.plan.monthly_petition_limit,
+            }
+
+        return {
+            "can_generate": True,
+            "used": used_this_month,
+            "limit": plan.plan.monthly_petition_limit,
+            "remaining": plan.plan.monthly_petition_limit - used_this_month - 1,
+        }
+
+    # Planos ilimitados ou petições não billable
+    return {"can_generate": True}
+
+
+def record_petition_usage(
+    user, petition_type: PetitionType, saved_petition_id: int = None
+) -> PetitionUsage:
+    """
+    Registra o uso de uma petição e cobra do saldo se for per_usage.
+    
+    Para planos per_usage:
+    - Verifica saldo
+    - Cobra do saldo
+    - Registra transação
+    
+    Para outros planos:
+    - Apenas registra o uso
+    """
     plan = user.get_active_plan()
     if not plan or plan.status != "active":
         raise BillingAccessError("Sua assinatura não está ativa.")
@@ -153,18 +256,44 @@ def record_petition_usage(user, petition_type: PetitionType) -> PetitionUsage:
         petition_type.is_billable and plan.plan.plan_type == "per_usage"
     )
 
-    # Verificar limites APENAS para petições billable em planos mensais
+    # Calcular valor
+    amount = Decimal("0.00")
+    if will_be_billable:
+        amount = petition_type.base_price or Decimal("0.00")
+
+    # Para planos per_usage, cobrar do saldo
+    if will_be_billable and amount > 0:
+        balance_record = UserPetitionBalance.get_or_create(user.id)
+
+        if not balance_record.charge(amount):
+            raise BillingAccessError(
+                f"Saldo insuficiente. Você precisa de R$ {amount:.2f} mas tem R$ {balance_record.balance:.2f}. "
+                "Por favor, adicione saldo para continuar."
+            )
+
+        # Registrar transação de cobrança
+        transaction = PetitionBalanceTransaction(
+            user_id=user.id,
+            transaction_type="charge",
+            amount=-amount,  # Negativo = saída
+            balance_after=balance_record.balance,
+            description=f"Geração de petição: {petition_type.name}",
+            petition_id=saved_petition_id,
+            petition_type_id=petition_type.id,
+        )
+        db.session.add(transaction)
+
+    # Verificar limites para planos mensais
     if (
         petition_type.is_billable
         and plan.plan.plan_type == "monthly"
         and plan.plan.monthly_petition_limit is not None
     ):
-        # Contar APENAS petições billable do ciclo atual
         current_cycle = current_billing_cycle()
         used_this_month = PetitionUsage.query.filter_by(
             user_id=user.id,
             billing_cycle=current_cycle,
-            billable=True,  # Conta apenas petições que têm valor
+            billable=True,
         ).count()
 
         if used_this_month >= plan.plan.monthly_petition_limit:
@@ -177,11 +306,7 @@ def record_petition_usage(user, petition_type: PetitionType) -> PetitionUsage:
         if used_this_month == int(plan.plan.monthly_petition_limit * 0.8):
             _create_limit_warning_notification(user, plan.plan, used_this_month)
 
-    # Calcular valor apenas se for billable no plano per_usage
-    amount = Decimal("0.00")
-    if will_be_billable:
-        amount = petition_type.base_price or Decimal("0.00")
-
+    # Registrar uso
     usage = PetitionUsage(
         user_id=user.id,
         petition_type_id=petition_type.id,
@@ -193,6 +318,52 @@ def record_petition_usage(user, petition_type: PetitionType) -> PetitionUsage:
     db.session.add(usage)
     db.session.commit()
     return usage
+
+
+def add_petition_balance(
+    user, amount: Decimal, source: str = "deposit", payment_id: int = None
+) -> UserPetitionBalance:
+    """
+    Adiciona saldo à conta do usuário para petições.
+    
+    Args:
+        user: Usuário
+        amount: Valor a adicionar
+        source: 'deposit', 'bonus', 'refund'
+        payment_id: ID do pagamento (se houver)
+    
+    Returns:
+        UserPetitionBalance atualizado
+    """
+    amount = Decimal(str(amount))
+    balance_record = UserPetitionBalance.get_or_create(user.id)
+    balance_record.add_balance(amount, source)
+
+    # Registrar transação
+    transaction = PetitionBalanceTransaction(
+        user_id=user.id,
+        transaction_type=source,
+        amount=amount,  # Positivo = entrada
+        balance_after=balance_record.balance,
+        description=f"Depósito via {source}" if source == "deposit" else f"Bônus: {source}",
+        payment_id=payment_id,
+    )
+    db.session.add(transaction)
+    db.session.commit()
+
+    return balance_record
+
+
+def get_user_petition_balance(user) -> dict:
+    """Retorna informações do saldo de petições do usuário."""
+    balance_record = UserPetitionBalance.get_or_create(user.id)
+
+    return {
+        "balance": float(balance_record.balance),
+        "total_deposited": float(balance_record.total_deposited),
+        "total_spent": float(balance_record.total_spent),
+        "total_bonus": float(balance_record.total_bonus),
+    }
 
 
 def get_user_petition_usage(user) -> dict:

@@ -190,12 +190,23 @@
     };
     // Dados de edição (se houver)
     window.EDIT_PETITION = {{ edit_petition_json | safe if edit_petition_json else 'null' }};
+    // Campos bloqueados (para petições pagas)
+    window.LOCKED_FIELDS = {{ locked_fields | tojson }};
 </script>
 
 <div class="container py-4" 
      x-data="dynamicPetitionForm()" 
      x-init="init()"
      x-cloak>
+
+    {% if edit_petition and edit_petition.is_paid %}
+    <!-- Aviso de campos bloqueados -->
+    <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+        <i class="fas fa-lock me-2"></i>
+        <strong>Campos bloqueados:</strong> Esta petição já foi paga. Os dados das partes (autor, réu, representantes) não podem ser alterados para garantir a integridade do processo.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+    {% endif %}
     
     <!-- Auto-save indicator -->
     <div class="auto-save-indicator" 
@@ -813,6 +824,8 @@ document.addEventListener('alpine:init', () => {
         quillEditors: {},
         autoSaveTimeout: null,
         aiCredits: 10, // Créditos de IA disponíveis
+        lockedFields: window.LOCKED_FIELDS || [], // Campos bloqueados para edição
+        isPaidPetition: false, // Se a petição já foi paga
         
         init() {
             // Inicializar estado de expansão das seções
@@ -838,6 +851,8 @@ document.addEventListener('alpine:init', () => {
             if (window.EDIT_PETITION) {
                 this.petitionId = window.EDIT_PETITION.id;
                 this.formData = window.EDIT_PETITION.form_data || {};
+                this.isPaidPetition = window.EDIT_PETITION.is_paid || false;
+                this.lockedFields = window.EDIT_PETITION.locked_fields || [];
                 
                 // Carregar anexos existentes
                 this.loadAttachments();
@@ -849,6 +864,9 @@ document.addEventListener('alpine:init', () => {
                             this.quillEditors[fieldName].root.innerHTML = this.formData[fieldName];
                         }
                     });
+                    
+                    // Aplicar bloqueio visual nos campos bloqueados
+                    this.applyFieldLocks();
                 });
             } else {
                 // Carregar rascunho local se existir
@@ -865,6 +883,32 @@ document.addEventListener('alpine:init', () => {
             this.$watch('formData', () => {
                 this.scheduleAutoSave();
             }, { deep: true });
+        },
+        
+        // Verifica se um campo está bloqueado para edição
+        isFieldLocked(fieldName) {
+            return this.lockedFields.includes(fieldName);
+        },
+        
+        // Aplica bloqueio visual nos campos bloqueados
+        applyFieldLocks() {
+            if (!this.isPaidPetition || this.lockedFields.length === 0) return;
+            
+            this.lockedFields.forEach(fieldName => {
+                const input = document.querySelector(`[name="${fieldName}"]`);
+                if (input) {
+                    input.setAttribute('readonly', 'readonly');
+                    input.setAttribute('disabled', 'disabled');
+                    input.classList.add('bg-light', 'text-muted');
+                    input.title = 'Este campo não pode ser alterado após o pagamento';
+                    
+                    // Adicionar ícone de cadeado
+                    const label = input.closest('.mb-3, .form-group')?.querySelector('label');
+                    if (label && !label.querySelector('.fa-lock')) {
+                        label.innerHTML = `<i class="fas fa-lock text-warning me-1" title="Campo bloqueado"></i>${label.innerHTML}`;
+                    }
+                }
+            });
         },
         
         initAllQuillEditors() {

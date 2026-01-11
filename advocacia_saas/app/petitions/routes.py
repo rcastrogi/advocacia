@@ -634,7 +634,11 @@ def dynamic_form(slug):
 
     # Serializar petição para edição (se existir)
     edit_petition_json = None
+    locked_fields = []
     if edit_petition:
+        # Obter campos bloqueados se a petição foi paga
+        locked_fields = edit_petition.get_locked_fields()
+
         edit_petition_json = json.dumps(
             {
                 "id": edit_petition.id,
@@ -642,6 +646,8 @@ def dynamic_form(slug):
                 "status": edit_petition.status,
                 "title": edit_petition.title,
                 "process_number": edit_petition.process_number,
+                "is_paid": edit_petition.is_paid,
+                "locked_fields": locked_fields,
             },
             ensure_ascii=False,
         )
@@ -654,6 +660,7 @@ def dynamic_form(slug):
         sections_json=sections_json,
         edit_petition=edit_petition,
         edit_petition_json=edit_petition_json,
+        locked_fields=locked_fields,
     )
 
 

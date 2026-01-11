@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Adicionar Saldo - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-plus-circle text-primary me-2"></i>
+                Adicionar Saldo
+            </h1>
+            <p class="text-muted mb-0">Deposite via PIX para gerar petições</p>
+        </div>
+        <a href="{{ url_for('payments.balance_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Formulário de Depósito -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm" x-data="depositForm()">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="fas fa-wallet me-2"></i>
+                        Valor do Depósito
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Valores Sugeridos -->
+                    <div class="mb-4">
+                        <label class="form-label">Escolha um valor ou digite:</label>
+                        <div class="row g-2">
+                            {% for amount in suggested_amounts %}
+                            <div class="col-4 col-md-2">
+                                <button type="button" 
+                                        class="btn w-100"
+                                        :class="selectedAmount == {{ amount }} ? 'btn-primary' : 'btn-outline-secondary'"
+                                        @click="selectAmount({{ amount }})">
+                                    R$ {{ amount }}
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Valor Personalizado -->
+                    <div class="mb-4">
+                        <label for="customAmount" class="form-label">Ou digite um valor personalizado:</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">R$</span>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="customAmount"
+                                   x-model="customAmount"
+                                   @input="onCustomAmountChange()"
+                                   min="10" 
+                                   max="10000" 
+                                   step="0.01"
+                                   placeholder="0,00">
+                        </div>
+                        <small class="text-muted">Mínimo R$ 10,00 | Máximo R$ 10.000,00</small>
+                    </div>
+
+                    <!-- Resumo -->
+                    <div class="alert alert-info" x-show="finalAmount > 0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Valor a depositar:</span>
+                            <strong class="fs-4">R$ <span x-text="finalAmount.toFixed(2)"></span></strong>
+                        </div>
+                    </div>
+
+                    <!-- Botão de Gerar PIX -->
+                    <button type="button" 
+                            class="btn btn-primary btn-lg w-100"
+                            :disabled="!canSubmit || isLoading"
+                            @click="generatePix()">
+                        <span x-show="!isLoading">
+                            <i class="fas fa-qrcode me-2"></i>
+                            Gerar PIX
+                        </span>
+                        <span x-show="isLoading">
+                            <i class="fas fa-spinner fa-spin me-2"></i>
+                            Gerando...
+                        </span>
+                    </button>
+                </div>
+
+                <!-- QR Code PIX -->
+                <div class="card-footer bg-light" x-show="pixData" x-cloak>
+                    <div class="text-center py-4">
+                        <h5 class="text-success mb-3">
+                            <i class="fas fa-check-circle me-2"></i>
+                            PIX Gerado com Sucesso!
+                        </h5>
+                        
+                        <!-- QR Code -->
+                        <div class="mb-3">
+                            <img :src="'data:image/png;base64,' + pixData.pix_qr_code" 
+                                 alt="QR Code PIX" 
+                                 class="img-fluid border rounded"
+                                 style="max-width: 250px;">
+                        </div>
+
+                        <!-- Código Copia e Cola -->
+                        <div class="mb-3">
+                            <label class="form-label">Código Copia e Cola:</label>
+                            <div class="input-group">
+                                <input type="text" 
+                                       class="form-control form-control-sm" 
+                                       :value="pixData.pix_code" 
+                                       readonly
+                                       id="pixCode">
+                                <button class="btn btn-outline-secondary" 
+                                        type="button"
+                                        @click="copyPixCode()">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Validade -->
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-clock me-1"></i>
+                            Este PIX expira em 24 horas
+                        </p>
+
+                        <!-- Instruções -->
+                        <div class="alert alert-warning small text-start">
+                            <strong>Após o pagamento:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>O saldo será creditado automaticamente em alguns minutos</li>
+                                <li>Você receberá uma notificação quando o depósito for confirmado</li>
+                                <li>Em caso de dúvidas, entre em contato com o suporte</li>
+                            </ul>
+                        </div>
+
+                        <!-- Novo Depósito -->
+                        <button type="button" 
+                                class="btn btn-outline-primary"
+                                @click="resetForm()">
+                            <i class="fas fa-redo me-1"></i>
+                            Fazer novo depósito
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informações Laterais -->
+        <div class="col-lg-5">
+            <!-- Benefícios -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0">
+                        <i class="fas fa-star text-warning me-2"></i>
+                        Benefícios do Pay per Use
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <strong>Sem mensalidade</strong> - Pague apenas pelo que usar
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <strong>Saldo não expira</strong> - Use quando quiser
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <strong>Edição ilimitada</strong> - Edite petições pagas quantas vezes quiser
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <strong>PIX instantâneo</strong> - Saldo liberado em minutos
+                        </li>
+                        <li>
+                            <i class="fas fa-check text-success me-2"></i>
+                            <strong>Histórico completo</strong> - Acompanhe todos os gastos
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Preços das Petições -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0">
+                        <i class="fas fa-tags me-2"></i>
+                        Preços por Tipo de Petição
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Cada tipo de petição tem um preço fixo. Confira alguns exemplos:
+                    </p>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Petição Cível Simples</span>
+                            <span class="badge bg-primary rounded-pill">R$ 20,00</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Ação de Cobrança</span>
+                            <span class="badge bg-primary rounded-pill">R$ 50,00</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Ação Trabalhista</span>
+                            <span class="badge bg-primary rounded-pill">R$ 75,00</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Habeas Corpus</span>
+                            <span class="badge bg-primary rounded-pill">R$ 100,00</span>
+                        </li>
+                    </ul>
+                    <a href="{{ url_for('main.peticionador') }}" class="btn btn-outline-primary btn-sm w-100 mt-3">
+                        Ver todos os tipos <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function depositForm() {
+    return {
+        selectedAmount: 0,
+        customAmount: '',
+        isLoading: false,
+        pixData: null,
+
+        get finalAmount() {
+            if (this.customAmount && parseFloat(this.customAmount) >= 10) {
+                return parseFloat(this.customAmount);
+            }
+            return this.selectedAmount;
+        },
+
+        get canSubmit() {
+            return this.finalAmount >= 10 && this.finalAmount <= 10000;
+        },
+
+        selectAmount(amount) {
+            this.selectedAmount = amount;
+            this.customAmount = '';
+        },
+
+        onCustomAmountChange() {
+            if (this.customAmount) {
+                this.selectedAmount = 0;
+            }
+        },
+
+        async generatePix() {
+            if (!this.canSubmit) return;
+
+            this.isLoading = true;
+            try {
+                const response = await fetch('{{ url_for("payments.create_balance_pix") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        amount: this.finalAmount
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.pixData = data;
+                } else {
+                    alert(data.error || 'Erro ao gerar PIX');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao gerar PIX. Tente novamente.');
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        copyPixCode() {
+            const input = document.getElementById('pixCode');
+            input.select();
+            document.execCommand('copy');
+            
+            // Feedback visual
+            const btn = event.target.closest('button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check text-success"></i>';
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+            }, 2000);
+        },
+
+        resetForm() {
+            this.selectedAmount = 0;
+            this.customAmount = '';
+            this.pixData = null;
+        }
+    }
+}
+</script>
+{% endblock %}

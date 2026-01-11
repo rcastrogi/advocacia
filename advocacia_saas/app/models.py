@@ -2202,6 +2202,11 @@ class SavedPetition(db.Model):
     # Dados do formulário em JSON
     form_data = db.Column(db.JSON, default=dict)
 
+    # Informações de pagamento (Pay per Use)
+    is_paid = db.Column(db.Boolean, default=False)  # Se foi paga
+    amount_paid = db.Column(db.Numeric(10, 2))  # Valor pago
+    paid_at = db.Column(db.DateTime)  # Quando foi paga
+
     # Metadados
     notes = db.Column(db.Text)  # Anotações internas
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
@@ -2248,6 +2253,43 @@ class SavedPetition(db.Model):
                 "requerido_nome", ""
             )
         return ""
+
+    def get_locked_fields(self):
+        """
+        Retorna lista de campos que devem ficar bloqueados na edição.
+        Campos de partes (autor/réu) ficam bloqueados após pagamento
+        para garantir integridade do processo.
+        """
+        if not self.is_paid:
+            return []
+
+        # Campos que identificam as partes - não podem ser alterados
+        locked_prefixes = [
+            "autor_",
+            "reu_",
+            "requerente_",
+            "requerido_",
+            "rep_autor_",
+            "rep_reu_",
+            "rep_terceiro_",
+            "terceiro_",
+        ]
+
+        locked = []
+        if self.form_data:
+            for key in self.form_data.keys():
+                for prefix in locked_prefixes:
+                    if key.startswith(prefix):
+                        locked.append(key)
+                        break
+
+        return locked
+
+    def can_edit_field(self, field_name: str) -> bool:
+        """Verifica se um campo específico pode ser editado."""
+        if not self.is_paid:
+            return True
+        return field_name not in self.get_locked_fields()
 
     def __repr__(self):
         return f"<SavedPetition {self.id} - {self.status}>"
@@ -2317,6 +2359,130 @@ class PetitionAttachment(db.Model):
 
     def __repr__(self):
         return f"<PetitionAttachment {self.filename}>"
+
+
+# =============================================================================
+# SISTEMA DE SALDO PARA PETIÇÕES (PAY PER USE)
+# =============================================================================
+
+
+class UserPetitionBalance(db.Model):
+    """
+    Saldo em R$ do usuário para gerar petições no modelo Pay per Use.
+    Diferente de créditos de IA - aqui é valor monetário.
+    """
+
+    __tablename__ = "user_petition_balance"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=False, unique=True
+    )
+    balance = db.Column(db.Numeric(10, 2), default=Decimal("0.00"))  # Saldo em R$
+    total_deposited = db.Column(
+        db.Numeric(10, 2), default=Decimal("0.00")
+    )  # Total depositado
+    total_spent = db.Column(db.Numeric(10, 2), default=Decimal("0.00"))  # Total gasto
+    total_bonus = db.Column(
+        db.Numeric(10, 2), default=Decimal("0.00")
+    )  # Total de bônus
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relacionamento
+    user = db.relationship(
+        "User", backref=db.backref("petition_balance", uselist=False, lazy=True)
+    )
+
+    def add_balance(self, amount, source="deposit"):
+        """Adiciona saldo (depósito ou bônus)"""
+        amount = Decimal(str(amount))
+        self.balance += amount
+        if source == "deposit":
+            self.total_deposited += amount
+        elif source == "bonus":
+            self.total_bonus += amount
+        self.updated_at = datetime.now(timezone.utc)
+        return self.balance
+
+    def charge(self, amount):
+        """
+        Cobra valor do saldo.
+        Retorna True se teve saldo suficiente, False caso contrário.
+        """
+        amount = Decimal(str(amount))
+        if self.balance >= amount:
+            self.balance -= amount
+            self.total_spent += amount
+            self.updated_at = datetime.now(timezone.utc)
+            return True
+        return False
+
+    def has_balance(self, amount):
+        """Verifica se tem saldo suficiente"""
+        return self.balance >= Decimal(str(amount))
+
+    @staticmethod
+    def get_or_create(user_id):
+        """Obtém ou cria registro de saldo para o usuário"""
+        balance = UserPetitionBalance.query.filter_by(user_id=user_id).first()
+        if not balance:
+            balance = UserPetitionBalance(user_id=user_id, balance=Decimal("0.00"))
+            db.session.add(balance)
+            db.session.commit()
+        return balance
+
+    def __repr__(self):
+        return f"<UserPetitionBalance user={self.user_id} balance=R${self.balance}>"
+
+
+class PetitionBalanceTransaction(db.Model):
+    """
+    Histórico de transações do saldo de petições.
+    Registra depósitos, gastos com petições, reembolsos, etc.
+    """
+
+    __tablename__ = "petition_balance_transactions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    transaction_type = db.Column(
+        db.String(20), nullable=False
+    )  # 'deposit', 'charge', 'refund', 'bonus'
+    amount = db.Column(
+        db.Numeric(10, 2), nullable=False
+    )  # Positivo = entrada, Negativo = saída
+    balance_after = db.Column(
+        db.Numeric(10, 2), nullable=False
+    )  # Saldo após transação
+
+    # Detalhes
+    description = db.Column(db.String(255))
+    petition_id = db.Column(
+        db.Integer, db.ForeignKey("saved_petitions.id"), nullable=True
+    )
+    petition_type_id = db.Column(
+        db.Integer, db.ForeignKey("petition_types.id"), nullable=True
+    )
+    payment_id = db.Column(
+        db.Integer, db.ForeignKey("payments.id"), nullable=True
+    )  # Referência ao pagamento
+
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Relacionamentos
+    user = db.relationship(
+        "User", backref=db.backref("petition_balance_transactions", lazy="dynamic")
+    )
+    petition = db.relationship("SavedPetition", backref="balance_transactions")
+    petition_type = db.relationship("PetitionType", backref="balance_transactions")
+
+    def __repr__(self):
+        return f"<PetitionBalanceTransaction {self.transaction_type}: R${self.amount}>"
 
 
 # =============================================================================
