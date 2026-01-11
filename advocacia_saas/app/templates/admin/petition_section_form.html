@@ -18,23 +18,14 @@
                 </div>
                 <div class="card-body">
                     <form method="post">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="name">Nome *</label>
-                                    <input type="text" class="form-control" id="name" name="name"
-                                           value="{{ section.name if section else '' }}" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="slug">Slug *</label>
-                                    <input type="text" class="form-control" id="slug" name="slug"
-                                           value="{{ section.slug if section else '' }}" required
-                                           pattern="[a-z0-9-]+" title="Apenas letras minúsculas, números e hífens" readonly>
-                                    <small class="form-text text-muted">Gerado automaticamente a partir do nome</small>
-                                </div>
-                            </div>
+                        <!-- Campo slug oculto (gerado automaticamente) -->
+                        <input type="hidden" id="slug" name="slug"
+                               value="{{ section.slug if section else '' }}">
+
+                        <div class="form-group">
+                            <label for="name">Nome *</label>
+                            <input type="text" class="form-control" id="name" name="name"
+                                   value="{{ section.name if section else '' }}" required>
                         </div>
 
                         <div class="form-group">

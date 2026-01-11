@@ -36,7 +36,6 @@
                 <thead>
                     <tr>
                         <th>Nome</th>
-                        <th>Slug</th>
                         <th>Categoria</th>
                         <th>Dinâmico</th>
                         <th>Ativo</th>
@@ -52,7 +51,6 @@
                             <i class="fas {{ petition_type.icon }} text-{{ petition_type.color }}"></i>
                             {{ petition_type.name }}
                         </td>
-                        <td><code>{{ petition_type.slug }}</code></td>
                         <td>
                             <span class="badge bg-info text-white">{{ petition_type.category.title() }}</span>
                         </td>
