@@ -401,9 +401,12 @@ def register():
 
         # Processar indicação (se houver)
         from app.referral.routes import process_referral_registration
+
         referral = process_referral_registration(user.email, user.id)
         if referral:
-            current_app.logger.info(f"User {user.id} registered via referral from {referral.referrer_id}")
+            current_app.logger.info(
+                f"User {user.id} registered via referral from {referral.referrer_id}"
+            )
 
         # Iniciar período de trial automaticamente para novos usuários
         from flask import current_app

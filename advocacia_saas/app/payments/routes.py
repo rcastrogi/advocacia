@@ -44,6 +44,7 @@ def _process_referral_conversion(user_id, payment_id, payment_amount):
     """
     try:
         from app.referral.routes import process_referral_conversion
+
         referral = process_referral_conversion(user_id, payment_id, payment_amount)
         if referral and referral.reward_granted:
             current_app.logger.info(
