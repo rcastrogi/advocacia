@@ -56,8 +56,10 @@ from app.schemas import (
     PetitionSaveSchema,
 )
 from app.utils.error_messages import format_error_for_user
+from app.services.pdf_converter import convert_to_pdf, CONVERTIBLE_EXTENSIONS
 
-ATTACHMENT_EXTENSIONS = {"pdf", "doc", "docx", "png", "jpg", "jpeg"}
+# Extensões permitidas - agora incluindo mais formatos que podem ser convertidos
+ATTACHMENT_EXTENSIONS = {"pdf", "doc", "docx", "png", "jpg", "jpeg", "gif", "txt", "xls", "xlsx"}
 MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024  # 20 MB por arquivo
 MAX_ATTACHMENT_COUNT = None  # Ilimitado
 MAX_TOTAL_SIZE_PER_PETITION = 50 * 1024 * 1024  # 50 MB total por petição
@@ -482,7 +484,17 @@ def _render_pdf(text: str, title: str) -> BytesIO:
     return buffer
 
 
-def _extract_attachments(files):
+def _extract_attachments(files, convert_to_pdf_enabled=True):
+    """
+    Extrai e processa anexos, convertendo para PDF quando possível.
+    
+    Args:
+        files: Lista de arquivos do request
+        convert_to_pdf_enabled: Se True, converte arquivos para PDF
+        
+    Returns:
+        list: Lista de dicionários com filename e data
+    """
     attachments = []
     if not files:
         return attachments
@@ -512,8 +524,24 @@ def _extract_attachments(files):
         if total_size + size > MAX_TOTAL_SIZE_PER_PETITION:
             raise ValueError(f"Total de arquivos excede o limite de 50 MB por petição.")
 
-        attachments.append({"filename": filename, "data": file_storage.read()})
-        total_size += size
+        # Ler dados do arquivo
+        file_data = file_storage.read()
+        
+        # Converter para PDF se habilitado e não for PDF
+        if convert_to_pdf_enabled and ext != "pdf":
+            try:
+                converted_data, new_filename = convert_to_pdf(file_data, filename)
+                # Verificar se conversão foi bem sucedida (arquivo mudou para .pdf)
+                if new_filename.endswith('.pdf'):
+                    current_app.logger.info(f"Arquivo {filename} convertido para {new_filename}")
+                    file_data = converted_data
+                    filename = new_filename
+            except Exception as e:
+                current_app.logger.warning(f"Falha ao converter {filename} para PDF: {e}")
+                # Mantém arquivo original se conversão falhar
+        
+        attachments.append({"filename": filename, "data": file_data})
+        total_size += len(file_data)
 
     return attachments
 
