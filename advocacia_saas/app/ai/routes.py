@@ -733,8 +733,12 @@ def create_credits_pix(slug):
         "payment_method_id": "pix",
         "payer": {
             "email": current_user.email,
-            "first_name": current_user.full_name.split()[0] if current_user.full_name else current_user.username,
-            "last_name": current_user.full_name.split()[-1] if current_user.full_name and len(current_user.full_name.split()) > 1 else "",
+            "first_name": current_user.full_name.split()[0]
+            if current_user.full_name
+            else current_user.username,
+            "last_name": current_user.full_name.split()[-1]
+            if current_user.full_name and len(current_user.full_name.split()) > 1
+            else "",
         },
         "metadata": {
             "user_id": current_user.id,
@@ -751,19 +755,25 @@ def create_credits_pix(slug):
         payment = payment_response["response"]
 
         if payment.get("status") == "pending":
-            pix_data = payment.get("point_of_interaction", {}).get("transaction_data", {})
+            pix_data = payment.get("point_of_interaction", {}).get(
+                "transaction_data", {}
+            )
 
-            return jsonify({
-                "success": True,
-                "payment_id": payment["id"],
-                "qr_code": pix_data.get("qr_code"),
-                "qr_code_base64": pix_data.get("qr_code_base64"),
-                "expiration": payment.get("date_of_expiration"),
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "payment_id": payment["id"],
+                    "qr_code": pix_data.get("qr_code"),
+                    "qr_code_base64": pix_data.get("qr_code_base64"),
+                    "expiration": payment.get("date_of_expiration"),
+                }
+            )
         else:
-            return jsonify({
-                "error": f"Erro ao criar PIX: {payment.get('status_detail', 'unknown')}"
-            }), 400
+            return jsonify(
+                {
+                    "error": f"Erro ao criar PIX: {payment.get('status_detail', 'unknown')}"
+                }
+            ), 400
 
     except Exception as e:
         current_app.logger.error(f"Erro ao criar PIX de créditos: {str(e)}")
@@ -801,11 +811,13 @@ def check_credits_pix(payment_id):
                 if not existing:
                     _process_credit_purchase(payment_id, user_id, package_id, metadata)
 
-        return jsonify({
-            "success": True,
-            "status": status,
-            "status_detail": payment.get("status_detail"),
-        })
+        return jsonify(
+            {
+                "success": True,
+                "status": status,
+                "status_detail": payment.get("status_detail"),
+            }
+        )
 
     except Exception as e:
         current_app.logger.error(f"Erro ao verificar PIX: {str(e)}")
@@ -950,7 +962,9 @@ def mercadopago_webhook_credits():
                 # Verificar se é compra de créditos (checkout ou PIX)
                 payment_type = metadata.get("type", "")
                 is_credit_purchase = payment_type == "credit_purchase" or (
-                    user_id and package_id and "credits" in str(payment.get("external_reference", ""))
+                    user_id
+                    and package_id
+                    and "credits" in str(payment.get("external_reference", ""))
                 )
 
                 if user_id and package_id and is_credit_purchase:
@@ -960,7 +974,9 @@ def mercadopago_webhook_credits():
                     ).first()
 
                     if not existing:
-                        _process_credit_purchase(payment_id, user_id, package_id, metadata)
+                        _process_credit_purchase(
+                            payment_id, user_id, package_id, metadata
+                        )
                         current_app.logger.info(
                             f"✅ Webhook: Créditos processados payment_id={payment_id}"
                         )
