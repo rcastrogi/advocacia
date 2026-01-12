@@ -22,7 +22,7 @@ from flask import (
 from flask_login import current_user, login_required
 
 from app import db
-from app.models import Referral, ReferralCode, User, UserCredits
+from app.models import Referral, ReferralCode
 from app.referral import bp
 
 

@@ -7,7 +7,7 @@ import io
 import os
 import subprocess
 import tempfile
-from typing import Tuple, Optional
+from typing import Tuple
 
 
 def convert_to_pdf(file_data: bytes, filename: str) -> Tuple[bytes, str]:

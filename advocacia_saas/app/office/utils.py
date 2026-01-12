@@ -7,8 +7,6 @@ membros de um escritório vejam apenas os dados compartilhados do escritório.
 
 from flask_login import current_user
 
-from app import db
-
 
 def get_office_user_ids():
     """
@@ -121,18 +119,18 @@ def get_office_lawyers():
         return []
 
     if current_user.office_id:
-        from app.models import OFFICE_ROLES, User
+        from app.models import User
 
         # Apenas advogados e admins podem ser responsáveis
         lawyers = (
             User.query.filter(
                 User.office_id == current_user.office_id,
-                User.is_active == True,
+                User.is_active.is_(True),
                 User.office_role.in_(["owner", "admin", "lawyer"]),
             )
             .order_by(User.full_name)
             .all()
         )
-        return [(l.id, l.full_name or l.username) for l in lawyers]
+        return [(lawyer.id, lawyer.full_name or lawyer.username) for lawyer in lawyers]
     else:
         return [(current_user.id, current_user.full_name or current_user.username)]

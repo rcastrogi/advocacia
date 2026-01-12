@@ -3,8 +3,6 @@
 from datetime import datetime, timezone
 
 from flask import (
-    abort,
-    current_app,
     flash,
     redirect,
     render_template,
@@ -601,7 +599,7 @@ def transfer_ownership():
 
     # Obter membros elegíveis (exceto o owner atual)
     eligible_members = office.members.filter(
-        User.id != current_user.id, User.is_active == True
+        User.id != current_user.id, User.is_active.is_(True)
     ).all()
 
     form.new_owner_id.choices = [
