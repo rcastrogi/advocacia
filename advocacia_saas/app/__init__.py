@@ -104,7 +104,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     mail.init_app(app)
     migrate.init_app(app, db)
-    
+
     # Initialize CSRF protection for all forms
     csrf.init_app(app)
 

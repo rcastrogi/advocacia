@@ -5,11 +5,11 @@ Analisa Python, HTML, JavaScript em busca de problemas comuns.
 Uso: python scripts/code_checker.py
 """
 
+import ast
 import re
 import sys
-import ast
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 
 # Cores para output
@@ -106,7 +106,9 @@ class CodeChecker:
                 for i, line in enumerate(lines, 1):
                     if "== True" in line or "== False" in line:
                         self.add_warning(
-                            str(rel_path), i, "Usar 'is True/False' em vez de '== True/False'"
+                            str(rel_path),
+                            i,
+                            "Usar 'is True/False' em vez de '== True/False'",
                         )
 
                 # Verificar except genérico
@@ -166,14 +168,18 @@ class CodeChecker:
                 endifs = len(re.findall(r"{%\s*endif\s*%}", content))
                 if ifs != endifs:
                     self.add_error(
-                        str(rel_path), 0, f"if/endif desbalanceados: {ifs} if, {endifs} endif"
+                        str(rel_path),
+                        0,
+                        f"if/endif desbalanceados: {ifs} if, {endifs} endif",
                     )
 
                 fors = len(re.findall(r"{%\s*for\s", content))
                 endfors = len(re.findall(r"{%\s*endfor\s*%}", content))
                 if fors != endfors:
                     self.add_error(
-                        str(rel_path), 0, f"for/endfor desbalanceados: {fors} for, {endfors} endfor"
+                        str(rel_path),
+                        0,
+                        f"for/endfor desbalanceados: {fors} for, {endfors} endfor",
                     )
 
                 # Verificar tags HTML não fechadas (básico)
@@ -182,7 +188,9 @@ class CodeChecker:
                     closes = len(re.findall(rf"</{tag}>", content, re.I))
                     if opens > closes + 10:
                         self.add_warning(
-                            str(rel_path), 0, f"Tag <{tag}> possivelmente não fechada ({opens} abertas, {closes} fechadas)"
+                            str(rel_path),
+                            0,
+                            f"Tag <{tag}> possivelmente não fechada ({opens} abertas, {closes} fechadas)",
                         )
 
                 # Verificar imagens sem alt
@@ -194,13 +202,13 @@ class CodeChecker:
 
                 # Verificar links com target="_blank" sem rel="noopener"
                 unsafe_links = re.findall(
-                    r'<a[^>]*target=["\']_blank["\'](?![^>]*rel=)[^>]*>',
-                    content,
-                    re.I
+                    r'<a[^>]*target=["\']_blank["\'](?![^>]*rel=)[^>]*>', content, re.I
                 )
                 if unsafe_links:
                     self.add_warning(
-                        str(rel_path), 0, f"{len(unsafe_links)} links com target='_blank' sem rel='noopener'"
+                        str(rel_path),
+                        0,
+                        f"{len(unsafe_links)} links com target='_blank' sem rel='noopener'",
                     )
 
             except Exception as e:
@@ -236,22 +244,30 @@ class CodeChecker:
                 console_logs = len(re.findall(r"console\.(log|debug)\(", content))
                 if console_logs > 0:
                     self.add_warning(
-                        str(rel_path), 0, f"{console_logs} console.log/debug encontrados"
+                        str(rel_path),
+                        0,
+                        f"{console_logs} console.log/debug encontrados",
                     )
 
                 # Verificar eval (perigoso)
                 if re.search(r"\beval\s*\(", content):
-                    self.add_error(str(rel_path), 0, "Uso de eval() detectado (perigoso!)")
+                    self.add_error(
+                        str(rel_path), 0, "Uso de eval() detectado (perigoso!)"
+                    )
 
                 # Verificar document.write
                 if "document.write" in content:
-                    self.add_warning(str(rel_path), 0, "document.write detectado (evitar)")
+                    self.add_warning(
+                        str(rel_path), 0, "document.write detectado (evitar)"
+                    )
 
                 # Verificar var vs let/const
                 var_count = len(re.findall(r"\bvar\s+", content))
                 if var_count > 10:
                     self.add_warning(
-                        str(rel_path), 0, f"{var_count} usos de 'var' (considerar let/const)"
+                        str(rel_path),
+                        0,
+                        f"{var_count} usos de 'var' (considerar let/const)",
                     )
 
             except Exception as e:
@@ -281,7 +297,9 @@ class CodeChecker:
                 importants = len(re.findall(r"!important", content))
                 if importants > 30:
                     self.add_warning(
-                        str(rel_path), 0, f"{importants} usos de !important (considerar refatoração)"
+                        str(rel_path),
+                        0,
+                        f"{importants} usos de !important (considerar refatoração)",
                     )
 
             except Exception as e:

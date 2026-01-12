@@ -40,9 +40,9 @@ def admin_required(f):
 @admin_required
 def view_logs():
     """Página para visualizar logs em tempo real"""
-    
+
     debug_log("🔍 [DEBUG] LOGS_ROUTE: Função view_logs() foi chamada")
-    
+
     log_file = "logs/petitio_production.log"
     debug_log(f"🔍 [DEBUG] LOGS_ROUTE: Procurando por arquivo: {log_file}")
 
@@ -70,9 +70,13 @@ def view_logs():
                 with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
                     all_lines = f.readlines()
                     lines = all_lines[-200:]
-                debug_log(f"✅ [DEBUG] LOGS_ROUTE: Lidas {len(lines)} linhas do caminho alternativo")
+                debug_log(
+                    f"✅ [DEBUG] LOGS_ROUTE: Lidas {len(lines)} linhas do caminho alternativo"
+                )
             except Exception as e:
-                debug_log(f"❌ [DEBUG] LOGS_ROUTE: Erro no caminho alternativo: {str(e)}")
+                debug_log(
+                    f"❌ [DEBUG] LOGS_ROUTE: Erro no caminho alternativo: {str(e)}"
+                )
                 lines = [f"❌ Erro ao ler logs: {str(e)}"]
         else:
             debug_log(f"❌ [DEBUG] LOGS_ROUTE: Nenhum arquivo encontrado!")
@@ -151,7 +155,7 @@ def view_logs():
     </body>
     </html>
     """
-    
+
     debug_log(f"✅ [DEBUG] LOGS_ROUTE: Renderizando página com {len(lines)} linhas")
     return render_template_string(html)
 
@@ -161,9 +165,9 @@ def view_logs():
 @admin_required
 def get_logs_json():
     """API para obter logs em JSON"""
-    
+
     debug_log("🔍 [DEBUG] /logs/json: Endpoint acionado")
-    
+
     log_file = "logs/petitio_production.log"
     lines = []
 
@@ -195,9 +199,9 @@ def get_logs_json():
 @admin_required
 def tail_logs():
     """Endpoint para tail -f (últimas linhas)"""
-    
+
     debug_log("🔍 [DEBUG] /logs/tail: Endpoint acionado")
-    
+
     log_file = "logs/petitio_production.log"
 
     if not os.path.exists(log_file):
@@ -208,7 +212,7 @@ def tail_logs():
         with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
             all_lines = f.readlines()
             last_lines = all_lines[-50:]  # Últimas 50 linhas
-        
+
         debug_log(f"✅ [DEBUG] /logs/tail: Lidas {len(last_lines)} linhas")
         return jsonify({"success": True, "lines": last_lines, "count": len(last_lines)})
     except Exception as e:

@@ -13,7 +13,6 @@ from app.models import (
     User,
 )
 
-
 # Mapeamento de tipos de notificação para categorias
 NOTIFICATION_TYPE_MAP = {
     # Prazos
@@ -143,12 +142,16 @@ def send_smart_notification(
                 data=data,
             )
             # Marcar como digest
-            queue_item = NotificationQueue.query.filter_by(
-                user_id=user_id,
-                notification_type=notification_type,
-                channel="email",
-                status="pending",
-            ).order_by(NotificationQueue.created_at.desc()).first()
+            queue_item = (
+                NotificationQueue.query.filter_by(
+                    user_id=user_id,
+                    notification_type=notification_type,
+                    channel="email",
+                    status="pending",
+                )
+                .order_by(NotificationQueue.created_at.desc())
+                .first()
+            )
             if queue_item:
                 queue_item.status = "digest"
                 db.session.commit()
@@ -191,7 +194,7 @@ def _send_email_notification(user_id, notification_type, title, message, link=No
             <div style="padding: 30px; background: #f8f9fa;">
                 <h2 style="color: #333;">{title}</h2>
                 <p style="color: #666; font-size: 16px;">{message}</p>
-                {f'<a href="{link}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">Ver Detalhes</a>' if link else ''}
+                {f'<a href="{link}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">Ver Detalhes</a>' if link else ""}
             </div>
             <div style="padding: 20px; text-align: center; color: #999; font-size: 12px;">
                 <p>Você recebeu este email porque tem notificações ativas no Petitio.</p>
@@ -273,7 +276,7 @@ def send_digest(user_id):
                 items_html += f"""
                 <li style="padding: 10px; background: #fff; margin-bottom: 5px; border-radius: 4px;">
                     <strong>{item.title}</strong><br>
-                    <span style="color: #666; font-size: 14px;">{item.message[:100]}{'...' if len(item.message) > 100 else ''}</span>
+                    <span style="color: #666; font-size: 14px;">{item.message[:100]}{"..." if len(item.message) > 100 else ""}</span>
                 </li>
                 """
             if len(items) > 5:
@@ -284,7 +287,7 @@ def send_digest(user_id):
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #2563eb; color: white; padding: 20px; text-align: center;">
                 <h1 style="margin: 0;">📬 Resumo de Notificações</h1>
-                <p style="margin: 5px 0 0 0; opacity: 0.9;">Petitio - {datetime.now().strftime('%d/%m/%Y')}</p>
+                <p style="margin: 5px 0 0 0; opacity: 0.9;">Petitio - {datetime.now().strftime("%d/%m/%Y")}</p>
             </div>
             <div style="padding: 30px; background: #f8f9fa;">
                 <p style="color: #666;">Olá {user.full_name or user.username},</p>

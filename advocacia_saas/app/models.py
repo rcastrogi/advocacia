@@ -2910,9 +2910,7 @@ class NotificationPreferences(db.Model):
                     or current_time <= self.quiet_hours_end
                 )
             else:
-                return (
-                    self.quiet_hours_start <= current_time <= self.quiet_hours_end
-                )
+                return self.quiet_hours_start <= current_time <= self.quiet_hours_end
 
         return False
 
@@ -2991,10 +2989,21 @@ class NotificationQueue(db.Model):
     sent_at = db.Column(db.DateTime)
 
     # Relacionamento
-    user = db.relationship("User", backref=db.backref("notification_queue", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("notification_queue", lazy="dynamic")
+    )
 
     @staticmethod
-    def add_to_queue(user_id, notification_type, channel, title, message, priority=2, link=None, data=None):
+    def add_to_queue(
+        user_id,
+        notification_type,
+        channel,
+        title,
+        message,
+        priority=2,
+        link=None,
+        data=None,
+    ):
         """Adiciona notificação à fila."""
         item = NotificationQueue(
             user_id=user_id,
@@ -3013,9 +3022,11 @@ class NotificationQueue(db.Model):
     @staticmethod
     def get_pending_digest(user_id):
         """Retorna notificações pendentes para digest."""
-        return NotificationQueue.query.filter_by(
-            user_id=user_id, status="digest"
-        ).order_by(NotificationQueue.created_at.desc()).all()
+        return (
+            NotificationQueue.query.filter_by(user_id=user_id, status="digest")
+            .order_by(NotificationQueue.created_at.desc())
+            .all()
+        )
 
     def __repr__(self):
         return f"<NotificationQueue {self.notification_type} - {self.status}>"

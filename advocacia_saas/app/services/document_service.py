@@ -148,9 +148,7 @@ def extract_document_text(file: FileStorage) -> Tuple[str, Dict]:
     elif filename.endswith(".txt"):
         return extract_text_from_txt(file)
     else:
-        raise ValueError(
-            f"Formato não suportado: {filename}. Use PDF, DOCX ou TXT."
-        )
+        raise ValueError(f"Formato não suportado: {filename}. Use PDF, DOCX ou TXT.")
 
 
 def get_supported_formats() -> list:
