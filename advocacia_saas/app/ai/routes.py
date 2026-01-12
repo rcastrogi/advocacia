@@ -300,9 +300,20 @@ def api_generate_section():
     existing_content = data.get("existing_content", "")
     premium = data.get("premium", False)
 
-    # Determina o custo
-    generation_type = "section"
+    # Seções de fundamentação são complexas - usam mais créditos e GPT-4o
+    fundamentos_sections = {
+        "direito", "fundamentos", "fundamentacao", "fundamentacao-juridica",
+        "fundamentos-juridicos", "do-direito", "dos-fundamentos"
+    }
+    is_fundamentos = section_type.lower().replace("_", "-") in fundamentos_sections
+
+    # Determina o custo - fundamentação é mais cara
+    generation_type = "fundamentos" if is_fundamentos else "section"
     credit_cost = ai_service.get_credit_cost(generation_type)
+
+    # Fundamentação sempre usa premium (GPT-4o)
+    if is_fundamentos:
+        premium = True
 
     # Verifica créditos (master não precisa)
     if not has_sufficient_credits(credit_cost):
