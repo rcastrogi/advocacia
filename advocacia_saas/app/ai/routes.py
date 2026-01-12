@@ -701,6 +701,173 @@ def credits_checkout(slug):
         return jsonify({"error": "Erro ao processar pagamento"}), 500
 
 
+# =============================================================================
+# PIX PARA CRÉDITOS DE IA
+# =============================================================================
+
+
+@ai_bp.route("/credits/pix/<slug>")
+@login_required
+def credits_pix_page(slug):
+    """Página de pagamento PIX para créditos de IA"""
+    package = CreditPackage.query.filter_by(slug=slug, is_active=True).first_or_404()
+    return render_template("ai/credits_pix.html", package=package)
+
+
+@ai_bp.route("/credits/create-pix/<slug>", methods=["POST"])
+@login_required
+def create_credits_pix(slug):
+    """Cria pagamento PIX para créditos de IA"""
+    package = CreditPackage.query.filter_by(slug=slug, is_active=True).first_or_404()
+
+    mp_access_token = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
+    if not mp_access_token:
+        return jsonify({"error": "Mercado Pago não configurado"}), 500
+
+    mp_sdk = mercadopago.SDK(mp_access_token)
+
+    # Criar pagamento PIX
+    payment_data = {
+        "transaction_amount": float(package.price),
+        "description": f"{package.name} - {package.total_credits} créditos de IA",
+        "payment_method_id": "pix",
+        "payer": {
+            "email": current_user.email,
+            "first_name": current_user.full_name.split()[0] if current_user.full_name else current_user.username,
+            "last_name": current_user.full_name.split()[-1] if current_user.full_name and len(current_user.full_name.split()) > 1 else "",
+        },
+        "metadata": {
+            "user_id": current_user.id,
+            "package_id": package.id,
+            "credits": package.credits,
+            "bonus_credits": package.bonus_credits or 0,
+            "type": "credit_purchase",
+        },
+        "external_reference": f"credits_pix_{current_user.id}_{package.id}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
+    }
+
+    try:
+        payment_response = mp_sdk.payment().create(payment_data)
+        payment = payment_response["response"]
+
+        if payment.get("status") == "pending":
+            pix_data = payment.get("point_of_interaction", {}).get("transaction_data", {})
+
+            return jsonify({
+                "success": True,
+                "payment_id": payment["id"],
+                "qr_code": pix_data.get("qr_code"),
+                "qr_code_base64": pix_data.get("qr_code_base64"),
+                "expiration": payment.get("date_of_expiration"),
+            })
+        else:
+            return jsonify({
+                "error": f"Erro ao criar PIX: {payment.get('status_detail', 'unknown')}"
+            }), 400
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao criar PIX de créditos: {str(e)}")
+        return jsonify({"error": "Erro ao processar pagamento PIX"}), 500
+
+
+@ai_bp.route("/credits/check-pix/<int:payment_id>")
+@login_required
+def check_credits_pix(payment_id):
+    """Verifica status do pagamento PIX de créditos"""
+    mp_access_token = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
+    if not mp_access_token:
+        return jsonify({"error": "Mercado Pago não configurado"}), 500
+
+    mp_sdk = mercadopago.SDK(mp_access_token)
+
+    try:
+        payment_response = mp_sdk.payment().get(payment_id)
+        payment = payment_response["response"]
+
+        status = payment.get("status")
+
+        # Se aprovado, processar créditos
+        if status == "approved":
+            metadata = payment.get("metadata", {})
+            user_id = metadata.get("user_id")
+            package_id = metadata.get("package_id")
+
+            if user_id == current_user.id and package_id:
+                # Verificar se já foi processado
+                existing = CreditTransaction.query.filter_by(
+                    payment_intent_id=str(payment_id)
+                ).first()
+
+                if not existing:
+                    _process_credit_purchase(payment_id, user_id, package_id, metadata)
+
+        return jsonify({
+            "success": True,
+            "status": status,
+            "status_detail": payment.get("status_detail"),
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao verificar PIX: {str(e)}")
+        return jsonify({"error": "Erro ao verificar pagamento"}), 500
+
+
+def _process_credit_purchase(payment_id, user_id, package_id, metadata):
+    """Processa compra de créditos após pagamento aprovado"""
+    try:
+        package = db.session.get(CreditPackage, package_id)
+        if not package:
+            return False
+
+        user_credits = UserCredits.get_or_create(user_id)
+
+        # Adicionar créditos
+        credits_to_add = metadata.get("credits", package.credits)
+        bonus_to_add = metadata.get("bonus_credits", package.bonus_credits or 0)
+
+        user_credits.add_credits(credits_to_add, source="purchase")
+        if bonus_to_add > 0:
+            user_credits.add_credits(bonus_to_add, source="bonus")
+
+        # Registrar transação principal
+        transaction = CreditTransaction(
+            user_id=user_id,
+            transaction_type="purchase",
+            amount=credits_to_add,
+            balance_after=user_credits.balance - bonus_to_add,  # Antes do bônus
+            description=f"Compra PIX - {package.name}",
+            package_id=package_id,
+            payment_intent_id=str(payment_id),
+            metadata=json.dumps({"payment_method": "pix", "bonus": bonus_to_add}),
+        )
+        db.session.add(transaction)
+
+        # Registrar bônus separadamente
+        if bonus_to_add > 0:
+            bonus_transaction = CreditTransaction(
+                user_id=user_id,
+                transaction_type="bonus",
+                amount=bonus_to_add,
+                balance_after=user_credits.balance,
+                description=f"Bônus - {package.name}",
+                package_id=package_id,
+            )
+            db.session.add(bonus_transaction)
+
+        db.session.commit()
+
+        current_app.logger.info(
+            f"✅ Créditos PIX processados: user={user_id}, "
+            f"credits={credits_to_add}, bonus={bonus_to_add}"
+        )
+        return True
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao processar compra de créditos: {str(e)}")
+        db.session.rollback()
+        return False
+
+
 @ai_bp.route("/credits/success")
 @login_required
 def credits_success():
@@ -761,7 +928,7 @@ def credits_failure():
 
 @ai_bp.route("/webhook/mercadopago/credits", methods=["POST"])
 def mercadopago_webhook_credits():
-    """Webhook do Mercado Pago para pagamentos de créditos (pagamentos únicos)"""
+    """Webhook do Mercado Pago para pagamentos de créditos (checkout e PIX)"""
     data = request.get_json()
 
     if data.get("type") == "payment":
@@ -780,41 +947,25 @@ def mercadopago_webhook_credits():
                 user_id = metadata.get("user_id")
                 package_id = metadata.get("package_id")
 
-                if user_id and package_id:
+                # Verificar se é compra de créditos (checkout ou PIX)
+                payment_type = metadata.get("type", "")
+                is_credit_purchase = payment_type == "credit_purchase" or (
+                    user_id and package_id and "credits" in str(payment.get("external_reference", ""))
+                )
+
+                if user_id and package_id and is_credit_purchase:
                     # Verificar duplicata
                     existing = CreditTransaction.query.filter_by(
                         payment_intent_id=str(payment_id)
                     ).first()
 
                     if not existing:
-                        package = db.session.get(CreditPackage, package_id)
-                        user_credits = UserCredits.get_or_create(user_id)
-
-                        # Adicionar créditos
-                        user_credits.add_credits(package.credits, source="purchase")
-                        if package.bonus_credits:
-                            user_credits.add_credits(
-                                package.bonus_credits, source="bonus"
-                            )
-
-                        # Registrar transação
-                        transaction = CreditTransaction(
-                            user_id=user_id,
-                            transaction_type="purchase",
-                            amount=package.credits,
-                            balance_after=user_credits.balance,
-                            description="Compra via Mercado Pago",
-                            package_id=package_id,
-                            payment_intent_id=str(payment_id),
-                        )
-                        db.session.add(transaction)
-                        db.session.commit()
-
+                        _process_credit_purchase(payment_id, user_id, package_id, metadata)
                         current_app.logger.info(
-                            f"Créditos adicionados via MP: {package.credits}"
+                            f"✅ Webhook: Créditos processados payment_id={payment_id}"
                         )
 
         except Exception as e:
-            current_app.logger.error(f"Erro no webhook MP: {str(e)}")
+            current_app.logger.error(f"Erro no webhook MP créditos: {str(e)}")
 
     return jsonify({"status": "ok"}), 200

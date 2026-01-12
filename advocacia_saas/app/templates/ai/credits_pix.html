@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Pagar com PIX - {{ package.name }} - Petitio{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <a href="{{ url_for('ai.credits_dashboard') }}" class="text-decoration-none text-muted">
+                    <i class="bi bi-arrow-left me-1"></i>Voltar aos créditos
+                </a>
+            </div>
+
+            <!-- Card de Pagamento PIX -->
+            <div class="card border-0 shadow" x-data="pixCreditsPayment()">
+                <div class="card-body p-4 p-md-5">
+                    <!-- Estado Inicial -->
+                    <template x-if="!pixData && !isLoading && !isApproved">
+                        <div>
+                            <div class="text-center mb-4">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
+                                    <i class="fas fa-coins text-primary display-4"></i>
+                                </div>
+                                <h2 class="fw-bold">{{ package.name }}</h2>
+                                <p class="text-muted">Pagamento instantâneo via PIX</p>
+                            </div>
+
+                            <!-- Resumo do Pacote -->
+                            <div class="bg-light rounded-3 p-4 mb-4">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Créditos:</span>
+                                    <strong>{{ package.credits }}</strong>
+                                </div>
+                                {% if package.bonus_credits > 0 %}
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Bônus:</span>
+                                    <strong class="text-warning">+{{ package.bonus_credits }}</strong>
+                                </div>
+                                {% endif %}
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">Total de créditos:</span>
+                                    <span class="h4 fw-bold text-success mb-0">{{ package.total_credits }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Preço -->
+                            <div class="text-center mb-4">
+                                <div class="display-4 fw-bold" style="color: var(--primary-green);">
+                                    R$ {{ "%.2f"|format(package.price) }}
+                                </div>
+                            </div>
+
+                            <!-- Botão Gerar PIX -->
+                            <button @click="generatePix()" 
+                                    class="btn btn-success btn-lg w-100 py-3">
+                                <i class="fas fa-qrcode me-2"></i>
+                                Gerar QR Code PIX
+                            </button>
+
+                            <div class="text-center mt-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Créditos liberados instantaneamente após pagamento
+                                </small>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Loading -->
+                    <template x-if="isLoading">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-success mb-3" role="status">
+                                <span class="visually-hidden">Gerando...</span>
+                            </div>
+                            <p class="text-muted">Gerando QR Code PIX...</p>
+                        </div>
+                    </template>
+
+                    <!-- QR Code Gerado -->
+                    <template x-if="pixData && !isApproved">
+                        <div>
+                            <div class="text-center mb-4">
+                                <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex p-3 mb-3">
+                                    <i class="fas fa-check-circle text-success display-6"></i>
+                                </div>
+                                <h4 class="fw-bold">PIX Gerado!</h4>
+                                <p class="text-muted mb-0">Escaneie o QR Code ou copie o código</p>
+                            </div>
+
+                            <!-- QR Code -->
+                            <div class="text-center mb-4">
+                                <div class="bg-white p-3 rounded-3 d-inline-block shadow-sm">
+                                    <img :src="'data:image/png;base64,' + pixData.qr_code_base64" 
+                                         alt="QR Code PIX" 
+                                         class="img-fluid" 
+                                         style="max-width: 200px;">
+                                </div>
+                            </div>
+
+                            <!-- Código PIX -->
+                            <div class="mb-4">
+                                <label class="form-label small text-muted">Código PIX (Copia e Cola)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" :value="pixData.qr_code" readonly>
+                                    <button class="btn btn-outline-success" @click="copyPixCode()">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="alert alert-info d-flex align-items-center">
+                                <div class="spinner-border spinner-border-sm me-2" role="status">
+                                    <span class="visually-hidden">Verificando...</span>
+                                </div>
+                                <span>Aguardando pagamento...</span>
+                            </div>
+
+                            <!-- Valor -->
+                            <div class="text-center">
+                                <span class="text-muted">Valor:</span>
+                                <strong class="text-success ms-2">R$ {{ "%.2f"|format(package.price) }}</strong>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Pagamento Aprovado -->
+                    <template x-if="isApproved">
+                        <div class="text-center py-4">
+                            <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
+                                <i class="fas fa-check-circle text-success display-4"></i>
+                            </div>
+                            <h3 class="fw-bold text-success">Pagamento Aprovado!</h3>
+                            <p class="text-muted mb-4">
+                                Seus <strong>{{ package.total_credits }} créditos</strong> já estão disponíveis!
+                            </p>
+                            <a href="{{ url_for('ai.credits_dashboard') }}" class="btn btn-success btn-lg">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                Ver Meus Créditos
+                            </a>
+                        </div>
+                    </template>
+
+                    <!-- Erro -->
+                    <template x-if="error">
+                        <div class="alert alert-danger mt-3">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span x-text="error"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function pixCreditsPayment() {
+    return {
+        isLoading: false,
+        pixData: null,
+        isApproved: false,
+        error: null,
+        checkInterval: null,
+
+        async generatePix() {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const response = await fetch('{{ url_for("ai.create_credits_pix", slug=package.slug) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.pixData = data;
+                    this.startChecking(data.payment_id);
+                } else {
+                    this.error = data.error || 'Erro ao gerar PIX';
+                }
+            } catch (e) {
+                this.error = 'Erro de conexão. Tente novamente.';
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        startChecking(paymentId) {
+            // Verificar a cada 3 segundos
+            this.checkInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/ai/credits/check-pix/${paymentId}`);
+                    const data = await response.json();
+
+                    if (data.status === 'approved') {
+                        this.isApproved = true;
+                        clearInterval(this.checkInterval);
+                    } else if (data.status === 'cancelled' || data.status === 'rejected') {
+                        this.error = 'Pagamento cancelado ou rejeitado';
+                        clearInterval(this.checkInterval);
+                    }
+                } catch (e) {
+                    console.error('Erro ao verificar status:', e);
+                }
+            }, 3000);
+        },
+
+        copyPixCode() {
+            if (this.pixData?.qr_code) {
+                navigator.clipboard.writeText(this.pixData.qr_code);
+                // Toast de sucesso
+                if (window.showToast) {
+                    window.showToast('Código PIX copiado!', 'success');
+                } else {
+                    alert('Código PIX copiado!');
+                }
+            }
+        },
+
+        // Limpar interval ao sair
+        destroy() {
+            if (this.checkInterval) {
+                clearInterval(this.checkInterval);
+            }
+        }
+    }
+}
+</script>
+{% endblock %}
