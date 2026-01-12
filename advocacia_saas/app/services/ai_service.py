@@ -14,15 +14,19 @@ CREDIT_COSTS = {
     "section": 1,  # Gerar uma seção individual
     "improve": 1,  # Melhorar texto existente
     "summarize": 1,  # Resumir texto
-    "full_petition": 5,  # Petição completa
-    "analyze": 3,  # Análise jurídica
-    "fundamentos": 3,  # Fundamentação jurídica
+    "full_petition": 5,  # Petição completa (usa GPT-4o)
+    "analyze": 3,  # Análise jurídica (usa GPT-4o)
+    "fundamentos": 3,  # Fundamentação jurídica (usa GPT-4o)
+    "analyze_document": 4,  # Análise de documento PDF (usa GPT-4o)
 }
+
+# Operações que usam modelo premium (GPT-4o) por padrão
+PREMIUM_OPERATIONS = {"full_petition", "analyze", "fundamentos", "analyze_document"}
 
 # Modelos disponíveis
 MODELS = {
-    "fast": "gpt-4o-mini",  # Rápido e barato
-    "premium": "gpt-4o",  # Melhor qualidade
+    "fast": "gpt-4o-mini",  # Rápido e barato - tarefas simples
+    "premium": "gpt-4o",  # Melhor qualidade - tarefas complexas
 }
 
 # Prompts do sistema para diferentes contextos
@@ -97,6 +101,41 @@ INSTRUÇÕES:
 3. Seja preciso e objetivo
 4. Estruture de forma profissional
 5. Inclua todos os elementos necessários""",
+    "analyze_document": """Você é um advogado brasileiro altamente qualificado especializado em análise documental.
+Sua tarefa é analisar o documento fornecido e extrair informações jurídicas relevantes.
+
+ANÁLISE OBRIGATÓRIA:
+1. TIPO DE DOCUMENTO: Identifique o tipo (contrato, procuração, notificação, etc.)
+2. PARTES ENVOLVIDAS: Liste todas as partes mencionadas
+3. OBJETO: Descreva o objeto principal do documento
+4. CLÁUSULAS RELEVANTES: Identifique cláusulas importantes
+5. DATAS E PRAZOS: Liste datas e prazos mencionados
+6. VALORES: Identifique valores monetários
+7. PONTOS DE ATENÇÃO: Destaque possíveis problemas ou irregularidades
+8. LEGISLAÇÃO APLICÁVEL: Cite leis que se aplicam ao caso
+
+INSTRUÇÕES:
+1. Seja objetivo e preciso
+2. Use linguagem jurídica formal
+3. Organize as informações de forma clara
+4. Destaque pontos que podem ser usados em fundamentação jurídica""",
+    "fundamentos_com_documento": """Você é um advogado brasileiro especialista em fundamentação jurídica.
+Sua tarefa é redigir uma fundamentação jurídica BASEADA no documento analisado.
+
+ESTRUTURA DA FUNDAMENTAÇÃO:
+1. Apresente o contexto fático extraído do documento
+2. Identifique as questões jurídicas envolvidas
+3. Cite a legislação aplicável (artigos específicos)
+4. Apresente jurisprudência relevante quando apropriado
+5. Conecte os fatos do documento ao direito aplicável
+6. Conclua com a tese jurídica sustentada
+
+INSTRUÇÕES:
+1. Baseie-se EXCLUSIVAMENTE nas informações do documento
+2. Cite artigos de lei de forma precisa (CF, CC, CPC, CDC, CLT, etc.)
+3. Use linguagem jurídica formal e técnica
+4. Estruture em parágrafos bem organizados
+5. Seja persuasivo mas tecnicamente correto""",
 }
 
 
@@ -442,6 +481,96 @@ INSTRUÇÕES IMPORTANTES:
 
         content, _ = self._call_openai(messages, model=model, max_tokens=2000)
         return content
+
+    def analyze_document(
+        self, document_text: str, document_name: str = None
+    ) -> Tuple[str, Dict[str, Any]]:
+        """
+        Analisa um documento (PDF/DOCX extraído) e extrai informações jurídicas.
+
+        Args:
+            document_text: Texto extraído do documento
+            document_name: Nome do arquivo (opcional)
+
+        Returns:
+            Tuple[str, Dict]: (análise do documento, metadados)
+        """
+        system_prompt = SYSTEM_PROMPTS["analyze_document"]
+
+        user_prompt = f"DOCUMENTO PARA ANÁLISE"
+        if document_name:
+            user_prompt += f" ({document_name})"
+        user_prompt += f":\n\n{document_text[:15000]}"  # Limitar a 15k chars
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        # Sempre usa modelo premium para análise de documentos
+        return self._call_openai(messages, model=MODELS["premium"], max_tokens=3000)
+
+    def generate_fundamentos_from_document(
+        self,
+        document_text: str,
+        document_analysis: str = None,
+        petition_type: str = None,
+        additional_context: str = None,
+    ) -> Tuple[str, Dict[str, Any]]:
+        """
+        Gera fundamentação jurídica baseada em documento analisado.
+
+        Args:
+            document_text: Texto do documento
+            document_analysis: Análise prévia do documento (opcional)
+            petition_type: Tipo de petição sendo elaborada
+            additional_context: Contexto adicional do usuário
+
+        Returns:
+            Tuple[str, Dict]: (fundamentação jurídica, metadados)
+        """
+        system_prompt = SYSTEM_PROMPTS["fundamentos_com_documento"]
+
+        user_prompt_parts = []
+
+        if petition_type:
+            user_prompt_parts.append(f"TIPO DE PETIÇÃO: {petition_type}")
+
+        if document_analysis:
+            user_prompt_parts.append(f"ANÁLISE DO DOCUMENTO:\n{document_analysis}")
+        else:
+            user_prompt_parts.append(
+                f"CONTEÚDO DO DOCUMENTO:\n{document_text[:12000]}"
+            )
+
+        if additional_context:
+            user_prompt_parts.append(f"CONTEXTO ADICIONAL:\n{additional_context}")
+
+        user_prompt_parts.append(
+            "\nCom base nas informações acima, elabore uma fundamentação jurídica completa e bem estruturada."
+        )
+
+        user_prompt = "\n\n".join(user_prompt_parts)
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        # Sempre usa modelo premium para fundamentação
+        return self._call_openai(messages, model=MODELS["premium"], max_tokens=4000)
+
+    def should_use_premium(self, generation_type: str) -> bool:
+        """
+        Verifica se uma operação deve usar o modelo premium por padrão.
+
+        Args:
+            generation_type: Tipo de geração (analyze, fundamentos, etc.)
+
+        Returns:
+            bool: True se deve usar GPT-4o
+        """
+        return generation_type in PREMIUM_OPERATIONS
 
 
 # Instância global do serviço

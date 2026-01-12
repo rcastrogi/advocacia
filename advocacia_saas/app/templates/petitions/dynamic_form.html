@@ -626,6 +626,117 @@
                             </ul>
                         </div>
                         
+                        {% elif field.type == 'fundamentos_editor' %}
+                        <!-- Campo Especial: Fundamentação com Análise de Documento -->
+                        <label class="form-label {% if field.required %}required{% endif %}">{{ field.label }}</label>
+                        
+                        <!-- Upload de Documento para Análise -->
+                        <div class="card border-primary mb-3" x-data="documentAnalysis('{{ section_config.section.slug }}_{{ field.name }}')">
+                            <div class="card-header bg-primary bg-opacity-10 d-flex align-items-center justify-content-between py-2">
+                                <span class="fw-semibold text-primary">
+                                    <i class="fas fa-file-pdf me-2"></i>
+                                    Análise de Documento para Fundamentação
+                                </span>
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-coins me-1"></i>4 créditos
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-3">
+                                    Envie um documento (contrato, notificação, processo, etc.) para que a IA analise e gere uma fundamentação jurídica baseada no conteúdo.
+                                </p>
+                                
+                                <!-- Upload Area -->
+                                <div class="document-upload-area border-2 border-dashed rounded p-3 text-center mb-3"
+                                     :class="{'border-success bg-success bg-opacity-10': documentFile, 'border-primary': !documentFile}"
+                                     @drop.prevent="handleDocumentDrop($event)"
+                                     @dragover.prevent="isDragging = true"
+                                     @dragleave.prevent="isDragging = false">
+                                    
+                                    <template x-if="!documentFile && !isAnalyzing">
+                                        <div>
+                                            <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-2"></i>
+                                            <p class="mb-2 small">Arraste um PDF, DOCX ou TXT aqui</p>
+                                            <input type="file" 
+                                                   class="d-none"
+                                                   id="doc_{{ section_config.section.slug }}_{{ field.name }}"
+                                                   @change="handleDocumentSelect($event)"
+                                                   accept=".pdf,.docx,.txt">
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                    @click="$refs.fileInput.click()">
+                                                <i class="fas fa-folder-open me-1"></i>
+                                                Selecionar Arquivo
+                                            </button>
+                                            <input type="file" x-ref="fileInput" class="d-none" 
+                                                   @change="handleDocumentSelect($event)" accept=".pdf,.docx,.txt">
+                                        </div>
+                                    </template>
+                                    
+                                    <template x-if="documentFile && !isAnalyzing">
+                                        <div>
+                                            <i class="fas fa-file-alt fa-2x text-success mb-2"></i>
+                                            <p class="mb-1 fw-semibold text-success" x-text="documentFile.name"></p>
+                                            <small class="text-muted" x-text="(documentFile.size / 1024 / 1024).toFixed(2) + ' MB'"></small>
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-sm btn-danger me-2" @click="clearDocument()">
+                                                    <i class="fas fa-times me-1"></i>Remover
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-success" @click="analyzeDocument()">
+                                                    <i class="fas fa-magic me-1"></i>Analisar e Gerar Fundamentação
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    
+                                    <template x-if="isAnalyzing">
+                                        <div>
+                                            <div class="spinner-border text-primary mb-2" role="status">
+                                                <span class="visually-hidden">Analisando...</span>
+                                            </div>
+                                            <p class="mb-0 text-primary fw-semibold" x-text="analyzeStatus"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                                
+                                <!-- Análise do Documento -->
+                                <template x-if="documentAnalysisResult">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label mb-0 fw-semibold">
+                                                <i class="fas fa-search text-info me-1"></i>
+                                                Análise do Documento
+                                            </label>
+                                            <button type="button" class="btn btn-sm btn-link text-muted p-0" 
+                                                    @click="showAnalysis = !showAnalysis"
+                                                    x-text="showAnalysis ? 'Ocultar' : 'Mostrar'"></button>
+                                        </div>
+                                        <div x-show="showAnalysis" x-collapse class="bg-light rounded p-3 small" 
+                                             style="max-height: 200px; overflow-y: auto;">
+                                            <pre class="mb-0 text-wrap" x-text="documentAnalysisResult" style="white-space: pre-wrap;"></pre>
+                                        </div>
+                                    </div>
+                                </template>
+                                
+                                <!-- Erro -->
+                                <template x-if="error">
+                                    <div class="alert alert-danger py-2 small">
+                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                        <span x-text="error"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <!-- Editor de Fundamentação -->
+                        <div class="quill-wrapper mb-3">
+                            <div class="quill-editor"
+                                 id="quill_{{ section_config.section.slug }}_{{ field.name }}"
+                                 x-ref="editor_{{ section_config.section.slug }}_{{ field.name }}"
+                                 x-init="$nextTick(() => initQuillEditor('{{ section_config.section.slug }}_{{ field.name }}'))">
+                            </div>
+                        </div>
+                        <input type="hidden" name="{{ section_config.section.slug }}_{{ field.name }}" x-model="formData['{{ section_config.section.slug }}_{{ field.name }}']">
+                        
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -2021,6 +2132,159 @@ document.addEventListener('alpine:init', () => {
                 this.showToast('Erro ao gerar petição. Tente novamente.', 'error');
             } finally {
                 this.isGenerating = false;
+            }
+        }
+    }));
+    
+    // Componente para análise de documentos na fundamentação
+    Alpine.data('documentAnalysis', (fieldName) => ({
+        fieldName: fieldName,
+        documentFile: null,
+        documentAnalysisResult: null,
+        generatedFundamentos: null,
+        isAnalyzing: false,
+        analyzeStatus: '',
+        error: null,
+        isDragging: false,
+        showAnalysis: true,
+        
+        handleDocumentDrop(event) {
+            this.isDragging = false;
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                this.selectDocument(files[0]);
+            }
+        },
+        
+        handleDocumentSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                this.selectDocument(files[0]);
+            }
+        },
+        
+        selectDocument(file) {
+            // Validar tipo
+            const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+            const allowedExtensions = ['.pdf', '.docx', '.txt'];
+            
+            const hasValidExtension = allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+            
+            if (!hasValidExtension) {
+                this.error = 'Formato não suportado. Use PDF, DOCX ou TXT.';
+                return;
+            }
+            
+            // Validar tamanho (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                this.error = 'Arquivo muito grande. Máximo: 10MB';
+                return;
+            }
+            
+            this.documentFile = file;
+            this.error = null;
+            this.documentAnalysisResult = null;
+            this.generatedFundamentos = null;
+        },
+        
+        clearDocument() {
+            this.documentFile = null;
+            this.documentAnalysisResult = null;
+            this.generatedFundamentos = null;
+            this.error = null;
+        },
+        
+        async analyzeDocument() {
+            if (!this.documentFile) return;
+            
+            this.isAnalyzing = true;
+            this.analyzeStatus = 'Enviando documento...';
+            this.error = null;
+            
+            try {
+                // 1. Upload e análise do documento
+                const formData = new FormData();
+                formData.append('document', this.documentFile);
+                
+                this.analyzeStatus = 'Analisando documento com IA...';
+                
+                const analyzeResponse = await fetch('/ai/api/analyze-document', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const analyzeData = await analyzeResponse.json();
+                
+                if (!analyzeData.success) {
+                    throw new Error(analyzeData.error || 'Erro ao analisar documento');
+                }
+                
+                this.documentAnalysisResult = analyzeData.analysis;
+                
+                // 2. Gerar fundamentação baseada na análise
+                this.analyzeStatus = 'Gerando fundamentação jurídica...';
+                
+                const fundamentosResponse = await fetch('/ai/api/generate-fundamentos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        document_analysis: analyzeData.analysis,
+                        petition_type: window.PETITION_TYPE?.name || ''
+                    })
+                });
+                
+                const fundamentosData = await fundamentosResponse.json();
+                
+                if (!fundamentosData.success) {
+                    throw new Error(fundamentosData.error || 'Erro ao gerar fundamentação');
+                }
+                
+                this.generatedFundamentos = fundamentosData.fundamentos;
+                
+                // 3. Inserir no editor Quill
+                this.insertIntoEditor(fundamentosData.fundamentos);
+                
+                // Mostrar sucesso
+                if (window.showToast) {
+                    window.showToast('Fundamentação gerada com sucesso!', 'success');
+                }
+                
+            } catch (err) {
+                console.error('Erro na análise:', err);
+                this.error = err.message || 'Erro ao processar documento';
+            } finally {
+                this.isAnalyzing = false;
+                this.analyzeStatus = '';
+            }
+        },
+        
+        insertIntoEditor(content) {
+            // Buscar o editor Quill do campo
+            const editorId = 'quill_' + this.fieldName;
+            const editorElement = document.getElementById(editorId);
+            
+            if (editorElement && editorElement.__quill) {
+                const quill = editorElement.__quill;
+                
+                // Limpar e inserir novo conteúdo
+                quill.root.innerHTML = content.replace(/\n/g, '<br>');
+                
+                // Disparar evento de mudança para o Alpine detectar
+                const event = new Event('text-change');
+                editorElement.dispatchEvent(event);
+                
+                // Atualizar formData do Alpine pai
+                const parentComponent = Alpine.$data(document.querySelector('[x-data*="dynamicPetitionForm"]'));
+                if (parentComponent) {
+                    parentComponent.formData[this.fieldName] = content;
+                }
+            } else {
+                // Fallback: tentar encontrar textarea
+                const textarea = document.querySelector(`textarea[name="${this.fieldName}"]`);
+                if (textarea) {
+                    textarea.value = content;
+                    textarea.dispatchEvent(new Event('input'));
+                }
             }
         }
     }));

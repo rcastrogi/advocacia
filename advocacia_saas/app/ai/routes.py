@@ -14,6 +14,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    session,
     url_for,
 )
 from flask_login import current_user, login_required
@@ -26,7 +27,12 @@ from app.models import (
     CreditTransaction,
     UserCredits,
 )
-from app.services.ai_service import CREDIT_COSTS, ai_service
+from app.services.ai_service import CREDIT_COSTS, PREMIUM_OPERATIONS, ai_service
+from app.services.document_service import (
+    extract_document_text,
+    get_supported_formats,
+    validate_document_file,
+)
 
 ai_bp = Blueprint("ai", __name__, url_prefix="/ai")
 
@@ -628,6 +634,180 @@ def api_generation_feedback(generation_id):
     db.session.commit()
 
     return jsonify({"success": True})
+
+
+# =============================================================================
+# ANÁLISE DE DOCUMENTOS COM IA
+# =============================================================================
+
+
+@ai_bp.route("/analyze-document")
+@login_required
+def analyze_document_page():
+    """Página de análise de documentos"""
+    user_credits = get_user_credits()
+    credit_cost = CREDIT_COSTS.get("analyze_document", 4)
+
+    return render_template(
+        "ai/analyze_document.html",
+        credits=user_credits,
+        credit_cost=credit_cost,
+        supported_formats=get_supported_formats(),
+    )
+
+
+@ai_bp.route("/api/analyze-document", methods=["POST"])
+@login_required
+@limiter.limit("10 per hour")
+def api_analyze_document():
+    """API para análise de documento com IA"""
+    credit_cost = CREDIT_COSTS.get("analyze_document", 4)
+
+    # Verificar créditos
+    if not has_sufficient_credits(credit_cost):
+        return jsonify({
+            "success": False,
+            "error": "Créditos insuficientes",
+            "credits_required": credit_cost,
+        }), 402
+
+    # Verificar arquivo
+    if "document" not in request.files:
+        return jsonify({"success": False, "error": "Nenhum arquivo enviado"}), 400
+
+    file = request.files["document"]
+    is_valid, error_msg = validate_document_file(file)
+
+    if not is_valid:
+        return jsonify({"success": False, "error": error_msg}), 400
+
+    try:
+        # Extrair texto do documento
+        document_text, doc_metadata = extract_document_text(file)
+
+        if not document_text or len(document_text.strip()) < 50:
+            return jsonify({
+                "success": False,
+                "error": "Não foi possível extrair texto suficiente do documento",
+            }), 400
+
+        # Analisar com IA
+        analysis, ai_metadata = ai_service.analyze_document(
+            document_text, file.filename
+        )
+
+        # Descontar créditos
+        if not is_master_user():
+            use_credits_if_needed(credit_cost)
+
+        # Salvar na sessão para uso posterior
+        session["last_document_text"] = document_text[:20000]
+        session["last_document_analysis"] = analysis
+        session["last_document_name"] = file.filename
+
+        # Registrar geração
+        generation = AIGeneration(
+            user_id=current_user.id,
+            generation_type="analyze_document",
+            prompt=f"Análise de: {file.filename}",
+            result=analysis[:5000],
+            tokens_used=ai_metadata.get("tokens_total", 0),
+            model_used=ai_metadata.get("model", "gpt-4o"),
+            credits_used=credit_cost,
+        )
+        db.session.add(generation)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "analysis": analysis,
+            "document_info": doc_metadata,
+            "ai_info": {
+                "model": ai_metadata.get("model"),
+                "tokens": ai_metadata.get("tokens_total"),
+            },
+            "credits_used": credit_cost,
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao analisar documento: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao processar documento: {str(e)}",
+        }), 500
+
+
+@ai_bp.route("/api/generate-fundamentos", methods=["POST"])
+@login_required
+@limiter.limit("10 per hour")
+def api_generate_fundamentos():
+    """API para gerar fundamentação jurídica baseada em documento"""
+    credit_cost = CREDIT_COSTS.get("fundamentos", 3)
+
+    # Verificar créditos
+    if not has_sufficient_credits(credit_cost):
+        return jsonify({
+            "success": False,
+            "error": "Créditos insuficientes",
+            "credits_required": credit_cost,
+        }), 402
+
+    data = request.get_json() or {}
+
+    # Pegar documento da sessão ou do request
+    document_text = data.get("document_text") or session.get("last_document_text")
+    document_analysis = data.get("document_analysis") or session.get("last_document_analysis")
+    petition_type = data.get("petition_type")
+    additional_context = data.get("additional_context")
+
+    if not document_text and not document_analysis:
+        return jsonify({
+            "success": False,
+            "error": "Nenhum documento carregado. Faça upload e análise primeiro.",
+        }), 400
+
+    try:
+        # Gerar fundamentação
+        fundamentos, ai_metadata = ai_service.generate_fundamentos_from_document(
+            document_text=document_text,
+            document_analysis=document_analysis,
+            petition_type=petition_type,
+            additional_context=additional_context,
+        )
+
+        # Descontar créditos
+        if not is_master_user():
+            use_credits_if_needed(credit_cost)
+
+        # Registrar geração
+        generation = AIGeneration(
+            user_id=current_user.id,
+            generation_type="fundamentos",
+            prompt=f"Fundamentação baseada em documento",
+            result=fundamentos[:5000],
+            tokens_used=ai_metadata.get("tokens_total", 0),
+            model_used=ai_metadata.get("model", "gpt-4o"),
+            credits_used=credit_cost,
+        )
+        db.session.add(generation)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "fundamentos": fundamentos,
+            "ai_info": {
+                "model": ai_metadata.get("model"),
+                "tokens": ai_metadata.get("tokens_total"),
+            },
+            "credits_used": credit_cost,
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao gerar fundamentação: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao gerar fundamentação: {str(e)}",
+        }), 500
 
 
 # =============================================================================
