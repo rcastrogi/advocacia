@@ -69,35 +69,52 @@ def create_app(config_class=Config):
         )
 
     # Initialize security headers (HTTPS, HSTS, CSP)
-    if app.config.get("FORCE_HTTPS", False):
-        Talisman(
-            app,
-            force_https=True,
-            strict_transport_security=True,
-            strict_transport_security_max_age=31536000,
-            content_security_policy={
-                "default-src": ["'self'"],
-                "script-src": [
-                    "'self'",
-                    "'unsafe-inline'",  # Necessário para Alpine.js inline
-                    "'unsafe-eval'",  # Necessário para Alpine.js expressions
-                    "cdn.jsdelivr.net",
-                    "unpkg.com",
-                    "cdnjs.cloudflare.com",
-                    "code.jquery.com",
-                ],
-                "style-src": [
-                    "'self'",
-                    "'unsafe-inline'",
-                    "cdn.jsdelivr.net",
-                    "cdnjs.cloudflare.com",
-                    "fonts.googleapis.com",
-                ],
-                "font-src": ["'self'", "fonts.gstatic.com", "cdnjs.cloudflare.com"],
-                "img-src": ["'self'", "data:", "https:"],
-                "connect-src": ["'self'"],
-            },
-        )
+    # Security headers são SEMPRE aplicados, HTTPS apenas em produção
+    force_https = app.config.get("FORCE_HTTPS", False)
+    
+    Talisman(
+        app,
+        force_https=force_https,
+        force_https_permanent=force_https,
+        strict_transport_security=force_https,  # HSTS só faz sentido com HTTPS
+        strict_transport_security_max_age=31536000 if force_https else 0,
+        # Headers de segurança SEMPRE ativos
+        content_security_policy={
+            "default-src": ["'self'"],
+            "script-src": [
+                "'self'",
+                "'unsafe-inline'",  # Necessário para Alpine.js inline
+                "'unsafe-eval'",  # Necessário para Alpine.js expressions
+                "cdn.jsdelivr.net",
+                "unpkg.com",
+                "cdnjs.cloudflare.com",
+                "code.jquery.com",
+            ],
+            "style-src": [
+                "'self'",
+                "'unsafe-inline'",
+                "cdn.jsdelivr.net",
+                "cdnjs.cloudflare.com",
+                "fonts.googleapis.com",
+            ],
+            "font-src": ["'self'", "fonts.gstatic.com", "cdnjs.cloudflare.com"],
+            "img-src": ["'self'", "data:", "https:"],
+            "connect-src": ["'self'"],
+            "frame-ancestors": ["'self'"],  # Equivalente a X-Frame-Options
+        },
+        # Headers de proteção contra ataques
+        content_security_policy_nonce_in=["script-src"],
+        referrer_policy="strict-origin-when-cross-origin",
+        feature_policy={
+            "geolocation": "'none'",
+            "microphone": "'none'",
+            "camera": "'none'",
+        },
+        # X-Content-Type-Options: nosniff (padrão do Talisman)
+        # X-Frame-Options: SAMEORIGIN (via frame-ancestors)
+        session_cookie_secure=force_https,
+        session_cookie_http_only=True,
+    )
 
     # Initialize extensions
     db.init_app(app)

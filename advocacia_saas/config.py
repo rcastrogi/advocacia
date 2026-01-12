@@ -125,3 +125,19 @@ class Config:
         "on",
         "1",
     ]
+
+    # =========================================================================
+    # SESSION & COOKIE SECURITY SETTINGS
+    # =========================================================================
+    # Session cookie security - Proteção contra XSS e CSRF
+    SESSION_COOKIE_SECURE = os.environ.get("FLASK_ENV") == "production"  # HTTPS only in production
+    SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
+    SESSION_COOKIE_SAMESITE = "Lax"  # CSRF protection - "Strict" for maximum security
+    SESSION_COOKIE_NAME = "petitio_session"  # Custom name to avoid fingerprinting
+
+    # Remember Me cookie security
+    REMEMBER_COOKIE_SECURE = os.environ.get("FLASK_ENV") == "production"  # HTTPS only in production
+    REMEMBER_COOKIE_HTTPONLY = True  # Prevent JavaScript access
+    REMEMBER_COOKIE_SAMESITE = "Lax"  # CSRF protection
+    REMEMBER_COOKIE_NAME = "petitio_remember"  # Custom name
+    REMEMBER_COOKIE_DURATION = 30 * 24 * 60 * 60  # 30 days in seconds

@@ -7,12 +7,18 @@
     <meta name="keywords" content="gerador petições, petições automáticas, criar petições online, modelos petições, petições jurídicas, advocacia digital, automação jurídica, IA advocacia, gerador petições IA">
     <meta name="author" content="Petitio">
     <meta name="robots" content="index, follow">
+    
+    <!-- CSRF Token for AJAX requests -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Canonical URL -->
     <link rel="canonical" href="{{ request.url_root[:-1] }}{{ request.path }}">
 
     <!-- Debug Console (FIRST SCRIPT - antes de tudo) -->
     <script src="{{ static_url('js/debug-console.js') }}"></script>
+    
+    <!-- CSRF Helper (SECOND SCRIPT - proteção automática AJAX) -->
+    <script src="{{ static_url('js/csrf-helper.js') }}"></script>
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
