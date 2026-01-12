@@ -727,6 +727,26 @@
                             </div>
                         </div>
                         
+                        <!-- Toolbar de IA para Melhorar Texto -->
+                        <div class="ai-toolbar d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <span class="text-muted small align-self-center me-2">
+                                    <i class="fas fa-lightbulb text-warning me-1"></i>
+                                    Escreva sua fundamentação e use a IA para melhorar:
+                                </span>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        onclick="window.PetitionForm?.improveContent('{{ section_config.section.slug }}_{{ field.name }}')">
+                                    <i class="fas fa-edit me-1"></i> Melhorar Texto
+                                    <span class="badge bg-primary bg-opacity-25 text-primary ms-1">1 crédito</span>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-success"
+                                        onclick="window.PetitionForm?.generateAIContent('{{ section_config.section.slug }}_{{ field.name }}')">
+                                    <i class="fas fa-magic me-1"></i> Gerar do Zero
+                                    <span class="badge bg-success bg-opacity-25 text-success ms-1">1 crédito</span>
+                                </button>
+                            </div>
+                        </div>
+                        
                         <!-- Editor de Fundamentação -->
                         <div class="quill-wrapper mb-3">
                             <div class="quill-editor"
