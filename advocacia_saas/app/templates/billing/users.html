@@ -99,6 +99,7 @@
                         <td>
                             <div class="d-flex flex-column gap-1">
                                 <form method="post" action="{{ url_for('billing.change_billing_status', user_id=user.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="status" value="{{ 'active' if user.billing_status == 'delinquent' else 'delinquent' }}">
                                     <button type="submit" class="btn btn-sm {{ 'btn-outline-success' if user.billing_status == 'delinquent' else 'btn-outline-danger' }}">
                                         {{ 'Liberar acesso' if user.billing_status == 'delinquent' else 'Marcar inadimplente' }}
@@ -106,6 +107,7 @@
                                 </form>
                                 {% if current_plan %}
                                 <form method="post" action="{{ url_for('billing.change_plan_status', user_id=user.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <select name="status" class="form-select form-select-sm mb-1">
                                         <option value="active" {% if current_plan.status == 'active' %}selected{% endif %}>Plano ativo</option>
                                         <option value="trial" {% if current_plan.status == 'trial' %}selected{% endif %}>Em teste</option>

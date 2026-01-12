@@ -103,6 +103,7 @@
                                       action="{{ url_for('admin.petition_type_delete', type_id=petition_type.id) }}"
                                       class="d-inline delete-form"
                                       data-item-name="{{ petition_type.name }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
                                         <i class="fas fa-trash"></i>
                                     </button>

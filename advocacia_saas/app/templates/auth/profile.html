@@ -191,6 +191,7 @@
                     {% endif %}
                     
                     <form action="{{ url_for('auth.upload_logo') }}" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-3">
                             <input type="file" class="form-control" name="logo" accept=".png,.jpg,.jpeg,.gif" {% if is_demo %}disabled{% else %}required{% endif %}>
                             <div class="form-text">Formatos aceitos: PNG, JPG, JPEG, GIF</div>
@@ -311,6 +312,7 @@
                 </div>
                 <div class="card-body">
                     <form action="{{ url_for('auth.update_timezone') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-3">
                             <label for="timezone" class="form-label">Fuso Horário</label>
                             <select class="form-select" id="timezone" name="timezone" required>

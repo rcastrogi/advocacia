@@ -170,6 +170,7 @@
                                 <div class="card-body">
                                     <!-- Alterar Status -->
                                     <form method="POST" action="{{ url_for('admin.roadmap_feedback_status', feedback_id=feedback.id) }}" class="mb-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <div class="form-group">
                                             <label for="status">Status:</label>
                                             <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
@@ -183,6 +184,7 @@
 
                                     <!-- Toggle Destaque -->
                                     <form method="POST" action="{{ url_for('admin.roadmap_feedback_toggle_featured', feedback_id=feedback.id) }}" class="mb-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm {{ 'btn-warning' if feedback.is_featured else 'btn-outline-warning' }} btn-block">
                                             <i class="fas fa-star"></i>
                                             {{ 'Remover Destaque' if feedback.is_featured else 'Destacar Feedback' }}
@@ -210,6 +212,7 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form method="POST" action="{{ url_for('admin.roadmap_feedback_respond', feedback_id=feedback.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
                     <h5 class="modal-title">Responder ao Feedback</h5>
                     <button type="button" class="close" data-dismiss="modal">

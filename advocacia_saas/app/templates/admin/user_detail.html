@@ -17,6 +17,7 @@
     <div>
         {% if user.user_type not in ["master", "admin"] %}
         <form action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" method="POST" class="d-inline" id="toggle-user-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             {% if user.is_active %}
             <button type="button" class="btn btn-outline-danger" onclick="confirmToggleUser(false)">
                 <i class="fas fa-user-slash me-2"></i>Desativar Usuário
@@ -233,6 +234,7 @@
                             <!-- Iniciar Trial -->
                             <div class="col-md-6">
                                 <form action="{{ url_for('admin.manage_user_trial', user_id=user.id) }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="action" value="start">
                                     <div class="input-group">
                                         <input type="number" name="trial_days" class="form-control" placeholder="Dias" min="1" max="365" value="{{ config.DEFAULT_TRIAL_DAYS }}" required>
@@ -246,6 +248,7 @@
                             <!-- Encerrar Trial -->
                             <div class="col-md-6">
                                 <form action="{{ url_for('admin.manage_user_trial', user_id=user.id) }}" method="POST" id="end-trial-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="action" value="end">
                                     <button type="button" class="btn btn-danger" onclick="confirmEndTrial()">
                                         <i class="fas fa-stop me-1"></i>Encerrar Trial
@@ -255,6 +258,7 @@
                             <!-- Estender Trial -->
                             <div class="col-md-6">
                                 <form action="{{ url_for('admin.manage_user_trial', user_id=user.id) }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="action" value="extend">
                                     <div class="input-group">
                                         <input type="number" name="additional_days" class="form-control" placeholder="Dias" min="1" max="365" value="7" required>
@@ -561,6 +565,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form action="{{ url_for('admin.add_user_credits', user_id=user.id) }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Quantidade de Créditos</label>

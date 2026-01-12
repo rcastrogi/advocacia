@@ -83,7 +83,7 @@
         <div class="card shadow-sm">
             <div class="card-body">
                 <form method="POST" class="meeting-form">
-                    {{ csrf_token() if csrf_token }}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <div class="mb-3">
                         <label for="title" class="form-label">Assunto da Reunião <span class="text-danger">*</span></label>

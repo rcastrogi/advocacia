@@ -5,10 +5,9 @@ Acesso: /admin/logs (apenas admin)
 
 import logging
 import os
-import sys
 from functools import wraps
 
-from flask import Blueprint, jsonify, render_template_string, request
+from flask import Blueprint, jsonify, render_template_string
 from flask_login import login_required
 
 bp = Blueprint("logs", __name__, url_prefix="/admin")

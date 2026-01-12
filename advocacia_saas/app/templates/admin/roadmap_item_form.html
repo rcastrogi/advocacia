@@ -78,6 +78,7 @@
 
     <!-- Formulário -->
     <form method="POST" id="roadmapForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <!-- Informações Básicas -->
         <div class="form-section">
             <h5><i class="fas fa-info-circle"></i> Informações Básicas</h5>

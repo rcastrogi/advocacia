@@ -121,11 +121,9 @@ def _convert_image_to_pdf(image_data: bytes, new_filename: str) -> Tuple[bytes, 
 def _convert_txt_to_pdf(txt_data: bytes, new_filename: str) -> Tuple[bytes, str]:
     """Converte TXT para PDF usando ReportLab"""
     try:
-        from reportlab.pdfgen import canvas
+        from reportlab.pdfgen import canvas  # type: ignore
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.units import cm
-        from reportlab.pdfbase import pdfmetrics
-        from reportlab.pdfbase.ttfonts import TTFont
         
         # Decodificar texto
         try:
@@ -189,13 +187,13 @@ def _convert_txt_to_pdf(txt_data: bytes, new_filename: str) -> Tuple[bytes, str]
 def _convert_docx_to_pdf(docx_data: bytes, new_filename: str) -> Tuple[bytes, str]:
     """Converte DOCX para PDF usando python-docx e ReportLab"""
     try:
-        from docx import Document
-        from reportlab.pdfgen import canvas
+        from docx import Document  # type: ignore
+        from reportlab.pdfgen import canvas  # type: ignore
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.units import cm
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-        from reportlab.lib.enums import TA_JUSTIFY, TA_LEFT, TA_CENTER
+        from reportlab.lib.enums import TA_JUSTIFY
         
         # Abrir DOCX
         doc = Document(io.BytesIO(docx_data))
@@ -376,8 +374,8 @@ def is_pdf_conversion_available() -> dict:
     
     # Verificar Pillow + ReportLab (imagens e TXT)
     try:
-        from PIL import Image
-        from reportlab.pdfgen import canvas
+        from PIL import Image  # type: ignore # noqa: F401
+        from reportlab.pdfgen import canvas  # type: ignore # noqa: F401
         status['images'] = True
         status['txt'] = True
     except ImportError:
@@ -385,7 +383,7 @@ def is_pdf_conversion_available() -> dict:
     
     # Verificar python-docx
     try:
-        from docx import Document
+        from docx import Document  # type: ignore # noqa: F401
         status['docx'] = True
     except ImportError:
         pass

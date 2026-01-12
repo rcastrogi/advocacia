@@ -28,6 +28,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('advanced.new_calendar_event') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Título -->
                         <div class="mb-3">
                             <label for="title" class="form-label">Título <span class="text-danger">*</span></label>

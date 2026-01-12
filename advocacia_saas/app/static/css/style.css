@@ -331,8 +331,6 @@ textarea.form-control {
     cursor: not-allowed !important;
     pointer-events: none !important;
 }
-    pointer-events: none !important;
-}
 
 
 /* ===== Logo Styles ===== */
@@ -2748,4 +2746,5 @@ textarea.form-control {
 /* ===== DESKTOP - acima de 1200px ===== */
 @media (min-width: 1400px) {
     .nav-custom-links li a i {
-        display: none;
+        display: none;    }
+}

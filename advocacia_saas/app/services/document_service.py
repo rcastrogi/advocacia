@@ -19,7 +19,7 @@ def extract_text_from_pdf(file: FileStorage) -> Tuple[str, Dict]:
         Tuple[str, Dict]: (texto extraído, metadados)
     """
     try:
-        from PyPDF2 import PdfReader
+        from PyPDF2 import PdfReader  # type: ignore
 
         # Ler o PDF
         pdf_reader = PdfReader(file)
@@ -55,7 +55,7 @@ def extract_text_from_docx(file: FileStorage) -> Tuple[str, Dict]:
         Tuple[str, Dict]: (texto extraído, metadados)
     """
     try:
-        from docx import Document
+        from docx import Document  # type: ignore
 
         # Ler o DOCX
         doc = Document(file)

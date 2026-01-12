@@ -14,6 +14,7 @@ from flask_migrate import Migrate
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from flask_talisman import Talisman
+from flask_wtf.csrf import CSRFProtect
 
 # Inicializar logging ANTES de qualquer coisa
 from logging_config import setup_production_logging
@@ -31,6 +32,7 @@ limiter = Limiter(
     storage_uri="memory://",
 )
 cache = Cache()
+csrf = CSRFProtect()
 
 
 def create_app(config_class=Config):
@@ -102,6 +104,9 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     mail.init_app(app)
     migrate.init_app(app, db)
+    
+    # Initialize CSRF protection for all forms
+    csrf.init_app(app)
 
     # Initialize email notifications system
     from app.processes.email_notifications import init_mail

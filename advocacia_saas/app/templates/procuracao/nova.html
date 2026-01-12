@@ -17,6 +17,7 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('procuracao.nova') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Seleção de Cliente -->
                         <div class="mb-4">
                             <label for="client_id" class="form-label fw-bold">

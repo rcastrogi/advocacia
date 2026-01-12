@@ -35,6 +35,7 @@
                 <div class="card-body">
                     {% if can_add_member %}
                     <form method="POST" action="{{ url_for('office.invite_member') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         {{ invite_form.hidden_tag() }}
                         
                         <div class="mb-3">

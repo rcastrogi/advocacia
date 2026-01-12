@@ -104,6 +104,7 @@
                             {% if t.status == 'pending' %}
                             <!-- Aprovar -->
                             <form method="post" action="{{ url_for('main.moderate_testimonial', testimonial_id=t.id) }}" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="action" value="approve">
                                 <button type="submit" class="btn btn-sm btn-success" title="Aprovar">
                                     <i class="fas fa-check"></i>
@@ -120,6 +121,7 @@
                             {% if t.status == 'approved' %}
                             <!-- Toggle destaque -->
                             <form method="post" action="{{ url_for('main.moderate_testimonial', testimonial_id=t.id) }}" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="action" value="feature">
                                 <button type="submit" class="btn btn-sm {{ 'btn-primary' if t.is_featured else 'btn-outline-primary' }}" 
                                         title="{{ 'Remover destaque' if t.is_featured else 'Destacar' }}">
@@ -139,6 +141,7 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <form method="post" action="{{ url_for('main.moderate_testimonial', testimonial_id=t.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="modal-header">
                             <h5 class="modal-title">Rejeitar Depoimento</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

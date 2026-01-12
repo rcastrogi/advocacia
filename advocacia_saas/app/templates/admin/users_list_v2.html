@@ -227,6 +227,7 @@
                                     <ul class="dropdown-menu dropdown-menu-end">
                                         <li>
                                             <form action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" method="POST" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="dropdown-item {% if user.is_active %}text-danger{% else %}text-success{% endif %}">
                                                     <i class="fas fa-{% if user.is_active %}user-slash{% else %}user-check{% endif %} me-2"></i>
                                                     {% if user.is_active %}Desativar{% else %}Reativar{% endif %}
@@ -325,6 +326,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="assignPlanForm" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Usuário</label>
@@ -363,6 +365,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="addCreditsForm" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Usuário</label>

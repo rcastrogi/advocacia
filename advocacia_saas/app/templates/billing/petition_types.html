@@ -97,10 +97,12 @@
                                 <td>
                                     <a href="{{ url_for('billing.edit_petition_type', type_id=petition.id) }}" class="btn btn-sm btn-outline-primary me-1">Editar</a>
                                     <form method="post" action="{{ url_for('billing.toggle_petition_type', type_id=petition.id) }}" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="action" value="toggle_billable">
                                         <button class="btn btn-sm btn-outline-success" type="submit">Alternar cobrança</button>
                                     </form>
                                     <form method="post" action="{{ url_for('billing.toggle_petition_type', type_id=petition.id) }}" class="d-inline ms-1">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="action" value="toggle_active">
                                         <button class="btn btn-sm btn-outline-secondary" type="submit">Ativar/Inativar</button>
                                     </form>

@@ -195,6 +195,7 @@
                         
                         {% if document.status == 'active' %}
                         <form method="POST" action="{{ url_for('documents.archive', doc_id=document.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-outline-secondary w-100">
                                 <i class="fas fa-archive me-2"></i>
                                 Arquivar
@@ -244,6 +245,7 @@
         <div class="modal-content">
             <form method="POST" action="{{ url_for('documents.new_version', doc_id=document.id) }}" 
                   enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
                     <h5 class="modal-title">Enviar Nova Versão</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -282,6 +284,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <form method="POST" action="{{ url_for('documents.delete', doc_id=document.id) }}" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">Excluir Documento</button>
                 </form>
             </div>

@@ -12,7 +12,6 @@ Uso:
 
 import os
 import sys
-from urllib.parse import parse_qs, urlencode, urlparse
 
 import requests
 from dotenv import load_dotenv
@@ -63,7 +62,7 @@ def show_authorization_url():
     print("=" * 70)
     print(f"\n📱 APP_ID: {app_id}")
     print(f"🔗 Redirect URI: {redirect_uri}")
-    print(f"\n🌐 URL DE AUTORIZAÇÃO:")
+    print("\n🌐 URL DE AUTORIZAÇÃO:")
     print("-" * 70)
     print(auth_url)
     print("-" * 70)
@@ -148,25 +147,25 @@ Ou execute com --secret=SEU_CLIENT_SECRET
         print("\n" + "=" * 70)
         print("  ✅ CREDENCIAIS OBTIDAS COM SUCESSO!")
         print("=" * 70)
-        print(f"\n🔐 ACCESS TOKEN:")
+        print("\n🔐 ACCESS TOKEN:")
         print(f"   {data.get('access_token')}")
-        print(f"\n🔑 PUBLIC KEY:")
+        print("\n🔑 PUBLIC KEY:")
         print(f"   {data.get('public_key', 'N/A')}")
-        print(f"\n🔄 REFRESH TOKEN:")
+        print("\n🔄 REFRESH TOKEN:")
         print(f"   {data.get('refresh_token', 'N/A')}")
-        print(f"\n👤 USER ID:")
+        print("\n👤 USER ID:")
         print(f"   {data.get('user_id')}")
-        print(f"\n⏰ EXPIRA EM:")
+        print("\n⏰ EXPIRA EM:")
         print(f"   {data.get('expires_in', 'N/A')} segundos")
-        print(f"\n📝 SCOPE:")
+        print("\n📝 SCOPE:")
         print(f"   {data.get('scope', 'N/A')}")
-        print(f"\n🌐 LIVE MODE:")
+        print("\n🌐 LIVE MODE:")
         print(f"   {data.get('live_mode', 'N/A')}")
 
         print("\n" + "-" * 70)
         print("Adicione estas variáveis ao seu .env para usar o usuário de teste:")
         print("-" * 70)
-        print(f"# Credenciais do usuário de teste")
+        print("# Credenciais do usuário de teste")
         print(f"MERCADOPAGO_TEST_USER_ACCESS_TOKEN={data.get('access_token')}")
         if data.get("public_key"):
             print(f"MERCADOPAGO_TEST_USER_PUBLIC_KEY={data.get('public_key')}")
@@ -174,7 +173,7 @@ Ou execute com --secret=SEU_CLIENT_SECRET
 
         return data
     else:
-        print(f"\n❌ ERRO:")
+        print("\n❌ ERRO:")
         print(f"   {response.text}")
         return None
 

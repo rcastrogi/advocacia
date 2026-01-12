@@ -130,7 +130,11 @@ class User(UserMixin, db.Model):
     )  # Bloqueado até esta data após múltiplas tentativas
 
     # Office (Escritório) - Multi-users support
-    office_id = db.Column(db.Integer, db.ForeignKey("offices.id"), nullable=True)
+    office_id = db.Column(
+        db.Integer,
+        db.ForeignKey("offices.id", use_alter=True, name="fk_user_office"),
+        nullable=True,
+    )
     office_role = db.Column(
         db.String(20), nullable=True
     )  # owner, admin, lawyer, secretary, intern
@@ -952,7 +956,11 @@ class Office(db.Model):
     slug = db.Column(db.String(100), unique=True, nullable=False)
 
     # Dono do escritório (quem criou e é responsável pelo pagamento)
-    owner_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    owner_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id", use_alter=True, name="fk_office_owner"),
+        nullable=False,
+    )
 
     # Informações do escritório
     cnpj = db.Column(db.String(20))
@@ -5969,7 +5977,7 @@ class TemplateExample(db.Model):
         IMPORTANTE: Retorna APENAS exemplos do mesmo tipo de petição para evitar
         misturar contextos (ex: ação civil vs criminal).
         """
-        query = cls.query.filter(cls.is_active == True)
+        query = cls.query.filter(cls.is_active.is_(True))
 
         # OBRIGATÓRIO: Filtrar por tipo de petição
         # Não usar exemplos de outros tipos para evitar contaminação de contexto
@@ -6233,7 +6241,7 @@ class Referral(db.Model):
         month_conversions = cls.query.filter(
             cls.referrer_id == referral.referrer_id,
             cls.converted_at >= month_start,
-            cls.reward_granted == True,
+            cls.reward_granted.is_(True),
         ).count()
 
         if month_conversions >= cls.MAX_REFERRALS_PER_MONTH:
@@ -6286,7 +6294,7 @@ class Referral(db.Model):
             db.session.query(
                 db.func.coalesce(db.func.sum(cls.referrer_reward_credits), 0)
             )
-            .filter(cls.referrer_id == user_id, cls.reward_granted == True)
+            .filter(cls.referrer_id == user_id, cls.reward_granted.is_(True))
             .scalar()
         )
 

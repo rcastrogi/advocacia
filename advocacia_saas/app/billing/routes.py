@@ -59,7 +59,7 @@ def upgrade():
     # Buscar planos disponíveis para upgrade (excluindo o atual e planos por uso)
     available_plans = (
         BillingPlan.query.filter(
-            BillingPlan.active == True, BillingPlan.plan_type != "per_usage"
+            BillingPlan.active.is_(True), BillingPlan.plan_type != "per_usage"
         )
         .order_by(BillingPlan.monthly_fee)
         .all()

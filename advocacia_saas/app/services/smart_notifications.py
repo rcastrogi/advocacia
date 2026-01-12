@@ -3,8 +3,7 @@ Sistema de Notificações Inteligentes
 Gerencia o envio de notificações respeitando as preferências do usuário.
 """
 
-import json
-from datetime import datetime, time, timezone
+from datetime import datetime, timezone
 
 from app import db
 from app.models import (

@@ -59,7 +59,7 @@ def predict_limit_date(user):
     recent_usage = PetitionUsage.query.filter(
         PetitionUsage.user_id == user.id,
         PetitionUsage.billing_cycle == current_cycle,
-        PetitionUsage.billable == True,
+        PetitionUsage.billable.is_(True),
         PetitionUsage.generated_at >= seven_days_ago,
     ).count()
 

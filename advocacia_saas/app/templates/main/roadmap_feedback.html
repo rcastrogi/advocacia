@@ -186,6 +186,7 @@
                     </div>
 
                     <form method="POST" id="feedbackForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="card-body p-4">
                         <!-- Rating -->
                         <div class="mb-4">

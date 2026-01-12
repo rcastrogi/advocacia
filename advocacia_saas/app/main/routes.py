@@ -960,7 +960,7 @@ def roadmap_item(slug):
         RoadmapItem.query.filter(
             RoadmapItem.category_id == item.category_id,
             RoadmapItem.id != item.id,
-            RoadmapItem.visible_to_users == True,
+            RoadmapItem.visible_to_users.is_(True),
         )
         .limit(5)
         .all()

@@ -144,6 +144,7 @@
                                             {% if cost.payment_status == 'pending' %}
                                                 <form method="POST" action="{{ url_for('process_management.mark_cost_paid', cost_id=cost.id) }}"
                                                       style="display: inline;" class="confirm-form" data-message="Marcar este custo como pago?" data-type="success" data-confirm-text="Marcar como Pago">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <button type="submit" class="btn btn-sm btn-success">
                                                         <i class="fas fa-check"></i> Pagar
                                                     </button>

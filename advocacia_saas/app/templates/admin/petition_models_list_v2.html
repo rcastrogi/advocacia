@@ -129,6 +129,7 @@
                                     action="{{ url_for('admin.petition_model_delete', model_id=model.id) }}"
                                     class="d-inline delete-form"
                                     data-item-name="{{ model.name }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button 
                                         type="submit" 
                                         class="btn btn-outline-danger"

@@ -308,6 +308,7 @@
                                           style="display: inline;" 
                                           class="delete-form"
                                           data-item-name="{{ lawyer.full_name or lawyer.username }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger ms-2" title="Remover advogado">
                                             <i class="fas fa-times"></i>
                                         </button>
@@ -324,6 +325,7 @@
                 <div class="mt-3 p-3 bg-light rounded">
                     <h6 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Adicionar Advogado</h6>
                     <form method="POST" action="{{ url_for('clients.add_lawyer', id=client.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row g-3">
                             <div class="col-md-5">
                                 <label class="form-label">Email do Advogado</label>

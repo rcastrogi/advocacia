@@ -62,6 +62,26 @@ from app.schemas import (
 )
 from app.utils.audit import AuditManager
 
+
+# === Funções Helper para Compatibilidade SQLite/PostgreSQL ===
+def _is_sqlite():
+    """Detecta se está usando SQLite"""
+    try:
+        return "sqlite" in str(db.engine.url)
+    except Exception:
+        return False
+
+
+def _date_trunc_month(column):
+    """Trunca data para início do mês de forma compatível com SQLite e PostgreSQL"""
+    if _is_sqlite():
+        # SQLite: usar strftime para extrair ano-mês e depois converter de volta
+        return func.strftime("%Y-%m-01", column)
+    else:
+        # PostgreSQL: usar date_trunc nativo
+        return func.date_trunc("month", column)
+
+
 # Configurar logging específico para admin
 admin_logger = logging.getLogger("admin")
 admin_logger.setLevel(logging.DEBUG)
@@ -543,49 +563,49 @@ def dashboard():
     # Query agregada: Faturamento por mês
     revenue_by_month = dict(
         db.session.query(
-            func.date_trunc("month", Payment.paid_at),
+            _date_trunc_month(Payment.paid_at),
             func.coalesce(func.sum(Payment.amount), 0),
         )
         .filter(
             Payment.paid_at >= twelve_months_ago, Payment.payment_status == "completed"
         )
-        .group_by(func.date_trunc("month", Payment.paid_at))
+        .group_by(_date_trunc_month(Payment.paid_at))
         .all()
     )
 
     # Query agregada: Uso de IA por mês
     ai_by_month = dict(
         db.session.query(
-            func.date_trunc("month", AIGeneration.created_at),
+            _date_trunc_month(AIGeneration.created_at),
             func.count(AIGeneration.id),
         )
         .filter(AIGeneration.created_at >= twelve_months_ago)
-        .group_by(func.date_trunc("month", AIGeneration.created_at))
+        .group_by(_date_trunc_month(AIGeneration.created_at))
         .all()
     )
 
     # Query agregada: Custo de IA por mês
     ai_cost_by_month = dict(
         db.session.query(
-            func.date_trunc("month", AIGeneration.created_at),
+            _date_trunc_month(AIGeneration.created_at),
             func.coalesce(func.sum(AIGeneration.cost_usd), 0),
         )
         .filter(AIGeneration.created_at >= twelve_months_ago)
-        .group_by(func.date_trunc("month", AIGeneration.created_at))
+        .group_by(_date_trunc_month(AIGeneration.created_at))
         .all()
     )
 
     # Query agregada: Créditos vendidos por mês
     credits_by_month = dict(
         db.session.query(
-            func.date_trunc("month", CreditTransaction.created_at),
+            _date_trunc_month(CreditTransaction.created_at),
             func.coalesce(func.sum(CreditTransaction.amount), 0),
         )
         .filter(
             CreditTransaction.created_at >= twelve_months_ago,
             CreditTransaction.transaction_type == "purchase",
         )
-        .group_by(func.date_trunc("month", CreditTransaction.created_at))
+        .group_by(_date_trunc_month(CreditTransaction.created_at))
         .all()
     )
 
@@ -810,7 +830,7 @@ def dashboard_regional():
         func.count(User.id).label("user_count"),
         func.count(User.id).filter(User.is_active.is_(True)).label("active_count"),
         func.count(User.id)
-        .filter(User.created_at >= func.date_trunc("month", func.now()))
+        .filter(User.created_at >= _date_trunc_month(func.now()))
         .label("new_this_month"),
     ).filter(User.uf.isnot(None), User.uf != "", User.user_type != "master")
 
@@ -1243,7 +1263,7 @@ def dashboard_financeiro():
             func.count(PetitionUsage.id).label("subscription_count"),
         )
         .join(PetitionUsage, BillingPlan.id == PetitionUsage.plan_id)
-        .filter(PetitionUsage.billable == True)
+        .filter(PetitionUsage.billable.is_(True))
     )
 
     if period != "all":
@@ -3030,9 +3050,9 @@ def roadmap_items():
         query = query.filter(RoadmapItem.category_id == category_filter)
 
     if visibility_filter == "public":
-        query = query.filter(RoadmapItem.visible_to_users == True)
+        query = query.filter(RoadmapItem.visible_to_users.is_(True))
     elif visibility_filter == "internal":
-        query = query.filter(RoadmapItem.internal_only == True)
+        query = query.filter(RoadmapItem.internal_only.is_(True))
 
     if priority_filter:
         query = query.filter(RoadmapItem.priority == priority_filter)
