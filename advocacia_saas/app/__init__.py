@@ -71,7 +71,7 @@ def create_app(config_class=Config):
     # Initialize security headers (HTTPS, HSTS, CSP)
     # Security headers são SEMPRE aplicados, HTTPS apenas em produção
     force_https = app.config.get("FORCE_HTTPS", False)
-    
+
     Talisman(
         app,
         force_https=force_https,
