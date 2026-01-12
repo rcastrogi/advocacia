@@ -5432,3 +5432,76 @@ def audit_logs_entity(entity_type, entity_id):
         entity_id=entity_id,
         entity_name=entity_name,
     )
+
+
+@bp.route("/system-diagnostics")
+@login_required
+@master_required
+def system_diagnostics():
+    """Diagnóstico do sistema - verifica dependências disponíveis"""
+    import subprocess
+    import sys
+    
+    diagnostics = {
+        "python_version": sys.version,
+        "platform": sys.platform,
+        "conversions": {}
+    }
+    
+    # Verificar Pillow (imagens)
+    try:
+        from PIL import Image
+        diagnostics["conversions"]["images"] = {"available": True, "lib": "Pillow"}
+    except ImportError:
+        diagnostics["conversions"]["images"] = {"available": False}
+    
+    # Verificar ReportLab (PDF)
+    try:
+        from reportlab.pdfgen import canvas
+        diagnostics["conversions"]["txt_to_pdf"] = {"available": True, "lib": "ReportLab"}
+    except ImportError:
+        diagnostics["conversions"]["txt_to_pdf"] = {"available": False}
+    
+    # Verificar python-docx
+    try:
+        from docx import Document
+        diagnostics["conversions"]["docx"] = {"available": True, "lib": "python-docx"}
+    except ImportError:
+        diagnostics["conversions"]["docx"] = {"available": False}
+    
+    # Verificar LibreOffice
+    libreoffice_paths = ['libreoffice', 'soffice', '/usr/bin/libreoffice', '/usr/bin/soffice']
+    libreoffice_found = False
+    libreoffice_version = None
+    
+    for path in libreoffice_paths:
+        try:
+            result = subprocess.run(
+                [path, '--version'],
+                capture_output=True,
+                timeout=5,
+                text=True
+            )
+            if result.returncode == 0:
+                libreoffice_found = True
+                libreoffice_version = result.stdout.strip()
+                break
+        except (subprocess.SubprocessError, FileNotFoundError, OSError):
+            continue
+    
+    diagnostics["conversions"]["office_files"] = {
+        "available": libreoffice_found,
+        "lib": "LibreOffice",
+        "version": libreoffice_version,
+        "note": "DOC, XLS, XLSX, PPT" if libreoffice_found else "Não disponível - DOC/XLS mantidos como original"
+    }
+    
+    # Verificar PyPDF2
+    try:
+        import PyPDF2
+        diagnostics["conversions"]["pdf_read"] = {"available": True, "lib": "PyPDF2"}
+    except ImportError:
+        diagnostics["conversions"]["pdf_read"] = {"available": False}
+    
+    return jsonify(diagnostics)
+
