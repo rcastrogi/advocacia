@@ -1371,15 +1371,16 @@ document.addEventListener('alpine:init', () => {
                     section.section.fields_schema.forEach(field => {
                         if (field.ai_enabled && (field.type === 'editor' || field.type === 'textarea')) {
                             const fieldName = section.section.slug + '_' + field.name;
+                            const sectionSlug = section.section.slug;
                             const element = document.querySelector(`[name="${fieldName}"]`) ||
                                           document.getElementById('quill_' + fieldName);
 
                             if (element) {
                                 if (field.type === 'editor') {
                                     const container = element;
-                                    this.createAIToolbarForField(fieldName, container, 'editor');
+                                    this.createAIToolbarForField(fieldName, container, 'editor', sectionSlug);
                                 } else if (field.type === 'textarea') {
-                                    this.createAIToolbarForField(fieldName, element, 'textarea');
+                                    this.createAIToolbarForField(fieldName, element, 'textarea', sectionSlug);
                                 }
                             }
                         }
@@ -1388,7 +1389,7 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        createAIToolbarForField(fieldName, container, fieldType = 'editor') {
+        createAIToolbarForField(fieldName, container, fieldType = 'editor', sectionSlug = '') {
             // Verificar se já existe uma toolbar
             let element = container;
             let toolbarContainer = null;
@@ -1412,28 +1413,69 @@ document.addEventListener('alpine:init', () => {
 
             if (!toolbarContainer) return; // Nenhum container válido
 
+            // Determinar tipo de seção para mostrar botões apropriados
+            const slug = sectionSlug.toLowerCase().replace(/_/g, '-');
+            const isFatosSection = ['fatos', 'dos-fatos', 'narrativa', 'historico'].some(s => slug.includes(s));
+            const isFundamentosSection = ['direito', 'fundamentos', 'fundamentacao', 'juridic'].some(s => slug.includes(s));
+
             // Criar toolbar de IA
             const toolbar = document.createElement('div');
             toolbar.className = 'ai-toolbar d-flex justify-content-between align-items-center';
-            toolbar.innerHTML = `
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-success"
-                            onclick="window.PetitionForm?.generateAIContent('${fieldName}')"
-                            data-tour="petition-ai-button">
-                        <i class="fas fa-magic me-1"></i> Gerar com IA
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-primary"
-                            onclick="window.PetitionForm?.improveContent('${fieldName}')">
-                        <i class="fas fa-edit me-1"></i> Melhorar
-                    </button>
-                </div>
-                <div class="ai-credits-indicator">
-                    <small class="text-muted">
-                        <i class="fas fa-coins me-1"></i>
-                        Créditos: <span id="credits-${fieldName}">--</span>
-                    </small>
-                </div>
-            `;
+
+            let toolbarHTML = '';
+            
+            if (isFatosSection) {
+                // Fatos: NÃO pode gerar do zero, apenas formalizar/melhorar
+                toolbarHTML = `
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="text-muted small">
+                            <i class="fas fa-info-circle text-info me-1"></i>
+                            Escreva os fatos e a IA formaliza:
+                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                onclick="window.PetitionForm?.improveContent('${fieldName}')">
+                            <i class="fas fa-gavel me-1"></i> Formalizar Texto
+                            <span class="badge bg-primary bg-opacity-25 text-primary ms-1">1 crédito</span>
+                        </button>
+                    </div>
+                `;
+            } else if (isFundamentosSection) {
+                // Fundamentação: pode gerar baseado nos fatos
+                toolbarHTML = `
+                    <div class="d-flex gap-2 align-items-center">
+                        <button type="button" class="btn btn-sm btn-outline-success"
+                                onclick="window.PetitionForm?.generateAIContent('${fieldName}')"
+                                data-tour="petition-ai-button">
+                            <i class="fas fa-magic me-1"></i> Gerar Fundamentação
+                            <span class="badge bg-success bg-opacity-25 text-success ms-1">3 créditos</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                onclick="window.PetitionForm?.improveContent('${fieldName}')">
+                            <i class="fas fa-edit me-1"></i> Melhorar
+                            <span class="badge bg-primary bg-opacity-25 text-primary ms-1">1 crédito</span>
+                        </button>
+                    </div>
+                `;
+            } else {
+                // Outras seções: botões padrão
+                toolbarHTML = `
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-success"
+                                onclick="window.PetitionForm?.generateAIContent('${fieldName}')"
+                                data-tour="petition-ai-button">
+                            <i class="fas fa-magic me-1"></i> Gerar com IA
+                            <span class="badge bg-success bg-opacity-25 text-success ms-1">1 crédito</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                onclick="window.PetitionForm?.improveContent('${fieldName}')">
+                            <i class="fas fa-edit me-1"></i> Melhorar
+                            <span class="badge bg-primary bg-opacity-25 text-primary ms-1">1 crédito</span>
+                        </button>
+                    </div>
+                `;
+            }
+
+            toolbar.innerHTML = toolbarHTML;
 
             // Inserir antes do elemento
             if (toolbarContainer) {
@@ -1903,11 +1945,46 @@ document.addEventListener('alpine:init', () => {
                 console.log('Starting AI generation...');
                 this.showToast('Gerando conteúdo com IA...', 'info');
 
-                // Preparar contexto
+                // Coletar contexto completo do formulário para a IA
                 const context = {
                     petition_type: window.PETITION_TYPE?.slug || 'petition',
+                    petition_type_name: window.PETITION_TYPE?.name || 'Petição',
                     section_type: sectionName || 'general'
                 };
+
+                // Coletar dados de todas as seções preenchidas
+                this.sections.forEach(section => {
+                    const slug = section.section.slug;
+                    const sectionData = {};
+                    
+                    if (section.section.fields_schema) {
+                        section.section.fields_schema.forEach(field => {
+                            const key = slug + '_' + field.name;
+                            const value = this.formData[key];
+                            if (value && value.toString().trim()) {
+                                // Limpar HTML se for editor
+                                let cleanValue = value;
+                                if (field.type === 'editor') {
+                                    cleanValue = value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                }
+                                sectionData[field.name] = cleanValue;
+                            }
+                        });
+                    }
+                    
+                    // Identificar e adicionar ao contexto
+                    const slugLower = slug.toLowerCase();
+                    if (slugLower.includes('autor') || slugLower.includes('requerente')) {
+                        context.autor = sectionData;
+                    } else if (slugLower.includes('reu') || slugLower.includes('requerido')) {
+                        context.reu = sectionData;
+                    } else if (slugLower.includes('fatos') || slugLower.includes('narrativa')) {
+                        context.fatos_resumo = Object.values(sectionData).join(' ');
+                    } else if (slugLower.includes('pedidos')) {
+                        context.pedidos_resumo = Object.values(sectionData).join(' ');
+                    }
+                });
+
                 console.log('Context:', context);
 
                 // Fazer requisição para gerar conteúdo
