@@ -2791,6 +2791,228 @@ class Notification(db.Model):
         return f"<Notification {self.type} - User {self.user_id}>"
 
 
+class NotificationPreferences(db.Model):
+    """
+    Preferências de notificação por usuário.
+    Permite controlar canais, tipos e horários de notificações.
+    """
+
+    __tablename__ = "notification_preferences"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=False, unique=True
+    )
+
+    # === Canais de Notificação ===
+    email_enabled = db.Column(db.Boolean, default=True)
+    push_enabled = db.Column(db.Boolean, default=True)
+    in_app_enabled = db.Column(db.Boolean, default=True)
+
+    # === Tipos de Notificação (por canal) ===
+    # Prazos
+    deadline_email = db.Column(db.Boolean, default=True)
+    deadline_push = db.Column(db.Boolean, default=True)
+    deadline_in_app = db.Column(db.Boolean, default=True)
+
+    # Movimentações processuais
+    movement_email = db.Column(db.Boolean, default=True)
+    movement_push = db.Column(db.Boolean, default=False)
+    movement_in_app = db.Column(db.Boolean, default=True)
+
+    # Pagamentos/Financeiro
+    payment_email = db.Column(db.Boolean, default=True)
+    payment_push = db.Column(db.Boolean, default=True)
+    payment_in_app = db.Column(db.Boolean, default=True)
+
+    # Petições/IA
+    petition_email = db.Column(db.Boolean, default=True)
+    petition_push = db.Column(db.Boolean, default=False)
+    petition_in_app = db.Column(db.Boolean, default=True)
+
+    # Sistema (atualizações, manutenção)
+    system_email = db.Column(db.Boolean, default=True)
+    system_push = db.Column(db.Boolean, default=False)
+    system_in_app = db.Column(db.Boolean, default=True)
+
+    # === Horário de Silêncio (Quiet Hours) ===
+    quiet_hours_enabled = db.Column(db.Boolean, default=False)
+    quiet_hours_start = db.Column(db.Time, default=None)  # Ex: 22:00
+    quiet_hours_end = db.Column(db.Time, default=None)  # Ex: 08:00
+    quiet_hours_weekends = db.Column(
+        db.Boolean, default=True
+    )  # Silenciar finais de semana
+
+    # === Digest/Resumo ===
+    digest_enabled = db.Column(db.Boolean, default=False)
+    digest_frequency = db.Column(
+        db.String(20), default="daily"
+    )  # 'daily', 'weekly', 'none'
+    digest_time = db.Column(db.Time, default=None)  # Horário de envio do digest
+    last_digest_sent = db.Column(db.DateTime)
+
+    # === Prioridade Mínima ===
+    # Só notifica se prioridade >= este valor (1=baixa, 2=média, 3=alta, 4=urgente)
+    min_priority_email = db.Column(db.Integer, default=1)
+    min_priority_push = db.Column(db.Integer, default=2)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relacionamento
+    user = db.relationship(
+        "User",
+        backref=db.backref("notification_preferences", uselist=False),
+    )
+
+    @staticmethod
+    def get_or_create(user_id):
+        """Obtém ou cria preferências para um usuário."""
+        prefs = NotificationPreferences.query.filter_by(user_id=user_id).first()
+        if not prefs:
+            prefs = NotificationPreferences(user_id=user_id)
+            db.session.add(prefs)
+            db.session.commit()
+        return prefs
+
+    def is_quiet_time(self):
+        """Verifica se está no horário de silêncio."""
+        if not self.quiet_hours_enabled:
+            return False
+
+        now = datetime.now(timezone.utc)
+        current_time = now.time()
+
+        # Verificar fim de semana
+        if self.quiet_hours_weekends and now.weekday() >= 5:
+            return True
+
+        # Verificar horário
+        if self.quiet_hours_start and self.quiet_hours_end:
+            # Caso normal: início < fim (ex: 22:00 - 08:00)
+            if self.quiet_hours_start > self.quiet_hours_end:
+                # Horário atravessa meia-noite
+                return (
+                    current_time >= self.quiet_hours_start
+                    or current_time <= self.quiet_hours_end
+                )
+            else:
+                return (
+                    self.quiet_hours_start <= current_time <= self.quiet_hours_end
+                )
+
+        return False
+
+    def should_notify(self, notification_type, channel, priority=2):
+        """
+        Determina se deve enviar notificação baseado nas preferências.
+
+        Args:
+            notification_type: 'deadline', 'movement', 'payment', 'petition', 'system'
+            channel: 'email', 'push', 'in_app'
+            priority: 1-4 (1=baixa, 4=urgente)
+
+        Returns:
+            bool: True se deve notificar
+        """
+        # Verificar canal global
+        if channel == "email" and not self.email_enabled:
+            return False
+        if channel == "push" and not self.push_enabled:
+            return False
+        if channel == "in_app" and not self.in_app_enabled:
+            return False
+
+        # Verificar tipo específico por canal
+        type_field = f"{notification_type}_{channel}"
+        if hasattr(self, type_field) and not getattr(self, type_field):
+            return False
+
+        # Verificar prioridade mínima (exceto in_app)
+        if channel == "email" and priority < self.min_priority_email:
+            return False
+        if channel == "push" and priority < self.min_priority_push:
+            return False
+
+        # Verificar horário de silêncio (urgentes sempre passam)
+        if priority < 4 and self.is_quiet_time():
+            # Se digest está ativo, adicionar à fila do digest
+            if self.digest_enabled and channel == "email":
+                return False  # Será enviado no digest
+            elif channel != "in_app":  # in_app sempre passa (silencioso)
+                return False
+
+        return True
+
+    def __repr__(self):
+        return f"<NotificationPreferences User {self.user_id}>"
+
+
+class NotificationQueue(db.Model):
+    """
+    Fila de notificações pendentes (para digest e retry).
+    """
+
+    __tablename__ = "notification_queue"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    notification_type = db.Column(db.String(50), nullable=False)
+    channel = db.Column(db.String(20), nullable=False)  # 'email', 'push'
+    priority = db.Column(db.Integer, default=2)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    link = db.Column(db.String(500))
+    data = db.Column(db.Text)  # JSON com dados extras
+
+    # Status
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # 'pending', 'sent', 'failed', 'digest'
+    retry_count = db.Column(db.Integer, default=0)
+    error_message = db.Column(db.Text)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    scheduled_for = db.Column(db.DateTime)  # Para envio agendado
+    sent_at = db.Column(db.DateTime)
+
+    # Relacionamento
+    user = db.relationship("User", backref=db.backref("notification_queue", lazy="dynamic"))
+
+    @staticmethod
+    def add_to_queue(user_id, notification_type, channel, title, message, priority=2, link=None, data=None):
+        """Adiciona notificação à fila."""
+        item = NotificationQueue(
+            user_id=user_id,
+            notification_type=notification_type,
+            channel=channel,
+            priority=priority,
+            title=title,
+            message=message,
+            link=link,
+            data=json.dumps(data) if data else None,
+        )
+        db.session.add(item)
+        db.session.commit()
+        return item
+
+    @staticmethod
+    def get_pending_digest(user_id):
+        """Retorna notificações pendentes para digest."""
+        return NotificationQueue.query.filter_by(
+            user_id=user_id, status="digest"
+        ).order_by(NotificationQueue.created_at.desc()).all()
+
+    def __repr__(self):
+        return f"<NotificationQueue {self.notification_type} - {self.status}>"
+
+
 # =============================================================================
 # PAYMENT MODELS - Sistema de Pagamentos
 # =============================================================================

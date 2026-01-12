@@ -28,10 +28,11 @@ from app.billing.utils import (
 )
 from app.decorators import lawyer_required, validate_with_schema
 from app.main import bp
-from app.main.forms import TestimonialForm
+from app.main.forms import NotificationPreferencesForm, TestimonialForm
 from app.models import (
     BillingPlan,
     Client,
+    NotificationPreferences,
     PetitionType,
     PetitionUsage,
     RoadmapCategory,
@@ -702,6 +703,76 @@ def mark_all_notifications_read():
             }
         ),
         200,
+    )
+
+
+@bp.route("/notifications/settings", methods=["GET", "POST"])
+@login_required
+@lawyer_required
+def notification_settings():
+    """Página de configurações de notificações."""
+    prefs = NotificationPreferences.get_or_create(current_user.id)
+    form = NotificationPreferencesForm(obj=prefs)
+
+    if form.validate_on_submit():
+        # Canais
+        prefs.email_enabled = form.email_enabled.data
+        prefs.push_enabled = form.push_enabled.data
+        prefs.in_app_enabled = form.in_app_enabled.data
+
+        # Tipos - Prazos
+        prefs.deadline_email = form.deadline_email.data
+        prefs.deadline_push = form.deadline_push.data
+        prefs.deadline_in_app = form.deadline_in_app.data
+
+        # Tipos - Movimentações
+        prefs.movement_email = form.movement_email.data
+        prefs.movement_push = form.movement_push.data
+        prefs.movement_in_app = form.movement_in_app.data
+
+        # Tipos - Pagamentos
+        prefs.payment_email = form.payment_email.data
+        prefs.payment_push = form.payment_push.data
+        prefs.payment_in_app = form.payment_in_app.data
+
+        # Tipos - Petições/IA
+        prefs.petition_email = form.petition_email.data
+        prefs.petition_push = form.petition_push.data
+        prefs.petition_in_app = form.petition_in_app.data
+
+        # Tipos - Sistema
+        prefs.system_email = form.system_email.data
+        prefs.system_push = form.system_push.data
+        prefs.system_in_app = form.system_in_app.data
+
+        # Horário de Silêncio
+        prefs.quiet_hours_enabled = form.quiet_hours_enabled.data
+        prefs.quiet_hours_start = form.quiet_hours_start.data
+        prefs.quiet_hours_end = form.quiet_hours_end.data
+        prefs.quiet_hours_weekends = form.quiet_hours_weekends.data
+
+        # Digest
+        prefs.digest_enabled = form.digest_enabled.data
+        prefs.digest_frequency = form.digest_frequency.data
+        prefs.digest_time = form.digest_time.data
+
+        # Prioridade
+        prefs.min_priority_email = int(form.min_priority_email.data)
+        prefs.min_priority_push = int(form.min_priority_push.data)
+
+        db.session.commit()
+        flash("Preferências de notificação atualizadas com sucesso!", "success")
+        return redirect(url_for("main.notification_settings"))
+
+    # Preencher valores atuais no formulário
+    form.min_priority_email.data = str(prefs.min_priority_email)
+    form.min_priority_push.data = str(prefs.min_priority_push)
+
+    return render_template(
+        "notification_settings.html",
+        title="Configurações de Notificações",
+        form=form,
+        prefs=prefs,
     )
 
 

@@ -666,6 +666,9 @@
                                 <i class="fas fa-wallet text-success"></i> Saldo Petições
                             </a></li>
                             {% endif %}
+                            <li><a class="dropdown-item" href="{{ url_for('main.notification_settings') }}">
+                                <i class="fas fa-bell-cog text-primary"></i> Config. Notificações
+                            </a></li>
                             <li><a class="dropdown-item" href="{{ url_for('referral.dashboard') }}">
                                 <i class="fas fa-gift text-danger"></i> Indicar Amigos
                                 <span class="badge bg-danger ms-1">+50</span>
