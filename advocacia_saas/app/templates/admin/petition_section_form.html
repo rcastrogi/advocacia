@@ -465,12 +465,23 @@ waitForJQuery(function() {
         const $field = $(this).closest('.field-item');
         const type = $(this).val();
         const $optionsContainer = $field.find('.options-container');
+        const $aiOption = $field.find('.ai-option');
 
+        // Mostrar opções de lista apenas para select
         if (type === 'select') {
             $optionsContainer.show();
         } else {
             $optionsContainer.hide();
         }
+        
+        // Mostrar opção de IA apenas para textarea
+        if (type === 'textarea') {
+            $aiOption.show();
+        } else {
+            $aiOption.hide();
+            $field.find('.field-ai-enabled').prop('checked', false);
+        }
+        
         updateFieldsSchema();
     });
 
@@ -499,7 +510,7 @@ waitForJQuery(function() {
     });
 
     // Atualizar schema quando campos mudarem
-    $(document).on('input change', '.field-name, .field-label, .field-type, .field-size, .field-required, .field-placeholder, .option-value, .option-label', function() {
+    $(document).on('input change', '.field-name, .field-label, .field-type, .field-size, .field-required, .field-ai-enabled, .field-placeholder, .option-value, .option-label', function() {
         updateFieldsSchema();
     });
 
@@ -524,66 +535,6 @@ waitForJQuery(function() {
         const fieldHtml = createFieldHtml();
         $('#fieldsContainer').append(fieldHtml);
         updateFieldsSchema();
-    });
-
-    // Remover campo
-    $(document).on('click', '.remove-field-btn', function() {
-        $(this).closest('.field-item').remove();
-        updateFieldsSchema();
-    });
-
-    // Mostrar/ocultar opções quando tipo mudar
-    $(document).on('change', '.field-type', function() {
-        const $field = $(this).closest('.field-item');
-        const type = $(this).val();
-        const $optionsContainer = $field.find('.options-container');
-
-        if (type === 'select') {
-            $optionsContainer.show();
-        } else {
-            $optionsContainer.hide();
-        }
-        updateFieldsSchema();
-    });
-
-    // Adicionar opção
-    $(document).on('click', '.add-option-btn', function() {
-        const $optionsList = $(this).siblings('.options-list');
-        const optionHtml = `
-            <div class="input-group mb-1 option-item">
-                <input type="text" class="form-control option-value" placeholder="Valor">
-                <input type="text" class="form-control option-label" placeholder="Rótulo">
-                <div class="input-group-append">
-                    <button class="btn btn-outline-danger remove-option-btn" type="button">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        $optionsList.append(optionHtml);
-        updateFieldsSchema();
-    });
-
-    // Remover opção
-    $(document).on('click', '.remove-option-btn', function() {
-        $(this).closest('.option-item').remove();
-        updateFieldsSchema();
-    });
-
-    // Função para gerar slug automaticamente
-    function generateSlug(text) {
-        return text
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-    }
-
-    // Gerar slug automaticamente quando o nome muda
-    $('#name').on('input', function() {
-        const name = $(this).val();
-        const slug = generateSlug(name);
-        $('#slug').val(slug);
     });
 
 });
