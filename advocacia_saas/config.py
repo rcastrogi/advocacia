@@ -113,8 +113,24 @@ class Config:
     DEBUG = os.environ.get("FLASK_DEBUG", "False").lower() in ["true", "on", "1"]
     ENV = os.environ.get("FLASK_ENV", "production")
 
-    # Security settings
-    FORCE_HTTPS = os.environ.get("FORCE_HTTPS", "False").lower() in ["true", "on", "1"]
+    # =========================================================================
+    # ENVIRONMENT DETECTION & SECURITY SETTINGS
+    # =========================================================================
+    # Auto-detect cloud environments that provide HTTPS
+    IS_RENDER = bool(os.environ.get("RENDER"))  # Render.com sets RENDER=true
+    IS_HEROKU = bool(os.environ.get("DYNO"))  # Heroku sets DYNO
+    IS_RAILWAY = bool(os.environ.get("RAILWAY_ENVIRONMENT"))  # Railway
+    IS_PRODUCTION = os.environ.get("FLASK_ENV") == "production"
+
+    # HTTPS is forced when:
+    # 1. Explicitly set via FORCE_HTTPS=True, OR
+    # 2. Running on a cloud platform that provides automatic HTTPS
+    FORCE_HTTPS = (
+        os.environ.get("FORCE_HTTPS", "").lower() in ["true", "on", "1"]
+        or IS_RENDER
+        or IS_HEROKU
+        or IS_RAILWAY
+    )
 
     # Trial settings
     DEFAULT_TRIAL_DAYS = int(os.environ.get("DEFAULT_TRIAL_DAYS", 3))
@@ -129,18 +145,17 @@ class Config:
     # =========================================================================
     # SESSION & COOKIE SECURITY SETTINGS
     # =========================================================================
+    # Cookies são seguros quando em produção OU em plataforma cloud com HTTPS
+    _SECURE_COOKIES = IS_PRODUCTION or FORCE_HTTPS
+
     # Session cookie security - Proteção contra XSS e CSRF
-    SESSION_COOKIE_SECURE = (
-        os.environ.get("FLASK_ENV") == "production"
-    )  # HTTPS only in production
+    SESSION_COOKIE_SECURE = _SECURE_COOKIES  # HTTPS only when secure
     SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
     SESSION_COOKIE_SAMESITE = "Lax"  # CSRF protection - "Strict" for maximum security
     SESSION_COOKIE_NAME = "petitio_session"  # Custom name to avoid fingerprinting
 
     # Remember Me cookie security
-    REMEMBER_COOKIE_SECURE = (
-        os.environ.get("FLASK_ENV") == "production"
-    )  # HTTPS only in production
+    REMEMBER_COOKIE_SECURE = _SECURE_COOKIES  # HTTPS only when secure
     REMEMBER_COOKIE_HTTPONLY = True  # Prevent JavaScript access
     REMEMBER_COOKIE_SAMESITE = "Lax"  # CSRF protection
     REMEMBER_COOKIE_NAME = "petitio_remember"  # Custom name

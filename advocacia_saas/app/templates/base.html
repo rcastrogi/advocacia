@@ -887,8 +887,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/loading-states.js"></script>
     
-    <!-- Alpine.js - Reatividade leve -->
-    <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Alpine.js - Carregado APÓS definição de petitioApp() abaixo -->
     
     <!-- Quill Editor - 100% gratuito e open-source -->
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
@@ -1112,6 +1111,9 @@
             document.body.dispatchEvent(event);
         };
     </script>
+    
+    <!-- Alpine.js - DEVE ser carregado APÓS petitioApp() ser definida -->
+    <script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
     
     <!-- Error Handling (deve ser carregado primeiro) -->
     <script src="{{ static_url('js/error-handling.js') }}"></script>
