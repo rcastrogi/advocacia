@@ -59,7 +59,7 @@
 
 {% block content %}
 <div class="container py-4" 
-     x-data="petitionForm()" 
+     x-data="petitionForm" 
      x-init="init()"
      @keydown.ctrl.s.prevent="saveAsDraft()">
     
@@ -349,8 +349,8 @@
 {% block scripts %}
 <script>
 // Alpine.js component para o formulário de petição
-function petitionForm() {
-    return {
+document.addEventListener('alpine:init', () => {
+    Alpine.data('petitionForm', () => ({
         // Estado do formulário
         selectedTemplate: '{{ form.template_id.data or "" }}',
         loading: false,
@@ -635,7 +635,7 @@ function petitionForm() {
             // Envia o formulário normalmente
             event.target.submit();
         }
-    }
-}
+    }));
+});
 </script>
 {% endblock %}

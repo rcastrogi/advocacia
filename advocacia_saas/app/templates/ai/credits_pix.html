@@ -13,7 +13,7 @@
             </div>
 
             <!-- Card de Pagamento PIX -->
-            <div class="card border-0 shadow" x-data="pixCreditsPayment()">
+            <div class="card border-0 shadow" x-data="pixCreditsPayment">
                 <div class="card-body p-4 p-md-5">
                     <!-- Estado Inicial -->
                     <template x-if="!pixData && !isLoading && !isApproved">
@@ -159,8 +159,8 @@
 
 {% block scripts %}
 <script>
-function pixCreditsPayment() {
-    return {
+document.addEventListener('alpine:init', () => {
+    Alpine.data('pixCreditsPayment', () => ({
         isLoading: false,
         pixData: null,
         isApproved: false,
@@ -232,7 +232,7 @@ function pixCreditsPayment() {
                 clearInterval(this.checkInterval);
             }
         }
-    }
-}
+    }));
+});
 </script>
 {% endblock %}

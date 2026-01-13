@@ -348,7 +348,7 @@
     
     {% block styles %}{% endblock %}
 </head>
-<body x-data="petitioApp()" @keydown.escape="closeModals()" class="{% block body_class %}{% if current_user.is_authenticated %}page-gray-bg{% endif %}{% endblock %}">
+<body x-data="petitioApp" @keydown.escape="closeModals()" class="{% block body_class %}{% if current_user.is_authenticated %}page-gray-bg{% endif %}{% endblock %}">
     <!-- Loading Spinner Global -->
     <div id="pageLoader" role="status" aria-live="assertive" aria-label="Carregando página" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.3s ease;">
         <div style="text-align:center;">
@@ -904,9 +904,9 @@
             {% endif %}
         };
 
-        // Global Alpine.js App Data
-        function petitioApp() {
-            return {
+        // Registrar componente Alpine.js via alpine:init para garantir ordem correta
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('petitioApp', () => ({
                 // Toast notifications
                 toasts: [],
                 toastId: 0,
@@ -1051,8 +1051,8 @@
                     // Fallback para confirm nativo
                     return window.confirm(message);
                 }
-            };
-        }
+            }));
+        });
         
         // HTMX Configuration
         document.addEventListener('DOMContentLoaded', function() {
@@ -1112,8 +1112,8 @@
         };
     </script>
     
-    <!-- Alpine.js - DEVE ser carregado APÓS petitioApp() ser definida -->
-    <script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Alpine.js - Com defer para garantir que todos os alpine:init listeners sejam registrados primeiro -->
+    <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
     
     <!-- Error Handling (deve ser carregado primeiro) -->
     <script src="{{ static_url('js/error-handling.js') }}"></script>

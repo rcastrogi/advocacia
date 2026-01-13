@@ -21,7 +21,7 @@
     <div class="row g-4">
         <!-- Formulário de Depósito -->
         <div class="col-lg-7">
-            <div class="card border-0 shadow-sm" x-data="depositForm()">
+            <div class="card border-0 shadow-sm" x-data="depositForm">
                 <div class="card-header bg-transparent">
                     <h5 class="mb-0">
                         <i class="fas fa-wallet me-2"></i>
@@ -225,8 +225,8 @@
 </div>
 
 <script>
-function depositForm() {
-    return {
+document.addEventListener('alpine:init', () => {
+    Alpine.data('depositForm', () => ({
         selectedAmount: 0,
         customAmount: '',
         isLoading: false,
@@ -303,7 +303,7 @@ function depositForm() {
             this.customAmount = '';
             this.pixData = null;
         }
-    }
-}
+    }));
+});
 </script>
 {% endblock %}
