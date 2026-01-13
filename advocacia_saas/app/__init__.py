@@ -103,7 +103,8 @@ def create_app(config_class=Config):
             "frame-ancestors": ["'self'"],  # Equivalente a X-Frame-Options
         },
         # Headers de proteção contra ataques
-        content_security_policy_nonce_in=["script-src"],
+        # NOTA: Não usar nonce pois temos muitos scripts inline no base.html
+        # content_security_policy_nonce_in=["script-src"],  # Desabilitado - requer refatoração
         referrer_policy="strict-origin-when-cross-origin",
         feature_policy={
             "geolocation": "'none'",
