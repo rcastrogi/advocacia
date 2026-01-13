@@ -964,14 +964,8 @@ document.addEventListener('alpine:init', () => {
                 this.sections.forEach(s => {
                     this.sectionExpanded[s.section.slug] = s.is_expanded !== false;
 
-                    // Habilitar IA para campos de texto
-                    if (s.section.fields_schema) {
-                        s.section.fields_schema.forEach(field => {
-                            if (field.type === 'editor' || field.type === 'textarea') {
-                                field.ai_enabled = true;
-                            }
-                        });
-                    }
+                    // A IA agora é controlada pelo campo ai_enabled no schema
+                    // Não habilitamos mais automaticamente para todos os campos textarea
                 });
             }
             

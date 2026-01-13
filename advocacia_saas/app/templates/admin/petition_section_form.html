@@ -247,6 +247,7 @@ waitForJQuery(function() {
             label: (field.label || '').toString(),
             type: ['text', 'textarea', 'select', 'email', 'number', 'date', 'tel', 'cpf_cnpj', 'cpf', 'cnpj', 'cep', 'currency'].includes(field.type) ? field.type : 'text',
             required: Boolean(field.required),
+            ai_enabled: Boolean(field.ai_enabled),
             size: ['col-md-3', 'col-md-4', 'col-md-6', 'col-md-8', 'col-md-12'].includes(field.size) ? field.size : 'col-md-6',
             placeholder: (field.placeholder || '').toString(),
             options: Array.isArray(field.options) ? field.options : []
@@ -316,6 +317,10 @@ waitForJQuery(function() {
                                 <div class="form-check">
                                     <input class="form-check-input field-required" type="checkbox" ${safeField.required ? 'checked' : ''}>
                                     <label class="form-check-label">Obrigatório</label>
+                                </div>
+                                <div class="form-check mt-2 ai-option" style="display: ${['textarea'].includes(safeField.type) ? 'block' : 'none'};">
+                                    <input class="form-check-input field-ai-enabled" type="checkbox" ${safeField.ai_enabled ? 'checked' : ''}>
+                                    <label class="form-check-label"><i class="fas fa-magic text-primary"></i> Habilitar IA</label>
                                 </div>
                             </div>
                         </div>
@@ -395,6 +400,7 @@ waitForJQuery(function() {
                 label: label,
                 type: type,
                 required: $field.find('.field-required').is(':checked'),
+                ai_enabled: $field.find('.field-ai-enabled').is(':checked'),
                 size: $field.find('.field-size').val() || 'col-md-6',
                 placeholder: $field.find('.field-placeholder').val() || ''
             };
