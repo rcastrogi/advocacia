@@ -78,35 +78,52 @@ def create_app(config_class=Config):
         force_https_permanent=force_https,
         strict_transport_security=force_https,  # HSTS só faz sentido com HTTPS
         strict_transport_security_max_age=31536000 if force_https else 0,
-        # Headers de segurança SEMPRE ativos
+        # CSP - Lista completa de CDNs auditados em 13/01/2026
         content_security_policy={
             "default-src": ["'self'"],
             "script-src": [
                 "'self'",
-                "'unsafe-inline'",  # Necessário para Alpine.js inline
+                "'unsafe-inline'",  # Necessário para Alpine.js e scripts inline
                 "'unsafe-eval'",  # Necessário para Alpine.js expressions
-                "cdn.jsdelivr.net",
-                "unpkg.com",
-                "cdnjs.cloudflare.com",
-                "code.jquery.com",
-                "cdn.datatables.net",  # DataTables para admin
+                "cdn.jsdelivr.net",  # Bootstrap, Quill, FullCalendar, ApexCharts, Chart.js
+                "unpkg.com",  # HTMX, Alpine.js
+                "cdnjs.cloudflare.com",  # jQuery Mask
+                "code.jquery.com",  # jQuery
+                "cdn.datatables.net",  # DataTables (admin)
+                "cdn.socket.io",  # Socket.IO (chat)
+                "cdn.quilljs.com",  # Quill (versão antiga em model_form)
+                "sdk.mercadopago.com",  # Mercado Pago
             ],
             "style-src": [
                 "'self'",
-                "'unsafe-inline'",
-                "cdn.jsdelivr.net",
-                "cdnjs.cloudflare.com",
-                "fonts.googleapis.com",
-                "cdn.datatables.net",  # DataTables CSS para admin
+                "'unsafe-inline'",  # Necessário para estilos inline
+                "cdn.jsdelivr.net",  # Bootstrap, Quill, FullCalendar, ApexCharts
+                "cdnjs.cloudflare.com",  # Font Awesome
+                "fonts.googleapis.com",  # Google Fonts
+                "cdn.datatables.net",  # DataTables CSS
             ],
-            "font-src": ["'self'", "fonts.gstatic.com", "cdnjs.cloudflare.com"],
-            "img-src": ["'self'", "data:", "https:"],
-            "connect-src": ["'self'"],
-            "frame-ancestors": ["'self'"],  # Equivalente a X-Frame-Options
+            "font-src": [
+                "'self'",
+                "fonts.gstatic.com",  # Google Fonts arquivos
+                "cdnjs.cloudflare.com",  # Font Awesome fonts
+            ],
+            "img-src": [
+                "'self'",
+                "data:",  # Imagens base64 (QR codes, etc)
+                "https:",  # Permitir imagens de qualquer HTTPS (Unsplash, etc)
+            ],
+            "connect-src": [
+                "'self'",
+                "wss:",  # WebSocket para Socket.IO
+                "ws:",  # WebSocket local dev
+            ],
+            "frame-ancestors": ["'self'"],  # Equivalente a X-Frame-Options SAMEORIGIN
+            "frame-src": [
+                "'self'",
+                "sdk.mercadopago.com",  # Iframe do Mercado Pago
+            ],
         },
-        # Headers de proteção contra ataques
-        # NOTA: Não usar nonce pois temos muitos scripts inline no base.html
-        # content_security_policy_nonce_in=["script-src"],  # Desabilitado - requer refatoração
+        # Headers de proteção adicionais
         referrer_policy="strict-origin-when-cross-origin",
         feature_policy={
             "geolocation": "'none'",
@@ -114,7 +131,7 @@ def create_app(config_class=Config):
             "camera": "'none'",
         },
         # X-Content-Type-Options: nosniff (padrão do Talisman)
-        # X-Frame-Options: SAMEORIGIN (via frame-ancestors)
+        # X-Frame-Options: SAMEORIGIN (padrão do Talisman)
         session_cookie_secure=force_https,
         session_cookie_http_only=True,
     )
