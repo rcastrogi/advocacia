@@ -89,6 +89,7 @@ def create_app(config_class=Config):
                 "unpkg.com",
                 "cdnjs.cloudflare.com",
                 "code.jquery.com",
+                "cdn.datatables.net",  # DataTables para admin
             ],
             "style-src": [
                 "'self'",
@@ -96,6 +97,7 @@ def create_app(config_class=Config):
                 "cdn.jsdelivr.net",
                 "cdnjs.cloudflare.com",
                 "fonts.googleapis.com",
+                "cdn.datatables.net",  # DataTables CSS para admin
             ],
             "font-src": ["'self'", "fonts.gstatic.com", "cdnjs.cloudflare.com"],
             "img-src": ["'self'", "data:", "https:"],
