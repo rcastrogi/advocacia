@@ -13,6 +13,7 @@ def init_app(app):
     app.cli.add_command(check_features_cmd)
     app.cli.add_command(init_features_cmd)
     app.cli.add_command(init_office_plans_cmd)
+    app.cli.add_command(reorder_sections_cmd)
 
 
 @click.command("renew-credits")
@@ -595,3 +596,146 @@ def init_office_plans_cmd(force):
     click.echo(f"   ⏭️  Ignorados: {skipped}")
     click.echo("\n💡 Use 'flask check-features' para ver os planos e features")
     click.echo("💡 Configure os planos em Admin > Planos")
+
+
+@click.command("reorder-sections")
+@click.option("--dry-run", is_flag=True, help="Simula sem efetuar mudanças")
+@with_appcontext
+def reorder_sections_cmd(dry_run):
+    """
+    Reordena as seções das petições para que representantes legais
+    fiquem logo após suas respectivas partes (autor, réu, terceiro).
+
+    Uso:
+        flask reorder-sections
+        flask reorder-sections --dry-run
+    """
+    from app import db
+    from app.models import PetitionModel, PetitionModelSection, PetitionSection
+
+    # Mapeamento de slug para ordem desejada
+    SECTION_ORDER = {
+        # Cabeçalho
+        "cabecalho": 1,
+        "informacoes-gerais": 2,
+        # Autor e seu representante (juntos!)
+        "autor": 10,
+        "representante-autor": 11,
+        "representante-legal-autor": 11,
+        # Réu e seu representante (juntos!)
+        "reu": 20,
+        "representante-reu": 21,
+        "representante-legal-reu": 21,
+        # Cônjuges
+        "conjuge-autor": 30,
+        "conjuge-reu": 31,
+        # Terceiros
+        "terceiro-interessado": 40,
+        "representante-terceiro": 41,
+        "representante-legal-terceiro": 41,
+        "terceiro-interessado-2": 42,
+        # Dados específicos
+        "imovel": 50,
+        "dados-imovel": 50,
+        "contrato": 51,
+        "dados-contrato": 51,
+        "veiculo": 52,
+        "dados-veiculo": 52,
+        "empresa": 53,
+        "dados-empresa": 53,
+        "divida": 55,
+        "dados-divida": 55,
+        "cobranca": 56,
+        "dados-cobranca": 56,
+        "danos": 57,
+        "dados-danos": 57,
+        "acordo": 58,
+        "dados-acordo": 58,
+        "inventario": 60,
+        "dados-inventario": 60,
+        "herdeiros": 61,
+        "bens": 62,
+        "partilha": 63,
+        "divorcio": 65,
+        "dados-divorcio": 65,
+        "guarda": 66,
+        "alimentos": 67,
+        "honorarios": 70,
+        "dados-honorarios": 70,
+        "servicos": 71,
+        "dados-servicos": 71,
+        "consumidor": 72,
+        "dados-consumidor": 72,
+        # Fatos e Fundamentos
+        "fatos": 80,
+        "fundamentos": 81,
+        "direito": 82,
+        "argumentos": 83,
+        "jurisprudencia": 85,
+        "doutrina": 86,
+        # Pedidos e Provas
+        "pedidos": 90,
+        "tutela-urgencia": 91,
+        "tutela": 91,
+        "antecipacao": 92,
+        "provas": 95,
+        "documentos": 96,
+        "testemunhas": 97,
+        # Valores e Custas
+        "valor-causa": 100,
+        "custas": 101,
+        "honorarios-sucumbencia": 102,
+        "gratuidade": 103,
+        # Assinatura
+        "assinatura": 200,
+        "encerramento": 200,
+    }
+
+    click.echo("🔄 Reordenando seções dos modelos de petição...")
+    click.echo("-" * 60)
+
+    if dry_run:
+        click.echo("⚠️  MODO DRY-RUN: nenhuma alteração será salva\n")
+
+    # Buscar todas as seções para criar mapeamento id -> slug
+    sections = PetitionSection.query.all()
+    section_slug_by_id = {s.id: s.slug for s in sections}
+
+    # Processar cada modelo de petição
+    models = PetitionModel.query.all()
+    total_updated = 0
+
+    for model in models:
+        click.echo(f"\n📄 Modelo: {model.name} ({model.slug})")
+
+        # Buscar associações deste modelo
+        model_sections = PetitionModelSection.query.filter_by(
+            petition_model_id=model.id
+        ).all()
+
+        updated_in_model = 0
+
+        for ms in model_sections:
+            section_slug = section_slug_by_id.get(ms.section_id, "unknown")
+            new_order = SECTION_ORDER.get(section_slug)
+
+            if new_order and ms.order != new_order:
+                old_order = ms.order
+                if not dry_run:
+                    ms.order = new_order
+                updated_in_model += 1
+                click.echo(f"   ✅ {section_slug}: {old_order} → {new_order}")
+            elif new_order is None:
+                click.echo(f"   ⚠️  {section_slug}: sem ordem definida (mantendo {ms.order})")
+
+        if updated_in_model > 0:
+            total_updated += updated_in_model
+
+    if not dry_run:
+        db.session.commit()
+
+    click.echo("\n" + "=" * 60)
+    click.echo(f"📊 Resultado: {total_updated} associações atualizadas")
+
+    if dry_run:
+        click.echo("\n💡 Execute sem --dry-run para aplicar as alterações")
