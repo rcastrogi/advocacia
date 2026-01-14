@@ -16,7 +16,6 @@ from app.billing.decorators import feature_required
 from app.decorators import lawyer_required
 from app.models import OFFICE_ROLES, Office, OfficeInvite, User
 from app.office import bp
-from app.utils.email import send_office_invite_email
 from app.office.forms import (
     ChangeMemberRoleForm,
     CreateOfficeForm,
@@ -24,6 +23,7 @@ from app.office.forms import (
     OfficeSettingsForm,
     TransferOwnershipForm,
 )
+from app.utils.email import send_office_invite_email
 
 # =============================================================================
 # Decorators específicos do módulo Office
@@ -320,11 +320,14 @@ def invite_member():
 
             # Enviar e-mail com link do convite
             email_sent = send_office_invite_email(invite)
-            
+
             if email_sent:
                 flash(f"Convite enviado para {email}!", "success")
             else:
-                flash(f"Convite criado, mas não foi possível enviar o email. Link: {url_for('office.accept_invite_page', token=invite.token, _external=True)}", "warning")
+                flash(
+                    f"Convite criado, mas não foi possível enviar o email. Link: {url_for('office.accept_invite_page', token=invite.token, _external=True)}",
+                    "warning",
+                )
         else:
             flash("Erro ao criar convite.", "danger")
     else:
@@ -474,11 +477,14 @@ def resend_invite(invite_id):
 
     # Reenviar e-mail
     email_sent = send_office_invite_email(invite)
-    
+
     if email_sent:
         flash(f"Convite reenviado para {invite.email}.", "success")
     else:
-        flash(f"Convite renovado, mas não foi possível enviar o email. Link: {url_for('office.accept_invite_page', token=invite.token, _external=True)}", "warning")
+        flash(
+            f"Convite renovado, mas não foi possível enviar o email. Link: {url_for('office.accept_invite_page', token=invite.token, _external=True)}",
+            "warning",
+        )
     return redirect(url_for("office.members"))
 
 

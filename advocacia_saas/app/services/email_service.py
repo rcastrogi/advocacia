@@ -2,6 +2,7 @@
 Serviço de email usando Resend
 Responsável por enviar emails transacionais incluindo 2FA
 """
+
 import os
 import secrets
 from typing import Optional
@@ -17,31 +18,36 @@ class EmailService:
         """Obtém cliente Resend ou retorna None se não configurado"""
         try:
             from resend import Resend
+
             api_key = os.getenv("RESEND_API_KEY")
             if not api_key:
                 current_app.logger.warning("RESEND_API_KEY não configurada")
                 return None
             return Resend(api_key=api_key)
         except ImportError:
-            current_app.logger.warning("Resend não instalado. Instale: pip install resend")
+            current_app.logger.warning(
+                "Resend não instalado. Instale: pip install resend"
+            )
             return None
 
     @staticmethod
     def send_2fa_code_email(user_email: str, code: str, method: str = "email") -> bool:
         """
         Envia código 2FA por email
-        
+
         Args:
             user_email: Email do usuário
             code: Código 2FA a ser enviado
             method: Método 2FA ('email' ou 'totp')
-            
+
         Returns:
             True se enviado com sucesso, False caso contrário
         """
         client = EmailService._get_resend_client()
         if not client:
-            current_app.logger.warning(f"Não foi possível enviar 2FA para {user_email}: Resend não configurado")
+            current_app.logger.warning(
+                f"Não foi possível enviar 2FA para {user_email}: Resend não configurado"
+            )
             return False
 
         try:
@@ -74,46 +80,60 @@ class EmailService:
                 </body>
             </html>
             """
-            
-            response = client.emails.send({
-                "from": "noreply@petitio.com.br",
-                "to": user_email,
-                "subject": "Código de Autenticação em Dois Fatores",
-                "html": html_content
-            })
-            
+
+            response = client.emails.send(
+                {
+                    "from": "noreply@petitio.com.br",
+                    "to": user_email,
+                    "subject": "Código de Autenticação em Dois Fatores",
+                    "html": html_content,
+                }
+            )
+
             if response.get("id"):
-                current_app.logger.info(f"Email 2FA enviado com sucesso para {user_email}")
+                current_app.logger.info(
+                    f"Email 2FA enviado com sucesso para {user_email}"
+                )
                 return True
             else:
-                current_app.logger.error(f"Erro ao enviar 2FA para {user_email}: {response}")
+                current_app.logger.error(
+                    f"Erro ao enviar 2FA para {user_email}: {response}"
+                )
                 return False
-                
+
         except Exception as e:
-            current_app.logger.error(f"Erro ao enviar email 2FA para {user_email}: {str(e)}", exc_info=True)
+            current_app.logger.error(
+                f"Erro ao enviar email 2FA para {user_email}: {str(e)}", exc_info=True
+            )
             return False
 
     @staticmethod
-    def send_2fa_enabled_notification(user_email: str, user_name: str, method: str) -> bool:
+    def send_2fa_enabled_notification(
+        user_email: str, user_name: str, method: str
+    ) -> bool:
         """
         Notifica usuário que 2FA foi ativado
-        
+
         Args:
             user_email: Email do usuário
             user_name: Nome do usuário
             method: Método ativado ('email' ou 'totp')
-            
+
         Returns:
             True se enviado com sucesso, False caso contrário
         """
         client = EmailService._get_resend_client()
         if not client:
-            current_app.logger.warning(f"Não foi possível notificar {user_email}: Resend não configurado")
+            current_app.logger.warning(
+                f"Não foi possível notificar {user_email}: Resend não configurado"
+            )
             return False
 
         try:
-            method_name = "Email" if method == "email" else "Aplicativo Autenticador (TOTP)"
-            
+            method_name = (
+                "Email" if method == "email" else "Aplicativo Autenticador (TOTP)"
+            )
+
             html_content = f"""
             <html>
                 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -151,40 +171,49 @@ class EmailService:
                 </body>
             </html>
             """
-            
-            response = client.emails.send({
-                "from": "noreply@petitio.com.br",
-                "to": user_email,
-                "subject": "Autenticação em Dois Fatores Ativada",
-                "html": html_content
-            })
-            
+
+            response = client.emails.send(
+                {
+                    "from": "noreply@petitio.com.br",
+                    "to": user_email,
+                    "subject": "Autenticação em Dois Fatores Ativada",
+                    "html": html_content,
+                }
+            )
+
             if response.get("id"):
-                current_app.logger.info(f"Notificação 2FA ativado enviada para {user_email}")
+                current_app.logger.info(
+                    f"Notificação 2FA ativado enviada para {user_email}"
+                )
                 return True
             else:
                 current_app.logger.error(f"Erro ao notificar {user_email}: {response}")
                 return False
-                
+
         except Exception as e:
-            current_app.logger.error(f"Erro ao enviar notificação 2FA para {user_email}: {str(e)}", exc_info=True)
+            current_app.logger.error(
+                f"Erro ao enviar notificação 2FA para {user_email}: {str(e)}",
+                exc_info=True,
+            )
             return False
 
     @staticmethod
     def send_2fa_disabled_notification(user_email: str, user_name: str) -> bool:
         """
         Notifica usuário que 2FA foi desativado
-        
+
         Args:
             user_email: Email do usuário
             user_name: Nome do usuário
-            
+
         Returns:
             True se enviado com sucesso, False caso contrário
         """
         client = EmailService._get_resend_client()
         if not client:
-            current_app.logger.warning(f"Não foi possível notificar {user_email}: Resend não configurado")
+            current_app.logger.warning(
+                f"Não foi possível notificar {user_email}: Resend não configurado"
+            )
             return False
 
         try:
@@ -219,23 +248,30 @@ class EmailService:
                 </body>
             </html>
             """
-            
-            response = client.emails.send({
-                "from": "noreply@petitio.com.br",
-                "to": user_email,
-                "subject": "Autenticação em Dois Fatores Desativada",
-                "html": html_content
-            })
-            
+
+            response = client.emails.send(
+                {
+                    "from": "noreply@petitio.com.br",
+                    "to": user_email,
+                    "subject": "Autenticação em Dois Fatores Desativada",
+                    "html": html_content,
+                }
+            )
+
             if response.get("id"):
-                current_app.logger.info(f"Notificação 2FA desativado enviada para {user_email}")
+                current_app.logger.info(
+                    f"Notificação 2FA desativado enviada para {user_email}"
+                )
                 return True
             else:
                 current_app.logger.error(f"Erro ao notificar {user_email}: {response}")
                 return False
-                
+
         except Exception as e:
-            current_app.logger.error(f"Erro ao enviar notificação 2FA desativado para {user_email}: {str(e)}", exc_info=True)
+            current_app.logger.error(
+                f"Erro ao enviar notificação 2FA desativado para {user_email}: {str(e)}",
+                exc_info=True,
+            )
             return False
 
     @staticmethod
@@ -248,11 +284,11 @@ class EmailService:
         role_description: str,
         expires_in_days: int,
         expires_at: str,
-        has_account: bool
+        has_account: bool,
     ) -> bool:
         """
         Envia email de convite para escritório
-        
+
         Args:
             invite_email: Email do convidado
             invite_url: URL para aceitar o convite
@@ -263,13 +299,15 @@ class EmailService:
             expires_in_days: Dias até expirar
             expires_at: Data de expiração formatada
             has_account: Se o convidado já tem conta
-            
+
         Returns:
             True se enviado com sucesso, False caso contrário
         """
         client = EmailService._get_resend_client()
         if not client:
-            current_app.logger.warning(f"Não foi possível enviar convite para {invite_email}: Resend não configurado")
+            current_app.logger.warning(
+                f"Não foi possível enviar convite para {invite_email}: Resend não configurado"
+            )
             return False
 
         try:
@@ -378,23 +416,31 @@ class EmailService:
             </body>
             </html>
             """
-            
-            response = client.emails.send({
-                "from": "noreply@petitio.com.br",
-                "to": invite_email,
-                "subject": f"📧 Convite para o escritório {office_name} - Petitio",
-                "html": html_content
-            })
-            
+
+            response = client.emails.send(
+                {
+                    "from": "noreply@petitio.com.br",
+                    "to": invite_email,
+                    "subject": f"📧 Convite para o escritório {office_name} - Petitio",
+                    "html": html_content,
+                }
+            )
+
             if response.get("id"):
-                current_app.logger.info(f"Convite de escritório enviado para {invite_email}")
+                current_app.logger.info(
+                    f"Convite de escritório enviado para {invite_email}"
+                )
                 return True
             else:
-                current_app.logger.error(f"Erro ao enviar convite para {invite_email}: {response}")
+                current_app.logger.error(
+                    f"Erro ao enviar convite para {invite_email}: {response}"
+                )
                 return False
-                
+
         except Exception as e:
-            current_app.logger.error(f"Erro ao enviar convite para {invite_email}: {str(e)}", exc_info=True)
+            current_app.logger.error(
+                f"Erro ao enviar convite para {invite_email}: {str(e)}", exc_info=True
+            )
             return False
 
 
@@ -402,4 +448,5 @@ class EmailService:
 def generate_email_2fa_code() -> str:
     """Gera código numérico de 6 dígitos para 2FA por email"""
     import random
-    return ''.join(str(random.randint(0, 9)) for _ in range(6))
+
+    return "".join(str(random.randint(0, 9)) for _ in range(6))
