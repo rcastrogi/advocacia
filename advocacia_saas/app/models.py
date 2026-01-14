@@ -6404,43 +6404,53 @@ class PromoCoupon(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(50), unique=True, nullable=False, index=True)
-    
+
     # Benefícios
     benefit_days = db.Column(db.Integer, default=0)  # Dias de acesso ao plano premium
     benefit_credits = db.Column(db.Integer, default=0)  # Créditos de IA
-    
+
     # Descrição do cupom (para admin)
     description = db.Column(db.String(255))
-    
+
     # Validade do cupom para resgate
     expires_at = db.Column(db.DateTime)  # Data limite para usar o cupom
-    
+
     # Status
     is_used = db.Column(db.Boolean, default=False)
     used_at = db.Column(db.DateTime)
     used_by_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    
+
     # Quem criou
     created_by_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    
+
     # Relacionamentos
     used_by = db.relationship("User", foreign_keys=[used_by_id], backref="coupons_used")
-    created_by = db.relationship("User", foreign_keys=[created_by_id], backref="coupons_created")
+    created_by = db.relationship(
+        "User", foreign_keys=[created_by_id], backref="coupons_created"
+    )
 
     @classmethod
     def generate_code(cls, prefix="PETITIO"):
         """Gera um código único para o cupom"""
         import secrets
+
         random_part = secrets.token_hex(4).upper()
         return f"{prefix}-{random_part}"
 
     @classmethod
-    def create_coupon(cls, created_by_id, benefit_days=0, benefit_credits=0, 
-                      description=None, expires_at=None, custom_code=None):
+    def create_coupon(
+        cls,
+        created_by_id,
+        benefit_days=0,
+        benefit_credits=0,
+        description=None,
+        expires_at=None,
+        custom_code=None,
+    ):
         """
         Cria um novo cupom promocional.
-        
+
         Args:
             created_by_id: ID do usuário master que está criando
             benefit_days: Dias de acesso premium
@@ -6448,24 +6458,24 @@ class PromoCoupon(db.Model):
             description: Descrição do cupom
             expires_at: Data de expiração para resgate
             custom_code: Código personalizado (opcional)
-            
+
         Returns:
             PromoCoupon: O cupom criado
         """
         code = custom_code or cls.generate_code()
-        
+
         # Verificar se código já existe
         if cls.query.filter_by(code=code).first():
             # Gerar novo código se já existir
             code = cls.generate_code()
-        
+
         coupon = cls(
             code=code,
             benefit_days=benefit_days,
             benefit_credits=benefit_credits,
             description=description,
             expires_at=expires_at,
-            created_by_id=created_by_id
+            created_by_id=created_by_id,
         )
         db.session.add(coupon)
         db.session.commit()
@@ -6475,19 +6485,19 @@ class PromoCoupon(db.Model):
         """Verifica se o cupom é válido para uso"""
         if self.is_used:
             return False, "Este cupom já foi utilizado"
-        
+
         if self.expires_at and datetime.now(timezone.utc) > self.expires_at:
             return False, "Este cupom expirou"
-        
+
         return True, "Cupom válido"
 
     def apply_to_user(self, user):
         """
         Aplica os benefícios do cupom ao usuário.
-        
+
         Args:
             user: Objeto User que está usando o cupom
-            
+
         Returns:
             tuple: (success, message, details)
         """
@@ -6495,19 +6505,19 @@ class PromoCoupon(db.Model):
         valid, msg = self.is_valid()
         if not valid:
             return False, msg, {}
-        
+
         details = {
             "days_added": 0,
             "credits_added": 0,
             "new_trial_end": None,
-            "new_credit_balance": 0
+            "new_credit_balance": 0,
         }
-        
+
         # Aplicar dias de acesso
         if self.benefit_days > 0:
             # Se usuário tem assinatura ativa, adiciona dias
             active_sub = user.subscriptions.filter_by(status="active").first()
-            
+
             if active_sub and active_sub.current_period_end:
                 # Adiciona dias à assinatura existente
                 active_sub.current_period_end += timedelta(days=self.benefit_days)
@@ -6517,8 +6527,10 @@ class PromoCoupon(db.Model):
                 # Calcular data atual de fim do trial (se existir)
                 current_trial_end = None
                 if user.trial_active and user.trial_start_date and user.trial_days:
-                    current_trial_end = user.trial_start_date + timedelta(days=user.trial_days)
-                
+                    current_trial_end = user.trial_start_date + timedelta(
+                        days=user.trial_days
+                    )
+
                 if current_trial_end and current_trial_end > datetime.now(timezone.utc):
                     # Extende trial existente
                     user.trial_days += self.benefit_days
@@ -6526,22 +6538,24 @@ class PromoCoupon(db.Model):
                     # Novo trial
                     user.trial_start_date = datetime.now(timezone.utc)
                     user.trial_days = self.benefit_days
-                
+
                 user.trial_active = True
-                details["new_trial_end"] = user.trial_start_date + timedelta(days=user.trial_days)
-            
+                details["new_trial_end"] = user.trial_start_date + timedelta(
+                    days=user.trial_days
+                )
+
             details["days_added"] = self.benefit_days
-        
+
         # Aplicar créditos de IA
         if self.benefit_credits > 0:
             if not user.credits:
                 user.credits = UserCredits(user_id=user.id, balance=0)
                 db.session.add(user.credits)
-            
+
             user.credits.add_credits(self.benefit_credits, source="bonus")
             details["credits_added"] = self.benefit_credits
             details["new_credit_balance"] = user.credits.balance
-            
+
             # Registrar transação de créditos
             transaction = CreditTransaction(
                 user_id=user.id,
@@ -6551,14 +6565,14 @@ class PromoCoupon(db.Model):
                 balance_after=user.credits.balance,
             )
             db.session.add(transaction)
-        
+
         # Marcar cupom como usado
         self.is_used = True
         self.used_at = datetime.now(timezone.utc)
         self.used_by_id = user.id
-        
+
         db.session.commit()
-        
+
         return True, "Cupom aplicado com sucesso!", details
 
     def __repr__(self):

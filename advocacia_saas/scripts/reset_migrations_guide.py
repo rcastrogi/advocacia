@@ -8,16 +8,19 @@ a partir do estado atual do banco de dados no Render.
 IMPORTANTE: Execute cada passo cuidadosamente!
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from datetime import datetime
 
+
 def print_step(num, title):
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"PASSO {num}: {title}")
-    print('='*60)
+    print("=" * 60)
+
 
 def main():
     print("""
@@ -31,7 +34,7 @@ def main():
 ║  4. Atualizar o alembic_version no banco                        ║
 ╚══════════════════════════════════════════════════════════════════╝
     """)
-    
+
     print_step(1, "BACKUP DAS MIGRATIONS ATUAIS")
     print("""
 Execute no terminal:
@@ -42,7 +45,7 @@ Execute no terminal:
     
 Isso cria um backup de segurança.
 """)
-    
+
     print_step(2, "DELETAR MIGRATIONS ANTIGAS")
     print("""
 Execute no terminal:
@@ -53,7 +56,7 @@ Execute no terminal:
     
 Isso remove todas as migrations antigas.
 """)
-    
+
     print_step(3, "CRIAR MIGRATION BASELINE")
     print("""
 Execute no terminal:
@@ -75,7 +78,7 @@ E em cada op.create_table(), adicione verificação:
     if 'nome_tabela' not in existing_tables:
         op.create_table(...)
 """)
-    
+
     print_step(4, "ATUALIZAR ALEMBIC_VERSION NO BANCO")
     print("""
 Após criar a migration baseline, você precisa registrar ela no banco
@@ -89,7 +92,7 @@ Depois execute:
     
 Substitua 'abc123' pelo ID real da sua migration.
 """)
-    
+
     print_step(5, "TESTAR")
     print("""
 Para verificar se está tudo ok:
@@ -99,7 +102,7 @@ Para verificar se está tudo ok:
     
 Ambos devem mostrar o mesmo ID.
 """)
-    
+
     print("""
 ╔══════════════════════════════════════════════════════════════════╗
 ║                    PROCESSO CONCLUÍDO                           ║
@@ -109,5 +112,6 @@ Ambos devem mostrar o mesmo ID.
 ╚══════════════════════════════════════════════════════════════════╝
     """)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

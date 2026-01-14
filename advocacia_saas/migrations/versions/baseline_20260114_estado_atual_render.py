@@ -1,7 +1,7 @@
 """baseline_20260114 - Estado atual do banco Render
 
 Revision ID: baseline_20260114
-Revises: 
+Revises:
 Create Date: 2026-01-14
 
 Esta migration representa o estado atual do banco de dados no Render.
@@ -24,12 +24,12 @@ Tabelas existentes:
 - saved_petitions, subscriptions, table_preferences, template_examples
 - testimonials, user, user_credits, user_petition_balance, user_plans
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = 'baseline_20260114'
+revision = "baseline_20260114"
 down_revision = None
 branch_labels = None
 depends_on = None
