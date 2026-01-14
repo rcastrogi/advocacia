@@ -1,0 +1,192 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Criar Cupom - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{{ url_for('admin.coupons_list') }}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Criar Cupom Promocional
+                    </h2>
+                    <p class="text-muted mb-0">Configure os benefícios do cupom</p>
+                </div>
+            </div>
+
+            <!-- Formulário -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.coupons_create') }}">
+                        <!-- Código personalizado (opcional) -->
+                        <div class="mb-4">
+                            <label for="custom_code" class="form-label">
+                                <i class="fas fa-tag me-1"></i> Código do Cupom
+                            </label>
+                            <input type="text" class="form-control form-control-lg text-uppercase" 
+                                   id="custom_code" name="custom_code" 
+                                   placeholder="Deixe vazio para gerar automaticamente"
+                                   maxlength="50" pattern="[A-Za-z0-9\-]*">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Ex: PROMO2026, BLACKFRIDAY, etc. Se deixar vazio, será gerado um código único.
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Benefícios -->
+                        <h5 class="mb-3">
+                            <i class="fas fa-gift me-2 text-primary"></i>
+                            Benefícios do Cupom
+                        </h5>
+
+                        <div class="row">
+                            <!-- Dias de acesso -->
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <i class="fas fa-calendar-day me-2"></i>
+                                        Dias de Acesso Premium
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="input-group input-group-lg">
+                                            <input type="number" class="form-control text-center" 
+                                                   id="benefit_days" name="benefit_days" 
+                                                   value="0" min="0" max="365">
+                                            <span class="input-group-text">dias</span>
+                                        </div>
+                                        <small class="text-muted d-block mt-2">
+                                            O usuário terá acesso como se fosse do plano Individual Premium.
+                                            Se já tiver plano, os dias serão adicionados.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Créditos de IA -->
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <i class="fas fa-coins me-2"></i>
+                                        Créditos de IA
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="input-group input-group-lg">
+                                            <input type="number" class="form-control text-center" 
+                                                   id="benefit_credits" name="benefit_credits" 
+                                                   value="0" min="0" max="10000">
+                                            <span class="input-group-text">créditos</span>
+                                        </div>
+                                        <small class="text-muted d-block mt-2">
+                                            Créditos serão adicionados ao saldo atual do usuário.
+                                            Cada geração de IA consome créditos.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Descrição -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-comment me-1"></i> Descrição (interno)
+                            </label>
+                            <input type="text" class="form-control" id="description" name="description" 
+                                   placeholder="Ex: Cupom para campanha de janeiro, Cupom para influencer X..."
+                                   maxlength="255">
+                            <div class="form-text">
+                                Anotação interna para identificar o propósito do cupom.
+                            </div>
+                        </div>
+
+                        <!-- Data de expiração -->
+                        <div class="mb-4">
+                            <label for="expires_at" class="form-label">
+                                <i class="fas fa-clock me-1"></i> Data de Expiração
+                            </label>
+                            <input type="date" class="form-control" id="expires_at" name="expires_at">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Após esta data, o cupom não poderá mais ser resgatado. 
+                                Deixe vazio para cupom sem expiração.
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="alert alert-light border mb-4" id="preview">
+                            <h6 class="mb-2"><i class="fas fa-eye me-2"></i>Preview do Cupom</h6>
+                            <div id="preview-content">
+                                <span class="text-muted">Configure os benefícios para ver o preview</span>
+                            </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.coupons_list') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check me-2"></i> Criar Cupom
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const daysInput = document.getElementById('benefit_days');
+    const creditsInput = document.getElementById('benefit_credits');
+    const codeInput = document.getElementById('custom_code');
+    const previewContent = document.getElementById('preview-content');
+    
+    function updatePreview() {
+        const days = parseInt(daysInput.value) || 0;
+        const credits = parseInt(creditsInput.value) || 0;
+        const code = codeInput.value.toUpperCase() || 'PETITIO-XXXX';
+        
+        if (days === 0 && credits === 0) {
+            previewContent.innerHTML = '<span class="text-muted">Configure os benefícios para ver o preview</span>';
+            return;
+        }
+        
+        let benefits = [];
+        if (days > 0) {
+            benefits.push(`<span class="badge bg-success"><i class="fas fa-calendar-day me-1"></i>${days} dias de acesso premium</span>`);
+        }
+        if (credits > 0) {
+            benefits.push(`<span class="badge bg-warning text-dark"><i class="fas fa-coins me-1"></i>${credits} créditos de IA</span>`);
+        }
+        
+        previewContent.innerHTML = `
+            <div class="d-flex align-items-center gap-3">
+                <code class="fs-5 fw-bold text-primary">${code}</code>
+                <span class="text-muted">→</span>
+                ${benefits.join(' ')}
+            </div>
+        `;
+    }
+    
+    daysInput.addEventListener('input', updatePreview);
+    creditsInput.addEventListener('input', updatePreview);
+    codeInput.addEventListener('input', updatePreview);
+    
+    // Converter código para maiúsculas
+    codeInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+});
+</script>
+{% endblock %}

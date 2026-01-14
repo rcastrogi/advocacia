@@ -42,6 +42,13 @@
                        title="Gerenciar Planos">
                         <i class="fas fa-tags me-2"></i><span>Planos</span>
                     </a>
+                    {% if current_user.role == 'master' %}
+                    <a href="{{ url_for('admin.coupons_list') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'coupons' in request.endpoint else '' }}"
+                       title="Cupons Promocionais">
+                        <i class="fas fa-ticket-alt me-2"></i><span>Cupons</span>
+                    </a>
+                    {% endif %}
                     <a href="{{ url_for('admin.petition_types_list') }}" 
                        class="list-group-item list-group-item-action {{ 'active' if 'petition_types' in request.endpoint else '' }}"
                        title="Tipos de Petição">

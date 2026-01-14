@@ -43,6 +43,7 @@ from app.models import (
     PetitionSection,
     PetitionType,
     PetitionUsage,
+    PromoCoupon,
     RoadmapCategory,
     RoadmapFeedback,
     RoadmapItem,
@@ -5535,3 +5536,184 @@ def system_diagnostics():
         diagnostics["conversions"]["pdf_read"] = {"available": False}
 
     return jsonify(diagnostics)
+
+
+# =============================================================================
+# GERENCIAMENTO DE CUPONS PROMOCIONAIS (Master Only)
+# =============================================================================
+
+
+@bp.route("/coupons")
+@login_required
+@master_required
+def coupons_list():
+    """Lista todos os cupons promocionais"""
+    # Filtros
+    status = request.args.get("status", "all")  # all, available, used, expired
+    
+    query = PromoCoupon.query
+    
+    if status == "available":
+        query = query.filter_by(is_used=False).filter(
+            (PromoCoupon.expires_at.is_(None)) | 
+            (PromoCoupon.expires_at > datetime.now(timezone.utc))
+        )
+    elif status == "used":
+        query = query.filter_by(is_used=True)
+    elif status == "expired":
+        query = query.filter_by(is_used=False).filter(
+            PromoCoupon.expires_at <= datetime.now(timezone.utc)
+        )
+    
+    coupons = query.order_by(PromoCoupon.created_at.desc()).all()
+    
+    # Estatísticas
+    stats = {
+        "total": PromoCoupon.query.count(),
+        "available": PromoCoupon.query.filter_by(is_used=False).filter(
+            (PromoCoupon.expires_at.is_(None)) | 
+            (PromoCoupon.expires_at > datetime.now(timezone.utc))
+        ).count(),
+        "used": PromoCoupon.query.filter_by(is_used=True).count(),
+        "expired": PromoCoupon.query.filter_by(is_used=False).filter(
+            PromoCoupon.expires_at <= datetime.now(timezone.utc)
+        ).count(),
+    }
+    
+    return render_template(
+        "admin/coupons_list.html",
+        coupons=coupons,
+        stats=stats,
+        current_status=status,
+        now=datetime.now(timezone.utc)
+    )
+
+
+@bp.route("/coupons/create", methods=["GET", "POST"])
+@login_required
+@master_required
+def coupons_create():
+    """Cria um novo cupom promocional"""
+    if request.method == "POST":
+        try:
+            benefit_days = int(request.form.get("benefit_days", 0))
+            benefit_credits = int(request.form.get("benefit_credits", 0))
+            description = request.form.get("description", "").strip()
+            custom_code = request.form.get("custom_code", "").strip().upper() or None
+            expires_at_str = request.form.get("expires_at", "")
+            
+            # Validar
+            if benefit_days <= 0 and benefit_credits <= 0:
+                flash("O cupom deve ter pelo menos dias de acesso ou créditos de IA.", "warning")
+                return redirect(url_for("admin.coupons_create"))
+            
+            # Processar data de expiração
+            expires_at = None
+            if expires_at_str:
+                expires_at = datetime.strptime(expires_at_str, "%Y-%m-%d")
+                expires_at = expires_at.replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+            
+            # Criar cupom
+            coupon = PromoCoupon.create_coupon(
+                created_by_id=current_user.id,
+                benefit_days=benefit_days,
+                benefit_credits=benefit_credits,
+                description=description,
+                expires_at=expires_at,
+                custom_code=custom_code
+            )
+            
+            flash(f"Cupom {coupon.code} criado com sucesso!", "success")
+            return redirect(url_for("admin.coupons_list"))
+            
+        except Exception as e:
+            flash(f"Erro ao criar cupom: {str(e)}", "danger")
+            return redirect(url_for("admin.coupons_create"))
+    
+    return render_template("admin/coupons_create.html")
+
+
+@bp.route("/coupons/<int:coupon_id>")
+@login_required
+@master_required
+def coupons_detail(coupon_id):
+    """Detalhes de um cupom"""
+    coupon = PromoCoupon.query.get_or_404(coupon_id)
+    return render_template("admin/coupons_detail.html", coupon=coupon, now=datetime.now(timezone.utc))
+
+
+@bp.route("/coupons/<int:coupon_id>/delete", methods=["POST"])
+@login_required
+@master_required
+def coupons_delete(coupon_id):
+    """Deleta um cupom (apenas se não foi usado)"""
+    coupon = PromoCoupon.query.get_or_404(coupon_id)
+    
+    if coupon.is_used:
+        flash("Não é possível deletar um cupom já utilizado.", "warning")
+        return redirect(url_for("admin.coupons_list"))
+    
+    code = coupon.code
+    db.session.delete(coupon)
+    db.session.commit()
+    
+    flash(f"Cupom {code} deletado com sucesso!", "success")
+    return redirect(url_for("admin.coupons_list"))
+
+
+@bp.route("/api/coupons/validate", methods=["POST"])
+@login_required
+def api_validate_coupon():
+    """API para validar um cupom (usado no checkout)"""
+    data = request.get_json()
+    code = data.get("code", "").strip().upper()
+    
+    if not code:
+        return jsonify({"valid": False, "message": "Código não informado"}), 400
+    
+    coupon = PromoCoupon.query.filter_by(code=code).first()
+    
+    if not coupon:
+        return jsonify({"valid": False, "message": "Cupom não encontrado"}), 404
+    
+    valid, message = coupon.is_valid()
+    
+    if valid:
+        return jsonify({
+            "valid": True,
+            "message": message,
+            "benefit_days": coupon.benefit_days,
+            "benefit_credits": coupon.benefit_credits
+        })
+    else:
+        return jsonify({"valid": False, "message": message}), 400
+
+
+@bp.route("/api/coupons/apply", methods=["POST"])
+@login_required
+def api_apply_coupon():
+    """API para aplicar um cupom ao usuário atual"""
+    data = request.get_json()
+    code = data.get("code", "").strip().upper()
+    
+    if not code:
+        return jsonify({"success": False, "message": "Código não informado"}), 400
+    
+    coupon = PromoCoupon.query.filter_by(code=code).first()
+    
+    if not coupon:
+        return jsonify({"success": False, "message": "Cupom não encontrado"}), 404
+    
+    success, message, details = coupon.apply_to_user(current_user)
+    
+    if success:
+        return jsonify({
+            "success": True,
+            "message": message,
+            "benefit_days": details.get("days_added", 0),
+            "benefit_credits": details.get("credits_added", 0),
+            "new_trial_end": details.get("new_trial_end").isoformat() if details.get("new_trial_end") else None,
+            "new_credit_balance": details.get("new_credit_balance", 0)
+        })
+    else:
+        return jsonify({"success": False, "message": message}), 400

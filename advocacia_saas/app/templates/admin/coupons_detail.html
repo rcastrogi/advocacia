@@ -1,0 +1,190 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Cupom {{ coupon.code }} - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{{ url_for('admin.coupons_list') }}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div class="flex-grow-1">
+                    <h2 class="mb-1">
+                        <i class="fas fa-ticket-alt me-2"></i>
+                        Detalhes do Cupom
+                    </h2>
+                    <p class="text-muted mb-0">Informações completas do cupom promocional</p>
+                </div>
+                {% if not coupon.is_used %}
+                <form action="{{ url_for('admin.coupons_delete', coupon_id=coupon.id) }}" 
+                      method="POST" class="d-inline"
+                      onsubmit="return confirm('Tem certeza que deseja deletar este cupom?');">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="fas fa-trash me-1"></i> Deletar
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+
+            <!-- Código do Cupom -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center py-4">
+                    <div class="mb-2">
+                        {% if coupon.is_used %}
+                        <span class="badge bg-info fs-6">
+                            <i class="fas fa-check me-1"></i>USADO
+                        </span>
+                        {% elif coupon.expires_at and coupon.expires_at < now %}
+                        <span class="badge bg-warning text-dark fs-6">
+                            <i class="fas fa-clock me-1"></i>EXPIRADO
+                        </span>
+                        {% else %}
+                        <span class="badge bg-success fs-6">
+                            <i class="fas fa-check-circle me-1"></i>DISPONÍVEL
+                        </span>
+                        {% endif %}
+                    </div>
+                    <code class="fs-1 fw-bold text-primary d-block mb-3">{{ coupon.code }}</code>
+                    {% if not coupon.is_used %}
+                    <button class="btn btn-outline-secondary" onclick="copyCouponCode('{{ coupon.code }}')">
+                        <i class="fas fa-copy me-1"></i> Copiar Código
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Benefícios -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100 border-success">
+                        <div class="card-header bg-success text-white">
+                            <i class="fas fa-calendar-day me-2"></i>Dias de Acesso
+                        </div>
+                        <div class="card-body text-center">
+                            <h2 class="mb-0 text-success">{{ coupon.benefit_days }}</h2>
+                            <small class="text-muted">dias de acesso premium</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <i class="fas fa-coins me-2"></i>Créditos de IA
+                        </div>
+                        <div class="card-body text-center">
+                            <h2 class="mb-0 text-warning">{{ coupon.benefit_credits }}</h2>
+                            <small class="text-muted">créditos de IA</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <i class="fas fa-info-circle me-2"></i>Informações
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <td class="text-muted" width="200">Descrição:</td>
+                            <td>{{ coupon.description or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Criado por:</td>
+                            <td>
+                                {% if coupon.created_by %}
+                                <a href="{{ url_for('admin.user_detail', user_id=coupon.created_by.id) }}">
+                                    {{ coupon.created_by.email }}
+                                </a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Criado em:</td>
+                            <td>{{ coupon.created_at.strftime('%d/%m/%Y às %H:%M') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Expira em:</td>
+                            <td>
+                                {% if coupon.expires_at %}
+                                <span class="{% if coupon.expires_at < now %}text-danger{% endif %}">
+                                    {{ coupon.expires_at.strftime('%d/%m/%Y às %H:%M') }}
+                                    {% if coupon.expires_at < now %}
+                                    <span class="badge bg-danger ms-2">Expirado</span>
+                                    {% endif %}
+                                </span>
+                                {% else %}
+                                <span class="text-success">Sem expiração</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Uso do Cupom (se usado) -->
+            {% if coupon.is_used %}
+            <div class="card border-0 shadow-sm border-info">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-user-check me-2"></i>Informações de Uso
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <td class="text-muted" width="200">Usado por:</td>
+                            <td>
+                                {% if coupon.used_by %}
+                                <a href="{{ url_for('admin.user_detail', user_id=coupon.used_by.id) }}">
+                                    <strong>{{ coupon.used_by.full_name or coupon.used_by.username }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ coupon.used_by.email }}</small>
+                                </a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Usado em:</td>
+                            <td>
+                                {% if coupon.used_at %}
+                                {{ coupon.used_at.strftime('%d/%m/%Y às %H:%M') }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function copyCouponCode(code) {
+    navigator.clipboard.writeText(code).then(function() {
+        const toast = document.createElement('div');
+        toast.className = 'position-fixed bottom-0 end-0 p-3';
+        toast.innerHTML = `
+            <div class="toast show bg-success text-white" role="alert">
+                <div class="toast-body">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Código ${code} copiado!
+                </div>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    });
+}
+</script>
+
+{% endblock %}

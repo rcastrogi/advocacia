@@ -92,6 +92,53 @@
 
                     <!-- Área de Pagamento Mercado Pago (subscription) -->
                     <div id="mercadopago-area" class="{% if plan_type == 'per_usage' %}d-none{% endif %} mt-4">
+                        <!-- Cupom Promocional -->
+                        <div class="card mb-4 border-info">
+                            <div class="card-header bg-info bg-opacity-10 py-2">
+                                <h6 class="mb-0 text-info">
+                                    <i class="fas fa-ticket-alt me-2"></i>
+                                    Cupom Promocional
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-3">
+                                    Possui um cupom promocional? Insira abaixo para receber dias de teste ou créditos de IA.
+                                </p>
+                                <div class="input-group">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="couponCode" 
+                                           placeholder="Digite o código do cupom"
+                                           maxlength="20"
+                                           style="text-transform: uppercase;">
+                                    <button class="btn btn-info" type="button" id="validateCouponBtn" onclick="validateCoupon()">
+                                        <i class="fas fa-check me-1"></i> Validar
+                                    </button>
+                                </div>
+                                
+                                <!-- Feedback do cupom -->
+                                <div id="couponFeedback" class="mt-3 d-none">
+                                    <!-- Será preenchido via JavaScript -->
+                                </div>
+                                
+                                <!-- Cupom aplicado -->
+                                <div id="couponApplied" class="d-none">
+                                    <div class="alert alert-success mb-0 mt-3">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div>
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                <strong>Cupom aplicado com sucesso!</strong>
+                                                <div id="couponBenefits" class="small mt-1"></div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCoupon()">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Termo de Adesão à Política de Cancelamento -->
                         <div class="alert alert-warning border">
                             <div class="d-flex align-items-start">
@@ -246,6 +293,165 @@
 <script>
 let selectedMethod = null;
 let paymentCheckInterval = null;
+let appliedCoupon = null;
+
+// ================== CUPOM PROMOCIONAL ==================
+
+async function validateCoupon() {
+    const codeInput = document.getElementById('couponCode');
+    const code = codeInput.value.trim().toUpperCase();
+    const btn = document.getElementById('validateCouponBtn');
+    const feedback = document.getElementById('couponFeedback');
+    
+    if (!code) {
+        showCouponFeedback('danger', 'Por favor, digite um código de cupom.');
+        return;
+    }
+    
+    // Disable button during validation
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+    codeInput.disabled = true;
+    
+    try {
+        const response = await fetch('/admin/api/coupons/validate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ code: code })
+        });
+        
+        const data = await response.json();
+        
+        if (data.valid) {
+            // Coupon is valid - show details and apply button
+            let benefitsHtml = '<ul class="list-unstyled mb-2 small">';
+            if (data.benefit_days > 0) {
+                benefitsHtml += `<li><i class="fas fa-calendar-plus text-success me-2"></i><strong>${data.benefit_days} dia(s)</strong> de acesso premium</li>`;
+            }
+            if (data.benefit_credits > 0) {
+                benefitsHtml += `<li><i class="fas fa-robot text-primary me-2"></i><strong>${data.benefit_credits}</strong> crédito(s) de IA</li>`;
+            }
+            benefitsHtml += '</ul>';
+            
+            showCouponFeedback('success', `
+                <strong>Cupom válido!</strong>
+                <div class="mt-2">Benefícios:</div>
+                ${benefitsHtml}
+                <button type="button" class="btn btn-success btn-sm" onclick="applyCoupon('${code}')">
+                    <i class="fas fa-check me-1"></i> Aplicar Cupom
+                </button>
+            `);
+        } else {
+            showCouponFeedback('danger', data.message || 'Cupom inválido ou já utilizado.');
+        }
+    } catch (error) {
+        console.error('Erro ao validar cupom:', error);
+        showCouponFeedback('danger', 'Erro ao validar cupom. Tente novamente.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        codeInput.disabled = false;
+    }
+}
+
+async function applyCoupon(code) {
+    const feedback = document.getElementById('couponFeedback');
+    
+    try {
+        feedback.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-2"></i>Aplicando cupom...</div>';
+        
+        const response = await fetch('/admin/api/coupons/apply', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ code: code })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            appliedCoupon = code;
+            
+            // Hide input area and feedback
+            document.getElementById('couponCode').value = '';
+            document.getElementById('couponCode').disabled = true;
+            document.getElementById('validateCouponBtn').disabled = true;
+            feedback.classList.add('d-none');
+            
+            // Show applied coupon info
+            const appliedDiv = document.getElementById('couponApplied');
+            const benefitsDiv = document.getElementById('couponBenefits');
+            
+            let benefitsText = [];
+            if (data.benefit_days > 0) {
+                benefitsText.push(`<i class="fas fa-calendar-plus me-1"></i>${data.benefit_days} dia(s) de acesso`);
+            }
+            if (data.benefit_credits > 0) {
+                benefitsText.push(`<i class="fas fa-robot me-1"></i>${data.benefit_credits} crédito(s) de IA`);
+            }
+            benefitsDiv.innerHTML = benefitsText.join(' • ');
+            
+            appliedDiv.classList.remove('d-none');
+            
+            // Show success message
+            if (typeof showSuccessToast === 'function') {
+                showSuccessToast('Cupom aplicado com sucesso!', 'Sucesso', 3000);
+            }
+            
+            // If coupon gives trial access, user might not need to pay
+            if (data.benefit_days > 0) {
+                // Show notice that they have trial access now
+                setTimeout(() => {
+                    if (confirm('Seu cupom foi aplicado! Você já tem acesso ao sistema. Deseja ir para o painel?')) {
+                        window.location.href = '/';
+                    }
+                }, 500);
+            }
+        } else {
+            showCouponFeedback('danger', data.message || 'Erro ao aplicar cupom.');
+        }
+    } catch (error) {
+        console.error('Erro ao aplicar cupom:', error);
+        showCouponFeedback('danger', 'Erro ao aplicar cupom. Tente novamente.');
+    }
+}
+
+function removeCoupon() {
+    appliedCoupon = null;
+    document.getElementById('couponCode').disabled = false;
+    document.getElementById('validateCouponBtn').disabled = false;
+    document.getElementById('couponApplied').classList.add('d-none');
+    document.getElementById('couponFeedback').classList.add('d-none');
+}
+
+function showCouponFeedback(type, message) {
+    const feedback = document.getElementById('couponFeedback');
+    feedback.innerHTML = `<div class="alert alert-${type} mb-0">${message}</div>`;
+    feedback.classList.remove('d-none');
+}
+
+function getCSRFToken() {
+    // Try to get CSRF token from meta tag or form
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag) {
+        return metaTag.getAttribute('content');
+    }
+    
+    const csrfInput = document.querySelector('input[name="csrf_token"]');
+    if (csrfInput) {
+        return csrfInput.value;
+    }
+    
+    return '';
+}
+
+// ================== PAGAMENTO ==================
 
 function selectPaymentMethod(method) {
     selectedMethod = method;
