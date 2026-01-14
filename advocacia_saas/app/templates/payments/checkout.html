@@ -297,16 +297,35 @@ let appliedCoupon = null;
 
 // ================== CUPOM PROMOCIONAL ==================
 
+// Função para sanitizar código do cupom (apenas letras, números e hífen)
+function sanitizeCouponCode(code) {
+    return code.replace(/[^A-Z0-9\-]/g, '').substring(0, 20);
+}
+
+// Função para escapar HTML (prevenir XSS)
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Armazena o código validado para uso posterior
+let validatedCouponCode = null;
+
 async function validateCoupon() {
     const codeInput = document.getElementById('couponCode');
-    const code = codeInput.value.trim().toUpperCase();
+    const rawCode = codeInput.value.trim().toUpperCase();
+    const code = sanitizeCouponCode(rawCode);
     const btn = document.getElementById('validateCouponBtn');
     const feedback = document.getElementById('couponFeedback');
     
     if (!code) {
-        showCouponFeedback('danger', 'Por favor, digite um código de cupom.');
+        showCouponFeedback('danger', 'Por favor, digite um código de cupom válido.');
         return;
     }
+    
+    // Atualiza input com código sanitizado
+    codeInput.value = code;
     
     // Disable button during validation
     const originalText = btn.innerHTML;
@@ -327,26 +346,65 @@ async function validateCoupon() {
         const data = await response.json();
         
         if (data.valid) {
-            // Coupon is valid - show details and apply button
-            let benefitsHtml = '<ul class="list-unstyled mb-2 small">';
-            if (data.benefit_days > 0) {
-                benefitsHtml += `<li><i class="fas fa-calendar-plus text-success me-2"></i><strong>${data.benefit_days} dia(s)</strong> de acesso premium</li>`;
-            }
-            if (data.benefit_credits > 0) {
-                benefitsHtml += `<li><i class="fas fa-robot text-primary me-2"></i><strong>${data.benefit_credits}</strong> crédito(s) de IA</li>`;
-            }
-            benefitsHtml += '</ul>';
+            // Armazena código validado para uso seguro
+            validatedCouponCode = code;
             
-            showCouponFeedback('success', `
-                <strong>Cupom válido!</strong>
-                <div class="mt-2">Benefícios:</div>
-                ${benefitsHtml}
-                <button type="button" class="btn btn-success btn-sm" onclick="applyCoupon('${code}')">
-                    <i class="fas fa-check me-1"></i> Aplicar Cupom
-                </button>
-            `);
+            // Coupon is valid - show details and apply button (usando DOM seguro)
+            const feedbackDiv = document.getElementById('couponFeedback');
+            feedbackDiv.innerHTML = ''; // Limpa conteúdo anterior
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success mb-0';
+            
+            const titleStrong = document.createElement('strong');
+            titleStrong.textContent = 'Cupom válido!';
+            alertDiv.appendChild(titleStrong);
+            
+            const benefitsTitle = document.createElement('div');
+            benefitsTitle.className = 'mt-2';
+            benefitsTitle.textContent = 'Benefícios:';
+            alertDiv.appendChild(benefitsTitle);
+            
+            const benefitsList = document.createElement('ul');
+            benefitsList.className = 'list-unstyled mb-2 small';
+            
+            // Validar que benefit_days e benefit_credits são números
+            const benefitDays = parseInt(data.benefit_days, 10) || 0;
+            const benefitCredits = parseInt(data.benefit_credits, 10) || 0;
+            
+            if (benefitDays > 0) {
+                const li = document.createElement('li');
+                li.innerHTML = '<i class="fas fa-calendar-plus text-success me-2"></i>';
+                const strong = document.createElement('strong');
+                strong.textContent = benefitDays + ' dia(s)';
+                li.appendChild(strong);
+                li.appendChild(document.createTextNode(' de acesso premium'));
+                benefitsList.appendChild(li);
+            }
+            if (benefitCredits > 0) {
+                const li = document.createElement('li');
+                li.innerHTML = '<i class="fas fa-robot text-primary me-2"></i>';
+                const strong = document.createElement('strong');
+                strong.textContent = benefitCredits;
+                li.appendChild(strong);
+                li.appendChild(document.createTextNode(' crédito(s) de IA'));
+                benefitsList.appendChild(li);
+            }
+            alertDiv.appendChild(benefitsList);
+            
+            const applyBtn = document.createElement('button');
+            applyBtn.type = 'button';
+            applyBtn.className = 'btn btn-success btn-sm';
+            applyBtn.innerHTML = '<i class="fas fa-check me-1"></i> Aplicar Cupom';
+            applyBtn.addEventListener('click', function() {
+                applyCouponValidated();
+            });
+            alertDiv.appendChild(applyBtn);
+            
+            feedbackDiv.appendChild(alertDiv);
+            feedbackDiv.classList.remove('d-none');
         } else {
-            showCouponFeedback('danger', data.message || 'Cupom inválido ou já utilizado.');
+            showCouponFeedback('danger', escapeHtml(data.message) || 'Cupom inválido ou já utilizado.');
         }
     } catch (error) {
         console.error('Erro ao validar cupom:', error);
@@ -358,7 +416,14 @@ async function validateCoupon() {
     }
 }
 
-async function applyCoupon(code) {
+async function applyCouponValidated() {
+    // Usa o código previamente validado (evita manipulação)
+    if (!validatedCouponCode) {
+        showCouponFeedback('danger', 'Por favor, valide o cupom primeiro.');
+        return;
+    }
+    
+    const code = validatedCouponCode;
     const feedback = document.getElementById('couponFeedback');
     
     try {
@@ -377,6 +442,7 @@ async function applyCoupon(code) {
         
         if (data.success) {
             appliedCoupon = code;
+            validatedCouponCode = null; // Limpa código validado
             
             // Hide input area and feedback
             document.getElementById('couponCode').value = '';
@@ -384,18 +450,31 @@ async function applyCoupon(code) {
             document.getElementById('validateCouponBtn').disabled = true;
             feedback.classList.add('d-none');
             
-            // Show applied coupon info
+            // Show applied coupon info (usando DOM seguro)
             const appliedDiv = document.getElementById('couponApplied');
             const benefitsDiv = document.getElementById('couponBenefits');
             
-            let benefitsText = [];
-            if (data.benefit_days > 0) {
-                benefitsText.push(`<i class="fas fa-calendar-plus me-1"></i>${data.benefit_days} dia(s) de acesso`);
+            // Validar que são números
+            const benefitDays = parseInt(data.benefit_days, 10) || 0;
+            const benefitCredits = parseInt(data.benefit_credits, 10) || 0;
+            
+            benefitsDiv.innerHTML = ''; // Limpa conteúdo
+            
+            if (benefitDays > 0) {
+                const span = document.createElement('span');
+                span.innerHTML = '<i class="fas fa-calendar-plus me-1"></i>';
+                span.appendChild(document.createTextNode(benefitDays + ' dia(s) de acesso'));
+                benefitsDiv.appendChild(span);
             }
-            if (data.benefit_credits > 0) {
-                benefitsText.push(`<i class="fas fa-robot me-1"></i>${data.benefit_credits} crédito(s) de IA`);
+            if (benefitCredits > 0) {
+                if (benefitDays > 0) {
+                    benefitsDiv.appendChild(document.createTextNode(' • '));
+                }
+                const span = document.createElement('span');
+                span.innerHTML = '<i class="fas fa-robot me-1"></i>';
+                span.appendChild(document.createTextNode(benefitCredits + ' crédito(s) de IA'));
+                benefitsDiv.appendChild(span);
             }
-            benefitsDiv.innerHTML = benefitsText.join(' • ');
             
             appliedDiv.classList.remove('d-none');
             
@@ -414,7 +493,7 @@ async function applyCoupon(code) {
                 }, 500);
             }
         } else {
-            showCouponFeedback('danger', data.message || 'Erro ao aplicar cupom.');
+            showCouponFeedback('danger', escapeHtml(data.message) || 'Erro ao aplicar cupom.');
         }
     } catch (error) {
         console.error('Erro ao aplicar cupom:', error);
@@ -424,6 +503,7 @@ async function applyCoupon(code) {
 
 function removeCoupon() {
     appliedCoupon = null;
+    validatedCouponCode = null;
     document.getElementById('couponCode').disabled = false;
     document.getElementById('validateCouponBtn').disabled = false;
     document.getElementById('couponApplied').classList.add('d-none');
@@ -431,8 +511,16 @@ function removeCoupon() {
 }
 
 function showCouponFeedback(type, message) {
+    // Valida que type é um dos valores permitidos
+    const allowedTypes = ['success', 'danger', 'warning', 'info'];
+    const safeType = allowedTypes.includes(type) ? type : 'info';
+    
     const feedback = document.getElementById('couponFeedback');
-    feedback.innerHTML = `<div class="alert alert-${type} mb-0">${message}</div>`;
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${safeType} mb-0`;
+    alertDiv.innerHTML = message; // message já deve estar sanitizado pelo chamador
+    feedback.innerHTML = '';
+    feedback.appendChild(alertDiv);
     feedback.classList.remove('d-none');
 }
 

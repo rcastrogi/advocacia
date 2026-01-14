@@ -52,7 +52,7 @@ from app.models import (
     UserCredits,
     UserPlan,
 )
-from app.rate_limits import ADMIN_API_LIMIT
+from app.rate_limits import ADMIN_API_LIMIT, COUPON_LIMIT
 from app.schemas import (
     BillingPlanSchema,
     PetitionModelSchema,
@@ -5598,10 +5598,24 @@ def coupons_create():
     """Cria um novo cupom promocional"""
     if request.method == "POST":
         try:
-            benefit_days = int(request.form.get("benefit_days", 0))
-            benefit_credits = int(request.form.get("benefit_credits", 0))
-            description = request.form.get("description", "").strip()
-            custom_code = request.form.get("custom_code", "").strip().upper() or None
+            # Sanitizar e validar inputs
+            try:
+                benefit_days = max(0, int(request.form.get("benefit_days", 0)))
+                benefit_credits = max(0, int(request.form.get("benefit_credits", 0)))
+            except (ValueError, TypeError):
+                flash("Valores de dias ou créditos inválidos.", "danger")
+                return redirect(url_for("admin.coupons_create"))
+            
+            # Sanitizar descrição (limitar tamanho e remover HTML)
+            description = request.form.get("description", "").strip()[:255]
+            # Remove tags HTML básicas
+            import re
+            description = re.sub(r'<[^>]+>', '', description)
+            
+            # Sanitizar código do cupom
+            raw_code = request.form.get("custom_code", "").strip().upper()
+            custom_code = sanitize_coupon_code(raw_code) if raw_code else None
+            
             expires_at_str = request.form.get("expires_at", "")
 
             # Validar
@@ -5611,14 +5625,27 @@ def coupons_create():
                     "warning",
                 )
                 return redirect(url_for("admin.coupons_create"))
+            
+            # Limitar valores máximos razoáveis
+            if benefit_days > 365:
+                flash("Dias de acesso não pode exceder 365.", "warning")
+                return redirect(url_for("admin.coupons_create"))
+            
+            if benefit_credits > 1000:
+                flash("Créditos de IA não pode exceder 1000.", "warning")
+                return redirect(url_for("admin.coupons_create"))
 
             # Processar data de expiração
             expires_at = None
             if expires_at_str:
-                expires_at = datetime.strptime(expires_at_str, "%Y-%m-%d")
-                expires_at = expires_at.replace(
-                    hour=23, minute=59, second=59, tzinfo=timezone.utc
-                )
+                try:
+                    expires_at = datetime.strptime(expires_at_str, "%Y-%m-%d")
+                    expires_at = expires_at.replace(
+                        hour=23, minute=59, second=59, tzinfo=timezone.utc
+                    )
+                except ValueError:
+                    flash("Data de expiração inválida.", "danger")
+                    return redirect(url_for("admin.coupons_create"))
 
             # Criar cupom
             coupon = PromoCoupon.create_coupon(
@@ -5670,15 +5697,34 @@ def coupons_delete(coupon_id):
     return redirect(url_for("admin.coupons_list"))
 
 
+def sanitize_coupon_code(code):
+    """Sanitiza código de cupom - apenas letras maiúsculas, números e hífen"""
+    import re
+    if not code:
+        return ""
+    # Remove caracteres não permitidos e limita tamanho
+    sanitized = re.sub(r'[^A-Z0-9\-]', '', code.upper())
+    return sanitized[:20]
+
+
 @bp.route("/api/coupons/validate", methods=["POST"])
+@limiter.limit(COUPON_LIMIT)
 @login_required
 def api_validate_coupon():
     """API para validar um cupom (usado no checkout)"""
     data = request.get_json()
-    code = data.get("code", "").strip().upper()
+    
+    if not data:
+        return jsonify({"valid": False, "message": "Dados inválidos"}), 400
+    
+    raw_code = data.get("code", "")
+    code = sanitize_coupon_code(raw_code)
 
     if not code:
-        return jsonify({"valid": False, "message": "Código não informado"}), 400
+        return jsonify({"valid": False, "message": "Código não informado ou inválido"}), 400
+    
+    if len(code) < 3:
+        return jsonify({"valid": False, "message": "Código muito curto"}), 400
 
     coupon = PromoCoupon.query.filter_by(code=code).first()
 
@@ -5692,8 +5738,8 @@ def api_validate_coupon():
             {
                 "valid": True,
                 "message": message,
-                "benefit_days": coupon.benefit_days,
-                "benefit_credits": coupon.benefit_credits,
+                "benefit_days": int(coupon.benefit_days or 0),
+                "benefit_credits": int(coupon.benefit_credits or 0),
             }
         )
     else:
@@ -5701,14 +5747,23 @@ def api_validate_coupon():
 
 
 @bp.route("/api/coupons/apply", methods=["POST"])
+@limiter.limit(COUPON_LIMIT)
 @login_required
 def api_apply_coupon():
     """API para aplicar um cupom ao usuário atual"""
     data = request.get_json()
-    code = data.get("code", "").strip().upper()
+    
+    if not data:
+        return jsonify({"success": False, "message": "Dados inválidos"}), 400
+    
+    raw_code = data.get("code", "")
+    code = sanitize_coupon_code(raw_code)
 
     if not code:
-        return jsonify({"success": False, "message": "Código não informado"}), 400
+        return jsonify({"success": False, "message": "Código não informado ou inválido"}), 400
+    
+    if len(code) < 3:
+        return jsonify({"success": False, "message": "Código muito curto"}), 400
 
     coupon = PromoCoupon.query.filter_by(code=code).first()
 
@@ -5722,12 +5777,12 @@ def api_apply_coupon():
             {
                 "success": True,
                 "message": message,
-                "benefit_days": details.get("days_added", 0),
-                "benefit_credits": details.get("credits_added", 0),
+                "benefit_days": int(details.get("days_added", 0)),
+                "benefit_credits": int(details.get("credits_added", 0)),
                 "new_trial_end": details.get("new_trial_end").isoformat()
                 if details.get("new_trial_end")
                 else None,
-                "new_credit_balance": details.get("new_credit_balance", 0),
+                "new_credit_balance": int(details.get("new_credit_balance", 0)),
             }
         )
     else:

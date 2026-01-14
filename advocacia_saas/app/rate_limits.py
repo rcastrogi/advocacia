@@ -35,6 +35,9 @@ LOGIN_LIMIT = "5 per minute"
 # Endpoints críticos - muito muito restritivo
 CRITICAL_LIMIT = "2 per minute"
 
+# Cupons - restritivo para evitar brute force de códigos
+COUPON_LIMIT = "10 per minute"
+
 # ============================================================================
 # FUNÇÃO AUXILIAR PARA APLICAR LIMITES
 # ============================================================================
