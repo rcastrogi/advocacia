@@ -5605,17 +5605,18 @@ def coupons_create():
             except (ValueError, TypeError):
                 flash("Valores de dias ou créditos inválidos.", "danger")
                 return redirect(url_for("admin.coupons_create"))
-            
+
             # Sanitizar descrição (limitar tamanho e remover HTML)
             description = request.form.get("description", "").strip()[:255]
             # Remove tags HTML básicas
             import re
-            description = re.sub(r'<[^>]+>', '', description)
-            
+
+            description = re.sub(r"<[^>]+>", "", description)
+
             # Sanitizar código do cupom
             raw_code = request.form.get("custom_code", "").strip().upper()
             custom_code = sanitize_coupon_code(raw_code) if raw_code else None
-            
+
             expires_at_str = request.form.get("expires_at", "")
 
             # Validar
@@ -5625,12 +5626,12 @@ def coupons_create():
                     "warning",
                 )
                 return redirect(url_for("admin.coupons_create"))
-            
+
             # Limitar valores máximos razoáveis
             if benefit_days > 365:
                 flash("Dias de acesso não pode exceder 365.", "warning")
                 return redirect(url_for("admin.coupons_create"))
-            
+
             if benefit_credits > 1000:
                 flash("Créditos de IA não pode exceder 1000.", "warning")
                 return redirect(url_for("admin.coupons_create"))
@@ -5700,10 +5701,11 @@ def coupons_delete(coupon_id):
 def sanitize_coupon_code(code):
     """Sanitiza código de cupom - apenas letras maiúsculas, números e hífen"""
     import re
+
     if not code:
         return ""
     # Remove caracteres não permitidos e limita tamanho
-    sanitized = re.sub(r'[^A-Z0-9\-]', '', code.upper())
+    sanitized = re.sub(r"[^A-Z0-9\-]", "", code.upper())
     return sanitized[:20]
 
 
@@ -5713,16 +5715,18 @@ def sanitize_coupon_code(code):
 def api_validate_coupon():
     """API para validar um cupom (usado no checkout)"""
     data = request.get_json()
-    
+
     if not data:
         return jsonify({"valid": False, "message": "Dados inválidos"}), 400
-    
+
     raw_code = data.get("code", "")
     code = sanitize_coupon_code(raw_code)
 
     if not code:
-        return jsonify({"valid": False, "message": "Código não informado ou inválido"}), 400
-    
+        return jsonify(
+            {"valid": False, "message": "Código não informado ou inválido"}
+        ), 400
+
     if len(code) < 3:
         return jsonify({"valid": False, "message": "Código muito curto"}), 400
 
@@ -5752,16 +5756,18 @@ def api_validate_coupon():
 def api_apply_coupon():
     """API para aplicar um cupom ao usuário atual"""
     data = request.get_json()
-    
+
     if not data:
         return jsonify({"success": False, "message": "Dados inválidos"}), 400
-    
+
     raw_code = data.get("code", "")
     code = sanitize_coupon_code(raw_code)
 
     if not code:
-        return jsonify({"success": False, "message": "Código não informado ou inválido"}), 400
-    
+        return jsonify(
+            {"success": False, "message": "Código não informado ou inválido"}
+        ), 400
+
     if len(code) < 3:
         return jsonify({"success": False, "message": "Código muito curto"}), 400
 
