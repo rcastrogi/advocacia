@@ -129,10 +129,22 @@ def gerar_procuracao_pdf(client, advogado, tipo="ad_judicia", poderes_especiais=
     story.append(Spacer(1, 0.3 * cm))
 
     # Outorgado
+    # Monta endereço do advogado
+    endereco_advogado = "endereço não informado"
+    if advogado.street:
+        partes_endereco = [advogado.street]
+        if advogado.number:
+            partes_endereco.append(advogado.number)
+        if advogado.neighborhood:
+            partes_endereco.append(advogado.neighborhood)
+        if advogado.city and advogado.uf:
+            partes_endereco.append(f"{advogado.city}/{advogado.uf}")
+        endereco_advogado = ", ".join(partes_endereco)
+    
     outorgado = f"""
     <b>OUTORGADO:</b> {advogado.full_name}, {advogado.nationality or "brasileiro(a)"}, 
     advogado(a), inscrito(a) na OAB/{advogado.oab_number or "OAB não informada"}, 
-    com escritório profissional localizado em {advogado.address or "endereço não informado"}.
+    com escritório profissional localizado em {endereco_advogado}.
     """
     story.append(Paragraph(outorgado, body_style))
     story.append(Spacer(1, 0.5 * cm))
