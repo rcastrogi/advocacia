@@ -10,7 +10,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h1 class="h3 mb-1">
-                        <i class="fas fa-magic text-primary me-2"></i>
+                        <i class="fas fa-brain text-primary me-2"></i>
                         Editor Visual de Seções
                         <span class="badge bg-warning text-dark ms-2">BETA</span>
                     </h1>
@@ -113,7 +113,7 @@
                                         <a href="{{ url_for('admin.petition_section_editor_edit', section_id=section.id) }}" 
                                            class="btn btn-sm btn-primary" 
                                            title="Editar com Editor Visual">
-                                            <i class="fas fa-magic"></i>
+                                            <i class="fas fa-brain"></i>
                                         </a>
                                         <a href="{{ url_for('admin.petition_section_edit', section_id=section.id) }}" 
                                            class="btn btn-sm btn-outline-secondary" 
@@ -225,7 +225,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                 <a href="{{ url_for('admin.petition_section_editor_edit', section_id=section.id) }}" class="btn btn-primary">
-                    <i class="fas fa-magic me-2"></i>Editar Campos
+                    <i class="fas fa-edit me-2"></i>Editar Campos
                 </a>
             </div>
         </div>
