@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Início</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('processes.dashboard') }}">Processos</a></li>
+            {% if is_edit %}
+            <li class="breadcrumb-item"><a href="{{ url_for('processes.view', process_id=process.id) }}">{{ process.title[:30] }}...</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+            {% else %}
+            <li class="breadcrumb-item active">Novo Processo</li>
+            {% endif %}
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-{{ 'edit' if is_edit else 'plus-circle' }} me-2 text-primary"></i>
+            {{ 'Editar Processo' if is_edit else 'Novo Processo' }}
+        </h1>
+        <a href="{{ url_for('processes.list_processes') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+    </div>
+
+    <form method="POST" novalidate>
+        {{ form.hidden_tag() }}
+        
+        <div class="row">
+            <!-- Coluna Principal -->
+            <div class="col-lg-8">
+                <!-- Identificação -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-alt me-2"></i>
+                            Identificação do Processo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-5 mb-3">
+                                <label for="process_number" class="form-label">Número do Processo</label>
+                                {{ form.process_number(class="form-control" + (" is-invalid" if form.process_number.errors else "")) }}
+                                <small class="text-muted">Formato: 0000000-00.0000.0.00.0000</small>
+                                {% for error in form.process_number.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-7 mb-3">
+                                <label for="title" class="form-label">Título/Descrição <span class="text-danger">*</span></label>
+                                {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                                {% for error in form.title.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="plaintiff" class="form-label">Autor/Requerente</label>
+                                {{ form.plaintiff(class="form-control") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="defendant" class="form-label">Réu/Requerido</label>
+                                {{ form.defendant(class="form-control") }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="client_id" class="form-label">Cliente Vinculado</label>
+                            {{ form.client_id(class="form-select") }}
+                            <small class="text-muted">Vincule este processo a um cliente cadastrado</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações do Tribunal -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-gavel me-2 text-primary"></i>
+                            Informações do Tribunal
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="court" class="form-label">Justiça/Tribunal</label>
+                                {{ form.court(class="form-select") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="court_instance" class="form-label">Instância</label>
+                                {{ form.court_instance(class="form-select") }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="jurisdiction" class="form-label">Vara/Órgão Julgador</label>
+                                {{ form.jurisdiction(class="form-control") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="district" class="form-label">Comarca/Foro</label>
+                                {{ form.district(class="form-control") }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="judge" class="form-label">Juiz/Relator</label>
+                            {{ form.judge(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna Lateral -->
+            <div class="col-lg-4">
+                <!-- Status e Prioridade -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-flag me-2 text-primary"></i>
+                            Status e Prioridade
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                            {{ form.status(class="form-select") }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="priority" class="form-label">Prioridade <span class="text-danger">*</span></label>
+                            {{ form.priority(class="form-select") }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="distribution_date" class="form-label">Data de Distribuição</label>
+                            {{ form.distribution_date(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controle de Prazos -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock me-2"></i>
+                            Controle de Prazos
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="next_deadline" class="form-label">Próximo Prazo</label>
+                            {{ form.next_deadline(class="form-control") }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="deadline_description" class="form-label">Descrição do Prazo</label>
+                            {{ form.deadline_description(class="form-control") }}
+                            <small class="text-muted">Ex: Prazo para contestação, Audiência de conciliação</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>
+                                {{ 'Salvar Alterações' if is_edit else 'Criar Processo' }}
+                            </button>
+                            
+                            {% if is_edit %}
+                            <a href="{{ url_for('processes.view', process_id=process.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('processes.list_processes') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Máscara para número do processo
+    const processNumber = document.getElementById('process_number');
+    if (processNumber) {
+        processNumber.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length > 20) {
+                value = value.substring(0, 20);
+            }
+            
+            // Formato: 0000000-00.0000.0.00.0000
+            if (value.length > 0) {
+                let formatted = value;
+                if (value.length > 7) {
+                    formatted = value.substring(0, 7) + '-' + value.substring(7);
+                }
+                if (value.length > 9) {
+                    formatted = formatted.substring(0, 10) + '.' + value.substring(9);
+                }
+                if (value.length > 13) {
+                    formatted = formatted.substring(0, 15) + '.' + value.substring(13);
+                }
+                if (value.length > 14) {
+                    formatted = formatted.substring(0, 17) + '.' + value.substring(14);
+                }
+                if (value.length > 16) {
+                    formatted = formatted.substring(0, 20) + '.' + value.substring(16);
+                }
+                e.target.value = formatted;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

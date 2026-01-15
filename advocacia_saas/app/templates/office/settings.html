@@ -225,6 +225,55 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Máscaras de input
+    function applyMask(input, maskFn) {
+        if (!input) return;
+        input.addEventListener('input', function(e) {
+            e.target.value = maskFn(e.target.value);
+        });
+        // Aplicar máscara no valor inicial
+        if (input.value) {
+            input.value = maskFn(input.value);
+        }
+    }
+    
+    // Máscara de CNPJ: 00.000.000/0000-00
+    function maskCnpj(value) {
+        return value
+            .replace(/\D/g, '')
+            .substring(0, 14)
+            .replace(/^(\d{2})(\d)/, '$1.$2')
+            .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/\.(\d{3})(\d)/, '.$1/$2')
+            .replace(/(\d{4})(\d)/, '$1-$2');
+    }
+    
+    // Máscara de telefone: (00) 00000-0000 ou (00) 0000-0000
+    function maskPhone(value) {
+        const digits = value.replace(/\D/g, '').substring(0, 11);
+        if (digits.length <= 10) {
+            return digits
+                .replace(/^(\d{2})(\d)/, '($1) $2')
+                .replace(/(\d{4})(\d)/, '$1-$2');
+        }
+        return digits
+            .replace(/^(\d{2})(\d)/, '($1) $2')
+            .replace(/(\d{5})(\d)/, '$1-$2');
+    }
+    
+    // Máscara de CEP: 00000-000
+    function maskCep(value) {
+        return value
+            .replace(/\D/g, '')
+            .substring(0, 8)
+            .replace(/^(\d{5})(\d)/, '$1-$2');
+    }
+    
+    // Aplicar máscaras
+    applyMask(document.getElementById('cnpj'), maskCnpj);
+    applyMask(document.getElementById('phone'), maskPhone);
+    applyMask(document.getElementById('cep'), maskCep);
+    
     // Busca CEP
     const cepInput = document.getElementById('cep');
     if (cepInput) {
