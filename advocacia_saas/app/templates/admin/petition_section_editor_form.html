@@ -92,201 +92,194 @@
 {% endblock %}
 
 {% block admin_content %}
-<!-- Define Alpine component BEFORE usage -->
-<script>
-function sectionEditor() {
-    return {
-        // Section data
-        section: {
-            id: {{ section.id if section else 'null' }},
-            name: {{ section.name|tojson if section else '""' }},
-            description: {{ section.description|tojson if section and section.description else '""' }},
-            icon: {{ section.icon|tojson if section and section.icon else '"fa-file-alt"' }},
-            color: {{ section.color|tojson if section and section.color else '"primary"' }},
-            order: {{ section.order if section else 0 }},
-            is_active: {{ 'true' if section and section.is_active else 'true' }}
-        },
-        
-        // Fields
-        fields: {{ section.fields_schema|tojson if section and section.fields_schema else '[]' }}.map((f, i) => ({
-            ...f,
-            id: 'field_' + i,
-            expanded: false,
-            dragging: false,
-            optionsText: (f.options || []).join('\n')
-        })),
-        
-        // Field types available
-        fieldTypes: [
-            { id: 'text', label: 'Texto', icon: 'fa-font', color: 'primary', description: 'Campo de texto simples' },
-            { id: 'textarea', label: 'Área de Texto', icon: 'fa-align-left', color: 'info', description: 'Texto longo multi-linha' },
-            { id: 'editor', label: 'Editor Rico', icon: 'fa-edit', color: 'success', description: 'Editor com formatação' },
-            { id: 'select', label: 'Seleção', icon: 'fa-list', color: 'warning', description: 'Lista de opções' },
-            { id: 'radio', label: 'Múltipla Escolha', icon: 'fa-dot-circle', color: 'secondary', description: 'Escolha única' },
-            { id: 'checkbox', label: 'Caixa de Seleção', icon: 'fa-check-square', color: 'dark', description: 'Sim/Não' },
-            { id: 'date', label: 'Data', icon: 'fa-calendar', color: 'danger', description: 'Seletor de data' },
-            { id: 'number', label: 'Número', icon: 'fa-hashtag', color: 'primary', description: 'Valor numérico' },
-            { id: 'currency', label: 'Moeda', icon: 'fa-dollar-sign', color: 'success', description: 'Valor em reais' }
-        ],
-        
-        // UI state
-        dragOver: false,
-        draggedType: null,
-        draggedFieldIndex: null,
-        saving: false,
-        toast: { show: false, type: 'success', message: '' },
-        fieldCounter: {{ section.fields_schema|length if section and section.fields_schema else 0 }},
-        
-        // Methods
-        addField(type) {
-            this.fieldCounter++;
-            const typeInfo = this.fieldTypes.find(t => t.id === type) || this.fieldTypes[0];
-            this.fields.push({
-                id: 'field_' + this.fieldCounter,
-                name: '',
-                label: '',
-                type: type,
-                required: false,
-                placeholder: '',
-                help_text: '',
-                options: [],
-                optionsText: '',
-                default_value: '',
-                expanded: true,
-                dragging: false
-            });
-        },
-        
-        removeField(index) {
-            if (confirm('Remover este campo?')) {
-                this.fields.splice(index, 1);
-            }
-        },
-        
-        startDragType(event, type) {
-            this.draggedType = type;
-            event.dataTransfer.effectAllowed = 'copy';
-        },
-        
-        startDragField(event, index) {
-            this.draggedFieldIndex = index;
-            this.fields[index].dragging = true;
-            event.dataTransfer.effectAllowed = 'move';
-        },
-        
-        endDrag() {
-            this.draggedType = null;
-            if (this.draggedFieldIndex !== null) {
-                this.fields[this.draggedFieldIndex].dragging = false;
-            }
-            this.draggedFieldIndex = null;
-            this.dragOver = false;
-        },
-        
-        handleDrop(event) {
-            this.dragOver = false;
-            if (this.draggedType) {
-                this.addField(this.draggedType.id);
-            }
-            this.endDrag();
-        },
-        
-        handleFieldDragOver(event, targetIndex) {
-            if (this.draggedFieldIndex !== null && this.draggedFieldIndex !== targetIndex) {
-                event.preventDefault();
-            }
-        },
-        
-        handleFieldDrop(event, targetIndex) {
-            if (this.draggedFieldIndex !== null && this.draggedFieldIndex !== targetIndex) {
-                const field = this.fields.splice(this.draggedFieldIndex, 1)[0];
-                this.fields.splice(targetIndex, 0, field);
-            }
-            this.endDrag();
-        },
-        
-        getFieldTypeIcon(type) {
-            const t = this.fieldTypes.find(ft => ft.id === type);
-            return t ? t.icon : 'fa-question';
-        },
-        
-        getFieldTypeColor(type) {
-            const t = this.fieldTypes.find(ft => ft.id === type);
-            return t ? t.color : 'secondary';
-        },
-        
-        getFieldTypeName(type) {
-            const t = this.fieldTypes.find(ft => ft.id === type);
-            return t ? t.label : type;
-        },
-        
-        showToast(type, message) {
-            this.toast = { show: true, type, message };
-            setTimeout(() => this.toast.show = false, 4000);
-        },
-        
-        async saveSection() {
-            if (!this.section.name.trim()) {
-                this.showToast('danger', 'Nome da seção é obrigatório');
-                return;
-            }
-            
-            this.saving = true;
-            
-            try {
-                const payload = {
-                    id: this.section.id,
-                    name: this.section.name,
-                    description: this.section.description,
-                    icon: this.section.icon,
-                    color: this.section.color,
-                    order: this.section.order,
-                    is_active: this.section.is_active,
-                    fields: this.fields.map(f => ({
-                        name: f.name,
-                        label: f.label,
-                        type: f.type,
-                        required: f.required,
-                        placeholder: f.placeholder,
-                        help_text: f.help_text,
-                        options: f.options || [],
-                        default_value: f.default_value || ''
-                    }))
-                };
-                
-                const response = await fetch('{{ url_for("admin.petition_section_editor_save") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    this.showToast('success', result.message);
-                    if (!this.section.id) {
-                        // New section created, redirect to edit
-                        setTimeout(() => {
-                            window.location.href = '{{ url_for("admin.petition_sections_editor") }}';
-                        }, 1500);
-                    }
-                } else {
-                    this.showToast('danger', result.error || 'Erro ao salvar');
-                }
-            } catch (error) {
-                console.error('Save error:', error);
-                this.showToast('danger', 'Erro de conexão');
-            } finally {
-                this.saving = false;
-            }
+<!-- Alpine component with inline data -->
+<div class="container-fluid py-4" x-data="{
+    // Section data
+    section: {
+        id: {{ section.id if section else 'null' }},
+        name: {{ section.name|tojson if section else '""' }},
+        description: {{ section.description|tojson if section and section.description else '""' }},
+        icon: {{ section.icon|tojson if section and section.icon else '"fa-file-alt"' }},
+        color: {{ section.color|tojson if section and section.color else '"primary"' }},
+        order: {{ section.order if section else 0 }},
+        is_active: {{ 'true' if section and section.is_active else 'true' }}
+    },
+    
+    // Fields
+    fields: {{ section.fields_schema|tojson if section and section.fields_schema else '[]' }}.map((f, i) => ({
+        ...f,
+        id: 'field_' + i,
+        expanded: false,
+        dragging: false,
+        optionsText: (f.options || []).join('\n')
+    })),
+    
+    // Field types available
+    fieldTypes: [
+        { id: 'text', label: 'Texto', icon: 'fa-font', color: 'primary', description: 'Campo de texto simples' },
+        { id: 'textarea', label: 'Área de Texto', icon: 'fa-align-left', color: 'info', description: 'Texto longo multi-linha' },
+        { id: 'editor', label: 'Editor Rico', icon: 'fa-edit', color: 'success', description: 'Editor com formatação' },
+        { id: 'select', label: 'Seleção', icon: 'fa-list', color: 'warning', description: 'Lista de opções' },
+        { id: 'radio', label: 'Múltipla Escolha', icon: 'fa-dot-circle', color: 'secondary', description: 'Escolha única' },
+        { id: 'checkbox', label: 'Caixa de Seleção', icon: 'fa-check-square', color: 'dark', description: 'Sim/Não' },
+        { id: 'date', label: 'Data', icon: 'fa-calendar', color: 'danger', description: 'Seletor de data' },
+        { id: 'number', label: 'Número', icon: 'fa-hashtag', color: 'primary', description: 'Valor numérico' },
+        { id: 'currency', label: 'Moeda', icon: 'fa-dollar-sign', color: 'success', description: 'Valor em reais' }
+    ],
+    
+    // UI state
+    dragOver: false,
+    draggedType: null,
+    draggedFieldIndex: null,
+    saving: false,
+    toast: { show: false, type: 'success', message: '' },
+    fieldCounter: {{ section.fields_schema|length if section and section.fields_schema else 0 }},
+    
+    // Methods
+    addField(type) {
+        this.fieldCounter++;
+        this.fields.push({
+            id: 'field_' + this.fieldCounter,
+            name: '',
+            label: '',
+            type: type,
+            required: false,
+            placeholder: '',
+            help_text: '',
+            options: [],
+            optionsText: '',
+            default_value: '',
+            expanded: true,
+            dragging: false
+        });
+    },
+    
+    removeField(index) {
+        if (confirm('Remover este campo?')) {
+            this.fields.splice(index, 1);
         }
-    };
-}
-</script>
-<div class="container-fluid py-4" x-data="sectionEditor()">
+    },
+    
+    startDragType(event, type) {
+        this.draggedType = type;
+        event.dataTransfer.effectAllowed = 'copy';
+    },
+    
+    startDragField(event, index) {
+        this.draggedFieldIndex = index;
+        this.fields[index].dragging = true;
+        event.dataTransfer.effectAllowed = 'move';
+    },
+    
+    endDrag() {
+        this.draggedType = null;
+        if (this.draggedFieldIndex !== null && this.fields[this.draggedFieldIndex]) {
+            this.fields[this.draggedFieldIndex].dragging = false;
+        }
+        this.draggedFieldIndex = null;
+        this.dragOver = false;
+    },
+    
+    handleDrop(event) {
+        this.dragOver = false;
+        if (this.draggedType) {
+            this.addField(this.draggedType.id);
+        }
+        this.endDrag();
+    },
+    
+    handleFieldDragOver(event, targetIndex) {
+        if (this.draggedFieldIndex !== null && this.draggedFieldIndex !== targetIndex) {
+            event.preventDefault();
+        }
+    },
+    
+    handleFieldDrop(event, targetIndex) {
+        if (this.draggedFieldIndex !== null && this.draggedFieldIndex !== targetIndex) {
+            const field = this.fields.splice(this.draggedFieldIndex, 1)[0];
+            this.fields.splice(targetIndex, 0, field);
+        }
+        this.endDrag();
+    },
+    
+    getFieldTypeIcon(type) {
+        const t = this.fieldTypes.find(ft => ft.id === type);
+        return t ? t.icon : 'fa-question';
+    },
+    
+    getFieldTypeColor(type) {
+        const t = this.fieldTypes.find(ft => ft.id === type);
+        return t ? t.color : 'secondary';
+    },
+    
+    getFieldTypeName(type) {
+        const t = this.fieldTypes.find(ft => ft.id === type);
+        return t ? t.label : type;
+    },
+    
+    showToast(type, message) {
+        this.toast = { show: true, type, message };
+        setTimeout(() => this.toast.show = false, 4000);
+    },
+    
+    async saveSection() {
+        if (!this.section.name.trim()) {
+            this.showToast('danger', 'Nome da seção é obrigatório');
+            return;
+        }
+        
+        this.saving = true;
+        
+        try {
+            const payload = {
+                id: this.section.id,
+                name: this.section.name,
+                description: this.section.description,
+                icon: this.section.icon,
+                color: this.section.color,
+                order: this.section.order,
+                is_active: this.section.is_active,
+                fields: this.fields.map(f => ({
+                    name: f.name,
+                    label: f.label,
+                    type: f.type,
+                    required: f.required,
+                    placeholder: f.placeholder,
+                    help_text: f.help_text,
+                    options: f.options || [],
+                    default_value: f.default_value || ''
+                }))
+            };
+            
+            const response = await fetch('{{ url_for('admin.petition_section_editor_save') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.content || ''
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showToast('success', result.message);
+                if (!this.section.id) {
+                    setTimeout(() => {
+                        window.location.href = '{{ url_for('admin.petition_sections_editor') }}';
+                    }, 1500);
+                }
+            } else {
+                this.showToast('danger', result.error || 'Erro ao salvar');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            this.showToast('danger', 'Erro de conexão');
+        } finally {
+            this.saving = false;
+        }
+    }
+}">
     <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
