@@ -1,6 +1,7 @@
 """
 Rotas de gerenciamento de prazos
 """
+
 import os
 from datetime import datetime, timedelta
 
@@ -235,21 +236,25 @@ def api_upcoming():
 @bp.route("/api/send-alerts", methods=["POST"])
 def api_send_alerts():
     """API: Enviar alertas de prazos próximos (cron job)
-    
+
     Requer header: X-API-Key com valor de CRON_API_KEY
     """
     from flask import current_app
-    
+
     # Autenticação por API key
     api_key = request.headers.get("X-API-Key")
     expected_key = os.environ.get("CRON_API_KEY")
-    
+
     if not expected_key:
-        current_app.logger.warning("CRON_API_KEY não configurada - endpoint desabilitado")
+        current_app.logger.warning(
+            "CRON_API_KEY não configurada - endpoint desabilitado"
+        )
         return jsonify({"error": "Endpoint não configurado"}), 503
-    
+
     if not api_key or api_key != expected_key:
-        current_app.logger.warning(f"Tentativa de acesso não autorizado ao cron de alertas")
+        current_app.logger.warning(
+            f"Tentativa de acesso não autorizado ao cron de alertas"
+        )
         return jsonify({"error": "API key inválida"}), 401
 
     # Buscar prazos que precisam de alerta
