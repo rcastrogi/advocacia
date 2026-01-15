@@ -146,6 +146,24 @@
     toast: { show: false, type: 'success', message: '' },
     fieldCounter: {{ section.fields_schema|length if section and section.fields_schema else 0 }},
     
+    // Helper: converte label para nome de campo (slug)
+    slugify(text) {
+        if (!text) return '';
+        return text
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+            .replace(/[^a-z0-9\s]/g, '') // Remove caracteres especiais
+            .trim()
+            .replace(/\s+/g, '_') // Espaços viram underscore
+            .substring(0, 50); // Limita tamanho
+    },
+    
+    // Atualiza nome automaticamente quando label muda
+    updateFieldName(field) {
+        field.name = this.slugify(field.label);
+    },
+    
     // Methods
     addField(type) {
         this.fieldCounter++;
@@ -483,23 +501,20 @@
                                 <!-- Field Config (expandable) -->
                                 <div class="field-config mt-3 pt-3 border-top">
                                     <div class="row">
-                                        <div class="col-6 mb-2">
-                                            <label class="form-label small">Nome do Campo</label>
-                                            <input type="text" class="form-control form-control-sm" 
-                                                   x-model="field.name" 
-                                                   placeholder="nome_campo"
-                                                   @input="field.name = field.name.toLowerCase().replace(/[^a-z0-9_]/g, '_')">
-                                        </div>
-                                        <div class="col-6 mb-2">
-                                            <label class="form-label small">Label (Rótulo)</label>
+                                        <div class="col-12 mb-2">
+                                            <label class="form-label small">Nome do Campo <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control form-control-sm" 
                                                    x-model="field.label" 
-                                                   placeholder="Rótulo visível">
+                                                   @input="updateFieldName(field)"
+                                                   placeholder="Ex: Nome Completo, CPF, Data de Nascimento...">
+                                            <small class="text-muted" x-show="field.name">
+                                                <i class="fas fa-code me-1"></i>ID interno: <code x-text="field.name"></code>
+                                            </small>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-6 mb-2">
-                                            <label class="form-label small">Tipo</label>
+                                            <label class="form-label small">Tipo de Campo</label>
                                             <select class="form-select form-select-sm" x-model="field.type">
                                                 <template x-for="type in fieldTypes" :key="type.id">
                                                     <option :value="type.id" x-text="type.label"></option>
@@ -507,17 +522,19 @@
                                             </select>
                                         </div>
                                         <div class="col-6 mb-2">
-                                            <label class="form-label small">Placeholder</label>
+                                            <label class="form-label small">Exemplo de Preenchimento</label>
                                             <input type="text" class="form-control form-control-sm" 
                                                    x-model="field.placeholder" 
-                                                   placeholder="Texto de exemplo...">
+                                                   placeholder="Ex: 000.000.000-00">
+                                            <small class="text-muted">Texto que aparece dentro do campo vazio</small>
                                         </div>
                                     </div>
                                     <div class="mb-2">
-                                        <label class="form-label small">Texto de Ajuda</label>
+                                        <label class="form-label small">Instrução para o Usuário</label>
                                         <input type="text" class="form-control form-control-sm" 
                                                x-model="field.help_text" 
-                                               placeholder="Instruções para o usuário...">
+                                               placeholder="Ex: Digite apenas números, sem pontos">
+                                        <small class="text-muted">Texto de ajuda exibido abaixo do campo</small>
                                     </div>
                                     
                                     <!-- Options for select/radio -->
