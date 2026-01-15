@@ -1,4 +1,4 @@
-from datetime import date, timedelta, timezone, datetime
+from datetime import date, datetime, timedelta, timezone
 
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -23,7 +23,9 @@ def dashboard():
     pending_processes = Process.query.filter_by(
         user_id=current_user.id, status="pending_distribution"
     ).count()
-    ongoing_processes = Process.query.filter_by(user_id=current_user.id, status="ongoing").count()
+    ongoing_processes = Process.query.filter_by(
+        user_id=current_user.id, status="ongoing"
+    ).count()
 
     # Processos recentes
     recent_processes = (
@@ -36,7 +38,10 @@ def dashboard():
     # Petições sem número de processo
     petitions_without_number = (
         SavedPetition.query.filter_by(user_id=current_user.id)
-        .filter((SavedPetition.process_number.is_(None)) | (SavedPetition.process_number == ""))
+        .filter(
+            (SavedPetition.process_number.is_(None))
+            | (SavedPetition.process_number == "")
+        )
         .filter(SavedPetition.status == "completed")
         .order_by(SavedPetition.completed_at.desc())
         .limit(10)
@@ -135,7 +140,10 @@ def pending_petitions():
 
     petitions = (
         SavedPetition.query.filter_by(user_id=current_user.id)
-        .filter((SavedPetition.process_number.is_(None)) | (SavedPetition.process_number == ""))
+        .filter(
+            (SavedPetition.process_number.is_(None))
+            | (SavedPetition.process_number == "")
+        )
         .filter(SavedPetition.status == "completed")
         .order_by(SavedPetition.completed_at.desc())
         .paginate(page=page, per_page=per_page, error_out=False)
@@ -164,7 +172,9 @@ def reports():
 
 def _get_client_choices():
     """Retorna lista de clientes para o select."""
-    clients = Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+    clients = (
+        Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+    )
     choices = [("", "Nenhum cliente vinculado")]
     choices.extend([(str(c.id), c.name) for c in clients])
     return choices
@@ -266,7 +276,10 @@ def edit(process_id):
 
     if form.validate_on_submit():
         # Verificar se número do processo já existe (se mudou)
-        if form.process_number.data and form.process_number.data != process.process_number:
+        if (
+            form.process_number.data
+            and form.process_number.data != process.process_number
+        ):
             existing = Process.query.filter_by(
                 process_number=form.process_number.data
             ).first()
