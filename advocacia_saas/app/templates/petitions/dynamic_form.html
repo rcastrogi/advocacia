@@ -874,6 +874,16 @@
                     </span>
                 </button>
                 
+                <!-- Botão Análise de Riscos -->
+                <button type="button" class="btn btn-outline-warning" @click="analyzeRisks()" :disabled="isAnalyzingRisk">
+                    <span x-show="!isAnalyzingRisk">
+                        <i class="fas fa-balance-scale me-1"></i> Analisar Riscos
+                    </span>
+                    <span x-show="isAnalyzingRisk">
+                        <i class="fas fa-spinner fa-spin me-1"></i> Analisando...
+                    </span>
+                </button>
+                
                 <!-- Botão Preview -->
                 <button type="button" class="btn btn-outline-primary" @click="previewPetition()">
                     <i class="fas fa-eye me-1"></i> Pré-visualizar
@@ -926,6 +936,29 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de Análise de Riscos -->
+<div class="modal fade" id="riskAnalysisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title">
+                    <i class="fas fa-balance-scale me-2"></i>Análise de Riscos e Chances
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="riskAnalysisContent">
+                <!-- Conteúdo será inserido via JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <small class="text-muted me-auto">
+                    <i class="fas fa-robot me-1"></i>Análise gerada por IA - use como orientação
+                </small>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -948,6 +981,7 @@ document.addEventListener('alpine:init', () => {
         isSaving: false,
         isUploading: false,
         isDragging: false,
+        isAnalyzingRisk: false,
         dragover: false,
         cepLoading: null,  // Campo CEP que está carregando
         petitionId: null,  // ID da petição se estiver editando
@@ -1894,6 +1928,212 @@ document.addEventListener('alpine:init', () => {
                 });
                 html += `</div></div>`;
             }
+            
+            content.innerHTML = html;
+            modal.show();
+        },
+        
+        async analyzeRisks() {
+            // Análise de riscos e chances de êxito
+            this.isAnalyzingRisk = true;
+            
+            try {
+                // Coletar conteúdo da petição
+                let petitionContent = '';
+                let fatos = '';
+                let pedidos = '';
+                let fundamentacao = '';
+                
+                // Percorrer seções e extrair conteúdo
+                this.sections.forEach(sectionConfig => {
+                    const section = sectionConfig.section;
+                    const fields = section.fields_schema || [];
+                    const slugLower = section.slug.toLowerCase();
+                    
+                    fields.forEach(field => {
+                        const key = section.slug + '_' + field.name;
+                        const value = this.formData[key];
+                        if (value && value.toString().trim()) {
+                            // Limpar HTML
+                            let cleanValue = value;
+                            if (field.type === 'editor') {
+                                cleanValue = value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                            }
+                            
+                            petitionContent += `\n${field.label}: ${cleanValue}\n`;
+                            
+                            // Identificar seções específicas
+                            if (slugLower.includes('fatos') || field.name.toLowerCase().includes('fatos')) {
+                                fatos += cleanValue + '\n';
+                            }
+                            if (slugLower.includes('pedido') || field.name.toLowerCase().includes('pedido')) {
+                                pedidos += cleanValue + '\n';
+                            }
+                            if (slugLower.includes('direito') || slugLower.includes('fundament') || field.name.toLowerCase().includes('fundament')) {
+                                fundamentacao += cleanValue + '\n';
+                            }
+                        }
+                    });
+                });
+                
+                if (!petitionContent.trim()) {
+                    this.showToast('Preencha alguns campos da petição antes de analisar', 'warning');
+                    this.isAnalyzingRisk = false;
+                    return;
+                }
+                
+                // Chamar API
+                const response = await fetch('/ai/api/analyze-risk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value || ''
+                    },
+                    body: JSON.stringify({
+                        petition_content: petitionContent,
+                        petition_type: window.PETITION_TYPE?.name || '',
+                        fatos: fatos,
+                        pedidos: pedidos,
+                        fundamentacao: fundamentacao
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    if (response.status === 402) {
+                        this.showToast('Créditos insuficientes. Necessário: ' + data.credits_needed + ' créditos', 'warning');
+                    } else {
+                        this.showToast(data.error || 'Erro ao analisar', 'error');
+                    }
+                    this.isAnalyzingRisk = false;
+                    return;
+                }
+                
+                // Exibir resultado no modal
+                this.showRiskAnalysisModal(data.analysis, data.credits_used);
+                
+            } catch (error) {
+                console.error('Erro na análise de riscos:', error);
+                this.showToast('Erro ao analisar petição', 'error');
+            } finally {
+                this.isAnalyzingRisk = false;
+            }
+        },
+        
+        showRiskAnalysisModal(analysis, creditsUsed) {
+            const modal = new bootstrap.Modal(document.getElementById('riskAnalysisModal'));
+            const content = document.getElementById('riskAnalysisContent');
+            
+            let html = '';
+            
+            // Verificar se houve erro no parse
+            if (analysis.parse_error) {
+                html = `<div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Não foi possível estruturar a análise. Resposta bruta:
+                </div>
+                <pre class="bg-light p-3 rounded small">${analysis.raw_analysis}</pre>`;
+            } else {
+                // Chance de êxito
+                const chance = analysis.chance_exito || {};
+                const percentual = chance.percentual || 0;
+                const classificacao = chance.classificacao || 'N/A';
+                
+                // Cor baseada no percentual
+                let barColor = 'danger';
+                if (percentual >= 70) barColor = 'success';
+                else if (percentual >= 50) barColor = 'warning';
+                else if (percentual >= 30) barColor = 'warning';
+                
+                html += `
+                <div class="card border-0 bg-light mb-4">
+                    <div class="card-body text-center">
+                        <h4 class="mb-3">Chance de Êxito</h4>
+                        <div class="display-4 fw-bold text-${barColor} mb-2">${percentual}%</div>
+                        <span class="badge bg-${barColor} fs-6">${classificacao}</span>
+                        <div class="progress mt-3" style="height: 20px;">
+                            <div class="progress-bar bg-${barColor}" style="width: ${percentual}%"></div>
+                        </div>
+                    </div>
+                </div>`;
+                
+                // Pontos fortes
+                if (analysis.pontos_fortes && analysis.pontos_fortes.length > 0) {
+                    html += `
+                    <div class="mb-4">
+                        <h5 class="text-success"><i class="fas fa-check-circle me-2"></i>Pontos Fortes</h5>
+                        <ul class="list-group">
+                            ${analysis.pontos_fortes.map(p => `<li class="list-group-item list-group-item-success"><i class="fas fa-check text-success me-2"></i>${p}</li>`).join('')}
+                        </ul>
+                    </div>`;
+                }
+                
+                // Riscos
+                if (analysis.riscos && analysis.riscos.length > 0) {
+                    html += `
+                    <div class="mb-4">
+                        <h5 class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Riscos Identificados</h5>
+                        <div class="list-group">
+                            ${analysis.riscos.map(r => {
+                                const gravidadeBadge = {
+                                    'BAIXA': 'success',
+                                    'MÉDIA': 'warning',
+                                    'ALTA': 'danger'
+                                }[r.gravidade] || 'secondary';
+                                return `
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <i class="fas fa-exclamation-circle text-${gravidadeBadge} me-2"></i>
+                                            <strong>${r.descricao}</strong>
+                                        </div>
+                                        <span class="badge bg-${gravidadeBadge}">${r.gravidade}</span>
+                                    </div>
+                                    ${r.mitigacao ? `<small class="text-muted d-block mt-1"><i class="fas fa-lightbulb me-1"></i>${r.mitigacao}</small>` : ''}
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>`;
+                }
+                
+                // Recomendações
+                if (analysis.recomendacoes && analysis.recomendacoes.length > 0) {
+                    html += `
+                    <div class="mb-4">
+                        <h5 class="text-primary"><i class="fas fa-lightbulb me-2"></i>Recomendações</h5>
+                        <ul class="list-group">
+                            ${analysis.recomendacoes.map(r => `<li class="list-group-item"><i class="fas fa-arrow-right text-primary me-2"></i>${r}</li>`).join('')}
+                        </ul>
+                    </div>`;
+                }
+                
+                // Jurisprudência
+                if (analysis.jurisprudencia_relevante && analysis.jurisprudencia_relevante.length > 0) {
+                    html += `
+                    <div class="mb-4">
+                        <h5 class="text-info"><i class="fas fa-gavel me-2"></i>Jurisprudência Relevante</h5>
+                        <ul class="list-group">
+                            ${analysis.jurisprudencia_relevante.map(j => `<li class="list-group-item list-group-item-light"><i class="fas fa-balance-scale text-info me-2"></i>${j}</li>`).join('')}
+                        </ul>
+                    </div>`;
+                }
+                
+                // Observações
+                if (analysis.observacoes) {
+                    html += `
+                    <div class="alert alert-secondary">
+                        <h6><i class="fas fa-info-circle me-2"></i>Observações</h6>
+                        <p class="mb-0">${analysis.observacoes}</p>
+                    </div>`;
+                }
+            }
+            
+            // Créditos usados
+            html += `
+            <div class="text-end text-muted small">
+                <i class="fas fa-coins me-1"></i>${creditsUsed} créditos utilizados
+            </div>`;
             
             content.innerHTML = html;
             modal.show();

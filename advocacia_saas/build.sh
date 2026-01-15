@@ -7,6 +7,21 @@ echo "=== Instalando dependencias ==="
 pip install -r requirements.txt
 
 echo ""
+echo "=== Criando tabelas extras (se necessario) ==="
+python -c "
+from app import create_app, db
+from app.models import AICreditConfig
+app = create_app()
+with app.app_context():
+    try:
+        AICreditConfig.__table__.create(db.engine, checkfirst=True)
+        AICreditConfig.seed_defaults()
+        print('AICreditConfig table OK')
+    except Exception as e:
+        print(f'AICreditConfig: {e}')
+"
+
+echo ""
 echo "=== Inicializando banco de dados e criando admin (se necessario) ==="
 
 # Configuracoes via env vars (opcionais)

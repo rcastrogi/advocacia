@@ -821,6 +821,125 @@ def api_generate_fundamentos():
         }), 500
 
 
+@ai_bp.route("/api/analyze-risk", methods=["POST"])
+@login_required
+@limiter.limit("10 per hour")
+def api_analyze_risk():
+    """API para analisar riscos e chances de êxito de uma petição"""
+    from app.services.ai_service import get_credit_cost
+    
+    credit_cost = get_credit_cost("analyze_risk")
+
+    # Verificar créditos
+    if not has_sufficient_credits(credit_cost):
+        return jsonify({
+            "success": False,
+            "error": "Créditos insuficientes",
+            "credits_needed": credit_cost,
+        }), 402
+
+    # Verificar configuração da API
+    if not ai_service.is_configured():
+        return jsonify({
+            "success": False,
+            "error": "API de IA não configurada",
+        }), 503
+
+    data = request.get_json()
+    if not data:
+        return jsonify({
+            "success": False,
+            "error": "Dados não fornecidos",
+        }), 400
+
+    # Extrair dados
+    petition_content = data.get("petition_content", "")
+    petition_type = data.get("petition_type", "")
+    fatos = data.get("fatos", "")
+    pedidos = data.get("pedidos", "")
+    fundamentacao = data.get("fundamentacao", "")
+
+    # Validar que há conteúdo para analisar
+    if not petition_content and not (fatos or pedidos or fundamentacao):
+        return jsonify({
+            "success": False,
+            "error": "Forneça o conteúdo da petição ou as seções individuais",
+        }), 400
+
+    try:
+        # Gerar análise
+        analysis_json, ai_metadata = ai_service.analyze_risk(
+            petition_content=petition_content,
+            petition_type=petition_type,
+            fatos=fatos,
+            pedidos=pedidos,
+            fundamentacao=fundamentacao,
+        )
+
+        # Debitar créditos
+        if not use_credits_if_needed(credit_cost):
+            return jsonify({
+                "success": False,
+                "error": "Erro ao debitar créditos",
+            }), 500
+
+        # Tentar parsear o JSON da resposta
+        import json
+        try:
+            # Limpar possíveis caracteres extras
+            analysis_json = analysis_json.strip()
+            if analysis_json.startswith("```json"):
+                analysis_json = analysis_json[7:]
+            if analysis_json.startswith("```"):
+                analysis_json = analysis_json[3:]
+            if analysis_json.endswith("```"):
+                analysis_json = analysis_json[:-3]
+            analysis_json = analysis_json.strip()
+            
+            analysis = json.loads(analysis_json)
+        except json.JSONDecodeError:
+            # Se não conseguir parsear, retornar como texto
+            analysis = {
+                "raw_analysis": analysis_json,
+                "parse_error": True
+            }
+
+        # Registrar transação
+        record_transaction(
+            user_id=current_user.id,
+            transaction_type="usage",
+            amount=-credit_cost,
+            description=f"Análise de riscos: {petition_type or 'Petição'}",
+        )
+
+        # Registrar geração
+        generation = record_ai_generation(
+            user_id=current_user.id,
+            generation_type="analyze_risk",
+            credits_used=credit_cost,
+            input_data={"petition_type": petition_type},
+            output_text=str(analysis)[:5000],
+            model_used=ai_metadata.get("model", "gpt-4o"),
+        )
+
+        return jsonify({
+            "success": True,
+            "analysis": analysis,
+            "ai_info": {
+                "model": ai_metadata.get("model"),
+                "tokens": ai_metadata.get("tokens_total"),
+            },
+            "credits_used": credit_cost,
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao analisar riscos: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao analisar petição: {str(e)}",
+        }), 500
+
+
 # =============================================================================
 # CHECKOUT MERCADO PAGO - CRÉDITOS IA
 # =============================================================================

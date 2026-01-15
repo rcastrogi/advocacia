@@ -84,6 +84,11 @@
                        title="Feedback Roadmap">
                         <i class="fas fa-people-arrows me-2"></i><span>Feedback Roadmap</span>
                     </a>
+                    <a href="{{ url_for('admin.ai_config') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'ai_config' in request.endpoint else '' }}"
+                       title="Config. IA">
+                        <i class="fas fa-robot text-info me-2"></i><span>Créditos IA</span>
+                    </a>
                     <a href="{{ url_for('admin.audit_logs') }}" 
                        class="list-group-item list-group-item-action {{ 'active' if 'audit_logs' in request.endpoint else '' }}"
                        title="Logs de Auditoria">

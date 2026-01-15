@@ -6578,3 +6578,107 @@ class PromoCoupon(db.Model):
     def __repr__(self):
         status = "USADO" if self.is_used else "DISPONÍVEL"
         return f"<PromoCoupon {self.code} [{status}]>"
+
+
+# =============================================================================
+# CONFIGURAÇÃO DE CUSTOS DE IA
+# =============================================================================
+
+
+class AICreditConfig(db.Model):
+    """Configuração de custos de créditos de IA - editável pelo admin"""
+
+    __tablename__ = "ai_credit_configs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    operation_key = db.Column(db.String(50), unique=True, nullable=False)  # Ex: 'section', 'improve', 'analyze_risk'
+    name = db.Column(db.String(100), nullable=False)  # Nome amigável
+    description = db.Column(db.Text)  # Descrição da operação
+    credit_cost = db.Column(db.Integer, nullable=False, default=1)  # Custo em créditos
+    is_premium = db.Column(db.Boolean, default=False)  # Se usa modelo premium (GPT-4o)
+    is_active = db.Column(db.Boolean, default=True)  # Se a operação está disponível
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Configurações padrão
+    DEFAULT_CONFIGS = [
+        {"operation_key": "section", "name": "Gerar Seção", "description": "Gera uma seção individual da petição (fatos, direito, pedidos)", "credit_cost": 1, "is_premium": False},
+        {"operation_key": "improve", "name": "Melhorar Texto", "description": "Melhora e revisa um trecho de texto selecionado", "credit_cost": 1, "is_premium": False},
+        {"operation_key": "summarize", "name": "Resumir Texto", "description": "Resume um texto longo em pontos principais", "credit_cost": 1, "is_premium": False},
+        {"operation_key": "full_petition", "name": "Petição Completa", "description": "Gera uma petição completa com todas as seções", "credit_cost": 5, "is_premium": True},
+        {"operation_key": "analyze", "name": "Análise Jurídica", "description": "Analisa juridicamente um caso ou situação", "credit_cost": 3, "is_premium": True},
+        {"operation_key": "fundamentos", "name": "Fundamentação Jurídica", "description": "Gera fundamentação jurídica com citações de leis", "credit_cost": 3, "is_premium": True},
+        {"operation_key": "analyze_document", "name": "Análise de Documento", "description": "Analisa documento PDF/DOCX e extrai informações", "credit_cost": 4, "is_premium": True},
+        {"operation_key": "analyze_risk", "name": "Análise de Riscos e Chances", "description": "Analisa riscos, pontos fortes/fracos e chances de êxito", "credit_cost": 3, "is_premium": True},
+    ]
+
+    @classmethod
+    def get_cost(cls, operation_key: str) -> int:
+        """Retorna o custo em créditos para uma operação"""
+        config = cls.query.filter_by(operation_key=operation_key, is_active=True).first()
+        if config:
+            return config.credit_cost
+        # Fallback para defaults
+        for default in cls.DEFAULT_CONFIGS:
+            if default["operation_key"] == operation_key:
+                return default["credit_cost"]
+        return 1  # Default mínimo
+
+    @classmethod
+    def is_premium_operation(cls, operation_key: str) -> bool:
+        """Verifica se a operação usa modelo premium"""
+        config = cls.query.filter_by(operation_key=operation_key, is_active=True).first()
+        if config:
+            return config.is_premium
+        # Fallback para defaults
+        for default in cls.DEFAULT_CONFIGS:
+            if default["operation_key"] == operation_key:
+                return default["is_premium"]
+        return False
+
+    @classmethod
+    def is_operation_active(cls, operation_key: str) -> bool:
+        """Verifica se a operação está ativa"""
+        config = cls.query.filter_by(operation_key=operation_key).first()
+        if config:
+            return config.is_active
+        return True  # Default: ativo
+
+    @classmethod
+    def get_all_configs(cls) -> dict:
+        """Retorna todas as configurações como dicionário"""
+        configs = cls.query.filter_by(is_active=True).order_by(cls.sort_order).all()
+        result = {}
+        for config in configs:
+            result[config.operation_key] = {
+                "name": config.name,
+                "description": config.description,
+                "credit_cost": config.credit_cost,
+                "is_premium": config.is_premium,
+            }
+        return result
+
+    @classmethod
+    def seed_defaults(cls):
+        """Popula a tabela com as configurações padrão se não existirem"""
+        for default in cls.DEFAULT_CONFIGS:
+            existing = cls.query.filter_by(operation_key=default["operation_key"]).first()
+            if not existing:
+                config = cls(
+                    operation_key=default["operation_key"],
+                    name=default["name"],
+                    description=default["description"],
+                    credit_cost=default["credit_cost"],
+                    is_premium=default["is_premium"],
+                    sort_order=cls.DEFAULT_CONFIGS.index(default),
+                )
+                db.session.add(config)
+        db.session.commit()
+
+    def __repr__(self):
+        return f"<AICreditConfig {self.operation_key}: {self.credit_cost} créditos>"

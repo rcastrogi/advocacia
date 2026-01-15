@@ -1,0 +1,340 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    {# Header #}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-robot text-primary me-2"></i>
+                Configuração de Créditos de IA
+            </h1>
+            <p class="text-muted mb-0">Gerencie os custos de créditos para cada operação de IA</p>
+        </div>
+        <div>
+            <form action="{{ url_for('admin.ai_config_reset') }}" method="POST" class="d-inline"
+                  onsubmit="return confirm('Tem certeza que deseja resetar todas as configurações para os valores padrão?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-warning">
+                    <i class="fas fa-undo me-1"></i>Resetar Padrões
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {# Estatísticas #}
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="display-6 text-primary mb-2">{{ total_generations }}</div>
+                    <div class="text-muted">Gerações Realizadas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="display-6 text-success mb-2">{{ total_credits_used }}</div>
+                    <div class="text-muted">Créditos Consumidos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="display-6 text-info mb-2">{{ configs|length }}</div>
+                    <div class="text-muted">Operações Configuradas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Tabela de Configurações #}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0">
+                <i class="fas fa-sliders-h me-2"></i>
+                Custos por Operação
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px;">Status</th>
+                            <th>Operação</th>
+                            <th>Descrição</th>
+                            <th style="width: 120px;" class="text-center">Créditos</th>
+                            <th style="width: 100px;" class="text-center">Modelo</th>
+                            <th style="width: 100px;" class="text-center">Uso</th>
+                            <th style="width: 100px;" class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for config in configs %}
+                        <tr id="config-row-{{ config.id }}" class="{% if not config.is_active %}table-secondary{% endif %}">
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-block">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="active-{{ config.id }}"
+                                           {% if config.is_active %}checked{% endif %}
+                                           onchange="toggleConfig({{ config.id }}, 'is_active', this.checked)">
+                                </div>
+                            </td>
+                            <td>
+                                <strong>{{ config.name }}</strong>
+                                <br>
+                                <code class="small text-muted">{{ config.operation_key }}</code>
+                            </td>
+                            <td>
+                                <span class="text-muted small">{{ config.description or '-' }}</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="input-group input-group-sm" style="max-width: 100px; margin: 0 auto;">
+                                    <input type="number" class="form-control text-center" 
+                                           id="cost-{{ config.id }}"
+                                           value="{{ config.credit_cost }}"
+                                           min="0" max="100"
+                                           onchange="updateCost({{ config.id }}, this.value)">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-coins text-warning"></i>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {% if config.is_premium %}bg-purple{% else %}bg-secondary{% endif %} cursor-pointer"
+                                      onclick="toggleConfig({{ config.id }}, 'is_premium', !{{ config.is_premium|lower }})"
+                                      title="Clique para alternar">
+                                    {% if config.is_premium %}
+                                        <i class="fas fa-star me-1"></i>GPT-4o
+                                    {% else %}
+                                        <i class="fas fa-bolt me-1"></i>GPT-4o-mini
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% set stats = usage_stats.get(config.operation_key, {'count': 0, 'credits': 0}) %}
+                                <span class="badge bg-light text-dark" title="{{ stats.credits }} créditos gastos">
+                                    {{ stats.count }}x
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="editConfig({{ config.id }})"
+                                        title="Editar detalhes">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# Legenda #}
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body">
+            <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Informações</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2">
+                            <span class="badge bg-purple me-2"><i class="fas fa-star"></i> GPT-4o</span>
+                            Modelo premium - melhor qualidade, mais lento e caro
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-secondary me-2"><i class="fas fa-bolt"></i> GPT-4o-mini</span>
+                            Modelo rápido - respostas rápidas, ideal para tarefas simples
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-coins text-warning me-2"></i>
+                            <strong>Créditos:</strong> Custo cobrado do usuário por cada uso
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-toggle-on text-success me-2"></i>
+                            <strong>Status:</strong> Desativar uma operação impede seu uso
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal de Edição #}
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Editar Configuração
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-config-id">
+                <div class="mb-3">
+                    <label class="form-label">Nome da Operação</label>
+                    <input type="text" class="form-control" id="edit-name" maxlength="100">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Descrição</label>
+                    <textarea class="form-control" id="edit-description" rows="3" maxlength="500"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <label class="form-label">Custo em Créditos</label>
+                        <input type="number" class="form-control" id="edit-cost" min="0" max="100">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Modelo</label>
+                        <select class="form-select" id="edit-premium">
+                            <option value="false">GPT-4o-mini (Rápido)</option>
+                            <option value="true">GPT-4o (Premium)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveConfig()">
+                    <i class="fas fa-save me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+.cursor-pointer {
+    cursor: pointer;
+}
+.cursor-pointer:hover {
+    opacity: 0.8;
+}
+</style>
+
+<script>
+const csrfToken = '{{ csrf_token() }}';
+
+function toggleConfig(configId, field, value) {
+    fetch(`/admin/ai-config/${configId}/update`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ [field]: value })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            // Atualizar UI se necessário
+            if (field === 'is_active') {
+                const row = document.getElementById(`config-row-${configId}`);
+                if (value) {
+                    row.classList.remove('table-secondary');
+                } else {
+                    row.classList.add('table-secondary');
+                }
+            }
+            if (field === 'is_premium') {
+                location.reload(); // Recarrega para atualizar badge
+            }
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(err => {
+        showToast('Erro ao atualizar configuração', 'error');
+        console.error(err);
+    });
+}
+
+function updateCost(configId, value) {
+    const cost = parseInt(value);
+    if (cost < 0 || cost > 100) {
+        showToast('Custo deve ser entre 0 e 100', 'warning');
+        return;
+    }
+    toggleConfig(configId, 'credit_cost', cost);
+}
+
+function editConfig(configId) {
+    // Buscar dados da linha
+    const row = document.getElementById(`config-row-${configId}`);
+    const name = row.querySelector('strong').textContent;
+    const description = row.querySelector('.text-muted.small').textContent;
+    const cost = document.getElementById(`cost-${configId}`).value;
+    const isPremium = row.querySelector('.badge').classList.contains('bg-purple');
+    
+    // Preencher modal
+    document.getElementById('edit-config-id').value = configId;
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-description').value = description !== '-' ? description : '';
+    document.getElementById('edit-cost').value = cost;
+    document.getElementById('edit-premium').value = isPremium ? 'true' : 'false';
+    
+    // Abrir modal
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+function saveConfig() {
+    const configId = document.getElementById('edit-config-id').value;
+    const data = {
+        name: document.getElementById('edit-name').value,
+        description: document.getElementById('edit-description').value,
+        credit_cost: parseInt(document.getElementById('edit-cost').value),
+        is_premium: document.getElementById('edit-premium').value === 'true'
+    };
+    
+    fetch(`/admin/ai-config/${configId}/update`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            location.reload();
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(err => {
+        showToast('Erro ao salvar configuração', 'error');
+        console.error(err);
+    });
+}
+
+function showToast(message, type) {
+    // Usa o sistema de toast global se existir
+    if (typeof window.showSuccessToast === 'function' && type === 'success') {
+        window.showSuccessToast(message);
+    } else if (typeof window.showErrorToast === 'function' && type === 'error') {
+        window.showErrorToast(message);
+    } else if (typeof window.showWarningToast === 'function' && type === 'warning') {
+        window.showWarningToast(message);
+    } else {
+        alert(message);
+    }
+}
+</script>
+{% endblock %}

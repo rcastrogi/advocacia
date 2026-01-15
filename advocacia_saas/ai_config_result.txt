@@ -1,0 +1,14 @@
+=== AI Credit Config - Verificacao ===
+
+Total de configuracoes: 8
+
+- section: 1 creditos (premium=False, ativo=True)
+- improve: 1 creditos (premium=False, ativo=True)
+- summarize: 1 creditos (premium=False, ativo=True)
+- full_petition: 5 creditos (premium=True, ativo=True)
+- analyze: 3 creditos (premium=True, ativo=True)
+- fundamentos: 3 creditos (premium=True, ativo=True)
+- analyze_document: 4 creditos (premium=True, ativo=True)
+- analyze_risk: 3 creditos (premium=True, ativo=True)
+
+=== SUCESSO! Tabela existe e tem dados. ===

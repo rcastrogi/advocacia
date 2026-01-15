@@ -9,7 +9,8 @@ from typing import Any, Dict, Tuple
 
 from openai import OpenAI
 
-# Configuração de custos por crédito para cada tipo de geração
+# Configuração de custos LEGADO (usado como fallback)
+# Os valores reais são lidos do banco via AICreditConfig
 CREDIT_COSTS = {
     "section": 1,  # Gerar uma seção individual
     "improve": 1,  # Melhorar texto existente
@@ -18,10 +19,30 @@ CREDIT_COSTS = {
     "analyze": 3,  # Análise jurídica (usa GPT-4o)
     "fundamentos": 3,  # Fundamentação jurídica (usa GPT-4o)
     "analyze_document": 4,  # Análise de documento PDF (usa GPT-4o)
+    "analyze_risk": 3,  # Análise de riscos e chances (usa GPT-4o)
 }
 
-# Operações que usam modelo premium (GPT-4o) por padrão
-PREMIUM_OPERATIONS = {"full_petition", "analyze", "fundamentos", "analyze_document"}
+# Operações que usam modelo premium (GPT-4o) por padrão (LEGADO)
+PREMIUM_OPERATIONS = {"full_petition", "analyze", "fundamentos", "analyze_document", "analyze_risk"}
+
+
+def get_credit_cost(operation_key: str) -> int:
+    """Obtém custo de créditos do banco ou fallback para constantes"""
+    try:
+        from app.models import AICreditConfig
+        return AICreditConfig.get_cost(operation_key)
+    except Exception:
+        return CREDIT_COSTS.get(operation_key, 1)
+
+
+def is_premium_operation(operation_key: str) -> bool:
+    """Verifica se operação usa modelo premium via banco ou fallback"""
+    try:
+        from app.models import AICreditConfig
+        return AICreditConfig.is_premium_operation(operation_key)
+    except Exception:
+        return operation_key in PREMIUM_OPERATIONS
+
 
 # Modelos disponíveis
 MODELS = {
@@ -136,6 +157,52 @@ INSTRUÇÕES:
 3. Use linguagem jurídica formal e técnica
 4. Estruture em parágrafos bem organizados
 5. Seja persuasivo mas tecnicamente correto""",
+    "analyze_risk": """Você é um advogado brasileiro sênior com vasta experiência em litígios.
+Sua tarefa é analisar uma petição e fornecer uma avaliação detalhada de riscos e chances de êxito.
+
+ESTRUTURA OBRIGATÓRIA DA ANÁLISE (use EXATAMENTE este formato JSON):
+{
+    "chance_exito": {
+        "percentual": 0-100,
+        "classificacao": "MUITO BAIXA" | "BAIXA" | "MÉDIA" | "MÉDIA-ALTA" | "ALTA" | "MUITO ALTA"
+    },
+    "pontos_fortes": [
+        "Ponto forte 1",
+        "Ponto forte 2"
+    ],
+    "riscos": [
+        {
+            "descricao": "Descrição do risco",
+            "gravidade": "BAIXA" | "MÉDIA" | "ALTA",
+            "mitigacao": "Como mitigar este risco"
+        }
+    ],
+    "recomendacoes": [
+        "Recomendação 1",
+        "Recomendação 2"
+    ],
+    "jurisprudencia_relevante": [
+        "Menção a jurisprudência favorável ou desfavorável"
+    ],
+    "observacoes": "Observações gerais sobre o caso"
+}
+
+CRITÉRIOS DE AVALIAÇÃO:
+1. Consistência entre fatos narrados e pedidos formulados
+2. Fundamentação jurídica adequada (leis, artigos, jurisprudência)
+3. Prescrição e decadência
+4. Legitimidade das partes
+5. Competência do juízo
+6. Documentação comprobatória mencionada
+7. Viabilidade dos pedidos
+8. Precedentes judiciais sobre o tema
+
+INSTRUÇÕES:
+1. Responda APENAS com o JSON, sem texto adicional
+2. Seja realista e objetivo na avaliação
+3. Considere a jurisprudência majoritária dos tribunais brasileiros
+4. Identifique TODOS os pontos fracos que podem ser explorados pela parte adversa
+5. Forneça recomendações práticas e específicas""",
 }
 
 
@@ -154,8 +221,8 @@ class AIService:
         return self.client is not None
 
     def get_credit_cost(self, generation_type: str) -> int:
-        """Retorna o custo em créditos para um tipo de geração"""
-        return CREDIT_COSTS.get(generation_type, 1)
+        """Retorna o custo em créditos para um tipo de geração (do banco)"""
+        return get_credit_cost(generation_type)
 
     def _call_openai(
         self,
@@ -570,7 +637,63 @@ INSTRUÇÕES IMPORTANTES:
         Returns:
             bool: True se deve usar GPT-4o
         """
-        return generation_type in PREMIUM_OPERATIONS
+        return is_premium_operation(generation_type)
+
+    def analyze_risk(
+        self,
+        petition_content: str,
+        petition_type: str = None,
+        fatos: str = None,
+        pedidos: str = None,
+        fundamentacao: str = None,
+    ) -> Tuple[str, Dict[str, Any]]:
+        """
+        Analisa riscos e chances de êxito de uma petição.
+
+        Args:
+            petition_content: Conteúdo completo da petição
+            petition_type: Tipo da petição (ex: "Ação de Cobrança")
+            fatos: Seção de fatos (se separada)
+            pedidos: Seção de pedidos (se separada)
+            fundamentacao: Seção de fundamentação (se separada)
+
+        Returns:
+            Tuple[str, Dict]: (JSON da análise, metadados)
+        """
+        system_prompt = SYSTEM_PROMPTS["analyze_risk"]
+
+        # Montar o prompt do usuário
+        user_prompt_parts = []
+
+        if petition_type:
+            user_prompt_parts.append(f"TIPO DE PETIÇÃO: {petition_type}")
+
+        if petition_content:
+            # Limitar tamanho para não exceder contexto
+            content = petition_content[:15000]
+            user_prompt_parts.append(f"PETIÇÃO COMPLETA:\n{content}")
+        else:
+            # Usar seções separadas
+            if fatos:
+                user_prompt_parts.append(f"DOS FATOS:\n{fatos[:5000]}")
+            if fundamentacao:
+                user_prompt_parts.append(f"DO DIREITO:\n{fundamentacao[:5000]}")
+            if pedidos:
+                user_prompt_parts.append(f"DOS PEDIDOS:\n{pedidos[:2000]}")
+
+        user_prompt_parts.append(
+            "\nAnalise esta petição e forneça a avaliação de riscos e chances de êxito no formato JSON especificado."
+        )
+
+        user_prompt = "\n\n".join(user_prompt_parts)
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        # Sempre usa modelo premium para análise de riscos
+        return self._call_openai(messages, model=MODELS["premium"], max_tokens=3000)
 
 
 # Instância global do serviço

@@ -31,6 +31,7 @@ from app import db, limiter
 from app.admin import bp
 from app.decorators import master_required, validate_with_schema
 from app.models import (
+    AICreditConfig,
     AIGeneration,
     AuditLog,
     BillingPlan,
@@ -6102,3 +6103,105 @@ def api_apply_coupon():
         )
     else:
         return jsonify({"success": False, "message": message}), 400
+
+
+# =============================================================================
+# CONFIGURAÇÃO DE CRÉDITOS DE IA
+# =============================================================================
+
+
+@bp.route("/ai-config")
+@login_required
+@master_required
+def ai_config():
+    """Tela de configuração de custos de créditos de IA"""
+    # Garantir que as configs padrão existam
+    AICreditConfig.seed_defaults()
+    
+    configs = AICreditConfig.query.order_by(AICreditConfig.sort_order).all()
+    
+    # Estatísticas de uso
+    total_generations = AIGeneration.query.count()
+    total_credits_used = db.session.query(func.sum(AIGeneration.credits_used)).scalar() or 0
+    
+    # Uso por operação
+    usage_by_type = db.session.query(
+        AIGeneration.generation_type,
+        func.count(AIGeneration.id).label('count'),
+        func.sum(AIGeneration.credits_used).label('credits')
+    ).group_by(AIGeneration.generation_type).all()
+    
+    usage_stats = {row.generation_type: {'count': row.count, 'credits': row.credits or 0} for row in usage_by_type}
+    
+    return render_template(
+        "admin/ai_config.html",
+        configs=configs,
+        total_generations=total_generations,
+        total_credits_used=int(total_credits_used),
+        usage_stats=usage_stats,
+    )
+
+
+@bp.route("/ai-config/<int:config_id>/update", methods=["POST"])
+@login_required
+@master_required
+def ai_config_update(config_id):
+    """Atualiza uma configuração de custo de IA"""
+    config = AICreditConfig.query.get_or_404(config_id)
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "Dados inválidos"}), 400
+    
+    # Atualizar campos
+    if "credit_cost" in data:
+        credit_cost = int(data["credit_cost"])
+        if credit_cost < 0 or credit_cost > 100:
+            return jsonify({"success": False, "message": "Custo deve ser entre 0 e 100"}), 400
+        config.credit_cost = credit_cost
+    
+    if "is_premium" in data:
+        config.is_premium = bool(data["is_premium"])
+    
+    if "is_active" in data:
+        config.is_active = bool(data["is_active"])
+    
+    if "name" in data:
+        config.name = str(data["name"])[:100]
+    
+    if "description" in data:
+        config.description = str(data["description"])[:500]
+    
+    db.session.commit()
+    
+    return jsonify({
+        "success": True,
+        "message": "Configuração atualizada!",
+        "config": {
+            "id": config.id,
+            "operation_key": config.operation_key,
+            "name": config.name,
+            "credit_cost": config.credit_cost,
+            "is_premium": config.is_premium,
+            "is_active": config.is_active,
+        }
+    })
+
+
+@bp.route("/ai-config/reset", methods=["POST"])
+@login_required
+@master_required
+def ai_config_reset():
+    """Reseta todas as configurações para os valores padrão"""
+    for default in AICreditConfig.DEFAULT_CONFIGS:
+        config = AICreditConfig.query.filter_by(operation_key=default["operation_key"]).first()
+        if config:
+            config.credit_cost = default["credit_cost"]
+            config.is_premium = default["is_premium"]
+            config.is_active = True
+            config.name = default["name"]
+            config.description = default["description"]
+    
+    db.session.commit()
+    flash("Configurações resetadas para os valores padrão!", "success")
+    return redirect(url_for("admin.ai_config"))
