@@ -88,6 +88,20 @@
         font-size: 0.7rem;
         padding: 2px 6px;
     }
+    
+    /* Cores explícitas para header dinâmico - garantir que funcionem com Alpine.js */
+    .section-header-primary { background-color: #0d6efd !important; color: white !important; }
+    .section-header-success { background-color: #198754 !important; color: white !important; }
+    .section-header-info { background-color: #0dcaf0 !important; color: #000 !important; }
+    .section-header-warning { background-color: #ffc107 !important; color: #000 !important; }
+    .section-header-danger { background-color: #dc3545 !important; color: white !important; }
+    .section-header-secondary { background-color: #6c757d !important; color: white !important; }
+    .section-header-dark { background-color: #212529 !important; color: white !important; }
+    
+    /* Card de info da seção */
+    .section-info-card {
+        transition: all 0.3s ease;
+    }
 </style>
 {% endblock %}
 
@@ -365,70 +379,78 @@
         </div>
     </div>
 
-    <div class="row">
-        <!-- Left Panel: Section Info + Field Types -->
-        <div class="col-md-3">
-            <div class="field-types-panel">
-                <!-- Section Info PRIMEIRO -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header" :class="'bg-' + section.color + ' text-white'">
-                        <h6 class="mb-0">
-                            <i :class="'fas ' + section.icon + ' me-2'"></i>
-                            <span x-text="section.name || 'Nova Seção'"></span>
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">Nome da Seção <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" x-model="section.name" placeholder="Ex: Dados do Autor">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Descrição</label>
-                            <textarea class="form-control" rows="2" x-model="section.description" placeholder="Descrição da seção..."></textarea>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <label class="form-label">Ícone</label>
-                                <select class="form-select form-select-sm" x-model="section.icon">
-                                    <option value="fa-file-alt">📄 Documento</option>
-                                    <option value="fa-user">👤 Usuário</option>
-                                    <option value="fa-users">👥 Pessoas</option>
-                                    <option value="fa-gavel">⚖️ Jurídico</option>
-                                    <option value="fa-balance-scale">⚖️ Balança</option>
-                                    <option value="fa-money-bill">💰 Dinheiro</option>
-                                    <option value="fa-calendar">📅 Data</option>
-                                    <option value="fa-map-marker">📍 Local</option>
-                                    <option value="fa-clipboard">📋 Clipboard</option>
-                                    <option value="fa-pen">✏️ Escrita</option>
-                                </select>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label">Cor</label>
-                                <select class="form-select form-select-sm" x-model="section.color">
-                                    <option value="primary">🔵 Azul</option>
-                                    <option value="success">🟢 Verde</option>
-                                    <option value="info">🔵 Ciano</option>
-                                    <option value="warning">🟡 Amarelo</option>
-                                    <option value="danger">🔴 Vermelho</option>
-                                    <option value="secondary">⚫ Cinza</option>
-                                    <option value="dark">⬛ Escuro</option>
-                                </select>
+    <!-- LINHA 1: Informações da Seção (largura total) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm section-info-card">
+                <div class="card-header" :class="'section-header-' + section.color">
+                    <h6 class="mb-0">
+                        <i :class="'fas ' + section.icon + ' me-2'"></i>
+                        <span x-text="section.name || 'Nova Seção'"></span>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Nome da Seção <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" x-model="section.name" placeholder="Ex: Dados do Autor">
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <label class="form-label">Ordem</label>
-                                <input type="number" class="form-control form-control-sm" x-model="section.order" min="0">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Descrição</label>
+                                <input type="text" class="form-control" x-model="section.description" placeholder="Descrição da seção...">
                             </div>
-                            <div class="col-6 d-flex align-items-end">
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="isActive" x-model="section.is_active">
-                                    <label class="form-check-label" for="isActive">Ativa</label>
-                                </div>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Ícone</label>
+                            <select class="form-select form-select-sm" x-model="section.icon">
+                                <option value="fa-file-alt">📄</option>
+                                <option value="fa-user">👤</option>
+                                <option value="fa-users">👥</option>
+                                <option value="fa-gavel">⚖️</option>
+                                <option value="fa-balance-scale">⚖️</option>
+                                <option value="fa-money-bill">💰</option>
+                                <option value="fa-calendar">📅</option>
+                                <option value="fa-map-marker">📍</option>
+                                <option value="fa-clipboard">📋</option>
+                                <option value="fa-pen">✏️</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Cor</label>
+                            <select class="form-select form-select-sm" x-model="section.color">
+                                <option value="primary">🔵</option>
+                                <option value="success">🟢</option>
+                                <option value="info">🩵</option>
+                                <option value="warning">🟡</option>
+                                <option value="danger">🔴</option>
+                                <option value="secondary">⚫</option>
+                                <option value="dark">⬛</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Ordem</label>
+                            <input type="number" class="form-control form-control-sm" x-model="section.order" min="0">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end pb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="isActive" x-model="section.is_active">
+                                <label class="form-check-label" for="isActive">Ativa</label>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LINHA 2: Tipos de Campo | Construtor | Preview -->
+    <div class="row">
+        <!-- Left Panel: Field Types -->
+        <div class="col-md-3">
+            <div class="field-types-panel">
 
                 <!-- Tipos de Campo -->
                 <div class="card shadow-sm">
@@ -715,7 +737,7 @@
                 </h6>
                 
                 <div class="card">
-                    <div class="card-header" :class="'bg-' + section.color + ' text-white'">
+                    <div class="card-header" :class="'section-header-' + section.color">
                         <i :class="'fas ' + section.icon + ' me-2'"></i>
                         <span x-text="section.name || 'Nome da Seção'"></span>
                     </div>
