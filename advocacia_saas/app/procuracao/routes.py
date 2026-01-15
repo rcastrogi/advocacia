@@ -64,7 +64,11 @@ def nova():
         )
 
     # GET - mostrar formulário
-    clients = Client.query.filter_by(lawyer_id=current_user.id).order_by(Client.full_name).all()
+    clients = (
+        Client.query.filter_by(lawyer_id=current_user.id)
+        .order_by(Client.full_name)
+        .all()
+    )
     return render_template("procuracao/nova.html", clients=clients)
 
 
@@ -114,7 +118,9 @@ def gerar_procuracao_pdf(client, advogado, tipo="ad_judicia", poderes_especiais=
     story = []
 
     # Título
-    titulo = "PROCURAÇÃO AD JUDICIA" if tipo == "ad_judicia" else "PROCURAÇÃO AD NEGOTIA"
+    titulo = (
+        "PROCURAÇÃO AD JUDICIA" if tipo == "ad_judicia" else "PROCURAÇÃO AD NEGOTIA"
+    )
     story.append(Paragraph(titulo, title_style))
     story.append(Spacer(1, 0.5 * cm))
 
@@ -140,7 +146,7 @@ def gerar_procuracao_pdf(client, advogado, tipo="ad_judicia", poderes_especiais=
         if advogado.city and advogado.uf:
             partes_endereco.append(f"{advogado.city}/{advogado.uf}")
         endereco_advogado = ", ".join(partes_endereco)
-    
+
     outorgado = f"""
     <b>OUTORGADO:</b> {advogado.full_name}, {advogado.nationality or "brasileiro(a)"}, 
     advogado(a), inscrito(a) na OAB/{advogado.oab_number or "OAB não informada"}, 
@@ -201,9 +207,7 @@ def gerar_procuracao_pdf(client, advogado, tipo="ad_judicia", poderes_especiais=
     _____________________________________________<br/>
     <b>{}</b><br/>
     CPF/CNPJ: {}
-    """.format(
-        client.full_name, client.cpf_cnpj
-    )
+    """.format(client.full_name, client.cpf_cnpj)
 
     story.append(
         Paragraph(
