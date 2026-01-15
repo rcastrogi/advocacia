@@ -60,9 +60,14 @@
                         <i class="fas fa-cogs me-2"></i><span>Modelos de Petição</span>
                     </a>
                     <a href="{{ url_for('admin.petition_sections_list') }}" 
-                       class="list-group-item list-group-item-action {{ 'active' if 'petition_sections' in request.endpoint else '' }}"
+                       class="list-group-item list-group-item-action {{ 'active' if 'petition_sections_list' in request.endpoint or 'petition_section_new' in request.endpoint or 'petition_section_edit' in request.endpoint else '' }}"
                        title="Seções de Petição">
                         <i class="fas fa-puzzle-piece me-2"></i><span>Seções de Petição</span>
+                    </a>
+                    <a href="{{ url_for('admin.petition_sections_editor') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if 'sections_editor' in request.endpoint else '' }}"
+                       title="Editor Visual (Beta)">
+                        <i class="fas fa-magic text-warning me-2"></i><span>Editor Visual <span class="badge bg-warning text-dark">BETA</span></span>
                     </a>
                     <a href="{{ url_for('admin.petition_template_examples_list') }}" 
                        class="list-group-item list-group-item-action {{ 'active' if 'template_example' in request.endpoint else '' }}"

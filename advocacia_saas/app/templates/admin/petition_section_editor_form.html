@@ -1,0 +1,664 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .field-types-panel {
+        position: sticky;
+        top: 80px;
+    }
+    
+    .field-type-item {
+        cursor: grab;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+    }
+    
+    .field-type-item:hover {
+        border-color: var(--bs-primary);
+        transform: translateY(-2px);
+    }
+    
+    .field-type-item:active {
+        cursor: grabbing;
+    }
+    
+    .fields-dropzone {
+        min-height: 300px;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .fields-dropzone.drag-over {
+        border-color: var(--bs-primary);
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .fields-dropzone.empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .field-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background: white;
+        cursor: move;
+        transition: all 0.2s ease;
+    }
+    
+    .field-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .field-card.dragging {
+        opacity: 0.5;
+        transform: rotate(2deg);
+    }
+    
+    .field-card .drag-handle {
+        cursor: grab;
+        color: #adb5bd;
+    }
+    
+    .field-card .drag-handle:hover {
+        color: var(--bs-primary);
+    }
+    
+    .field-config {
+        display: none;
+    }
+    
+    .field-card.expanded .field-config {
+        display: block;
+    }
+    
+    .preview-panel {
+        background: #f8f9fa;
+        border-radius: 8px;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+    
+    .type-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" x-data="sectionEditor()">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-1">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('admin.petition_sections_editor') }}">Editor Visual</a>
+                            </li>
+                            <li class="breadcrumb-item active">
+                                {% if section %}Editar: {{ section.name }}{% else %}Nova Seção{% endif %}
+                            </li>
+                        </ol>
+                    </nav>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-magic text-primary me-2"></i>
+                        {{ title }}
+                        <span class="badge bg-warning text-dark ms-2">BETA</span>
+                    </h1>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-success" @click="saveSection()" :disabled="saving">
+                        <i class="fas fa-save me-2" x-show="!saving"></i>
+                        <i class="fas fa-spinner fa-spin me-2" x-show="saving"></i>
+                        <span x-text="saving ? 'Salvando...' : 'Salvar Seção'"></span>
+                    </button>
+                    <a href="{{ url_for('admin.petition_sections_editor') }}" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Panel: Field Types -->
+        <div class="col-md-3">
+            <div class="field-types-panel">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-toolbox me-2"></i>
+                            Tipos de Campo
+                        </h6>
+                    </div>
+                    <div class="card-body p-2">
+                        <p class="small text-muted mb-2">Arraste para adicionar:</p>
+                        
+                        <template x-for="type in fieldTypes" :key="type.id">
+                            <div class="field-type-item card mb-2 p-2"
+                                 draggable="true"
+                                 @dragstart="startDragType($event, type)"
+                                 @dragend="endDrag()">
+                                <div class="d-flex align-items-center">
+                                    <i :class="'fas ' + type.icon + ' text-' + type.color + ' me-2'"></i>
+                                    <div>
+                                        <strong class="small" x-text="type.label"></strong>
+                                        <br>
+                                        <small class="text-muted" x-text="type.description"></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Section Info -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Informações da Seção
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Nome <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" x-model="section.name" placeholder="Ex: Dados do Autor">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descrição</label>
+                            <textarea class="form-control" rows="2" x-model="section.description" placeholder="Descrição da seção..."></textarea>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Ícone</label>
+                                <select class="form-select form-select-sm" x-model="section.icon">
+                                    <option value="fa-file-alt">📄 Documento</option>
+                                    <option value="fa-user">👤 Usuário</option>
+                                    <option value="fa-users">👥 Pessoas</option>
+                                    <option value="fa-gavel">⚖️ Jurídico</option>
+                                    <option value="fa-balance-scale">⚖️ Balança</option>
+                                    <option value="fa-money-bill">💰 Dinheiro</option>
+                                    <option value="fa-calendar">📅 Data</option>
+                                    <option value="fa-map-marker">📍 Local</option>
+                                    <option value="fa-clipboard">📋 Clipboard</option>
+                                    <option value="fa-pen">✏️ Escrita</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Cor</label>
+                                <select class="form-select form-select-sm" x-model="section.color">
+                                    <option value="primary">Azul</option>
+                                    <option value="success">Verde</option>
+                                    <option value="info">Ciano</option>
+                                    <option value="warning">Amarelo</option>
+                                    <option value="danger">Vermelho</option>
+                                    <option value="secondary">Cinza</option>
+                                    <option value="dark">Escuro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ordem</label>
+                            <input type="number" class="form-control form-control-sm" x-model="section.order" min="0">
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="isActive" x-model="section.is_active">
+                            <label class="form-check-label" for="isActive">Seção Ativa</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel: Fields Builder -->
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list-ul me-2"></i>
+                        Campos da Seção
+                        <span class="badge bg-primary ms-2" x-text="fields.length"></span>
+                    </h6>
+                    <button class="btn btn-sm btn-outline-primary" @click="addField('text')">
+                        <i class="fas fa-plus me-1"></i>Adicionar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="fields-dropzone p-3"
+                         :class="{ 'drag-over': dragOver, 'empty': fields.length === 0 }"
+                         @dragover.prevent="dragOver = true"
+                         @dragleave="dragOver = false"
+                         @drop.prevent="handleDrop($event)">
+                        
+                        <template x-if="fields.length === 0">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                <p>Arraste tipos de campo aqui<br>ou clique em "Adicionar"</p>
+                            </div>
+                        </template>
+                        
+                        <template x-for="(field, index) in fields" :key="field.id">
+                            <div class="field-card mb-3 p-3"
+                                 :class="{ 'expanded': field.expanded, 'dragging': field.dragging }"
+                                 draggable="true"
+                                 @dragstart="startDragField($event, index)"
+                                 @dragend="endDrag()"
+                                 @dragover.prevent="handleFieldDragOver($event, index)"
+                                 @drop.prevent="handleFieldDrop($event, index)">
+                                
+                                <!-- Field Header -->
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <span class="drag-handle me-2">
+                                            <i class="fas fa-grip-vertical"></i>
+                                        </span>
+                                        <i :class="'fas ' + getFieldTypeIcon(field.type) + ' text-' + getFieldTypeColor(field.type) + ' me-2'"></i>
+                                        <div>
+                                            <strong x-text="field.label || field.name || 'Novo Campo'"></strong>
+                                            <span class="type-badge badge bg-secondary ms-2" x-text="getFieldTypeName(field.type)"></span>
+                                        </div>
+                                    </div>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-secondary" @click="field.expanded = !field.expanded">
+                                            <i :class="field.expanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" @click="removeField(index)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Field Config (expandable) -->
+                                <div class="field-config mt-3 pt-3 border-top">
+                                    <div class="row">
+                                        <div class="col-6 mb-2">
+                                            <label class="form-label small">Nome do Campo</label>
+                                            <input type="text" class="form-control form-control-sm" 
+                                                   x-model="field.name" 
+                                                   placeholder="nome_campo"
+                                                   @input="field.name = field.name.toLowerCase().replace(/[^a-z0-9_]/g, '_')">
+                                        </div>
+                                        <div class="col-6 mb-2">
+                                            <label class="form-label small">Label (Rótulo)</label>
+                                            <input type="text" class="form-control form-control-sm" 
+                                                   x-model="field.label" 
+                                                   placeholder="Rótulo visível">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6 mb-2">
+                                            <label class="form-label small">Tipo</label>
+                                            <select class="form-select form-select-sm" x-model="field.type">
+                                                <template x-for="type in fieldTypes" :key="type.id">
+                                                    <option :value="type.id" x-text="type.label"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                        <div class="col-6 mb-2">
+                                            <label class="form-label small">Placeholder</label>
+                                            <input type="text" class="form-control form-control-sm" 
+                                                   x-model="field.placeholder" 
+                                                   placeholder="Texto de exemplo...">
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Texto de Ajuda</label>
+                                        <input type="text" class="form-control form-control-sm" 
+                                               x-model="field.help_text" 
+                                               placeholder="Instruções para o usuário...">
+                                    </div>
+                                    
+                                    <!-- Options for select/radio -->
+                                    <template x-if="field.type === 'select' || field.type === 'radio'">
+                                        <div class="mb-2">
+                                            <label class="form-label small">Opções (uma por linha)</label>
+                                            <textarea class="form-control form-control-sm" rows="3" 
+                                                      x-model="field.optionsText"
+                                                      @input="field.options = field.optionsText.split('\n').filter(o => o.trim())"
+                                                      placeholder="Opção 1&#10;Opção 2&#10;Opção 3"></textarea>
+                                        </div>
+                                    </template>
+                                    
+                                    <div class="form-check form-check-inline">
+                                        <input type="checkbox" class="form-check-input" 
+                                               :id="'req_' + field.id" 
+                                               x-model="field.required">
+                                        <label class="form-check-label small" :for="'req_' + field.id">Obrigatório</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Preview -->
+        <div class="col-md-4">
+            <div class="preview-panel p-4">
+                <h6 class="mb-3">
+                    <i class="fas fa-eye me-2"></i>
+                    Preview em Tempo Real
+                </h6>
+                
+                <div class="card">
+                    <div class="card-header" :class="'bg-' + section.color + ' text-white'">
+                        <i :class="'fas ' + section.icon + ' me-2'"></i>
+                        <span x-text="section.name || 'Nome da Seção'"></span>
+                    </div>
+                    <div class="card-body">
+                        <template x-if="fields.length === 0">
+                            <p class="text-muted text-center py-4">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Adicione campos para ver o preview
+                            </p>
+                        </template>
+                        
+                        <template x-for="field in fields" :key="field.id">
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <span x-text="field.label || field.name || 'Campo'"></span>
+                                    <span class="text-danger" x-show="field.required">*</span>
+                                </label>
+                                
+                                <!-- Text -->
+                                <template x-if="field.type === 'text'">
+                                    <input type="text" class="form-control" :placeholder="field.placeholder" disabled>
+                                </template>
+                                
+                                <!-- Textarea -->
+                                <template x-if="field.type === 'textarea'">
+                                    <textarea class="form-control" rows="3" :placeholder="field.placeholder" disabled></textarea>
+                                </template>
+                                
+                                <!-- Editor -->
+                                <template x-if="field.type === 'editor'">
+                                    <div class="border rounded p-3 bg-light">
+                                        <em class="text-muted small">Editor de texto rico</em>
+                                    </div>
+                                </template>
+                                
+                                <!-- Select -->
+                                <template x-if="field.type === 'select'">
+                                    <select class="form-select" disabled>
+                                        <option>Selecione...</option>
+                                        <template x-for="opt in field.options" :key="opt">
+                                            <option x-text="opt"></option>
+                                        </template>
+                                    </select>
+                                </template>
+                                
+                                <!-- Radio -->
+                                <template x-if="field.type === 'radio'">
+                                    <div>
+                                        <template x-for="(opt, i) in field.options" :key="i">
+                                            <div class="form-check">
+                                                <input type="radio" class="form-check-input" disabled>
+                                                <label class="form-check-label" x-text="opt"></label>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                
+                                <!-- Checkbox -->
+                                <template x-if="field.type === 'checkbox'">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" disabled>
+                                        <label class="form-check-label" x-text="field.label || field.name"></label>
+                                    </div>
+                                </template>
+                                
+                                <!-- Date -->
+                                <template x-if="field.type === 'date'">
+                                    <input type="date" class="form-control" disabled>
+                                </template>
+                                
+                                <!-- Number -->
+                                <template x-if="field.type === 'number'">
+                                    <input type="number" class="form-control" :placeholder="field.placeholder" disabled>
+                                </template>
+                                
+                                <!-- Currency -->
+                                <template x-if="field.type === 'currency'">
+                                    <div class="input-group">
+                                        <span class="input-group-text">R$</span>
+                                        <input type="text" class="form-control" placeholder="0,00" disabled>
+                                    </div>
+                                </template>
+                                
+                                <!-- Help text -->
+                                <template x-if="field.help_text">
+                                    <small class="text-muted" x-text="field.help_text"></small>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Este é um preview aproximado de como os campos aparecerão no formulário
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast for messages -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+        <div class="toast" :class="{ 'show': toast.show }" role="alert">
+            <div class="toast-header" :class="'bg-' + toast.type + ' text-white'">
+                <i :class="'fas ' + (toast.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle') + ' me-2'"></i>
+                <strong class="me-auto" x-text="toast.type === 'success' ? 'Sucesso' : 'Erro'"></strong>
+                <button type="button" class="btn-close btn-close-white" @click="toast.show = false"></button>
+            </div>
+            <div class="toast-body" x-text="toast.message"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sectionEditor() {
+    return {
+        // Section data
+        section: {
+            id: {{ section.id if section else 'null' }},
+            name: {{ section.name|tojson if section else '""' }},
+            description: {{ section.description|tojson if section and section.description else '""' }},
+            icon: {{ section.icon|tojson if section and section.icon else '"fa-file-alt"' }},
+            color: {{ section.color|tojson if section and section.color else '"primary"' }},
+            order: {{ section.order if section else 0 }},
+            is_active: {{ 'true' if section and section.is_active else 'true' }}
+        },
+        
+        // Fields
+        fields: {{ section.fields_schema|tojson if section and section.fields_schema else '[]' }}.map((f, i) => ({
+            ...f,
+            id: 'field_' + i,
+            expanded: false,
+            dragging: false,
+            optionsText: (f.options || []).join('\n')
+        })),
+        
+        // Field types available
+        fieldTypes: [
+            { id: 'text', label: 'Texto', icon: 'fa-font', color: 'primary', description: 'Campo de texto simples' },
+            { id: 'textarea', label: 'Área de Texto', icon: 'fa-align-left', color: 'info', description: 'Texto longo multi-linha' },
+            { id: 'editor', label: 'Editor Rico', icon: 'fa-edit', color: 'success', description: 'Editor com formatação' },
+            { id: 'select', label: 'Seleção', icon: 'fa-list', color: 'warning', description: 'Lista de opções' },
+            { id: 'radio', label: 'Múltipla Escolha', icon: 'fa-dot-circle', color: 'secondary', description: 'Escolha única' },
+            { id: 'checkbox', label: 'Caixa de Seleção', icon: 'fa-check-square', color: 'dark', description: 'Sim/Não' },
+            { id: 'date', label: 'Data', icon: 'fa-calendar', color: 'danger', description: 'Seletor de data' },
+            { id: 'number', label: 'Número', icon: 'fa-hashtag', color: 'primary', description: 'Valor numérico' },
+            { id: 'currency', label: 'Moeda', icon: 'fa-dollar-sign', color: 'success', description: 'Valor em reais' }
+        ],
+        
+        // UI state
+        dragOver: false,
+        draggedType: null,
+        draggedFieldIndex: null,
+        saving: false,
+        toast: { show: false, type: 'success', message: '' },
+        fieldCounter: {{ section.fields_schema|length if section and section.fields_schema else 0 }},
+        
+        // Methods
+        addField(type) {
+            this.fieldCounter++;
+            const typeInfo = this.fieldTypes.find(t => t.id === type) || this.fieldTypes[0];
+            this.fields.push({
+                id: 'field_' + this.fieldCounter,
+                name: '',
+                label: '',
+                type: type,
+                required: false,
+                placeholder: '',
+                help_text: '',
+                options: [],
+                optionsText: '',
+                default_value: '',
+                expanded: true,
+                dragging: false
+            });
+        },
+        
+        removeField(index) {
+            if (confirm('Remover este campo?')) {
+                this.fields.splice(index, 1);
+            }
+        },
+        
+        startDragType(event, type) {
+            this.draggedType = type;
+            event.dataTransfer.effectAllowed = 'copy';
+        },
+        
+        startDragField(event, index) {
+            this.draggedFieldIndex = index;
+            this.fields[index].dragging = true;
+            event.dataTransfer.effectAllowed = 'move';
+        },
+        
+        endDrag() {
+            this.draggedType = null;
+            if (this.draggedFieldIndex !== null) {
+                this.fields[this.draggedFieldIndex].dragging = false;
+            }
+            this.draggedFieldIndex = null;
+            this.dragOver = false;
+        },
+        
+        handleDrop(event) {
+            this.dragOver = false;
+            if (this.draggedType) {
+                this.addField(this.draggedType.id);
+            }
+            this.endDrag();
+        },
+        
+        handleFieldDragOver(event, targetIndex) {
+            if (this.draggedFieldIndex !== null && this.draggedFieldIndex !== targetIndex) {
+                event.preventDefault();
+            }
+        },
+        
+        handleFieldDrop(event, targetIndex) {
+            if (this.draggedFieldIndex !== null && this.draggedFieldIndex !== targetIndex) {
+                const field = this.fields.splice(this.draggedFieldIndex, 1)[0];
+                this.fields.splice(targetIndex, 0, field);
+            }
+            this.endDrag();
+        },
+        
+        getFieldTypeIcon(type) {
+            const t = this.fieldTypes.find(ft => ft.id === type);
+            return t ? t.icon : 'fa-question';
+        },
+        
+        getFieldTypeColor(type) {
+            const t = this.fieldTypes.find(ft => ft.id === type);
+            return t ? t.color : 'secondary';
+        },
+        
+        getFieldTypeName(type) {
+            const t = this.fieldTypes.find(ft => ft.id === type);
+            return t ? t.label : type;
+        },
+        
+        showToast(type, message) {
+            this.toast = { show: true, type, message };
+            setTimeout(() => this.toast.show = false, 4000);
+        },
+        
+        async saveSection() {
+            if (!this.section.name.trim()) {
+                this.showToast('danger', 'Nome da seção é obrigatório');
+                return;
+            }
+            
+            this.saving = true;
+            
+            try {
+                const payload = {
+                    id: this.section.id,
+                    name: this.section.name,
+                    description: this.section.description,
+                    icon: this.section.icon,
+                    color: this.section.color,
+                    order: this.section.order,
+                    is_active: this.section.is_active,
+                    fields: this.fields.map(f => ({
+                        name: f.name,
+                        label: f.label,
+                        type: f.type,
+                        required: f.required,
+                        placeholder: f.placeholder,
+                        help_text: f.help_text,
+                        options: f.options || [],
+                        default_value: f.default_value || ''
+                    }))
+                };
+                
+                const response = await fetch('{{ url_for("admin.petition_section_editor_save") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showToast('success', result.message);
+                    if (!this.section.id) {
+                        // New section created, redirect to edit
+                        setTimeout(() => {
+                            window.location.href = '{{ url_for("admin.petition_sections_editor") }}';
+                        }, 1500);
+                    }
+                } else {
+                    this.showToast('danger', result.error || 'Erro ao salvar');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                this.showToast('danger', 'Erro de conexão');
+            } finally {
+                this.saving = false;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

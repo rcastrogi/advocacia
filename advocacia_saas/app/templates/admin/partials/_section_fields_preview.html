@@ -1,0 +1,62 @@
+{# Partial template for field preview rendering #}
+{% for field in fields %}
+<div class="mb-3">
+    <label class="form-label">
+        {{ field.label or field.name or 'Campo' }}
+        {% if field.required %}<span class="text-danger">*</span>{% endif %}
+    </label>
+    
+    {% if field.type == 'text' %}
+    <input type="text" class="form-control" placeholder="{{ field.placeholder or '' }}" disabled>
+    
+    {% elif field.type == 'textarea' %}
+    <textarea class="form-control" rows="3" placeholder="{{ field.placeholder or '' }}" disabled></textarea>
+    
+    {% elif field.type == 'editor' %}
+    <div class="border rounded p-3 bg-light">
+        <em class="text-muted">Editor de texto rico (Quill)</em>
+    </div>
+    
+    {% elif field.type == 'select' %}
+    <select class="form-select" disabled>
+        <option>Selecione...</option>
+        {% for opt in field.options or [] %}
+        <option>{{ opt }}</option>
+        {% endfor %}
+    </select>
+    
+    {% elif field.type == 'radio' %}
+    {% for opt in field.options or [] %}
+    <div class="form-check">
+        <input type="radio" class="form-check-input" disabled>
+        <label class="form-check-label">{{ opt }}</label>
+    </div>
+    {% endfor %}
+    
+    {% elif field.type == 'checkbox' %}
+    <div class="form-check">
+        <input type="checkbox" class="form-check-input" disabled>
+        <label class="form-check-label">{{ field.label or field.name }}</label>
+    </div>
+    
+    {% elif field.type == 'date' %}
+    <input type="date" class="form-control" disabled>
+    
+    {% elif field.type == 'number' %}
+    <input type="number" class="form-control" placeholder="{{ field.placeholder or '' }}" disabled>
+    
+    {% elif field.type == 'currency' %}
+    <div class="input-group">
+        <span class="input-group-text">R$</span>
+        <input type="text" class="form-control" placeholder="0,00" disabled>
+    </div>
+    
+    {% else %}
+    <input type="text" class="form-control" placeholder="{{ field.placeholder or '' }}" disabled>
+    {% endif %}
+    
+    {% if field.help_text %}
+    <small class="text-muted">{{ field.help_text }}</small>
+    {% endif %}
+</div>
+{% endfor %}

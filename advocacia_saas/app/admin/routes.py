@@ -2427,6 +2427,190 @@ def petition_section_delete(section_id):
         return redirect(url_for("admin.petition_sections_list"))
 
 
+# =============================================================================
+# EDITOR VISUAL DE SEÇÕES (BETA) - Formulário experimental com drag-and-drop
+# =============================================================================
+
+
+@bp.route("/petitions/sections-editor")
+@login_required
+@master_required
+def petition_sections_editor():
+    """
+    Editor visual de seções (BETA).
+    Interface drag-and-drop para criar/editar campos de seções.
+    """
+    _require_admin()
+
+    sections = PetitionSection.query.order_by(PetitionSection.order).all()
+
+    return render_template(
+        "admin/petition_sections_editor.html",
+        title="Editor Visual de Seções (Beta)",
+        sections=sections,
+    )
+
+
+@bp.route("/petitions/sections-editor/<int:section_id>")
+@login_required
+@master_required
+def petition_section_editor_edit(section_id):
+    """
+    Editor visual para uma seção específica (BETA).
+    """
+    _require_admin()
+
+    section = PetitionSection.query.get_or_404(section_id)
+
+    return render_template(
+        "admin/petition_section_editor_form.html",
+        title=f"Editor Visual: {section.name}",
+        section=section,
+    )
+
+
+@bp.route("/petitions/sections-editor/new")
+@login_required
+@master_required
+def petition_section_editor_new():
+    """
+    Criar nova seção com editor visual (BETA).
+    """
+    _require_admin()
+
+    return render_template(
+        "admin/petition_section_editor_form.html",
+        title="Nova Seção (Editor Visual)",
+        section=None,
+    )
+
+
+@bp.route("/petitions/sections-editor/save", methods=["POST"])
+@login_required
+@master_required
+@limiter.limit(ADMIN_API_LIMIT)
+def petition_section_editor_save():
+    """
+    Salva seção criada/editada pelo editor visual (BETA).
+    Recebe JSON com dados da seção e campos.
+    """
+    _require_admin()
+
+    try:
+        data = request.get_json()
+
+        section_id = data.get("id")
+        name = data.get("name", "").strip()
+        description = data.get("description", "").strip()
+        icon = data.get("icon", "fa-file-alt")
+        color = data.get("color", "primary")
+        order = int(data.get("order", 0))
+        is_active = data.get("is_active", True)
+        fields = data.get("fields", [])
+
+        if not name:
+            return jsonify({"success": False, "error": "Nome é obrigatório"}), 400
+
+        # Validar campos
+        validated_fields = []
+        for idx, field in enumerate(fields):
+            field_name = field.get("name", "").strip()
+            if not field_name:
+                field_name = f"campo_{idx + 1}"
+
+            validated_fields.append({
+                "name": field_name,
+                "label": field.get("label", field_name.replace("_", " ").title()),
+                "type": field.get("type", "text"),
+                "required": field.get("required", False),
+                "placeholder": field.get("placeholder", ""),
+                "help_text": field.get("help_text", ""),
+                "options": field.get("options", []),  # Para select/radio
+                "default_value": field.get("default_value", ""),
+                "validation": field.get("validation", {}),
+            })
+
+        if section_id:
+            # Editar seção existente
+            section = PetitionSection.query.get_or_404(section_id)
+            section.name = name
+            section.description = description
+            section.icon = icon
+            section.color = color
+            section.order = order
+            section.is_active = is_active
+            section.fields_schema = validated_fields
+
+            db.session.commit()
+
+            current_app.logger.info(
+                f"✅ [EDITOR] Seção atualizada via editor visual - ID: {section.id}"
+            )
+
+            return jsonify({
+                "success": True,
+                "message": "Seção atualizada com sucesso!",
+                "section_id": section.id,
+            })
+        else:
+            # Criar nova seção
+            slug = generate_unique_slug(name, PetitionSection)
+
+            section = PetitionSection(
+                name=name,
+                slug=slug,
+                description=description,
+                icon=icon,
+                color=color,
+                order=order,
+                is_active=is_active,
+                fields_schema=validated_fields,
+            )
+
+            db.session.add(section)
+            db.session.commit()
+
+            current_app.logger.info(
+                f"✅ [EDITOR] Seção criada via editor visual - ID: {section.id}"
+            )
+
+            return jsonify({
+                "success": True,
+                "message": "Seção criada com sucesso!",
+                "section_id": section.id,
+            })
+
+    except Exception as e:
+        current_app.logger.error(f"❌ [EDITOR] Erro ao salvar seção: {str(e)}")
+        db.session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@bp.route("/petitions/sections-editor/<int:section_id>/preview", methods=["POST"])
+@login_required
+@master_required
+def petition_section_editor_preview(section_id):
+    """
+    Gera preview HTML dos campos de uma seção (BETA).
+    """
+    _require_admin()
+
+    try:
+        data = request.get_json()
+        fields = data.get("fields", [])
+
+        # Renderizar preview dos campos
+        preview_html = render_template(
+            "admin/partials/_section_fields_preview.html",
+            fields=fields,
+        )
+
+        return jsonify({"success": True, "html": preview_html})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @bp.route("/petitions/types/<int:type_id>/sections", methods=["GET", "POST"])
 @login_required
 def petition_type_sections(type_id):
