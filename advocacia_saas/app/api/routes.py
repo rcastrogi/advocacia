@@ -1,11 +1,11 @@
 import requests
+from config import Config
 from flask import jsonify, request
 from flask_login import current_user, login_required
 
 from app import limiter
 from app.api import bp
 from app.models import Cidade, Client, Estado, User
-from config import Config
 
 
 def api_login_required(f):
@@ -41,7 +41,9 @@ def get_cidades_by_estado(sigla):
         if not estado:
             return jsonify({"error": "Estado não encontrado"}), 404
 
-        cidades = Cidade.query.filter_by(estado_id=estado.id).order_by(Cidade.nome).all()
+        cidades = (
+            Cidade.query.filter_by(estado_id=estado.id).order_by(Cidade.nome).all()
+        )
         return jsonify([cidade.to_dict() for cidade in cidades])
     except Exception:
         return jsonify({"error": "Erro ao buscar cidades"}), 500
@@ -52,8 +54,9 @@ def get_cidades_by_estado(sigla):
 def get_cep_info(cep):
     """Get address information from CEP using ViaCEP API"""
     import logging
+
     logger = logging.getLogger(__name__)
-    
+
     try:
         # Remove any non-numeric characters
         clean_cep = "".join(filter(str.isdigit, cep))
@@ -67,7 +70,7 @@ def get_cep_info(cep):
         # Call ViaCEP API
         url = Config.CEP_API_URL.format(clean_cep)
         logger.info(f"Buscando CEP: {url}")
-        
+
         response = requests.get(url, timeout=10, verify=True)
         logger.info(f"CEP response status: {response.status_code}")
 
@@ -89,7 +92,9 @@ def get_cep_info(cep):
                 }
             )
         else:
-            logger.error(f"CEP API retornou status {response.status_code}: {response.text[:200]}")
+            logger.error(
+                f"CEP API retornou status {response.status_code}: {response.text[:200]}"
+            )
             return jsonify({"error": "Erro ao consultar CEP"}), 500
 
     except requests.exceptions.Timeout:
@@ -304,7 +309,9 @@ def get_flash_messages():
                         else (
                             "warning"
                             if category == "warning"
-                            else "info" if category == "info" else "success"
+                            else "info"
+                            if category == "info"
+                            else "success"
                         )
                     ),
                     "message": message,
