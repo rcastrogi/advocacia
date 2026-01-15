@@ -145,7 +145,7 @@
                                 <i class="fas fa-eye"></i>
                             </a>
                             <a href="{{ url_for('documents.download', doc_id=doc.id) }}" 
-                               class="btn btn-sm btn-outline-success" title="Download">
+                               class="btn btn-sm btn-outline-success" title="Download" data-download="true">
                                 <i class="fas fa-download"></i>
                             </a>
                             <a href="{{ url_for('documents.edit', doc_id=doc.id) }}" 

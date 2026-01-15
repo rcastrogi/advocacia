@@ -44,7 +44,7 @@
                         <button class="btn btn-primary" onclick="downloadCodes()">
                             <i class="fas fa-download"></i> Baixar Códigos (TXT)
                         </button>
-                        <a href="{{ url_for('auth.download_backup_codes') }}" class="btn btn-info">
+                        <a href="{{ url_for('auth.download_backup_codes') }}" class="btn btn-info" data-download="true">
                             <i class="fas fa-file-pdf"></i> Baixar em PDF
                         </a>
                         <button class="btn btn-secondary" onclick="printCodes()">

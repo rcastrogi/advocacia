@@ -39,7 +39,7 @@
         <div class="col-md-4 text-end">
             <div class="btn-group" role="group">
                 <a href="{{ url_for('documents.download', doc_id=document.id) }}" 
-                   class="btn btn-success">
+                   class="btn btn-success" data-download="true">
                     <i class="fas fa-download me-1"></i>
                     Download
                 </a>
@@ -161,7 +161,7 @@
                                 </div>
                                 <div>
                                     <a href="{{ url_for('documents.download', doc_id=version.id) }}" 
-                                       class="btn btn-sm btn-outline-success">
+                                       class="btn btn-sm btn-outline-success" data-download="true">
                                         <i class="fas fa-download"></i>
                                     </a>
                                     <a href="{{ url_for('documents.view', doc_id=version.id) }}" 

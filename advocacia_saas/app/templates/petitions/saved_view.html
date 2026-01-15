@@ -326,7 +326,7 @@
                             <small class="text-muted">{{ attachment.get_file_size_display() }}</small>
                         </div>
                         <a href="{{ url_for('petitions.download_attachment', attachment_id=attachment.id) }}" 
-                           class="btn btn-sm btn-outline-primary" title="Download">
+                           class="btn btn-sm btn-outline-primary" title="Download" data-download="true">
                             <i class="fas fa-download"></i>
                         </a>
                     </div>

@@ -124,7 +124,7 @@
                                     <div class="message-file">
                                         <i class="fas fa-paperclip me-2"></i>
                                         <a href="{{ url_for('chat.download_file', message_id=message.id) }}" 
-                                           class="{% if message.sender_id == current_user.id %}text-white{% endif %}">
+                                           class="{% if message.sender_id == current_user.id %}text-white{% endif %}" data-download="true">
                                             {{ message.attachment_filename }}
                                         </a>
                                         <small class="d-block mt-1">

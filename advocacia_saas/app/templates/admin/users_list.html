@@ -7,7 +7,7 @@
 {% set page_icon = 'users' %}
 {% set page_description = total_users ~ ' usuários cadastrados | ' ~ active_users ~ ' ativos | ' ~ paying_users ~ ' pagantes' %}
 {% set extra_actions %}
-<a href="{{ url_for('admin.export_users') }}" class="btn btn-outline-success" target="_blank">
+<a href="{{ url_for('admin.export_users') }}" class="btn btn-outline-success" target="_blank" data-download="true">
     <i class="fas fa-download me-1"></i>Exportar JSON
 </a>
 {% endset %}

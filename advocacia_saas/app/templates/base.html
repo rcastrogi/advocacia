@@ -1284,10 +1284,12 @@
                 showLoader();
             });
             
-            // Mostra o loader quando clicar em links internos (exceto dropdowns, modals, etc)
+            // Mostra o loader quando clicar em links internos (exceto dropdowns, modals, downloads, etc)
             document.addEventListener('click', function(e) {
                 var link = e.target.closest('a');
-                if (link && link.href && !link.target && !link.hasAttribute('download') && 
+                if (link && link.href && !link.target && 
+                    !link.hasAttribute('download') && 
+                    !link.hasAttribute('data-download') &&
                     !link.href.startsWith('javascript:') && !link.getAttribute('href').startsWith('#') &&
                     link.href.indexOf(window.location.host) !== -1 &&
                     !link.hasAttribute('hx-get') && !link.hasAttribute('hx-post') &&
@@ -1301,7 +1303,13 @@
             // Mostra o loader quando submeter formulários
             document.addEventListener('submit', function(e) {
                 var form = e.target;
-                if (form && !form.hasAttribute('hx-post') && !form.hasAttribute('hx-get')) {
+                // Não mostra loader para:
+                // - formulários HTMX
+                // - formulários de download (data-download="true")
+                if (form && 
+                    !form.hasAttribute('hx-post') && 
+                    !form.hasAttribute('hx-get') &&
+                    !form.hasAttribute('data-download')) {
                     showLoader();
                 }
             });
