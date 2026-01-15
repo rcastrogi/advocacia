@@ -23,13 +23,20 @@ CREDIT_COSTS = {
 }
 
 # Operações que usam modelo premium (GPT-4o) por padrão (LEGADO)
-PREMIUM_OPERATIONS = {"full_petition", "analyze", "fundamentos", "analyze_document", "analyze_risk"}
+PREMIUM_OPERATIONS = {
+    "full_petition",
+    "analyze",
+    "fundamentos",
+    "analyze_document",
+    "analyze_risk",
+}
 
 
 def get_credit_cost(operation_key: str) -> int:
     """Obtém custo de créditos do banco ou fallback para constantes"""
     try:
         from app.models import AICreditConfig
+
         return AICreditConfig.get_cost(operation_key)
     except Exception:
         return CREDIT_COSTS.get(operation_key, 1)
@@ -39,6 +46,7 @@ def is_premium_operation(operation_key: str) -> bool:
     """Verifica se operação usa modelo premium via banco ou fallback"""
     try:
         from app.models import AICreditConfig
+
         return AICreditConfig.is_premium_operation(operation_key)
     except Exception:
         return operation_key in PREMIUM_OPERATIONS
@@ -238,7 +246,9 @@ class AIService:
             Tuple[str, Dict]: (conteúdo gerado, metadados com tokens e tempo)
         """
         if not self.client:
-            raise Exception("API OpenAI não configurada. Configure OPENAI_API_KEY no .env")
+            raise Exception(
+                "API OpenAI não configurada. Configure OPENAI_API_KEY no .env"
+            )
 
         start_time = time.time()
 
@@ -288,7 +298,9 @@ class AIService:
         system_prompt = SYSTEM_PROMPTS.get(system_prompt_key, SYSTEM_PROMPTS["default"])
 
         # Monta o prompt do usuário com o contexto
-        user_prompt = self._build_section_prompt(section_type, context, existing_content)
+        user_prompt = self._build_section_prompt(
+            section_type, context, existing_content
+        )
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -344,7 +356,9 @@ class AIService:
 
         # Conteúdo existente para referência
         if existing_content:
-            prompt_parts.append(f"CONTEÚDO ATUAL (para referência): {existing_content[:500]}...")
+            prompt_parts.append(
+                f"CONTEÚDO ATUAL (para referência): {existing_content[:500]}..."
+            )
 
         # Instrução final
         prompt_parts.append(
@@ -383,7 +397,9 @@ class AIService:
 
         return self._call_openai(messages, model=model, max_tokens=4000)
 
-    def _build_full_petition_prompt(self, petition_type: str, context: Dict[str, Any]) -> str:
+    def _build_full_petition_prompt(
+        self, petition_type: str, context: Dict[str, Any]
+    ) -> str:
         """Constrói o prompt para petição completa"""
 
         prompt_parts = [f"TIPO DE PETIÇÃO: {petition_type}"]
@@ -435,7 +451,9 @@ DADOS DO RÉU:
         if context.get("instrucoes"):
             prompt_parts.append(f"INSTRUÇÕES ADICIONAIS:\n{context['instrucoes']}")
 
-        prompt_parts.append("\nRedija a petição completa com todos os elementos obrigatórios.")
+        prompt_parts.append(
+            "\nRedija a petição completa com todos os elementos obrigatórios."
+        )
 
         return "\n\n".join(prompt_parts)
 
@@ -606,9 +624,7 @@ INSTRUÇÕES IMPORTANTES:
         if document_analysis:
             user_prompt_parts.append(f"ANÁLISE DO DOCUMENTO:\n{document_analysis}")
         else:
-            user_prompt_parts.append(
-                f"CONTEÚDO DO DOCUMENTO:\n{document_text[:12000]}"
-            )
+            user_prompt_parts.append(f"CONTEÚDO DO DOCUMENTO:\n{document_text[:12000]}")
 
         if additional_context:
             user_prompt_parts.append(f"CONTEXTO ADICIONAL:\n{additional_context}")

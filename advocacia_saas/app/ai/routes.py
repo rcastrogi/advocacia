@@ -302,8 +302,13 @@ def api_generate_section():
 
     # Seções de fundamentação são complexas - usam mais créditos e GPT-4o
     fundamentos_sections = {
-        "direito", "fundamentos", "fundamentacao", "fundamentacao-juridica",
-        "fundamentos-juridicos", "do-direito", "dos-fundamentos"
+        "direito",
+        "fundamentos",
+        "fundamentacao",
+        "fundamentacao-juridica",
+        "fundamentos-juridicos",
+        "do-direito",
+        "dos-fundamentos",
     }
     is_fundamentos = section_type.lower().replace("_", "-") in fundamentos_sections
 
@@ -676,11 +681,13 @@ def api_analyze_document():
 
     # Verificar créditos
     if not has_sufficient_credits(credit_cost):
-        return jsonify({
-            "success": False,
-            "error": "Créditos insuficientes",
-            "credits_required": credit_cost,
-        }), 402
+        return jsonify(
+            {
+                "success": False,
+                "error": "Créditos insuficientes",
+                "credits_required": credit_cost,
+            }
+        ), 402
 
     # Verificar arquivo
     if "document" not in request.files:
@@ -697,10 +704,12 @@ def api_analyze_document():
         document_text, doc_metadata = extract_document_text(file)
 
         if not document_text or len(document_text.strip()) < 50:
-            return jsonify({
-                "success": False,
-                "error": "Não foi possível extrair texto suficiente do documento",
-            }), 400
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Não foi possível extrair texto suficiente do documento",
+                }
+            ), 400
 
         # Analisar com IA
         analysis, ai_metadata = ai_service.analyze_document(
@@ -729,23 +738,27 @@ def api_analyze_document():
         db.session.add(generation)
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "analysis": analysis,
-            "document_info": doc_metadata,
-            "ai_info": {
-                "model": ai_metadata.get("model"),
-                "tokens": ai_metadata.get("tokens_total"),
-            },
-            "credits_used": credit_cost,
-        })
+        return jsonify(
+            {
+                "success": True,
+                "analysis": analysis,
+                "document_info": doc_metadata,
+                "ai_info": {
+                    "model": ai_metadata.get("model"),
+                    "tokens": ai_metadata.get("tokens_total"),
+                },
+                "credits_used": credit_cost,
+            }
+        )
 
     except Exception as e:
         current_app.logger.error(f"Erro ao analisar documento: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": f"Erro ao processar documento: {str(e)}",
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Erro ao processar documento: {str(e)}",
+            }
+        ), 500
 
 
 @ai_bp.route("/api/generate-fundamentos", methods=["POST"])
@@ -757,25 +770,31 @@ def api_generate_fundamentos():
 
     # Verificar créditos
     if not has_sufficient_credits(credit_cost):
-        return jsonify({
-            "success": False,
-            "error": "Créditos insuficientes",
-            "credits_required": credit_cost,
-        }), 402
+        return jsonify(
+            {
+                "success": False,
+                "error": "Créditos insuficientes",
+                "credits_required": credit_cost,
+            }
+        ), 402
 
     data = request.get_json() or {}
 
     # Pegar documento da sessão ou do request
     document_text = data.get("document_text") or session.get("last_document_text")
-    document_analysis = data.get("document_analysis") or session.get("last_document_analysis")
+    document_analysis = data.get("document_analysis") or session.get(
+        "last_document_analysis"
+    )
     petition_type = data.get("petition_type")
     additional_context = data.get("additional_context")
 
     if not document_text and not document_analysis:
-        return jsonify({
-            "success": False,
-            "error": "Nenhum documento carregado. Faça upload e análise primeiro.",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Nenhum documento carregado. Faça upload e análise primeiro.",
+            }
+        ), 400
 
     try:
         # Gerar fundamentação
@@ -803,22 +822,26 @@ def api_generate_fundamentos():
         db.session.add(generation)
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "fundamentos": fundamentos,
-            "ai_info": {
-                "model": ai_metadata.get("model"),
-                "tokens": ai_metadata.get("tokens_total"),
-            },
-            "credits_used": credit_cost,
-        })
+        return jsonify(
+            {
+                "success": True,
+                "fundamentos": fundamentos,
+                "ai_info": {
+                    "model": ai_metadata.get("model"),
+                    "tokens": ai_metadata.get("tokens_total"),
+                },
+                "credits_used": credit_cost,
+            }
+        )
 
     except Exception as e:
         current_app.logger.error(f"Erro ao gerar fundamentação: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": f"Erro ao gerar fundamentação: {str(e)}",
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Erro ao gerar fundamentação: {str(e)}",
+            }
+        ), 500
 
 
 @ai_bp.route("/api/analyze-risk", methods=["POST"])
@@ -827,30 +850,36 @@ def api_generate_fundamentos():
 def api_analyze_risk():
     """API para analisar riscos e chances de êxito de uma petição"""
     from app.services.ai_service import get_credit_cost
-    
+
     credit_cost = get_credit_cost("analyze_risk")
 
     # Verificar créditos
     if not has_sufficient_credits(credit_cost):
-        return jsonify({
-            "success": False,
-            "error": "Créditos insuficientes",
-            "credits_needed": credit_cost,
-        }), 402
+        return jsonify(
+            {
+                "success": False,
+                "error": "Créditos insuficientes",
+                "credits_needed": credit_cost,
+            }
+        ), 402
 
     # Verificar configuração da API
     if not ai_service.is_configured():
-        return jsonify({
-            "success": False,
-            "error": "API de IA não configurada",
-        }), 503
+        return jsonify(
+            {
+                "success": False,
+                "error": "API de IA não configurada",
+            }
+        ), 503
 
     data = request.get_json()
     if not data:
-        return jsonify({
-            "success": False,
-            "error": "Dados não fornecidos",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Dados não fornecidos",
+            }
+        ), 400
 
     # Extrair dados
     petition_content = data.get("petition_content", "")
@@ -861,10 +890,12 @@ def api_analyze_risk():
 
     # Validar que há conteúdo para analisar
     if not petition_content and not (fatos or pedidos or fundamentacao):
-        return jsonify({
-            "success": False,
-            "error": "Forneça o conteúdo da petição ou as seções individuais",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Forneça o conteúdo da petição ou as seções individuais",
+            }
+        ), 400
 
     try:
         # Gerar análise
@@ -878,13 +909,16 @@ def api_analyze_risk():
 
         # Debitar créditos
         if not use_credits_if_needed(credit_cost):
-            return jsonify({
-                "success": False,
-                "error": "Erro ao debitar créditos",
-            }), 500
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Erro ao debitar créditos",
+                }
+            ), 500
 
         # Tentar parsear o JSON da resposta
         import json
+
         try:
             # Limpar possíveis caracteres extras
             analysis_json = analysis_json.strip()
@@ -895,14 +929,11 @@ def api_analyze_risk():
             if analysis_json.endswith("```"):
                 analysis_json = analysis_json[:-3]
             analysis_json = analysis_json.strip()
-            
+
             analysis = json.loads(analysis_json)
         except json.JSONDecodeError:
             # Se não conseguir parsear, retornar como texto
-            analysis = {
-                "raw_analysis": analysis_json,
-                "parse_error": True
-            }
+            analysis = {"raw_analysis": analysis_json, "parse_error": True}
 
         # Registrar transação
         record_transaction(
@@ -922,22 +953,26 @@ def api_analyze_risk():
             model_used=ai_metadata.get("model", "gpt-4o"),
         )
 
-        return jsonify({
-            "success": True,
-            "analysis": analysis,
-            "ai_info": {
-                "model": ai_metadata.get("model"),
-                "tokens": ai_metadata.get("tokens_total"),
-            },
-            "credits_used": credit_cost,
-        })
+        return jsonify(
+            {
+                "success": True,
+                "analysis": analysis,
+                "ai_info": {
+                    "model": ai_metadata.get("model"),
+                    "tokens": ai_metadata.get("tokens_total"),
+                },
+                "credits_used": credit_cost,
+            }
+        )
 
     except Exception as e:
         current_app.logger.error(f"Erro ao analisar riscos: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": f"Erro ao analisar petição: {str(e)}",
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Erro ao analisar petição: {str(e)}",
+            }
+        ), 500
 
 
 # =============================================================================
