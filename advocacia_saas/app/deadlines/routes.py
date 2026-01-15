@@ -1,7 +1,8 @@
 """
 Rotas de gerenciamento de prazos
 """
-import osfrom datetime import datetime, timedelta
+import os
+from datetime import datetime, timedelta
 
 from flask import flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
