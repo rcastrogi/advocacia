@@ -2500,12 +2500,43 @@ def petition_section_editor_save():
 
     # Listas de valores permitidos (whitelist)
     ALLOWED_ICONS = [
-        "fa-file-alt", "fa-user", "fa-users", "fa-gavel", "fa-balance-scale",
-        "fa-money-bill", "fa-calendar", "fa-map-marker", "fa-clipboard", "fa-pen",
-        "fa-home", "fa-briefcase", "fa-folder", "fa-list", "fa-check"
+        "fa-file-alt",
+        "fa-user",
+        "fa-users",
+        "fa-gavel",
+        "fa-balance-scale",
+        "fa-money-bill",
+        "fa-calendar",
+        "fa-map-marker",
+        "fa-clipboard",
+        "fa-pen",
+        "fa-home",
+        "fa-briefcase",
+        "fa-folder",
+        "fa-list",
+        "fa-check",
     ]
-    ALLOWED_COLORS = ["primary", "secondary", "success", "danger", "warning", "info", "dark", "light"]
-    ALLOWED_FIELD_TYPES = ["text", "textarea", "editor", "select", "radio", "checkbox", "date", "number", "currency"]
+    ALLOWED_COLORS = [
+        "primary",
+        "secondary",
+        "success",
+        "danger",
+        "warning",
+        "info",
+        "dark",
+        "light",
+    ]
+    ALLOWED_FIELD_TYPES = [
+        "text",
+        "textarea",
+        "editor",
+        "select",
+        "radio",
+        "checkbox",
+        "date",
+        "number",
+        "currency",
+    ]
 
     try:
         data = request.get_json()
@@ -2519,14 +2550,14 @@ def petition_section_editor_save():
             """Remove HTML e limita tamanho"""
             if not text:
                 return ""
-            text = re.sub(r'<[^>]+>', '', str(text).strip())
+            text = re.sub(r"<[^>]+>", "", str(text).strip())
             return text[:max_length]
 
         def sanitize_name(name, max_length=100):
             """Sanitiza nome de campo (apenas alfanumérico e underscore)"""
             if not name:
                 return ""
-            return re.sub(r'[^a-z0-9_]', '', str(name).lower())[:max_length]
+            return re.sub(r"[^a-z0-9_]", "", str(name).lower())[:max_length]
 
         section_id = data.get("id")
         if section_id is not None:
@@ -2559,12 +2590,16 @@ def petition_section_editor_save():
             return jsonify({"success": False, "error": "Nome é obrigatório"}), 400
 
         if len(name) < 3:
-            return jsonify({"success": False, "error": "Nome deve ter pelo menos 3 caracteres"}), 400
+            return jsonify(
+                {"success": False, "error": "Nome deve ter pelo menos 3 caracteres"}
+            ), 400
 
         # Limitar quantidade de campos
         MAX_FIELDS = 50
         if len(fields) > MAX_FIELDS:
-            return jsonify({"success": False, "error": f"Máximo de {MAX_FIELDS} campos permitido"}), 400
+            return jsonify(
+                {"success": False, "error": f"Máximo de {MAX_FIELDS} campos permitido"}
+            ), 400
 
         # Validar e sanitizar campos
         validated_fields = []
@@ -2583,20 +2618,33 @@ def petition_section_editor_save():
             # Sanitizar options para select/radio
             options = field.get("options", [])
             if isinstance(options, list):
-                options = [sanitize_text(str(opt), max_length=100) for opt in options[:20]]  # Max 20 opções
+                options = [
+                    sanitize_text(str(opt), max_length=100) for opt in options[:20]
+                ]  # Max 20 opções
             else:
                 options = []
 
-            validated_fields.append({
-                "name": str(field_name),
-                "label": sanitize_text(field.get("label", field_name.replace("_", " ").title()), max_length=100),
-                "type": str(field_type),
-                "required": bool(field.get("required", False)),
-                "placeholder": sanitize_text(field.get("placeholder", ""), max_length=200),
-                "help_text": sanitize_text(field.get("help_text", ""), max_length=300),
-                "options": list(options),
-                "default_value": sanitize_text(field.get("default_value", ""), max_length=500),
-            })
+            validated_fields.append(
+                {
+                    "name": str(field_name),
+                    "label": sanitize_text(
+                        field.get("label", field_name.replace("_", " ").title()),
+                        max_length=100,
+                    ),
+                    "type": str(field_type),
+                    "required": bool(field.get("required", False)),
+                    "placeholder": sanitize_text(
+                        field.get("placeholder", ""), max_length=200
+                    ),
+                    "help_text": sanitize_text(
+                        field.get("help_text", ""), max_length=300
+                    ),
+                    "options": list(options),
+                    "default_value": sanitize_text(
+                        field.get("default_value", ""), max_length=500
+                    ),
+                }
+            )
 
         if section_id:
             # Editar seção existente
@@ -2615,11 +2663,13 @@ def petition_section_editor_save():
                 f"[EDITOR] Seção atualizada via editor visual - ID: {section.id}"
             )
 
-            return jsonify({
-                "success": True,
-                "message": "Seção atualizada com sucesso!",
-                "section_id": int(section.id),
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Seção atualizada com sucesso!",
+                    "section_id": int(section.id),
+                }
+            )
         else:
             # Criar nova seção
             slug = generate_unique_slug(name, PetitionSection)
@@ -2642,11 +2692,13 @@ def petition_section_editor_save():
                 f"[EDITOR] Seção criada via editor visual - ID: {section.id}"
             )
 
-            return jsonify({
-                "success": True,
-                "message": "Seção criada com sucesso!",
-                "section_id": int(section.id),
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Seção criada com sucesso!",
+                    "section_id": int(section.id),
+                }
+            )
 
     except Exception as e:
         current_app.logger.error(f"[EDITOR] Erro ao salvar seção: {str(e)}")
