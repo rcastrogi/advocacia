@@ -44,7 +44,7 @@
                         </button>
                     </form>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <select name="status" class="form-select" onchange="this.form.submit()">
                         <option value="">Todos os Status</option>
                         <option value="pending_distribution" {{ 'selected' if status_filter == 'pending_distribution' }}>Aguardando Distribuição</option>
@@ -54,11 +54,6 @@
                         <option value="archived" {{ 'selected' if status_filter == 'archived' }}>Arquivado</option>
                         <option value="finished" {{ 'selected' if status_filter == 'finished' }}>Finalizado</option>
                     </select>
-                </div>
-                <div class="col-md-2 text-end">
-                    <a href="#" class="btn btn-success w-100">
-                        <i class="fas fa-plus me-1"></i>Novo
-                    </a>
                 </div>
             </div>
         </div>
@@ -186,7 +181,7 @@
                     Você ainda não cadastrou nenhum processo.
                 {% endif %}
             </p>
-            <a href="#" class="btn btn-success">
+            <a href="{{ url_for('processes.create') }}" class="btn btn-success">
                 <i class="fas fa-plus me-2"></i>Cadastrar Primeiro Processo
             </a>
         </div>

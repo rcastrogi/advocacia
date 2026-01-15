@@ -173,10 +173,12 @@ def reports():
 def _get_client_choices():
     """Retorna lista de clientes para o select."""
     clients = (
-        Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+        Client.query.filter_by(lawyer_id=current_user.id)
+        .order_by(Client.full_name)
+        .all()
     )
     choices = [("", "Nenhum cliente vinculado")]
-    choices.extend([(str(c.id), c.name) for c in clients])
+    choices.extend([(str(c.id), c.full_name) for c in clients])
     return choices
 
 
