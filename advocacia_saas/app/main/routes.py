@@ -98,14 +98,16 @@ def index():
 
     # Busca dados do roadmap (apenas itens visíveis aos usuários)
     public_roadmap_items = RoadmapItem.query.filter_by(visible_to_users=True).all()
-    
+
     roadmap_stats = {
         "total": len(public_roadmap_items),
         "completed": len([i for i in public_roadmap_items if i.status == "completed"]),
-        "in_progress": len([i for i in public_roadmap_items if i.status == "in_progress"]),
+        "in_progress": len(
+            [i for i in public_roadmap_items if i.status == "in_progress"]
+        ),
         "planned": len([i for i in public_roadmap_items if i.status == "planned"]),
     }
-    
+
     # Calcular progresso
     if roadmap_stats["total"] > 0:
         roadmap_stats["progress"] = round(
@@ -113,10 +115,10 @@ def index():
         )
     else:
         roadmap_stats["progress"] = 0
-    
+
     # Buscar itens em destaque para mostrar na home (3 itens: 1 concluído, 1 em progresso, 1 planejado)
     featured_roadmap = []
-    
+
     # Um item concluído
     completed_item = (
         RoadmapItem.query.filter_by(visible_to_users=True, status="completed")
@@ -125,7 +127,7 @@ def index():
     )
     if completed_item:
         featured_roadmap.append(completed_item)
-    
+
     # Um item em progresso
     in_progress_item = (
         RoadmapItem.query.filter_by(visible_to_users=True, status="in_progress")
@@ -134,7 +136,7 @@ def index():
     )
     if in_progress_item:
         featured_roadmap.append(in_progress_item)
-    
+
     # Um item planejado
     planned_item = (
         RoadmapItem.query.filter_by(visible_to_users=True, status="planned")
