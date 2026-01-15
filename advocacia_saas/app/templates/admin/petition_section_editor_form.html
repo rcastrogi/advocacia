@@ -111,21 +111,37 @@
         id: 'field_' + i,
         expanded: false,
         dragging: false,
-        optionsText: (f.options || []).join('\n'),
-        width: f.width || '12'
+        optionsText: Array.isArray(f.options) ? f.options.map(o => typeof o === 'object' ? o.label || o.value : o).join('\n') : '',
+        width: f.width || f.size?.replace('col-md-', '') || '12',
+        ai_enabled: f.ai_enabled || false
     })),
     
-    // Field types available
+    // Field types available - Organizados por categoria
     fieldTypes: [
-        { id: 'text', label: 'Texto', icon: 'fa-font', color: 'primary', description: 'Campo de texto simples' },
-        { id: 'textarea', label: 'Área de Texto', icon: 'fa-align-left', color: 'info', description: 'Texto longo multi-linha' },
-        { id: 'editor', label: 'Editor Rico', icon: 'fa-edit', color: 'success', description: 'Editor com formatação' },
-        { id: 'select', label: 'Seleção', icon: 'fa-list', color: 'warning', description: 'Lista de opções' },
-        { id: 'radio', label: 'Múltipla Escolha', icon: 'fa-dot-circle', color: 'secondary', description: 'Escolha única' },
-        { id: 'checkbox', label: 'Caixa de Seleção', icon: 'fa-check-square', color: 'dark', description: 'Sim/Não' },
-        { id: 'date', label: 'Data', icon: 'fa-calendar', color: 'danger', description: 'Seletor de data' },
-        { id: 'number', label: 'Número', icon: 'fa-hashtag', color: 'primary', description: 'Valor numérico' },
-        { id: 'currency', label: 'Moeda', icon: 'fa-dollar-sign', color: 'success', description: 'Valor em reais' }
+        // Texto
+        { id: 'text', label: 'Texto Simples', icon: 'fa-font', color: 'primary', description: 'Campo de texto de uma linha', category: 'texto' },
+        { id: 'textarea', label: 'Área de Texto', icon: 'fa-align-left', color: 'info', description: 'Texto longo, múltiplas linhas', category: 'texto' },
+        { id: 'editor', label: 'Editor Rico', icon: 'fa-edit', color: 'success', description: 'Editor com formatação (negrito, itálico...)', category: 'texto' },
+        
+        // Dados pessoais
+        { id: 'cpf', label: 'CPF', icon: 'fa-id-card', color: 'secondary', description: 'CPF com máscara 000.000.000-00', category: 'documento' },
+        { id: 'cnpj', label: 'CNPJ', icon: 'fa-building', color: 'secondary', description: 'CNPJ com máscara', category: 'documento' },
+        { id: 'cpf_cnpj', label: 'CPF ou CNPJ', icon: 'fa-id-badge', color: 'secondary', description: 'Aceita CPF ou CNPJ', category: 'documento' },
+        
+        // Contato
+        { id: 'email', label: 'E-mail', icon: 'fa-envelope', color: 'info', description: 'Endereço de e-mail', category: 'contato' },
+        { id: 'tel', label: 'Telefone', icon: 'fa-phone', color: 'info', description: 'Telefone com máscara', category: 'contato' },
+        { id: 'cep', label: 'CEP', icon: 'fa-map-marker-alt', color: 'info', description: 'CEP com máscara 00000-000', category: 'contato' },
+        
+        // Seleção
+        { id: 'select', label: 'Lista de Opções', icon: 'fa-list', color: 'warning', description: 'Dropdown para escolher uma opção', category: 'selecao' },
+        { id: 'radio', label: 'Escolha Única', icon: 'fa-dot-circle', color: 'warning', description: 'Botões para escolher uma opção', category: 'selecao' },
+        { id: 'checkbox', label: 'Sim/Não', icon: 'fa-check-square', color: 'dark', description: 'Caixa de marcação', category: 'selecao' },
+        
+        // Números e datas
+        { id: 'date', label: 'Data', icon: 'fa-calendar', color: 'danger', description: 'Seletor de data', category: 'numero' },
+        { id: 'number', label: 'Número', icon: 'fa-hashtag', color: 'primary', description: 'Valor numérico inteiro', category: 'numero' },
+        { id: 'currency', label: 'Valor em R$', icon: 'fa-dollar-sign', color: 'success', description: 'Valor monetário', category: 'numero' }
     ],
     
     // Width options for grid layout
@@ -173,6 +189,7 @@
             label: '',
             type: type,
             required: false,
+            ai_enabled: false,
             placeholder: '',
             help_text: '',
             options: [],
@@ -274,11 +291,13 @@
                     label: f.label,
                     type: f.type,
                     required: f.required,
+                    ai_enabled: f.ai_enabled || false,
                     placeholder: f.placeholder,
                     help_text: f.help_text,
-                    options: f.options || [],
+                    options: f.optionsText ? f.optionsText.split('\n').filter(o => o.trim()).map(o => ({ value: o.trim(), label: o.trim() })) : [],
                     default_value: f.default_value || '',
-                    width: f.width || '12'
+                    width: f.width || '12',
+                    size: 'col-md-' + (f.width || '12')
                 }))
             };
             
@@ -358,19 +377,103 @@
                         </h6>
                     </div>
                     <div class="card-body p-2">
-                        <p class="small text-muted mb-2">Arraste para adicionar:</p>
+                        <p class="small text-muted mb-2">Clique ou arraste para adicionar:</p>
                         
-                        <template x-for="type in fieldTypes" :key="type.id">
+                        <!-- Texto -->
+                        <div class="mb-2">
+                            <small class="text-uppercase text-muted fw-bold">Texto</small>
+                        </div>
+                        <template x-for="type in fieldTypes.filter(t => t.category === 'texto')" :key="type.id">
                             <div class="field-type-item card mb-2 p-2"
                                  draggable="true"
+                                 @click="addField(type.id)"
                                  @dragstart="startDragType($event, type)"
-                                 @dragend="endDrag()">
+                                 @dragend="endDrag()"
+                                 style="cursor: pointer;">
                                 <div class="d-flex align-items-center">
                                     <i :class="'fas ' + type.icon + ' text-' + type.color + ' me-2'"></i>
                                     <div>
                                         <strong class="small" x-text="type.label"></strong>
-                                        <br>
-                                        <small class="text-muted" x-text="type.description"></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <!-- Documentos -->
+                        <div class="mb-2 mt-3">
+                            <small class="text-uppercase text-muted fw-bold">Documentos</small>
+                        </div>
+                        <template x-for="type in fieldTypes.filter(t => t.category === 'documento')" :key="type.id">
+                            <div class="field-type-item card mb-2 p-2"
+                                 draggable="true"
+                                 @click="addField(type.id)"
+                                 @dragstart="startDragType($event, type)"
+                                 @dragend="endDrag()"
+                                 style="cursor: pointer;">
+                                <div class="d-flex align-items-center">
+                                    <i :class="'fas ' + type.icon + ' text-' + type.color + ' me-2'"></i>
+                                    <div>
+                                        <strong class="small" x-text="type.label"></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <!-- Contato -->
+                        <div class="mb-2 mt-3">
+                            <small class="text-uppercase text-muted fw-bold">Contato</small>
+                        </div>
+                        <template x-for="type in fieldTypes.filter(t => t.category === 'contato')" :key="type.id">
+                            <div class="field-type-item card mb-2 p-2"
+                                 draggable="true"
+                                 @click="addField(type.id)"
+                                 @dragstart="startDragType($event, type)"
+                                 @dragend="endDrag()"
+                                 style="cursor: pointer;">
+                                <div class="d-flex align-items-center">
+                                    <i :class="'fas ' + type.icon + ' text-' + type.color + ' me-2'"></i>
+                                    <div>
+                                        <strong class="small" x-text="type.label"></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <!-- Seleção -->
+                        <div class="mb-2 mt-3">
+                            <small class="text-uppercase text-muted fw-bold">Seleção</small>
+                        </div>
+                        <template x-for="type in fieldTypes.filter(t => t.category === 'selecao')" :key="type.id">
+                            <div class="field-type-item card mb-2 p-2"
+                                 draggable="true"
+                                 @click="addField(type.id)"
+                                 @dragstart="startDragType($event, type)"
+                                 @dragend="endDrag()"
+                                 style="cursor: pointer;">
+                                <div class="d-flex align-items-center">
+                                    <i :class="'fas ' + type.icon + ' text-' + type.color + ' me-2'"></i>
+                                    <div>
+                                        <strong class="small" x-text="type.label"></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <!-- Números e Datas -->
+                        <div class="mb-2 mt-3">
+                            <small class="text-uppercase text-muted fw-bold">Números e Datas</small>
+                        </div>
+                        <template x-for="type in fieldTypes.filter(t => t.category === 'numero')" :key="type.id">
+                            <div class="field-type-item card mb-2 p-2"
+                                 draggable="true"
+                                 @click="addField(type.id)"
+                                 @dragstart="startDragType($event, type)"
+                                 @dragend="endDrag()"
+                                 style="cursor: pointer;">
+                                <div class="d-flex align-items-center">
+                                    <i :class="'fas ' + type.icon + ' text-' + type.color + ' me-2'"></i>
+                                    <div>
+                                        <strong class="small" x-text="type.label"></strong>
                                     </div>
                                 </div>
                             </div>
@@ -545,6 +648,7 @@
                                                       x-model="field.optionsText"
                                                       @input="field.options = field.optionsText.split('\n').filter(o => o.trim())"
                                                       placeholder="Opção 1&#10;Opção 2&#10;Opção 3"></textarea>
+                                            <small class="text-muted">Digite cada opção em uma linha</small>
                                         </div>
                                     </template>
                                     
@@ -565,11 +669,29 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="form-check form-check-inline">
-                                        <input type="checkbox" class="form-check-input" 
-                                               :id="'req_' + field.id" 
-                                               x-model="field.required">
-                                        <label class="form-check-label small" :for="'req_' + field.id">Obrigatório</label>
+                                    <!-- Checkboxes de opções -->
+                                    <div class="d-flex flex-wrap gap-3 mt-2">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" 
+                                                   :id="'req_' + field.id" 
+                                                   x-model="field.required">
+                                            <label class="form-check-label small" :for="'req_' + field.id">
+                                                <i class="fas fa-asterisk text-danger me-1"></i>Obrigatório
+                                            </label>
+                                        </div>
+                                        
+                                        <!-- Opção IA - só para textarea e editor -->
+                                        <template x-if="field.type === 'textarea' || field.type === 'editor'">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" 
+                                                       :id="'ai_' + field.id" 
+                                                       x-model="field.ai_enabled">
+                                                <label class="form-check-label small" :for="'ai_' + field.id">
+                                                    <i class="fas fa-magic text-primary me-1"></i>Habilitar IA
+                                                    <span class="badge bg-info ms-1">Gera texto automaticamente</span>
+                                                </label>
+                                            </div>
+                                        </template>
                                     </div>
                                 </div>
                             </div>
@@ -606,6 +728,7 @@
                                 <label class="form-label">
                                     <span x-text="field.label || field.name || 'Campo'"></span>
                                     <span class="text-danger" x-show="field.required">*</span>
+                                    <i class="fas fa-magic text-primary ms-1" x-show="field.ai_enabled" title="IA habilitada"></i>
                                 </label>
                                 
                                 <!-- Text -->
@@ -625,12 +748,42 @@
                                     </div>
                                 </template>
                                 
+                                <!-- CPF -->
+                                <template x-if="field.type === 'cpf'">
+                                    <input type="text" class="form-control" placeholder="000.000.000-00" disabled>
+                                </template>
+                                
+                                <!-- CNPJ -->
+                                <template x-if="field.type === 'cnpj'">
+                                    <input type="text" class="form-control" placeholder="00.000.000/0000-00" disabled>
+                                </template>
+                                
+                                <!-- CPF/CNPJ -->
+                                <template x-if="field.type === 'cpf_cnpj'">
+                                    <input type="text" class="form-control" placeholder="CPF ou CNPJ" disabled>
+                                </template>
+                                
+                                <!-- Email -->
+                                <template x-if="field.type === 'email'">
+                                    <input type="email" class="form-control" placeholder="email@exemplo.com" disabled>
+                                </template>
+                                
+                                <!-- Telefone -->
+                                <template x-if="field.type === 'tel'">
+                                    <input type="tel" class="form-control" placeholder="(00) 00000-0000" disabled>
+                                </template>
+                                
+                                <!-- CEP -->
+                                <template x-if="field.type === 'cep'">
+                                    <input type="text" class="form-control" placeholder="00000-000" disabled>
+                                </template>
+                                
                                 <!-- Select -->
                                 <template x-if="field.type === 'select'">
                                     <select class="form-select" disabled>
                                         <option>Selecione...</option>
                                         <template x-for="opt in field.options" :key="opt">
-                                            <option x-text="opt"></option>
+                                            <option x-text="typeof opt === 'object' ? opt.label : opt"></option>
                                         </template>
                                     </select>
                                 </template>
@@ -641,7 +794,7 @@
                                         <template x-for="(opt, i) in field.options" :key="i">
                                             <div class="form-check">
                                                 <input type="radio" class="form-check-input" disabled>
-                                                <label class="form-check-label" x-text="opt"></label>
+                                                <label class="form-check-label" x-text="typeof opt === 'object' ? opt.label : opt"></label>
                                             </div>
                                         </template>
                                     </div>
