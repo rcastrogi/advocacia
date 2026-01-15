@@ -51,6 +51,9 @@ def get_cidades_by_estado(sigla):
 @limiter.limit("50 per hour")  # CEP API tem limite externo, controlar uso
 def get_cep_info(cep):
     """Get address information from CEP using ViaCEP API"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         # Remove any non-numeric characters
         clean_cep = "".join(filter(str.isdigit, cep))
@@ -62,7 +65,11 @@ def get_cep_info(cep):
         formatted_cep = f"{clean_cep[:5]}-{clean_cep[5:]}"
 
         # Call ViaCEP API
-        response = requests.get(Config.CEP_API_URL.format(clean_cep), timeout=10)
+        url = Config.CEP_API_URL.format(clean_cep)
+        logger.info(f"Buscando CEP: {url}")
+        
+        response = requests.get(url, timeout=10, verify=True)
+        logger.info(f"CEP response status: {response.status_code}")
 
         if response.status_code == 200:
             data = response.json()
@@ -82,13 +89,17 @@ def get_cep_info(cep):
                 }
             )
         else:
+            logger.error(f"CEP API retornou status {response.status_code}: {response.text[:200]}")
             return jsonify({"error": "Erro ao consultar CEP"}), 500
 
     except requests.exceptions.Timeout:
+        logger.error("Timeout na consulta do CEP")
         return jsonify({"error": "Timeout na consulta do CEP"}), 500
-    except requests.exceptions.RequestException:
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Erro de conexão ao consultar CEP: {str(e)}")
         return jsonify({"error": "Erro de conexão ao consultar CEP"}), 500
-    except Exception:
+    except Exception as e:
+        logger.error(f"Erro interno ao consultar CEP: {str(e)}")
         return jsonify({"error": "Erro interno do servidor"}), 500
 
 

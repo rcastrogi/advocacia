@@ -116,6 +116,7 @@ def create_app(config_class=Config):
                 "'self'",
                 "wss:",  # WebSocket para Socket.IO
                 "ws:",  # WebSocket local dev
+                "https://viacep.com.br",  # API de CEP
             ],
             "frame-ancestors": ["'self'"],  # Equivalente a X-Frame-Options SAMEORIGIN
             "frame-src": [

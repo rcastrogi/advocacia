@@ -228,20 +228,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Busca CEP
     const cepInput = document.getElementById('cep');
     if (cepInput) {
-        cepInput.addEventListener('blur', function() {
+        cepInput.addEventListener('blur', async function() {
             const cep = this.value.replace(/\D/g, '');
             if (cep.length === 8) {
-                fetch(`https://viacep.com.br/ws/${cep}/json/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (!data.erro) {
-                            document.getElementById('street').value = data.logradouro || '';
-                            document.getElementById('neighborhood').value = data.bairro || '';
-                            document.getElementById('city').value = data.localidade || '';
-                            document.getElementById('uf').value = data.uf || '';
-                        }
-                    })
-                    .catch(err => console.log('Erro ao buscar CEP:', err));
+                try {
+                    // Usar API do backend (proxy seguro)
+                    const response = await fetch(`/api/cep/${cep}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        document.getElementById('street').value = data.street || '';
+                        document.getElementById('neighborhood').value = data.neighborhood || '';
+                        document.getElementById('city').value = data.city || '';
+                        document.getElementById('uf').value = data.uf || '';
+                    }
+                } catch (err) {
+                    console.log('Erro ao buscar CEP:', err);
+                }
             }
         });
     }

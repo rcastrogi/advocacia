@@ -168,6 +168,23 @@
         { value: '3', label: '25%', icon: '███░░░░░░░░░' }
     ],
     
+    // Color definitions for dynamic styling
+    colorStyles: {
+        primary: { bg: '#0d6efd', text: '#ffffff' },
+        success: { bg: '#198754', text: '#ffffff' },
+        info: { bg: '#0dcaf0', text: '#000000' },
+        warning: { bg: '#ffc107', text: '#000000' },
+        danger: { bg: '#dc3545', text: '#ffffff' },
+        secondary: { bg: '#6c757d', text: '#ffffff' },
+        dark: { bg: '#212529', text: '#ffffff' }
+    },
+    
+    // Get style for current color
+    getHeaderStyle() {
+        const c = this.colorStyles[this.section.color] || this.colorStyles.primary;
+        return `background-color: ${c.bg}; color: ${c.text};`;
+    },
+    
     // UI state
     dragOver: false,
     draggedType: null,
@@ -383,29 +400,29 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm section-info-card">
-                <div class="card-header" :class="'section-header-' + section.color">
+                <div class="card-header" :style="getHeaderStyle()">
                     <h6 class="mb-0">
                         <i :class="'fas ' + section.icon + ' me-2'"></i>
                         <span x-text="section.name || 'Nova Seção'"></span>
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
+                    <div class="row align-items-end">
+                        <div class="col-md-5">
+                            <div class="mb-3 mb-md-0">
                                 <label class="form-label">Nome da Seção <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" x-model="section.name" placeholder="Ex: Dados do Autor">
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="mb-3">
+                            <div class="mb-3 mb-md-0">
                                 <label class="form-label">Descrição</label>
                                 <input type="text" class="form-control" x-model="section.description" placeholder="Descrição da seção...">
                             </div>
                         </div>
                         <div class="col-md-1">
                             <label class="form-label">Ícone</label>
-                            <select class="form-select form-select-sm" x-model="section.icon">
+                            <select class="form-select" x-model="section.icon">
                                 <option value="fa-file-alt">📄</option>
                                 <option value="fa-user">👤</option>
                                 <option value="fa-users">👥</option>
@@ -420,7 +437,7 @@
                         </div>
                         <div class="col-md-1">
                             <label class="form-label">Cor</label>
-                            <select class="form-select form-select-sm" x-model="section.color">
+                            <select class="form-select" x-model="section.color">
                                 <option value="primary">🔵</option>
                                 <option value="success">🟢</option>
                                 <option value="info">🩵</option>
@@ -430,11 +447,7 @@
                                 <option value="dark">⬛</option>
                             </select>
                         </div>
-                        <div class="col-md-1">
-                            <label class="form-label">Ordem</label>
-                            <input type="number" class="form-control form-control-sm" x-model="section.order" min="0">
-                        </div>
-                        <div class="col-md-1 d-flex align-items-end pb-3">
+                        <div class="col-md-1 d-flex align-items-center justify-content-center">
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="isActive" x-model="section.is_active">
                                 <label class="form-check-label" for="isActive">Ativa</label>
@@ -737,7 +750,7 @@
                 </h6>
                 
                 <div class="card">
-                    <div class="card-header" :class="'section-header-' + section.color">
+                    <div class="card-header" :style="getHeaderStyle()">
                         <i :class="'fas ' + section.icon + ' me-2'"></i>
                         <span x-text="section.name || 'Nome da Seção'"></span>
                     </div>
