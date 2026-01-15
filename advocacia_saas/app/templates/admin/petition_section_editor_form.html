@@ -111,7 +111,8 @@
         id: 'field_' + i,
         expanded: false,
         dragging: false,
-        optionsText: (f.options || []).join('\n')
+        optionsText: (f.options || []).join('\n'),
+        width: f.width || '12'
     })),
     
     // Field types available
@@ -125,6 +126,16 @@
         { id: 'date', label: 'Data', icon: 'fa-calendar', color: 'danger', description: 'Seletor de data' },
         { id: 'number', label: 'Número', icon: 'fa-hashtag', color: 'primary', description: 'Valor numérico' },
         { id: 'currency', label: 'Moeda', icon: 'fa-dollar-sign', color: 'success', description: 'Valor em reais' }
+    ],
+    
+    // Width options for grid layout
+    widthOptions: [
+        { value: '12', label: '100%', icon: '████████████' },
+        { value: '9', label: '75%', icon: '█████████░░░' },
+        { value: '8', label: '66%', icon: '████████░░░░' },
+        { value: '6', label: '50%', icon: '██████░░░░░░' },
+        { value: '4', label: '33%', icon: '████░░░░░░░░' },
+        { value: '3', label: '25%', icon: '███░░░░░░░░░' }
     ],
     
     // UI state
@@ -149,6 +160,7 @@
             options: [],
             optionsText: '',
             default_value: '',
+            width: '12',
             expanded: true,
             dragging: false
         });
@@ -247,7 +259,8 @@
                     placeholder: f.placeholder,
                     help_text: f.help_text,
                     options: f.options || [],
-                    default_value: f.default_value || ''
+                    default_value: f.default_value || '',
+                    width: f.width || '12'
                 }))
             };
             
@@ -452,6 +465,9 @@
                                         <div>
                                             <strong x-text="field.label || field.name || 'Novo Campo'"></strong>
                                             <span class="type-badge badge bg-secondary ms-2" x-text="getFieldTypeName(field.type)"></span>
+                                            <span class="type-badge badge bg-info ms-1" 
+                                                  x-text="widthOptions.find(w => w.value === field.width)?.label || '100%'"
+                                                  :title="'Largura: ' + (widthOptions.find(w => w.value === field.width)?.label || '100%')"></span>
                                         </div>
                                     </div>
                                     <div class="btn-group btn-group-sm">
@@ -515,6 +531,23 @@
                                         </div>
                                     </template>
                                     
+                                    <!-- Width selector -->
+                                    <div class="mb-2">
+                                        <label class="form-label small">Largura do Campo</label>
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            <template x-for="w in widthOptions" :key="w.value">
+                                                <button type="button" 
+                                                        class="btn btn-sm position-relative"
+                                                        :class="field.width === w.value ? 'btn-primary' : 'btn-outline-secondary'"
+                                                        @click="field.width = w.value"
+                                                        :title="w.label">
+                                                    <span class="d-block" style="font-size: 8px; letter-spacing: -1px; font-family: monospace;" x-text="w.icon"></span>
+                                                    <span class="d-block small" x-text="w.label"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    
                                     <div class="form-check form-check-inline">
                                         <input type="checkbox" class="form-check-input" 
                                                :id="'req_' + field.id" 
@@ -550,8 +583,9 @@
                             </p>
                         </template>
                         
+                        <div class="row">
                         <template x-for="field in fields" :key="field.id">
-                            <div class="mb-3">
+                            <div class="mb-3" :class="'col-md-' + (field.width || '12')">
                                 <label class="form-label">
                                     <span x-text="field.label || field.name || 'Campo'"></span>
                                     <span class="text-danger" x-show="field.required">*</span>
@@ -628,6 +662,7 @@
                                 </template>
                             </div>
                         </template>
+                        </div>
                     </div>
                 </div>
                 
