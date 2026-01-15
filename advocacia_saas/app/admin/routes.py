@@ -2518,17 +2518,19 @@ def petition_section_editor_save():
             if not field_name:
                 field_name = f"campo_{idx + 1}"
 
-            validated_fields.append({
-                "name": field_name,
-                "label": field.get("label", field_name.replace("_", " ").title()),
-                "type": field.get("type", "text"),
-                "required": field.get("required", False),
-                "placeholder": field.get("placeholder", ""),
-                "help_text": field.get("help_text", ""),
-                "options": field.get("options", []),  # Para select/radio
-                "default_value": field.get("default_value", ""),
-                "validation": field.get("validation", {}),
-            })
+            validated_fields.append(
+                {
+                    "name": field_name,
+                    "label": field.get("label", field_name.replace("_", " ").title()),
+                    "type": field.get("type", "text"),
+                    "required": field.get("required", False),
+                    "placeholder": field.get("placeholder", ""),
+                    "help_text": field.get("help_text", ""),
+                    "options": field.get("options", []),  # Para select/radio
+                    "default_value": field.get("default_value", ""),
+                    "validation": field.get("validation", {}),
+                }
+            )
 
         if section_id:
             # Editar seção existente
@@ -2547,11 +2549,13 @@ def petition_section_editor_save():
                 f"✅ [EDITOR] Seção atualizada via editor visual - ID: {section.id}"
             )
 
-            return jsonify({
-                "success": True,
-                "message": "Seção atualizada com sucesso!",
-                "section_id": section.id,
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Seção atualizada com sucesso!",
+                    "section_id": section.id,
+                }
+            )
         else:
             # Criar nova seção
             slug = generate_unique_slug(name, PetitionSection)
@@ -2574,11 +2578,13 @@ def petition_section_editor_save():
                 f"✅ [EDITOR] Seção criada via editor visual - ID: {section.id}"
             )
 
-            return jsonify({
-                "success": True,
-                "message": "Seção criada com sucesso!",
-                "section_id": section.id,
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Seção criada com sucesso!",
+                    "section_id": section.id,
+                }
+            )
 
     except Exception as e:
         current_app.logger.error(f"❌ [EDITOR] Erro ao salvar seção: {str(e)}")
