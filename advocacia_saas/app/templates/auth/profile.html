@@ -368,6 +368,58 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // === Máscara e busca de CEP ===
+    function maskCep(value) {
+        return value
+            .replace(/\D/g, '')
+            .substring(0, 8)
+            .replace(/^(\d{5})(\d)/, '$1-$2');
+    }
+    
+    function applyMask(input, maskFn) {
+        if (!input) return;
+        input.addEventListener('input', function(e) {
+            e.target.value = maskFn(e.target.value);
+        });
+        // Aplicar máscara no valor inicial
+        if (input.value) {
+            input.value = maskFn(input.value);
+        }
+    }
+    
+    const cepInput = document.getElementById('cep');
+    if (cepInput) {
+        // Aplicar máscara de CEP
+        applyMask(cepInput, maskCep);
+        
+        // Busca automática de endereço
+        cepInput.addEventListener('blur', async function() {
+            const cep = this.value.replace(/\D/g, '');
+            if (cep.length === 8) {
+                try {
+                    // Usar API do backend (proxy seguro)
+                    const response = await fetch(`/api/cep/${cep}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Preencher campos com IDs do WTForms
+                        const streetField = document.getElementById('street');
+                        const neighborhoodField = document.getElementById('neighborhood');
+                        const cityField = document.getElementById('city');
+                        const ufField = document.getElementById('uf');
+                        
+                        if (streetField && data.street) streetField.value = data.street;
+                        if (neighborhoodField && data.neighborhood) neighborhoodField.value = data.neighborhood;
+                        if (cityField && data.city) cityField.value = data.city;
+                        if (ufField && data.uf) ufField.value = data.uf;
+                    }
+                } catch (err) {
+                    console.log('Erro ao buscar CEP:', err);
+                }
+            }
+        });
+    }
+    
+    // === Detecção de Timezone ===
     // Detectar timezone automaticamente
     const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const currentTimezoneSpan = document.getElementById('current-timezone');
