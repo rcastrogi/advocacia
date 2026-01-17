@@ -22,6 +22,7 @@ from werkzeug.utils import secure_filename
 from app import db
 from app.documents import bp
 from app.models import Client, Document
+from app.utils.pagination import PaginationHelper
 
 ALLOWED_EXTENSIONS = {
     "pdf",
@@ -69,18 +70,26 @@ def index():
             )
         )
 
-    documents = query.order_by(Document.created_at.desc()).all()
+    query = query.order_by(Document.created_at.desc())
+    
+    # Paginação
+    pagination = PaginationHelper(
+        query=query,
+        per_page=20,
+        filters={"client": client_id, "type": doc_type, "search": search}
+    )
 
     # Buscar clientes para filtro
     clients = Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
 
     return render_template(
         "documents/index.html",
-        documents=documents,
+        documents=pagination.items,
         clients=clients,
         selected_client=client_id,
         doc_type=doc_type,
         search=search,
+        pagination=pagination.to_dict(),
     )
 
 

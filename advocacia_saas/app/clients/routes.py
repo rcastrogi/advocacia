@@ -11,6 +11,7 @@ from app.decorators import lawyer_required
 from app.models import Client, Dependent, Estado, User
 from app.office.utils import can_access_record, filter_by_office_member
 from app.utils.audit import AuditManager
+from app.utils.pagination import PaginationHelper
 
 
 @bp.route("/")
@@ -18,14 +19,24 @@ from app.utils.audit import AuditManager
 @lawyer_required
 @subscription_required
 def index():
-    page = request.args.get("page", 1, type=int)
+    search = request.args.get("search", "")
+    
     # Filtrar por escritório se o usuário pertence a um
-    clients = (
-        filter_by_office_member(Client, "lawyer_id")
-        .order_by(Client.created_at.desc())
-        .paginate(page=page, per_page=10, error_out=False)
+    query = filter_by_office_member(Client, "lawyer_id").order_by(Client.created_at.desc())
+    
+    # Paginação padronizada
+    pagination = PaginationHelper(
+        query=query,
+        per_page=20,
+        filters={"search": search}
     )
-    return render_template("clients/index.html", title="Clientes", clients=clients)
+    
+    return render_template(
+        "clients/index.html", 
+        title="Clientes", 
+        clients=pagination.paginated,
+        pagination=pagination.to_dict()
+    )
 
 
 @bp.route("/new", methods=["GET", "POST"])

@@ -1,0 +1,159 @@
+{# Template componente universal de paginação #}
+{# 
+  Uso básico:
+    {% include 'components/pagination.html' %}
+  
+  Com variáveis customizadas:
+    {% include 'components/pagination.html' with context %}
+    
+  Variáveis esperadas:
+    - pagination: Objeto de paginação (obrigatório)
+    - url_generator: Função para gerar URLs (opcional, usa url_for se não fornecida)
+    - css_classes: Classes CSS customizadas (opcional)
+    - show_per_page: Mostrar opção de itens por página (default true)
+#}
+
+{% if pagination.pages > 1 %}
+<nav class="pagination-wrapper {{ css_classes or '' }}" aria-label="Paginação">
+    <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+        {# Informações de paginação #}
+        <div class="pagination-info small text-muted">
+            <span>
+                Página <strong>{{ pagination.page }}</strong> de <strong>{{ pagination.pages }}</strong>
+                {% if pagination.total %}
+                    ({{ pagination.total }} {{ 'item' if pagination.total == 1 else 'itens' }} total)
+                {% endif %}
+            </span>
+        </div>
+        
+        {# Controles de paginação #}
+        <ul class="pagination mb-0" role="group">
+            {# Botão anterior #}
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{% if url_generator %}{{ url_generator(pagination.prev_num) }}{% else %}?page={{ pagination.prev_num }}{% endif %}" 
+                   aria-label="Página anterior"
+                   title="Página anterior">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-chevron-left"></i>
+                </span>
+            </li>
+            {% endif %}
+            
+            {# Números de página #}
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                    <li class="page-item active" aria-current="page">
+                        <span class="page-link">
+                            {{ page_num }}
+                        </span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{% if url_generator %}{{ url_generator(page_num) }}{% else %}?page={{ page_num }}{% endif %}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">…</span>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            {# Botão próximo #}
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{% if url_generator %}{{ url_generator(pagination.next_num) }}{% else %}?page={{ pagination.next_num }}{% endif %}"
+                   aria-label="Próxima página"
+                   title="Próxima página">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-chevron-right"></i>
+                </span>
+            </li>
+            {% endif %}
+        </ul>
+        
+        {# Atalhos rápidos (mobile) #}
+        <div class="pagination-quick-go d-lg-none">
+            <form method="get" class="input-group input-group-sm">
+                <input type="hidden" name="page" id="goToPage" value="">
+                <input type="number" class="form-control" placeholder="Ir para página..." 
+                       min="1" max="{{ pagination.pages }}" 
+                       onchange="document.getElementById('goToPage').value = this.value; this.form.submit();">
+                <button class="btn btn-outline-secondary btn-sm" type="submit">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    {# Rodapé com resumo #}
+    <div class="pagination-footer small text-muted mt-2">
+        <span>
+            Mostrando {% if pagination.items %}
+                {{ ((pagination.page - 1) * pagination.per_page) + 1 }} 
+                até 
+                {{ ((pagination.page - 1) * pagination.per_page) + pagination.items|length }}
+            {% else %}
+                0
+            {% endif %}
+            de {{ pagination.total or 0 }}
+        </span>
+    </div>
+</nav>
+
+<style>
+.pagination-wrapper {
+    padding: 1rem 0;
+    border-top: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef;
+    margin: 1.5rem 0;
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+}
+
+.pagination-quick-go {
+    width: 100%;
+}
+
+.pagination-quick-go .input-group {
+    max-width: 200px;
+}
+
+.pagination-footer {
+    text-align: center;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 576px) {
+    .pagination-wrapper {
+        flex-direction: column;
+        gap: 1rem !important;
+    }
+    
+    .pagination {
+        justify-content: center !important;
+    }
+    
+    .pagination-info {
+        text-align: center;
+        width: 100%;
+    }
+}
+</style>
+{% endif %}

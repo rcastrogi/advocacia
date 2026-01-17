@@ -68,51 +68,59 @@
                             <h5 class="text-muted mb-3">
                                 <i class="fas fa-map-marker-alt me-2"></i>Endereço
                             </h5>
+                            <!-- Linha 1: CEP + Endereço -->
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        {{ form.cep.label(class="form-label", for="cep") }}
+                                        <div class="input-group">
+                                            {{ form.cep(class="form-control", id="cep", placeholder="00000-000") }}
+                                            <button type="button" class="btn btn-outline-secondary d-flex align-items-center" id="searchCep" title="Buscar CEP" style="padding: 0.375rem 0.75rem;">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="mb-3">
+                                        {{ form.street.label(class="form-label", for="street") }}
+                                        {{ form.street(class="form-control", id="street") }}
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Linha 2: Número + Complemento -->
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        {{ form.number.label(class="form-label", for="number") }}
+                                        {{ form.number(class="form-control", id="number") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="mb-3">
+                                        {{ form.complement.label(class="form-label", for="complement") }}
+                                        {{ form.complement(class="form-control", id="complement", placeholder="Apto, Bloco, Sala, etc.") }}
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Linha 3: Bairro + Cidade + UF -->
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="mb-3">
-                                        {{ form.cep.label(class="form-label") }}
-                                        {{ form.cep(class="form-control") }}
+                                        {{ form.neighborhood.label(class="form-label", for="neighborhood") }}
+                                        {{ form.neighborhood(class="form-control", id="neighborhood") }}
                                     </div>
                                 </div>
-                                <div class="col-md-8">
+                                <div class="col-md-5">
                                     <div class="mb-3">
-                                        {{ form.street.label(class="form-label") }}
-                                        {{ form.street(class="form-control") }}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <div class="mb-3">
-                                        {{ form.number.label(class="form-label") }}
-                                        {{ form.number(class="form-control") }}
+                                        {{ form.city.label(class="form-label", for="city") }}
+                                        {{ form.city(class="form-control", id="city") }}
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="mb-3">
-                                        {{ form.uf.label(class="form-label") }}
-                                        {{ form.uf(class="form-select") }}
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        {{ form.city.label(class="form-label") }}
-                                        {{ form.city(class="form-control") }}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        {{ form.neighborhood.label(class="form-label") }}
-                                        {{ form.neighborhood(class="form-control") }}
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        {{ form.complement.label(class="form-label") }}
-                                        {{ form.complement(class="form-control") }}
+                                        {{ form.uf.label(class="form-label", for="uf") }}
+                                        {{ form.uf(class="form-select", id="uf") }}
                                     </div>
                                 </div>
                             </div>
@@ -388,35 +396,102 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     const cepInput = document.getElementById('cep');
+    const searchCepBtn = document.getElementById('searchCep');
+    
+    // Função de busca CEP
+    async function searchCep() {
+        if (!cepInput) return;
+        
+        const cep = cepInput.value.replace(/\D/g, '');
+        if (cep.length !== 8) {
+            cepInput.classList.add('is-invalid');
+            setTimeout(() => cepInput.classList.remove('is-invalid'), 2000);
+            return;
+        }
+        
+        // Mostrar loading
+        cepInput.classList.add('loading');
+        cepInput.disabled = true;
+        if (searchCepBtn) {
+            searchCepBtn.disabled = true;
+            searchCepBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+        
+        try {
+            const response = await fetch(`/api/cep/${cep}`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                if (data.error) {
+                    cepInput.classList.add('is-invalid');
+                    setTimeout(() => cepInput.classList.remove('is-invalid'), 2000);
+                    return;
+                }
+                
+                // Preencher campos
+                const streetField = document.getElementById('street');
+                const neighborhoodField = document.getElementById('neighborhood');
+                const cityField = document.getElementById('city');
+                const ufField = document.getElementById('uf');
+                
+                if (streetField && data.street) {
+                    streetField.value = data.street;
+                    streetField.dispatchEvent(new Event('change'));
+                }
+                if (neighborhoodField && data.neighborhood) {
+                    neighborhoodField.value = data.neighborhood;
+                    neighborhoodField.dispatchEvent(new Event('change'));
+                }
+                if (cityField && data.city) {
+                    cityField.value = data.city;
+                    cityField.dispatchEvent(new Event('change'));
+                }
+                if (ufField && data.uf) {
+                    ufField.value = data.uf;
+                    ufField.dispatchEvent(new Event('change'));
+                }
+                
+                // Feedback visual de sucesso
+                cepInput.classList.add('is-valid');
+                setTimeout(() => cepInput.classList.remove('is-valid'), 2000);
+            } else {
+                cepInput.classList.add('is-invalid');
+                setTimeout(() => cepInput.classList.remove('is-invalid'), 2000);
+            }
+        } catch (err) {
+            console.error('Erro ao buscar CEP:', err);
+            cepInput.classList.add('is-invalid');
+            setTimeout(() => cepInput.classList.remove('is-invalid'), 2000);
+        } finally {
+            cepInput.classList.remove('loading');
+            cepInput.disabled = false;
+            if (searchCepBtn) {
+                searchCepBtn.disabled = false;
+                searchCepBtn.innerHTML = '<i class="fas fa-search"></i>';
+            }
+        }
+    }
+    
     if (cepInput) {
         // Aplicar máscara de CEP
         applyMask(cepInput, maskCep);
         
-        // Busca automática de endereço
-        cepInput.addEventListener('blur', async function() {
-            const cep = this.value.replace(/\D/g, '');
-            if (cep.length === 8) {
-                try {
-                    // Usar API do backend (proxy seguro)
-                    const response = await fetch(`/api/cep/${cep}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        // Preencher campos com IDs do WTForms
-                        const streetField = document.getElementById('street');
-                        const neighborhoodField = document.getElementById('neighborhood');
-                        const cityField = document.getElementById('city');
-                        const ufField = document.getElementById('uf');
-                        
-                        if (streetField && data.street) streetField.value = data.street;
-                        if (neighborhoodField && data.neighborhood) neighborhoodField.value = data.neighborhood;
-                        if (cityField && data.city) cityField.value = data.city;
-                        if (ufField && data.uf) ufField.value = data.uf;
-                    }
-                } catch (err) {
-                    console.log('Erro ao buscar CEP:', err);
-                }
+        // Busca ao sair do campo
+        cepInput.addEventListener('blur', searchCep);
+        
+        // Busca ao pressionar Enter
+        cepInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchCep();
             }
         });
+    }
+    
+    // Busca ao clicar no botão
+    if (searchCepBtn) {
+        searchCepBtn.addEventListener('click', searchCep);
     }
     
     // === Detecção de Timezone ===

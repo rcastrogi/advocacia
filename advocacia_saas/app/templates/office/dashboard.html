@@ -21,41 +21,54 @@
 </div>
 
 <div class="container my-5 content-wrapper">
-    <!-- Quick Stats -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="dashboard-card h-100">
-                <div class="card-body text-center p-4">
-                    <div class="display-4 text-primary mb-2">
-                        <i class="fas fa-users"></i>
+    <!-- Quick Stats + Actions (inline) -->
+    <div class="row mb-3">
+        <div class="col">
+            <div class="dashboard-card">
+                <div class="card-body py-2 px-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <!-- Stats -->
+                        <div class="d-flex flex-wrap gap-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-users text-primary me-2"></i>
+                                <div>
+                                    <span class="fw-bold fs-5">{{ members|length }}</span>
+                                    <span class="text-muted small">/ {{ max_members }} membros</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock text-warning me-2"></i>
+                                <div>
+                                    <span class="fw-bold fs-5">{{ pending_invites }}</span>
+                                    <span class="text-muted small">convites pendentes</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar-alt text-success me-2"></i>
+                                <span class="text-muted small">Criado em {{ office.created_at|local_datetime('%d/%m/%Y') }}</span>
+                            </div>
+                        </div>
+                        <!-- Quick Actions -->
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="{{ url_for('office.members') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-user-plus me-1"></i>Convidar
+                            </a>
+                            {% if can_manage %}
+                            <a href="{{ url_for('office.settings') }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-cog me-1"></i>Configurar
+                            </a>
+                            {% endif %}
+                            {% if is_owner %}
+                            <a href="{{ url_for('office.transfer_ownership') }}" class="btn btn-sm btn-outline-warning">
+                                <i class="fas fa-exchange-alt me-1"></i>Transferir
+                            </a>
+                            {% else %}
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#leaveModal">
+                                <i class="fas fa-sign-out-alt me-1"></i>Sair
+                            </button>
+                            {% endif %}
+                        </div>
                     </div>
-                    <h3 class="mb-1">{{ members|length }}</h3>
-                    <p class="text-muted mb-0">Membros Ativos</p>
-                    <small class="text-muted">de {{ max_members }} permitidos</small>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="dashboard-card h-100">
-                <div class="card-body text-center p-4">
-                    <div class="display-4 text-warning mb-2">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <h3 class="mb-1">{{ pending_invites }}</h3>
-                    <p class="text-muted mb-0">Convites Pendentes</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="dashboard-card h-100">
-                <div class="card-body text-center p-4">
-                    <div class="display-4 text-success mb-2">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <h5 class="mb-1">{{ office.created_at|local_datetime('%d/%m/%Y') }}</h5>
-                    <p class="text-muted mb-0">Data de Criação</p>
                 </div>
             </div>
         </div>
@@ -65,7 +78,7 @@
     <div class="row">
         <!-- Left Column - Office Info -->
         <div class="col-lg-4 mb-4">
-            <div class="dashboard-card h-100">
+            <div class="dashboard-card">
                 <div class="card-header-custom d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="fas fa-info-circle me-2"></i>Informações
@@ -84,43 +97,49 @@
                     </div>
                     {% endif %}
                     
-                    <dl class="row mb-0">
+                    <ul class="list-unstyled mb-0 small">
                         {% if office.cnpj %}
-                        <dt class="col-5">CNPJ:</dt>
-                        <dd class="col-7">{{ office.cnpj }}</dd>
+                        <li class="mb-2 d-flex">
+                            <span class="text-muted me-2" style="min-width: 70px;">CNPJ:</span>
+                            <span class="fw-medium">{{ office.cnpj }}</span>
+                        </li>
                         {% endif %}
                         
                         {% if office.oab_number %}
-                        <dt class="col-5">OAB:</dt>
-                        <dd class="col-7">{{ office.oab_number }}</dd>
+                        <li class="mb-2 d-flex">
+                            <span class="text-muted me-2" style="min-width: 70px;">OAB:</span>
+                            <span class="fw-medium">{{ office.oab_number }}</span>
+                        </li>
                         {% endif %}
                         
                         {% if office.phone %}
-                        <dt class="col-5">Telefone:</dt>
-                        <dd class="col-7">
+                        <li class="mb-2 d-flex">
+                            <span class="text-muted me-2" style="min-width: 70px;">Telefone:</span>
                             <a href="tel:{{ office.phone }}">{{ office.phone }}</a>
-                        </dd>
+                        </li>
                         {% endif %}
                         
                         {% if office.email %}
-                        <dt class="col-5">E-mail:</dt>
-                        <dd class="col-7">
-                            <a href="mailto:{{ office.email }}">{{ office.email }}</a>
-                        </dd>
+                        <li class="mb-2 d-flex">
+                            <span class="text-muted me-2" style="min-width: 70px;">E-mail:</span>
+                            <a href="mailto:{{ office.email }}" class="text-truncate" style="max-width: 150px;" title="{{ office.email }}">{{ office.email }}</a>
+                        </li>
                         {% endif %}
                         
                         {% if office.website %}
-                        <dt class="col-5">Website:</dt>
-                        <dd class="col-7">
-                            <a href="{{ office.website }}" target="_blank">{{ office.website }}</a>
-                        </dd>
+                        <li class="mb-2 d-flex">
+                            <span class="text-muted me-2" style="min-width: 70px;">Website:</span>
+                            <a href="{{ office.website }}" target="_blank" class="text-truncate" style="max-width: 150px;" title="{{ office.website }}">{{ office.website }}</a>
+                        </li>
                         {% endif %}
                         
                         {% if office.city %}
-                        <dt class="col-5">Localização:</dt>
-                        <dd class="col-7">{{ office.city }}/{{ office.uf }}</dd>
+                        <li class="d-flex">
+                            <span class="text-muted me-2" style="min-width: 70px;">Local:</span>
+                            <span class="fw-medium">{{ office.city }}/{{ office.uf }}</span>
+                        </li>
                         {% endif %}
-                    </dl>
+                    </ul>
                     
                     {% if not office.cnpj and not office.phone and not office.email %}
                     <div class="text-center text-muted">
@@ -198,44 +217,6 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Quick Actions -->
-            <div class="dashboard-card mt-4">
-                <div class="card-header-custom">
-                    <h5 class="mb-0">
-                        <i class="fas fa-bolt me-2"></i>Ações Rápidas
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-2">
-                            <a href="{{ url_for('office.members') }}" class="btn btn-outline-primary w-100">
-                                <i class="fas fa-user-plus me-2"></i>Convidar Membro
-                            </a>
-                        </div>
-                        {% if can_manage %}
-                        <div class="col-md-4 mb-2">
-                            <a href="{{ url_for('office.settings') }}" class="btn btn-outline-secondary w-100">
-                                <i class="fas fa-cog me-2"></i>Configurações
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if is_owner %}
-                        <div class="col-md-4 mb-2">
-                            <a href="{{ url_for('office.transfer_ownership') }}" class="btn btn-outline-warning w-100">
-                                <i class="fas fa-exchange-alt me-2"></i>Transferir Propriedade
-                            </a>
-                        </div>
-                        {% else %}
-                        <div class="col-md-4 mb-2">
-                            <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#leaveModal">
-                                <i class="fas fa-sign-out-alt me-2"></i>Sair do Escritório
-                            </button>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>

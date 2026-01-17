@@ -12,12 +12,13 @@ from app import db
 from app.deadlines import bp
 from app.models import Client, Deadline
 from app.utils.email import send_email
+from app.utils.pagination import PaginationHelper
 
 
 @bp.route("/")
 @login_required
 def index():
-    """Lista todos os prazos"""
+    """Lista todos os prazos com paginação"""
     # Filtros
     status = request.args.get("status", "pending")
     deadline_type = request.args.get("type")
@@ -31,7 +32,16 @@ def index():
         query = query.filter_by(deadline_type=deadline_type)
 
     # Ordenar por data
-    deadlines = query.order_by(Deadline.deadline_date.asc()).all()
+    query = query.order_by(Deadline.deadline_date.asc())
+    
+    # Paginação
+    pagination = PaginationHelper(
+        query=query,
+        per_page=20,
+        filters={"status": status, "type": deadline_type}
+    )
+    
+    deadlines = pagination.items
 
     # Separar por urgência
     urgent = [d for d in deadlines if d.is_urgent()]
@@ -42,6 +52,7 @@ def index():
         urgent_deadlines=urgent,
         upcoming_deadlines=upcoming,
         all_deadlines=deadlines,
+        pagination=pagination.to_dict(),
     )
 
 

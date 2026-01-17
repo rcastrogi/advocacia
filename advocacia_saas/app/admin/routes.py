@@ -260,6 +260,7 @@ def _get_dashboard_alerts():
 def users_list():
     """Lista todos os usuários com métricas detalhadas"""
     from sqlalchemy.orm import joinedload
+    from app.utils.pagination import PaginationHelper
 
     try:
         admin_logger.info(f"Admin {current_user.email} acessando lista de usuários")
@@ -270,8 +271,7 @@ def users_list():
         user_type_filter = request.args.get("user_type", "all")
         sort_by = request.args.get("sort", "created_at")
         sort_order = request.args.get("order", "desc")
-        page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 20, type=int)
+        per_page = 20
 
         admin_logger.debug(
             f"Filtros aplicados - search: '{search}', status: {status_filter}, type: {user_type_filter}"
@@ -314,15 +314,25 @@ def users_list():
         else:
             query = query.order_by(sort_column.asc())
 
-        # Paginação
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        # Paginação Universal
+        pagination = PaginationHelper(
+            query=query,
+            per_page=per_page,
+            filters={
+                'search': search,
+                'status': status_filter,
+                'user_type': user_type_filter,
+                'sort': sort_by,
+                'order': sort_order
+            }
+        )
         users = pagination.items
 
         # Calcular métricas em bulk (evita N+1 queries)
         users_with_metrics = _get_bulk_user_metrics(users)
 
         admin_logger.info(
-            f"Lista de usuários carregada: {len(users)} usuários encontrados (página {page})"
+            f"Lista de usuários carregada: {len(users)} usuários encontrados (página {pagination.page})"
         )
 
         return render_template(
@@ -5359,17 +5369,18 @@ def petition_model_save_as_example(model_id):
 @login_required
 def audit_logs():
     """Visualizar logs de auditoria do sistema"""
+    from app.utils.pagination import PaginationHelper
+    
     _require_admin()
 
     # Parâmetros de filtro
-    page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 50, type=int)
     entity_type = request.args.get("entity_type")
     entity_id = request.args.get("entity_id", type=int)
     user_id = request.args.get("user_id", type=int)
     action = request.args.get("action")
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
+    per_page = 50
 
     # Construir query
     query = AuditLog.query
@@ -5393,9 +5404,18 @@ def audit_logs():
 
         query = query.filter(AuditLog.timestamp <= datetime.fromisoformat(date_to))
 
-    # Paginação
-    logs = query.order_by(AuditLog.timestamp.desc()).paginate(
-        page=page, per_page=per_page, error_out=False
+    # Paginação Universal
+    logs = PaginationHelper(
+        query=query.order_by(AuditLog.timestamp.desc()),
+        per_page=per_page,
+        filters={
+            'entity_type': entity_type,
+            'entity_id': entity_id,
+            'user_id': user_id,
+            'action': action,
+            'date_from': date_from,
+            'date_to': date_to
+        }
     )
 
     # Estatísticas

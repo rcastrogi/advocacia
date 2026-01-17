@@ -128,6 +128,13 @@
                 </div>
             </div>
             {% endfor %}
+            
+            <!-- Paginação -->
+            {% if pagination %}
+            <div class="col-12">
+                {% include 'components/pagination.html' %}
+            </div>
+            {% endif %}
         {% else %}
             <div class="col-12">
                 <div class="card shadow-sm">

@@ -1076,11 +1076,11 @@ def generate_model():
 @login_required
 def saved_list():
     """Lista todas as petições salvas do usuário."""
+    from app.utils.pagination import PaginationHelper
 
     # Filtros
     status_filter = request.args.get("status", "all")
     search = request.args.get("search", "").strip()
-    page = request.args.get("page", 1, type=int)
     per_page = 20
 
     # Query base
@@ -1105,8 +1105,12 @@ def saved_list():
     # Ordenar por mais recentes
     query = query.order_by(SavedPetition.updated_at.desc())
 
-    # Paginação
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    # Paginação Universal
+    pagination = PaginationHelper(
+        query=query,
+        per_page=per_page,
+        filters={'status': status_filter, 'search': search}
+    )
     petitions = pagination.items
 
     # Estatísticas

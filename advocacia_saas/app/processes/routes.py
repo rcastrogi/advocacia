@@ -10,6 +10,7 @@ from app.models import Client, Process, SavedPetition
 from app.processes import bp
 from app.processes.forms import ProcessForm
 from app.processes.notifications import get_unread_notifications
+from app.utils.pagination import PaginationHelper
 
 
 @bp.route("/")
@@ -95,8 +96,6 @@ def dashboard():
 @lawyer_required
 def list_processes():
     """Lista todos os processos."""
-
-    page = request.args.get("page", 1, type=int)
     per_page = 20
 
     # Filtros
@@ -116,14 +115,20 @@ def list_processes():
             | (Process.defendant.contains(search))
         )
 
-    processes = query.order_by(Process.updated_at.desc()).paginate(
-        page=page, per_page=per_page, error_out=False
+    query = query.order_by(Process.updated_at.desc())
+    
+    # Paginação padronizada
+    pagination = PaginationHelper(
+        query=query,
+        per_page=per_page,
+        filters={"status": status_filter, "search": search}
     )
 
     return render_template(
         "processes/list.html",
         title="Lista de Processos",
-        processes=processes,
+        processes=pagination.paginated,
+        pagination=pagination.to_dict(),
         status_filter=status_filter,
         search=search,
     )

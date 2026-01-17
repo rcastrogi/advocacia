@@ -131,41 +131,9 @@
         </div>
     </div>
 
-    {# Pagination #}
-    {% if processes.has_prev or processes.has_next %}
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center">
-            {% if processes.has_prev %}
-            <li class="page-item">
-                <a class="page-link" href="{{ url_for('processes.list_processes', page=processes.prev_num, status=status_filter, search=search) }}">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-            </li>
-            {% endif %}
-
-            {% for page_num in processes.iter_pages() %}
-                {% if page_num %}
-                    <li class="page-item {{ 'active' if page_num == processes.page else '' }}">
-                        <a class="page-link" href="{{ url_for('processes.list_processes', page=page_num, status=status_filter, search=search) }}">
-                            {{ page_num }}
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">…</span>
-                    </li>
-                {% endif %}
-            {% endfor %}
-
-            {% if processes.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="{{ url_for('processes.list_processes', page=processes.next_num, status=status_filter, search=search) }}">
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
+    {# Paginação #}
+    {% if pagination %}
+        {% include 'components/pagination.html' %}
     {% endif %}
     {% else %}
     <div class="card">
