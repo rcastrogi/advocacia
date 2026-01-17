@@ -350,6 +350,11 @@
     </style>
     
     {% block styles %}{% endblock %}
+    
+    <!-- Calculadora Modal CSS (para usuários logados) -->
+    {% if current_user.is_authenticated %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator-modal.css') }}">
+    {% endif %}
 </head>
 <body x-data="petitioApp" @keydown.escape="closeModals()" class="{% block body_class %}{% if current_user.is_authenticated %}page-gray-bg{% endif %}{% endblock %}">
     <!-- Loading Spinner Global -->
@@ -621,6 +626,18 @@
                 </ul>
                 
                 <ul class="navbar-nav align-items-center">
+                    <!-- Botão Calculadora Modal -->
+                    <li class="nav-item me-2">
+                        <button type="button" 
+                                class="btn btn-link nav-icon-btn p-0" 
+                                id="calculatorNavBtn"
+                                onclick="abrirCalculadoraModal()"
+                                title="Calculadora Jurídica (Ctrl+Shift+C)"
+                                aria-label="Abrir calculadora jurídica">
+                            <i class="fas fa-calculator"></i>
+                        </button>
+                    </li>
+                    
                     <!-- Dropdown de Notificações -->
                     <li class="nav-item me-2">
                         <div class="notifications-dropdown">
@@ -1385,6 +1402,119 @@
     <!-- Main Application Scripts -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/accessibility.js') }}"></script>
+    
+    <!-- Calculadora Modal (para usuários logados) -->
+    {% if current_user.is_authenticated %}
+    <!-- Modal Overlay -->
+    <div id="calculatorModalOverlay" class="calculator-modal-overlay"></div>
+    
+    <!-- Modal da Calculadora -->
+    <div id="calculatorModal" class="calculator-modal">
+        <div class="calculator-modal-header">
+            <h5><i class="fas fa-calculator"></i> Calculadora Jurídica</h5>
+            <button type="button" id="calculatorModalClose" class="btn-close" aria-label="Fechar"></button>
+        </div>
+        <div class="calculator-modal-body">
+            <!-- Tabs -->
+            <div class="calc-tabs">
+                <button type="button" class="calc-tab active" data-tab="completo">Completo</button>
+                <button type="button" class="calc-tab" data-tab="correcao">Correção</button>
+                <button type="button" class="calc-tab" data-tab="juros">Juros</button>
+                <button type="button" class="calc-tab" data-tab="honorarios">Honorários</button>
+            </div>
+            
+            <!-- Formulário -->
+            <form id="calcModalForm" data-no-loader="true">
+                <div id="camposCalculo">
+                    <div class="form-group">
+                        <label class="form-label">Valor (R$)</label>
+                        <input type="text" class="form-control" id="calcModalValor" placeholder="0,00" data-money="true" inputmode="numeric">
+                    </div>
+                    
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Data Inicial</label>
+                                <input type="date" class="form-control" id="calcModalDataInicial">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Data Final</label>
+                                <input type="date" class="form-control" id="calcModalDataFinal">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="indiceGroup">
+                        <label class="form-label">Índice de Correção</label>
+                        <select class="form-select" id="calcModalIndice">
+                            <option value="IPCA" selected>IPCA</option>
+                            <option value="INPC">INPC</option>
+                            <option value="IGPM">IGP-M</option>
+                            <option value="TR">TR</option>
+                            <option value="SELIC">SELIC</option>
+                        </select>
+                    </div>
+                    
+                    <div id="jurosGroup" style="display: none;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" id="calcModalJuros">
+                            <label class="form-check-label" for="calcModalJuros">Aplicar Juros</label>
+                        </div>
+                        <select class="form-select form-select-sm" id="calcModalTipoJuros">
+                            <option value="simples_1">Juros Simples 1% a.m.</option>
+                            <option value="simples_0.5">Juros Simples 0,5% a.m.</option>
+                            <option value="composto_1">Juros Compostos 1% a.m.</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Campos Honorários (oculto por padrão) -->
+                <div id="honorariosFields" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Valor da Causa (R$)</label>
+                        <input type="text" class="form-control" id="calcModalValorCausa" placeholder="0,00" data-money="true" inputmode="numeric">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Percentual (%)</label>
+                        <input type="number" class="form-control" id="calcModalPercentual" value="20" min="1" max="100">
+                    </div>
+                </div>
+                
+                <!-- Toggle Índices -->
+                <button type="button" id="indicesToggle" class="indices-toggle">
+                    <span><i class="fas fa-chart-line me-1"></i> Ver Índices Atuais</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <!-- Painel de Índices -->
+                <div id="indicesPanel" class="indices-panel">
+                    <div class="indice-item"><span class="indice-nome">Carregando...</span></div>
+                </div>
+                
+                <!-- Botão Calcular -->
+                <button type="submit" id="btnCalcularModal" class="btn-calcular">
+                    <i class="fas fa-calculator me-1"></i> Calcular
+                </button>
+            </form>
+            
+            <!-- Resultado -->
+            <div id="resultadoModal" class="resultado-box">
+                <div id="resultadoValorModal" class="resultado-valor"></div>
+                <div id="resultadoDetalhesModal" class="resultado-detalhes"></div>
+                <button type="button" id="btnCopiarModal" class="btn-copiar">
+                    <i class="fas fa-copy me-1"></i> Copiar Resultado
+                </button>
+            </div>
+            
+            <!-- Erro -->
+            <div id="erroModal" class="erro-box"></div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/calculator-modal.js') }}"></script>
+    {% endif %}
     
     <!-- Modal de Confirmação Global -->
     <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true" data-bs-backdrop="static">
