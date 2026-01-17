@@ -3,6 +3,15 @@
  * Todas as notificações agora passam pelo NotificationSystem
  */
 
+// Função auxiliar segura para mostrar notificação
+function safeShowNotification(message, type) {
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(message, type);
+    } else {
+        console.warn('[NOTIFICATION] showNotification not available:', message);
+    }
+}
+
 // Interceptador global de fetch para tratamento de erros
 if (typeof fetch !== 'undefined') {
     const originalFetch = window.fetch;
@@ -22,20 +31,20 @@ if (typeof fetch !== 'undefined') {
                             const errorData = JSON.parse(text);
                             if (errorData.message) {
                                 console.error('[FETCH-ERROR-MSG]:', errorData.message);
-                                window.showNotification(errorData.message, 'error');
+                                safeShowNotification(errorData.message, 'error');
                             } else if (errorData.error) {
                                 console.error('[FETCH-ERROR-MSG]:', errorData.error);
-                                window.showNotification(errorData.error, 'error');
+                                safeShowNotification(errorData.error, 'error');
                             }
                         } catch (e) {
-                            // Se não for JSON, mostrar mensagem genérica
+                            // Se não for JSON, não mostrar notificação (provavelmente é página HTML 404)
                             const errorMsg = `Erro ${response.status}: ${response.statusText}`;
                             console.error('[FETCH-ERROR-GENERIC]:', errorMsg);
-                            window.showNotification(errorMsg, 'error');
+                            // Não mostrar popup para erros que retornam HTML
                         }
                     }).catch(err => {
                         console.error('[FETCH-ERROR-PARSE]:', err);
-                        window.showNotification(`Erro ${response.status}: ${response.statusText}`, 'error');
+                        // Não mostrar popup para erros de parse
                     });
                 }
                 return response;
@@ -43,7 +52,7 @@ if (typeof fetch !== 'undefined') {
             .catch(error => {
                 // Erro de rede
                 console.error('[FETCH-NETWORK-ERROR]:', error.message || error);
-                window.showNotification('Erro de conexão. Verifique sua internet.', 'error');
+                safeShowNotification('Erro de conexão. Verifique sua internet.', 'error');
                 throw error;
             });
     };

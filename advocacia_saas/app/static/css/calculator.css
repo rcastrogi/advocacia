@@ -1,0 +1,748 @@
+/**
+ * Calculadora Jurídica - Estilos
+ * Visual moderno e compacto
+ */
+
+/* ============================================
+   RESET/FIX GLOBAL PARA CONTRASTE
+   ============================================ */
+
+/* Forçar cor do botão primário na calculadora */
+.container-fluid .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-color: #667eea !important;
+    color: white !important;
+}
+
+.container-fluid .btn-primary:hover,
+.container-fluid .btn-primary:focus {
+    background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%) !important;
+    border-color: #5a6fd6 !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* Garantir texto legível em TODOS os inputs e selects da calculadora */
+.container-fluid .form-control,
+.container-fluid .form-select,
+.container-fluid input[type="text"],
+.container-fluid input[type="number"],
+.container-fluid input[type="date"],
+.container-fluid select {
+    color: #212529 !important;
+    background-color: #fff !important;
+}
+
+.container-fluid .form-control::placeholder {
+    color: #6c757d !important;
+}
+
+.container-fluid .form-select option {
+    color: #212529 !important;
+    background-color: #fff !important;
+}
+
+/* Labels devem ser sempre escuros */
+.container-fluid .form-label {
+    color: #212529 !important;
+}
+
+/* ============================================
+   BOTÃO FLUTUANTE
+   ============================================ */
+
+.calculator-floating-btn {
+    position: fixed;
+    top: calc(50% + 100px);
+    right: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    text-decoration: none;
+    border: none;
+    padding: 15px 8px;
+    cursor: pointer;
+    z-index: 9997;
+    border-radius: 4px 0 0 4px;
+    box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.calculator-floating-btn:hover {
+    background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%) !important;
+    padding-right: 12px;
+    color: white !important;
+}
+
+.calculator-floating-btn i {
+    display: block;
+    transform: rotate(90deg);
+    margin-bottom: 5px;
+    color: white !important;
+}
+
+/* Mobile: esconder texto, só ícone */
+@media (max-width: 576px) {
+    .calculator-floating-btn span {
+        display: none;
+    }
+}
+
+/* ============================================
+   HEADER COMPACTO
+   ============================================ */
+
+.calculator-icon-sm {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    flex-shrink: 0;
+}
+
+.calculator-icon-sm i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+/* ============================================
+   TABS DE NAVEGAÇÃO
+   ============================================ */
+
+.calculator-nav {
+    border-bottom: 2px solid #e9ecef;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.calculator-nav .nav-link {
+    background: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    border-bottom: none !important;
+    border-radius: 8px 8px 0 0;
+    padding: 0.75rem 1rem !important;
+    font-weight: 600;
+    color: #495057 !important;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    margin-bottom: -2px;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    font-size: 0.9rem !important;
+}
+
+.calculator-nav .nav-link:hover {
+    background: #e9ecef !important;
+    color: #667eea !important;
+}
+
+.calculator-nav .nav-link.active {
+    background: white !important;
+    color: #667eea !important;
+    border-color: #dee2e6 !important;
+    border-bottom: 2px solid white !important;
+}
+
+.calculator-nav .nav-link i {
+    font-size: 1rem;
+    color: inherit !important;
+}
+
+@media (max-width: 768px) {
+    .calculator-nav .nav-link span {
+        display: none;
+    }
+    
+    .calculator-nav .nav-link {
+        padding: 0.75rem;
+    }
+}
+
+/* ============================================
+   CARDS DE CÁLCULO
+   ============================================ */
+
+.calculator-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.calculator-card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 1.5rem 2rem;
+    color: white;
+}
+
+.calculator-card-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem;
+}
+
+.calculator-card-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+.calculator-card-body {
+    padding: 2rem;
+}
+
+/* ============================================
+   INPUTS
+   ============================================ */
+
+.calculator-input-group {
+    position: relative;
+}
+
+.calculator-input-group .form-control,
+.calculator-input-group .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1rem 1rem 1rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    height: auto;
+    background-color: #fff;
+    color: #212529;
+}
+
+/* Fix para form-floating com select - label não sobrepor texto */
+.calculator-input-group.form-floating > .form-select {
+    padding-top: 1.625rem;
+    padding-bottom: 0.625rem;
+}
+
+.calculator-input-group.form-floating > label {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    color: #667eea;
+    opacity: 1;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    background: linear-gradient(180deg, #fff 50%, transparent 50%);
+}
+
+/* Garantir contraste no select */
+.calculator-input-group .form-select option {
+    color: #212529;
+    background-color: #fff;
+}
+
+.calculator-input-group .form-control:focus,
+.calculator-input-group .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+}
+
+.calculator-input-group label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.calculator-input-group label i {
+    color: #667eea;
+}
+
+/* Switch customizado */
+.calculator-switch {
+    padding-left: 3rem;
+}
+
+.calculator-switch .form-check-input {
+    width: 3rem;
+    height: 1.5rem;
+    margin-left: -3rem;
+    border-radius: 2rem;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.calculator-switch .form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.calculator-switch .form-check-label {
+    padding-top: 0.15rem;
+    color: #495057;
+    font-weight: 500;
+}
+
+.calculator-switch .form-check-label i {
+    color: #667eea;
+}
+
+/* ============================================
+   BOTÃO PRINCIPAL
+   ============================================ */
+
+.calculator-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+}
+
+.calculator-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
+}
+
+.calculator-btn:active {
+    transform: translateY(0);
+}
+
+.calculator-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ============================================
+   RESULTADOS
+   ============================================ */
+
+.calculator-result {
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.result-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    color: #28a745;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.result-header i {
+    font-size: 1.25rem;
+}
+
+.result-main {
+    text-align: center;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.result-valor-final .label {
+    display: block;
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.result-valor-final .valor {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Breakdown */
+.result-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.breakdown-item:hover {
+    transform: translateX(5px);
+}
+
+.breakdown-item.highlight-success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-left: 4px solid #28a745;
+}
+
+.breakdown-item.highlight-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+    border-left: 4px solid #ffc107;
+}
+
+.breakdown-item.total {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.breakdown-item.total .breakdown-label,
+.breakdown-item.total .breakdown-value {
+    color: white;
+}
+
+.breakdown-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(102, 126, 234, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667eea;
+    flex-shrink: 0;
+}
+
+.breakdown-item.total .breakdown-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.breakdown-content {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.breakdown-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.breakdown-value {
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+/* Meta info */
+.result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed rgba(102, 126, 234, 0.3);
+    margin-bottom: 1rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.meta-item i {
+    color: #667eea;
+}
+
+.meta-item.highlight {
+    background: #e8f4fd;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    color: #0c5460;
+}
+
+/* Actions */
+.result-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.result-actions .btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+/* Error */
+.result-error {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border-radius: 12px;
+    color: #721c24;
+    font-weight: 500;
+}
+
+.result-error i {
+    font-size: 1.25rem;
+}
+
+/* Honorários range */
+.honorarios-range {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.range-min, .range-max {
+    text-align: center;
+}
+
+.range-min .label, .range-max .label {
+    display: block;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.range-min .value, .range-max .value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.range-arrow {
+    color: #667eea;
+    font-size: 1.5rem;
+}
+
+/* ============================================
+   CARD INFORMATIVO
+   ============================================ */
+
+.calculator-info-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.calculator-info-card h5 {
+    color: #667eea;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #e9ecef;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.info-list li:last-child {
+    border-bottom: none;
+}
+
+.info-list li strong {
+    color: #1a1a2e;
+}
+
+/* ============================================
+   TOAST
+   ============================================ */
+
+.calculator-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 9999;
+}
+
+.calculator-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ============================================
+   RESPONSIVO
+   ============================================ */
+
+@media (max-width: 576px) {
+    .calculator-title {
+        font-size: 1.75rem;
+    }
+    
+    .calculator-card-body {
+        padding: 1.25rem;
+    }
+    
+    .result-valor-final .valor {
+        font-size: 1.75rem;
+    }
+    
+    .breakdown-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .honorarios-range {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .range-arrow {
+        transform: rotate(90deg);
+    }
+}
+
+/* ============================================
+   PRINT
+   ============================================ */
+
+@media print {
+    .calculator-nav,
+    .calculator-btn,
+    .result-actions,
+    .calculator-info-card {
+        display: none !important;
+    }
+    
+    .calculator-result {
+        box-shadow: none;
+        border: 2px solid #000;
+    }
+    
+    .calculator-card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}
+
+/* ============================================
+   CARD DE RESULTADO LATERAL
+   ============================================ */
+
+#resultadoCard {
+    transition: box-shadow 0.3s ease;
+}
+
+#resultadoCard.has-result {
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3) !important;
+}
+
+.resultado-valor-final {
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#resultadoDetalhes .text-success {
+    color: #198754 !important;
+}
+
+#resultadoDetalhes .text-warning {
+    color: #fd7e14 !important;
+}
+
+/* Garantir boa visualização no mobile */
+@media (max-width: 991.98px) {
+    #resultadoCard {
+        position: relative !important;
+        top: auto !important;
+        margin-top: 1.5rem;
+    }
+}
+
+/* ============================================
+   RESULTADO INLINE (abaixo do botão)
+   ============================================ */
+
+.resultado-inline {
+    animation: fadeInUp 0.3s ease;
+}
+
+.resultado-inline .resultado-card {
+    background: linear-gradient(135deg, rgba(102, 51, 153, 0.1) 0%, rgba(102, 51, 153, 0.05) 100%);
+}
+
+.resultado-inline .display-6 {
+    font-size: 1.75rem;
+}
+
+.resultado-inline .detalhes-calculo {
+    background: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+}
+
+.resultado-inline .detalhes-calculo .d-flex {
+    padding: 0.25rem 0;
+}
+
+.resultado-inline .detalhes-calculo hr {
+    margin: 0.5rem 0;
+}

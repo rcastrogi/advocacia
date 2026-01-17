@@ -129,8 +129,8 @@ class UserOnboarding(db.Model):
 
 
 @api_bp.route("/onboarding/status", methods=["GET"])
-@login_required
 @limiter.limit(AUTH_API_LIMIT)
+@login_required
 def get_onboarding_status():
     """Obter status de onboarding do usuário"""
     onboarding = UserOnboarding.get_or_create(current_user.id)
@@ -139,8 +139,8 @@ def get_onboarding_status():
 
 
 @api_bp.route("/onboarding/tour/<tour_name>/complete", methods=["POST"])
-@login_required
 @limiter.limit(AUTH_API_LIMIT)
+@login_required
 def mark_tour_complete(tour_name):
     """Marcar um tour como completado"""
     onboarding = UserOnboarding.get_or_create(current_user.id)
