@@ -189,14 +189,21 @@ def create_app(config_class=Config):
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Por favor, faça login para acessar esta página."
     login_manager.login_message_category = "info"
-    
+
     # Handler para requisições não autenticadas em APIs (retornar JSON ao invés de redirect)
     @login_manager.unauthorized_handler
     def unauthorized_callback():
-        from flask import request, jsonify, redirect, url_for
-        if request.path.startswith('/api/') or request.is_json or request.headers.get('Accept') == 'application/json':
-            return jsonify({"success": False, "message": "Autenticação necessária"}), 401
-        return redirect(url_for('auth.login'))
+        from flask import jsonify, redirect, request, url_for
+
+        if (
+            request.path.startswith("/api/")
+            or request.is_json
+            or request.headers.get("Accept") == "application/json"
+        ):
+            return jsonify(
+                {"success": False, "message": "Autenticação necessária"}
+            ), 401
+        return redirect(url_for("auth.login"))
 
     # Import all models to ensure they're registered with SQLAlchemy
     # This MUST be done before any db.create_all() calls
