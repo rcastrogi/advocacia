@@ -33,14 +33,12 @@ def index():
 
     # Ordenar por data
     query = query.order_by(Deadline.deadline_date.asc())
-    
+
     # Paginação
     pagination = PaginationHelper(
-        query=query,
-        per_page=20,
-        filters={"status": status, "type": deadline_type}
+        query=query, per_page=20, filters={"status": status, "type": deadline_type}
     )
-    
+
     deadlines = pagination.items
 
     # Separar por urgência

@@ -20,22 +20,20 @@ from app.utils.pagination import PaginationHelper
 @subscription_required
 def index():
     search = request.args.get("search", "")
-    
+
     # Filtrar por escritório se o usuário pertence a um
-    query = filter_by_office_member(Client, "lawyer_id").order_by(Client.created_at.desc())
-    
-    # Paginação padronizada
-    pagination = PaginationHelper(
-        query=query,
-        per_page=20,
-        filters={"search": search}
+    query = filter_by_office_member(Client, "lawyer_id").order_by(
+        Client.created_at.desc()
     )
-    
+
+    # Paginação padronizada
+    pagination = PaginationHelper(query=query, per_page=20, filters={"search": search})
+
     return render_template(
-        "clients/index.html", 
-        title="Clientes", 
+        "clients/index.html",
+        title="Clientes",
         clients=pagination.paginated,
-        pagination=pagination.to_dict()
+        pagination=pagination.to_dict(),
     )
 
 

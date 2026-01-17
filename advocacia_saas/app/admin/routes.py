@@ -260,6 +260,7 @@ def _get_dashboard_alerts():
 def users_list():
     """Lista todos os usuários com métricas detalhadas"""
     from sqlalchemy.orm import joinedload
+
     from app.utils.pagination import PaginationHelper
 
     try:
@@ -319,12 +320,12 @@ def users_list():
             query=query,
             per_page=per_page,
             filters={
-                'search': search,
-                'status': status_filter,
-                'user_type': user_type_filter,
-                'sort': sort_by,
-                'order': sort_order
-            }
+                "search": search,
+                "status": status_filter,
+                "user_type": user_type_filter,
+                "sort": sort_by,
+                "order": sort_order,
+            },
         )
         users = pagination.items
 
@@ -5370,7 +5371,7 @@ def petition_model_save_as_example(model_id):
 def audit_logs():
     """Visualizar logs de auditoria do sistema"""
     from app.utils.pagination import PaginationHelper
-    
+
     _require_admin()
 
     # Parâmetros de filtro
@@ -5409,13 +5410,13 @@ def audit_logs():
         query=query.order_by(AuditLog.timestamp.desc()),
         per_page=per_page,
         filters={
-            'entity_type': entity_type,
-            'entity_id': entity_id,
-            'user_id': user_id,
-            'action': action,
-            'date_from': date_from,
-            'date_to': date_to
-        }
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "user_id": user_id,
+            "action": action,
+            "date_from": date_from,
+            "date_to": date_to,
+        },
     )
 
     # Estatísticas

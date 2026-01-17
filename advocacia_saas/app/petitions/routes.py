@@ -55,11 +55,22 @@ from app.schemas import (
     GenerateModelSchema,
     PetitionSaveSchema,
 )
+from app.services.pdf_converter import CONVERTIBLE_EXTENSIONS, convert_to_pdf
 from app.utils.error_messages import format_error_for_user
-from app.services.pdf_converter import convert_to_pdf, CONVERTIBLE_EXTENSIONS
 
 # Extensões permitidas - agora incluindo mais formatos que podem ser convertidos
-ATTACHMENT_EXTENSIONS = {"pdf", "doc", "docx", "png", "jpg", "jpeg", "gif", "txt", "xls", "xlsx"}
+ATTACHMENT_EXTENSIONS = {
+    "pdf",
+    "doc",
+    "docx",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "txt",
+    "xls",
+    "xlsx",
+}
 MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024  # 20 MB por arquivo
 MAX_ATTACHMENT_COUNT = None  # Ilimitado
 MAX_TOTAL_SIZE_PER_PETITION = 50 * 1024 * 1024  # 50 MB total por petição
@@ -487,11 +498,11 @@ def _render_pdf(text: str, title: str) -> BytesIO:
 def _extract_attachments(files, convert_to_pdf_enabled=True):
     """
     Extrai e processa anexos, convertendo para PDF quando possível.
-    
+
     Args:
         files: Lista de arquivos do request
         convert_to_pdf_enabled: Se True, converte arquivos para PDF
-        
+
     Returns:
         list: Lista de dicionários com filename e data
     """
@@ -526,20 +537,24 @@ def _extract_attachments(files, convert_to_pdf_enabled=True):
 
         # Ler dados do arquivo
         file_data = file_storage.read()
-        
+
         # Converter para PDF se habilitado e não for PDF
         if convert_to_pdf_enabled and ext != "pdf":
             try:
                 converted_data, new_filename = convert_to_pdf(file_data, filename)
                 # Verificar se conversão foi bem sucedida (arquivo mudou para .pdf)
-                if new_filename.endswith('.pdf'):
-                    current_app.logger.info(f"Arquivo {filename} convertido para {new_filename}")
+                if new_filename.endswith(".pdf"):
+                    current_app.logger.info(
+                        f"Arquivo {filename} convertido para {new_filename}"
+                    )
                     file_data = converted_data
                     filename = new_filename
             except Exception as e:
-                current_app.logger.warning(f"Falha ao converter {filename} para PDF: {e}")
+                current_app.logger.warning(
+                    f"Falha ao converter {filename} para PDF: {e}"
+                )
                 # Mantém arquivo original se conversão falhar
-        
+
         attachments.append({"filename": filename, "data": file_data})
         total_size += len(file_data)
 
@@ -637,7 +652,7 @@ def dynamic_form(slug):
     for section_data in sections:
         sections_with_linked.append(section_data)
         section_id = section_data["section"]["id"]
-        
+
         # Verificar se alguma seção vinculada deve ser inserida após esta
         for linked_id, parent_id in linked_sections_map.items():
             if parent_id == section_id:
@@ -1109,7 +1124,7 @@ def saved_list():
     pagination = PaginationHelper(
         query=query,
         per_page=per_page,
-        filters={'status': status_filter, 'search': search}
+        filters={"status": status_filter, "search": search},
     )
     petitions = pagination.items
 

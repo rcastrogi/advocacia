@@ -250,7 +250,7 @@ def create_app(config_class=Config):
     from app.api.notifications import notifications_api_bp
 
     app.register_blueprint(notifications_api_bp)
-    
+
     # Importar e registrar rotas de onboarding (estão no mesmo blueprint api_bp)
     # As rotas de onboarding em app/api/onboarding.py estão integradas ao bp
 

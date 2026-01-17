@@ -116,12 +116,12 @@ def list_processes():
         )
 
     query = query.order_by(Process.updated_at.desc())
-    
+
     # Paginação padronizada
     pagination = PaginationHelper(
         query=query,
         per_page=per_page,
-        filters={"status": status_filter, "search": search}
+        filters={"status": status_filter, "search": search},
     )
 
     return render_template(

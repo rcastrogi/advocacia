@@ -71,16 +71,18 @@ def index():
         )
 
     query = query.order_by(Document.created_at.desc())
-    
+
     # Paginação
     pagination = PaginationHelper(
         query=query,
         per_page=20,
-        filters={"client": client_id, "type": doc_type, "search": search}
+        filters={"client": client_id, "type": doc_type, "search": search},
     )
 
     # Buscar clientes para filtro
-    clients = Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+    clients = (
+        Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+    )
 
     return render_template(
         "documents/index.html",
@@ -132,7 +134,9 @@ def upload():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         unique_filename = f"{timestamp}_{filename}"
 
-        upload_folder = os.path.join(current_app.root_path, "static", "uploads", "documents")
+        upload_folder = os.path.join(
+            current_app.root_path, "static", "uploads", "documents"
+        )
         os.makedirs(upload_folder, exist_ok=True)
 
         filepath = os.path.join(upload_folder, unique_filename)
@@ -167,7 +171,9 @@ def upload():
         return redirect(url_for("documents.view", doc_id=document.id))
 
     # GET - Mostrar formulário
-    clients = Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+    clients = (
+        Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+    )
 
     return render_template("documents/upload.html", clients=clients)
 
@@ -176,7 +182,9 @@ def upload():
 @login_required
 def view(doc_id):
     """Visualizar documento"""
-    document = Document.query.filter_by(id=doc_id, user_id=current_user.id).first_or_404()
+    document = Document.query.filter_by(
+        id=doc_id, user_id=current_user.id
+    ).first_or_404()
 
     # Marcar como acessado
     document.mark_accessed()
@@ -204,7 +212,9 @@ def view(doc_id):
 @login_required
 def edit(doc_id):
     """Editar metadados do documento"""
-    document = Document.query.filter_by(id=doc_id, user_id=current_user.id).first_or_404()
+    document = Document.query.filter_by(
+        id=doc_id, user_id=current_user.id
+    ).first_or_404()
 
     if request.method == "POST":
         document.title = request.form.get("title")
@@ -221,7 +231,9 @@ def edit(doc_id):
         flash("Documento atualizado com sucesso!", "success")
         return redirect(url_for("documents.view", doc_id=document.id))
 
-    clients = Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+    clients = (
+        Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+    )
 
     return render_template("documents/edit.html", document=document, clients=clients)
 
@@ -230,7 +242,9 @@ def edit(doc_id):
 @login_required
 def download(doc_id):
     """Download de documento"""
-    document = Document.query.filter_by(id=doc_id, user_id=current_user.id).first_or_404()
+    document = Document.query.filter_by(
+        id=doc_id, user_id=current_user.id
+    ).first_or_404()
 
     if not document.file_path:
         abort(404)
@@ -238,7 +252,9 @@ def download(doc_id):
     # Marcar como acessado
     document.mark_accessed()
 
-    directory = os.path.dirname(os.path.join(current_app.root_path, "static", document.file_path))
+    directory = os.path.dirname(
+        os.path.join(current_app.root_path, "static", document.file_path)
+    )
     filename = os.path.basename(document.file_path)
 
     return send_from_directory(
@@ -250,7 +266,9 @@ def download(doc_id):
 @login_required
 def new_version(doc_id):
     """Upload de nova versão do documento"""
-    document = Document.query.filter_by(id=doc_id, user_id=current_user.id).first_or_404()
+    document = Document.query.filter_by(
+        id=doc_id, user_id=current_user.id
+    ).first_or_404()
 
     if "file" not in request.files:
         flash("Nenhum arquivo selecionado", "danger")
@@ -267,7 +285,9 @@ def new_version(doc_id):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     unique_filename = f"{timestamp}_{filename}"
 
-    upload_folder = os.path.join(current_app.root_path, "static", "uploads", "documents")
+    upload_folder = os.path.join(
+        current_app.root_path, "static", "uploads", "documents"
+    )
     filepath = os.path.join(upload_folder, unique_filename)
     file.save(filepath)
 
@@ -286,7 +306,9 @@ def new_version(doc_id):
 @login_required
 def archive(doc_id):
     """Arquivar documento"""
-    document = Document.query.filter_by(id=doc_id, user_id=current_user.id).first_or_404()
+    document = Document.query.filter_by(
+        id=doc_id, user_id=current_user.id
+    ).first_or_404()
     document.archive()
 
     flash("Documento arquivado com sucesso!", "success")
@@ -297,7 +319,9 @@ def archive(doc_id):
 @login_required
 def delete(doc_id):
     """Deletar documento (soft delete)"""
-    document = Document.query.filter_by(id=doc_id, user_id=current_user.id).first_or_404()
+    document = Document.query.filter_by(
+        id=doc_id, user_id=current_user.id
+    ).first_or_404()
     document.delete_document()
 
     flash("Documento excluído com sucesso!", "success")
@@ -308,15 +332,21 @@ def delete(doc_id):
 @login_required
 def by_client(client_id):
     """Listar documentos de um cliente específico"""
-    client = Client.query.filter_by(id=client_id, user_id=current_user.id).first_or_404()
+    client = Client.query.filter_by(
+        id=client_id, user_id=current_user.id
+    ).first_or_404()
 
     documents = (
-        Document.query.filter_by(user_id=current_user.id, client_id=client_id, status="active")
+        Document.query.filter_by(
+            user_id=current_user.id, client_id=client_id, status="active"
+        )
         .order_by(Document.created_at.desc())
         .all()
     )
 
-    return render_template("documents/by_client.html", client=client, documents=documents)
+    return render_template(
+        "documents/by_client.html", client=client, documents=documents
+    )
 
 
 @bp.route("/api/search")
