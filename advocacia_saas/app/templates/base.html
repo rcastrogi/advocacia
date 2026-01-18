@@ -441,7 +441,9 @@
                 <li><kbd>Alt + 1</kbd> - Página inicial</li>
                 <li><kbd>Alt + 2</kbd> - Dashboard</li>
                 <li><kbd>Alt + 3</kbd> - Clientes</li>
+                <li><kbd>Alt + A</kbd> - Acessibilidade</li>
                 <li><kbd>Alt + H</kbd> - Ajuda</li>
+                <li><kbd>Ctrl + K</kbd> - Busca global</li>
                 <li><kbd>Tab</kbd> - Navegar</li>
                 <li><kbd>Esc</kbd> - Fechar</li>
             </ul>
@@ -457,12 +459,22 @@
             const toggle = document.getElementById('accessibilityToggle');
             const bar = document.getElementById('accessibilityBar');
             
+            // Função para abrir/fechar a barra
+            function toggleAccessibilityBar() {
+                if (!bar || !toggle) return;
+                const isOpen = bar.classList.toggle('open');
+                toggle.setAttribute('aria-expanded', isOpen);
+                toggle.setAttribute('aria-label', isOpen ? 'Fechar barra de acessibilidade' : 'Abrir barra de acessibilidade');
+                
+                // Focar no primeiro botão quando abrir
+                if (isOpen) {
+                    const firstButton = bar.querySelector('button');
+                    if (firstButton) firstButton.focus();
+                }
+            }
+            
             if (toggle && bar) {
-                toggle.addEventListener('click', function() {
-                    const isOpen = bar.classList.toggle('open');
-                    toggle.setAttribute('aria-expanded', isOpen);
-                    toggle.setAttribute('aria-label', isOpen ? 'Fechar barra de acessibilidade' : 'Abrir barra de acessibilidade');
-                });
+                toggle.addEventListener('click', toggleAccessibilityBar);
                 
                 // Fechar ao clicar fora
                 document.addEventListener('click', function(e) {
@@ -472,6 +484,71 @@
                     }
                 });
             }
+            
+            // Atalho de teclado: Alt+A para acessibilidade
+            document.addEventListener('keydown', function(e) {
+                // Ignorar se estiver em input, textarea ou contenteditable
+                const activeEl = document.activeElement;
+                const isEditing = activeEl && (
+                    activeEl.tagName === 'INPUT' || 
+                    activeEl.tagName === 'TEXTAREA' || 
+                    activeEl.isContentEditable
+                );
+                
+                // Esc fecha a barra se estiver aberta (funciona mesmo editando)
+                if (e.key === 'Escape' && bar && bar.classList.contains('open')) {
+                    bar.classList.remove('open');
+                    toggle.setAttribute('aria-expanded', 'false');
+                    toggle.focus();
+                    return;
+                }
+                
+                // Não processar atalhos Alt se estiver editando
+                if (isEditing) return;
+                
+                // Alt+A - Toggle Acessibilidade
+                if (e.altKey && e.key.toLowerCase() === 'a') {
+                    e.preventDefault();
+                    toggleAccessibilityBar();
+                    return;
+                }
+                
+                // Alt+1 - Página inicial
+                if (e.altKey && e.key === '1') {
+                    e.preventDefault();
+                    window.location.href = '{{ url_for("main.index") }}';
+                    return;
+                }
+                
+                // Alt+2 - Dashboard
+                if (e.altKey && e.key === '2') {
+                    e.preventDefault();
+                    {% if current_user.is_authenticated %}
+                    window.location.href = '{{ url_for("main.dashboard") }}';
+                    {% else %}
+                    window.location.href = '{{ url_for("auth.login") }}';
+                    {% endif %}
+                    return;
+                }
+                
+                // Alt+3 - Clientes
+                if (e.altKey && e.key === '3') {
+                    e.preventDefault();
+                    {% if current_user.is_authenticated %}
+                    window.location.href = '{{ url_for("clients.index") }}';
+                    {% else %}
+                    window.location.href = '{{ url_for("auth.login") }}';
+                    {% endif %}
+                    return;
+                }
+                
+                // Alt+H - Ajuda
+                if (e.altKey && e.key.toLowerCase() === 'h') {
+                    e.preventDefault();
+                    window.location.href = '{{ url_for("main.help_page") }}';
+                    return;
+                }
+            });
         });
     </script>
     

@@ -69,9 +69,25 @@ def filter_by_office_member(model_class, field_name="lawyer_id"):
 
         # Use:
         clients = filter_by_office_member(Client)
+    
+    Nota: Para modelos que têm office_id (como Client), também considera
+    registros vinculados diretamente ao escritório.
     """
+    from app import db
+    
     user_ids = get_office_user_ids()
     field = getattr(model_class, field_name)
+    
+    # Verificar se o modelo tem office_id (ex: Client)
+    if hasattr(model_class, 'office_id') and current_user.office_id:
+        # Incluir registros do escritório OU do advogado
+        return model_class.query.filter(
+            db.or_(
+                model_class.office_id == current_user.office_id,
+                field.in_(user_ids)
+            )
+        )
+    
     return model_class.query.filter(field.in_(user_ids))
 
 
@@ -97,7 +113,13 @@ def can_access_record(record, owner_field="lawyer_id"):
     if record_owner_id == current_user.id:
         return True
 
-    # Se são do mesmo escritório
+    # Se o registro tem office_id e é do mesmo escritório do usuário
+    if current_user.office_id and hasattr(record, 'office_id'):
+        record_office_id = getattr(record, 'office_id', None)
+        if record_office_id and record_office_id == current_user.office_id:
+            return True
+
+    # Se são do mesmo escritório (via owner)
     if current_user.office_id:
         from app.models import User
 

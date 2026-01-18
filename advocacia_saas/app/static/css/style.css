@@ -43,6 +43,14 @@ html {
 
 /* ===== Typography - Cormorant Garamond + Inter ===== */
 
+/* Fix para círculos não ficarem ovais (aspect-ratio 1:1) */
+.rounded-circle {
+    aspect-ratio: 1 / 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 16px;

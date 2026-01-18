@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from flask import abort, flash, redirect, render_template, request, url_for
@@ -9,9 +10,66 @@ from app.clients import bp
 from app.clients.forms import ClientForm
 from app.decorators import lawyer_required
 from app.models import Client, Dependent, Estado, User
-from app.office.utils import can_access_record, filter_by_office_member
+from app.office.utils import can_access_record, filter_by_office_member, get_office_user_ids
 from app.utils.audit import AuditManager
 from app.utils.pagination import PaginationHelper
+
+
+def sanitize_cpf_cnpj(value: str) -> str:
+    """Remove caracteres não numéricos do CPF/CNPJ para comparação."""
+    if not value:
+        return ""
+    return re.sub(r"[^0-9]", "", value)
+
+
+def check_duplicate_cpf_cnpj(cpf_cnpj: str, exclude_client_id: int = None) -> Client | None:
+    """
+    Verifica se já existe um cliente com o mesmo CPF/CNPJ no escopo do escritório.
+    
+    Prioridade de escopo:
+    1. Se usuário pertence a um escritório, busca por office_id
+    2. Senão, busca por lawyer_id (advogado individual)
+    
+    Args:
+        cpf_cnpj: CPF ou CNPJ a verificar
+        exclude_client_id: ID do cliente a excluir da busca (para edição)
+    
+    Returns:
+        Client existente se encontrado, None caso contrário
+    """
+    if not cpf_cnpj:
+        return None
+    
+    sanitized = sanitize_cpf_cnpj(cpf_cnpj)
+    if len(sanitized) < 11:  # CPF mínimo tem 11 dígitos
+        return None
+    
+    # Determinar escopo: escritório ou advogado individual
+    if current_user.office_id:
+        # Buscar por office_id (prioridade) ou por advogados do escritório (fallback)
+        office_user_ids = get_office_user_ids()
+        query = Client.query.filter(
+            db.or_(
+                Client.office_id == current_user.office_id,
+                Client.lawyer_id.in_(office_user_ids)
+            )
+        )
+    else:
+        # Advogado individual: buscar apenas seus próprios clientes
+        query = Client.query.filter(Client.lawyer_id == current_user.id)
+    
+    # Excluir o próprio cliente na edição
+    if exclude_client_id:
+        query = query.filter(Client.id != exclude_client_id)
+    
+    # Buscar clientes com CPF/CNPJ similar (comparando apenas números)
+    existing_clients = query.all()
+    
+    for client in existing_clients:
+        if sanitize_cpf_cnpj(client.cpf_cnpj) == sanitized:
+            return client
+    
+    return None
 
 
 @bp.route("/")
@@ -48,7 +106,18 @@ def new():
     form.uf.choices = [("", "Selecione...")] + [(e.sigla, e.nome) for e in estados]
 
     if form.validate_on_submit():
+        # Verificar duplicidade de CPF/CNPJ
+        existing_client = check_duplicate_cpf_cnpj(form.cpf_cnpj.data)
+        if existing_client:
+            flash(
+                f"Já existe um cliente cadastrado com este CPF/CNPJ: {existing_client.full_name}. "
+                "Verifique os dados ou acesse o cadastro existente.",
+                "warning"
+            )
+            return render_template("clients/form.html", title="Novo cliente", form=form)
+        
         client = Client(
+            office_id=current_user.office_id,  # Vincula ao escritório (pode ser None para advogado individual)
             lawyer_id=current_user.id,
             full_name=form.full_name.data,
             rg=form.rg.data,
@@ -151,6 +220,22 @@ def edit(id):
     form.uf.choices = [("", "Selecione...")] + [(e.sigla, e.nome) for e in estados]
 
     if form.validate_on_submit():
+        # Verificar duplicidade de CPF/CNPJ (excluindo o próprio cliente)
+        if form.cpf_cnpj.data != client.cpf_cnpj:
+            existing_client = check_duplicate_cpf_cnpj(form.cpf_cnpj.data, exclude_client_id=client.id)
+            if existing_client:
+                flash(
+                    f"Já existe outro cliente cadastrado com este CPF/CNPJ: {existing_client.full_name}. "
+                    "Verifique os dados.",
+                    "warning"
+                )
+                return render_template(
+                    "clients/form.html",
+                    title=f"Editar: {client.full_name}",
+                    form=form,
+                    client=client,
+                )
+        
         # Capturar valores antigos para auditoria
         old_values = {
             "full_name": client.full_name,

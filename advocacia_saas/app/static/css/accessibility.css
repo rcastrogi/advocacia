@@ -88,45 +88,709 @@ textarea:focus-visible {
     color: #000000 !important;
 }
 
-/* Variáveis específicas para navbar em alto contraste */
-.high-contrast .navbar {
-    --text-color: #ffffff !important;
-    --title-color: #ffffff !important;
-    --subtitle-color: #ffffff !important;
-}
-
-/* Navbar em modo contraste - fundo preto, texto branco */
+/* ============================================
+   NAVBAR - ALTO CONTRASTE
+   Fundo PRETO, texto BRANCO, hover AMARELO
+   ============================================ */
 body.high-contrast .navbar,
 .high-contrast .navbar {
     background: #000000 !important;
-    color: #ffffff !important;
+    border-bottom: 3px solid #ffff00 !important;
 }
 
-body.high-contrast .navbar[style],
-.high-contrast .navbar[style] {
-    background: #000000 !important;
+/* Todos os textos e links dentro do navbar */
+body.high-contrast .navbar *,
+.high-contrast .navbar * {
+    color: #ffffff !important;
 }
 
 body.high-contrast .navbar a,
 body.high-contrast .navbar .nav-link,
 body.high-contrast .navbar .navbar-brand,
-body.high-contrast .navbar-brand,
-body.high-contrast a.navbar-brand,
+body.high-contrast .navbar span,
+body.high-contrast .navbar .dropdown-toggle,
 .high-contrast .navbar a,
 .high-contrast .navbar .nav-link,
 .high-contrast .navbar .navbar-brand,
-.high-contrast .navbar-brand,
-.high-contrast a.navbar-brand {
+.high-contrast .navbar span,
+.high-contrast .navbar .dropdown-toggle {
     color: #ffffff !important;
     background: transparent !important;
 }
 
+/* Hover em links do navbar - amarelo */
 body.high-contrast .navbar a:hover,
 body.high-contrast .navbar .nav-link:hover,
+body.high-contrast .navbar .dropdown-toggle:hover,
 .high-contrast .navbar a:hover,
-.high-contrast .navbar .nav-link:hover {
+.high-contrast .navbar .nav-link:hover,
+.high-contrast .navbar .dropdown-toggle:hover {
     color: #ffff00 !important;
     background: transparent !important;
+}
+
+/* Ícones no navbar - BRANCOS */
+body.high-contrast .navbar i,
+body.high-contrast .navbar .fas,
+body.high-contrast .navbar .far,
+body.high-contrast .navbar .fa,
+body.high-contrast .navbar svg,
+.high-contrast .navbar i,
+.high-contrast .navbar .fas,
+.high-contrast .navbar .far,
+.high-contrast .navbar .fa,
+.high-contrast .navbar svg {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+}
+
+body.high-contrast .navbar i:hover,
+body.high-contrast .navbar .fas:hover,
+.high-contrast .navbar i:hover,
+.high-contrast .navbar .fas:hover {
+    color: #ffff00 !important;
+}
+
+/* Botões no navbar */
+body.high-contrast .navbar .btn,
+body.high-contrast .navbar button,
+body.high-contrast .navbar .nav-icon-btn,
+.high-contrast .navbar .btn,
+.high-contrast .navbar button,
+.high-contrast .navbar .nav-icon-btn {
+    color: #ffffff !important;
+    background: transparent !important;
+    border-color: #ffffff !important;
+}
+
+body.high-contrast .navbar .btn:hover,
+body.high-contrast .navbar button:hover,
+body.high-contrast .navbar .nav-icon-btn:hover,
+.high-contrast .navbar .btn:hover,
+.high-contrast .navbar button:hover,
+.high-contrast .navbar .nav-icon-btn:hover {
+    color: #ffff00 !important;
+    background: #333333 !important;
+}
+
+/* Badges no navbar */
+body.high-contrast .navbar .badge,
+body.high-contrast .navbar .notifications-badge,
+.high-contrast .navbar .badge,
+.high-contrast .navbar .notifications-badge {
+    background: #ffff00 !important;
+    color: #000000 !important;
+}
+
+/* Dropdown menu no navbar */
+body.high-contrast .navbar .dropdown-menu,
+.high-contrast .navbar .dropdown-menu {
+    background: #000000 !important;
+    border: 2px solid #ffffff !important;
+}
+
+body.high-contrast .navbar .dropdown-item,
+.high-contrast .navbar .dropdown-item {
+    color: #ffffff !important;
+    background: transparent !important;
+}
+
+body.high-contrast .navbar .dropdown-item:hover,
+.high-contrast .navbar .dropdown-item:hover {
+    color: #000000 !important;
+    background: #ffff00 !important;
+}
+
+/* Notifications dropdown */
+body.high-contrast .notifications-dropdown .notifications-menu,
+.high-contrast .notifications-dropdown .notifications-menu {
+    background: #000000 !important;
+    border: 2px solid #ffffff !important;
+}
+
+body.high-contrast .notifications-dropdown .notification-item,
+.high-contrast .notifications-dropdown .notification-item {
+    color: #ffffff !important;
+    border-bottom-color: #333333 !important;
+}
+
+body.high-contrast .notifications-dropdown .notification-item:hover,
+.high-contrast .notifications-dropdown .notification-item:hover {
+    background: #333333 !important;
+}
+
+/* ============================================
+   ÍCONES GERAIS - ALTO CONTRASTE
+   Fundo branco = ícone preto
+   Fundo preto = ícone branco
+   ============================================ */
+
+/* Ícones em fundo branco/claro - devem ser PRETOS */
+body.high-contrast i,
+body.high-contrast .fas,
+body.high-contrast .far,
+body.high-contrast .fa,
+.high-contrast i,
+.high-contrast .fas,
+.high-contrast .far,
+.high-contrast .fa {
+    color: #000000 !important;
+}
+
+/* Ícones dentro de cards/sections com fundo branco */
+body.high-contrast .card i,
+body.high-contrast .section i,
+body.high-contrast main i,
+.high-contrast .card i,
+.high-contrast .section i,
+.high-contrast main i {
+    color: #000000 !important;
+}
+
+/* Ícones coloridos (type-client, type-process, etc) */
+body.high-contrast .global-search-item-icon,
+.high-contrast .global-search-item-icon {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+body.high-contrast .global-search-item-icon i,
+.high-contrast .global-search-item-icon i {
+    color: #ffffff !important;
+}
+
+/* ============================================
+   SIDEBAR E MENUS LATERAIS - ALTO CONTRASTE
+   ============================================ */
+body.high-contrast .sidebar,
+body.high-contrast aside,
+.high-contrast .sidebar,
+.high-contrast aside {
+    background: #ffffff !important;
+    border: 2px solid #000000 !important;
+}
+
+body.high-contrast .sidebar a,
+body.high-contrast .sidebar .nav-link,
+.high-contrast .sidebar a,
+.high-contrast .sidebar .nav-link {
+    color: #000000 !important;
+    border: 1px solid transparent !important;
+}
+
+body.high-contrast .sidebar a:hover,
+body.high-contrast .sidebar .nav-link:hover,
+.high-contrast .sidebar a:hover,
+.high-contrast .sidebar .nav-link:hover {
+    background: #ffff00 !important;
+    color: #000000 !important;
+}
+
+body.high-contrast .sidebar a.active,
+body.high-contrast .sidebar .nav-link.active,
+.high-contrast .sidebar a.active,
+.high-contrast .sidebar .nav-link.active {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+/* ============================================
+   FOOTER - ALTO CONTRASTE  
+   Fundo PRETO, texto BRANCO
+   ============================================ */
+body.high-contrast .footer,
+body.high-contrast footer,
+.high-contrast .footer,
+.high-contrast footer {
+    background: #000000 !important;
+    border-top: 3px solid #ffff00 !important;
+}
+
+body.high-contrast .footer *,
+body.high-contrast footer *,
+.high-contrast .footer *,
+.high-contrast footer * {
+    color: #ffffff !important;
+}
+
+body.high-contrast .footer a:hover,
+body.high-contrast footer a:hover,
+.high-contrast .footer a:hover,
+.high-contrast footer a:hover {
+    color: #ffff00 !important;
+    background: transparent !important;
+}
+
+body.high-contrast .footer i,
+body.high-contrast footer i,
+.high-contrast .footer i,
+.high-contrast footer i {
+    color: #ffffff !important;
+}
+
+/* ============================================
+   BOTÕES - ALTO CONTRASTE
+   Fundo PRETO, texto BRANCO, borda visível
+   ============================================ */
+body.high-contrast .btn,
+body.high-contrast button:not(.accessibility-bar button):not(.navbar button),
+.high-contrast .btn,
+.high-contrast button:not(.accessibility-bar button):not(.navbar button) {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #000000 !important;
+}
+
+body.high-contrast .btn:hover,
+body.high-contrast button:not(.accessibility-bar button):not(.navbar button):hover,
+.high-contrast .btn:hover,
+.high-contrast button:not(.accessibility-bar button):not(.navbar button):hover {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+/* Botões de outline */
+body.high-contrast .btn-outline-primary,
+body.high-contrast .btn-outline-secondary,
+body.high-contrast .btn-outline-success,
+body.high-contrast .btn-outline-danger,
+body.high-contrast .btn-outline-warning,
+body.high-contrast .btn-outline-info,
+.high-contrast .btn-outline-primary,
+.high-contrast .btn-outline-secondary,
+.high-contrast .btn-outline-success,
+.high-contrast .btn-outline-danger,
+.high-contrast .btn-outline-warning,
+.high-contrast .btn-outline-info {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+body.high-contrast .btn-outline-primary:hover,
+body.high-contrast .btn-outline-secondary:hover,
+.high-contrast .btn-outline-primary:hover,
+.high-contrast .btn-outline-secondary:hover {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+/* Botões com ícones */
+body.high-contrast .btn i,
+body.high-contrast button i,
+.high-contrast .btn i,
+.high-contrast button i {
+    color: inherit !important;
+}
+
+/* ============================================
+   CARDS - ALTO CONTRASTE
+   Fundo BRANCO, borda PRETA grossa
+   ============================================ */
+body.high-contrast .card,
+body.high-contrast .form-card,
+body.high-contrast .stat-card,
+body.high-contrast .roadmap-item-card,
+.high-contrast .card,
+.high-contrast .form-card,
+.high-contrast .stat-card,
+.high-contrast .roadmap-item-card {
+    background: #ffffff !important;
+    border: 3px solid #000000 !important;
+    box-shadow: none !important;
+}
+
+body.high-contrast .card *,
+body.high-contrast .form-card *,
+.high-contrast .card *,
+.high-contrast .form-card * {
+    color: #000000 !important;
+}
+
+body.high-contrast .card-header,
+.high-contrast .card-header {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border-bottom: 2px solid #000000 !important;
+}
+
+body.high-contrast .card-header *,
+.high-contrast .card-header * {
+    color: #ffffff !important;
+}
+
+body.high-contrast .card-footer,
+.high-contrast .card-footer {
+    background: #f0f0f0 !important;
+    border-top: 2px solid #000000 !important;
+}
+
+/* ============================================
+   TABELAS - ALTO CONTRASTE
+   ============================================ */
+body.high-contrast table,
+body.high-contrast .table,
+.high-contrast table,
+.high-contrast .table {
+    border: 2px solid #000000 !important;
+}
+
+body.high-contrast th,
+body.high-contrast .table th,
+.high-contrast th,
+.high-contrast .table th {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 1px solid #ffffff !important;
+}
+
+body.high-contrast td,
+body.high-contrast .table td,
+.high-contrast td,
+.high-contrast .table td {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+}
+
+body.high-contrast tr:hover td,
+body.high-contrast .table-hover tr:hover td,
+.high-contrast tr:hover td,
+.high-contrast .table-hover tr:hover td {
+    background: #ffff00 !important;
+    color: #000000 !important;
+}
+
+/* ============================================
+   FORMULÁRIOS - ALTO CONTRASTE
+   ============================================ */
+body.high-contrast input,
+body.high-contrast select,
+body.high-contrast textarea,
+body.high-contrast .form-control,
+body.high-contrast .form-select,
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea,
+.high-contrast .form-control,
+.high-contrast .form-select {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+body.high-contrast input:focus,
+body.high-contrast select:focus,
+body.high-contrast textarea:focus,
+.high-contrast input:focus,
+.high-contrast select:focus,
+.high-contrast textarea:focus {
+    outline: 3px solid #ffff00 !important;
+    border-color: #000000 !important;
+}
+
+body.high-contrast label,
+body.high-contrast .form-label,
+.high-contrast label,
+.high-contrast .form-label {
+    color: #000000 !important;
+    font-weight: 600 !important;
+}
+
+/* ============================================
+   MODAL DE BUSCA GLOBAL - ALTO CONTRASTE
+   ============================================ */
+body.high-contrast .global-search-modal .global-search-container,
+.high-contrast .global-search-modal .global-search-container {
+    background: #ffffff !important;
+    border: 3px solid #000000 !important;
+}
+
+body.high-contrast .global-search-input,
+.high-contrast .global-search-input {
+    color: #000000 !important;
+}
+
+body.high-contrast .global-search-item,
+.high-contrast .global-search-item {
+    border: 1px solid #cccccc !important;
+}
+
+body.high-contrast .global-search-item:hover,
+body.high-contrast .global-search-item.selected,
+.high-contrast .global-search-item:hover,
+.high-contrast .global-search-item.selected {
+    background: #ffff00 !important;
+    border-color: #000000 !important;
+}
+
+body.high-contrast .global-search-item-title,
+body.high-contrast .global-search-item-subtitle,
+.high-contrast .global-search-item-title,
+.high-contrast .global-search-item-subtitle {
+    color: #000000 !important;
+}
+
+body.high-contrast .global-search-group-title,
+.high-contrast .global-search-group-title {
+    color: #000000 !important;
+    font-weight: bold !important;
+}
+
+/* ============================================
+   CALCULADORA MODAL - ALTO CONTRASTE
+   ============================================ */
+body.high-contrast .calculator-modal,
+.high-contrast .calculator-modal {
+    background: #ffffff !important;
+    border: 3px solid #000000 !important;
+}
+
+body.high-contrast .calculator-modal-header,
+.high-contrast .calculator-modal-header {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+body.high-contrast .calculator-modal-header *,
+.high-contrast .calculator-modal-header * {
+    color: #ffffff !important;
+}
+
+body.high-contrast .calculator-modal-body,
+.high-contrast .calculator-modal-body {
+    background: #ffffff !important;
+}
+
+body.high-contrast .calculator-modal-body *,
+.high-contrast .calculator-modal-body * {
+    color: #000000 !important;
+}
+
+body.high-contrast .calc-tab,
+.high-contrast .calc-tab {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+body.high-contrast .calc-tab.active,
+.high-contrast .calc-tab.active {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+/* ============================================
+   ALERTS E BADGES - ALTO CONTRASTE
+   ============================================ */
+body.high-contrast .alert,
+.high-contrast .alert {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+body.high-contrast .badge,
+.high-contrast .badge {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 1px solid #000000 !important;
+}
+
+body.high-contrast .badge.bg-success,
+body.high-contrast .badge.bg-warning,
+body.high-contrast .badge.bg-danger,
+body.high-contrast .badge.bg-info,
+.high-contrast .badge.bg-success,
+.high-contrast .badge.bg-warning,
+.high-contrast .badge.bg-danger,
+.high-contrast .badge.bg-info {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+/* ============================================
+   BREADCRUMB - ALTO CONTRASTE
+   ============================================ */
+body.high-contrast .breadcrumb-custom,
+.high-contrast .breadcrumb-custom {
+    background: #000000 !important;
+}
+
+body.high-contrast .breadcrumb-custom *,
+.high-contrast .breadcrumb-custom * {
+    color: #ffffff !important;
+}
+
+body.high-contrast .breadcrumb-item a:hover,
+.high-contrast .breadcrumb-item a:hover {
+    color: #ffff00 !important;
+}
+
+/* ============================================
+   ÍCONES CIRCULARES EM CARDS - ALTO CONTRASTE
+   Cards com ícones bg-opacity-10 ficam invisíveis
+   ============================================ */
+
+/* Círculos com bg-opacity (peticionador, etc) */
+body.high-contrast .rounded-circle.bg-primary,
+body.high-contrast .rounded-circle.bg-secondary,
+body.high-contrast .rounded-circle.bg-success,
+body.high-contrast .rounded-circle.bg-danger,
+body.high-contrast .rounded-circle.bg-warning,
+body.high-contrast .rounded-circle.bg-info,
+body.high-contrast .rounded-circle[class*="bg-"],
+.high-contrast .rounded-circle.bg-primary,
+.high-contrast .rounded-circle.bg-secondary,
+.high-contrast .rounded-circle.bg-success,
+.high-contrast .rounded-circle.bg-danger,
+.high-contrast .rounded-circle.bg-warning,
+.high-contrast .rounded-circle.bg-info,
+.high-contrast .rounded-circle[class*="bg-"] {
+    background: #ffffff !important;
+    border: 2px solid #000000 !important;
+    /* Garantir que seja círculo e não oval */
+    aspect-ratio: 1 / 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Remover bg-opacity no alto contraste */
+body.high-contrast .bg-opacity-10,
+body.high-contrast .bg-opacity-25,
+body.high-contrast .bg-opacity-50,
+body.high-contrast .bg-opacity-75,
+.high-contrast .bg-opacity-10,
+.high-contrast .bg-opacity-25,
+.high-contrast .bg-opacity-50,
+.high-contrast .bg-opacity-75 {
+    --bs-bg-opacity: 1 !important;
+    background-color: #ffffff !important;
+    border: 2px solid #000000 !important;
+}
+
+/* Ícones dentro de círculos */
+body.high-contrast .rounded-circle i,
+body.high-contrast .rounded-circle .fas,
+body.high-contrast .rounded-circle .far,
+body.high-contrast .rounded-circle .fab,
+body.high-contrast [class*="bg-opacity"] i,
+.high-contrast .rounded-circle i,
+.high-contrast .rounded-circle .fas,
+.high-contrast .rounded-circle .far,
+.high-contrast .rounded-circle .fab,
+.high-contrast [class*="bg-opacity"] i {
+    color: #000000 !important;
+}
+
+/* Ícones com text-primary, text-secondary, etc */
+body.high-contrast .text-primary,
+body.high-contrast .text-secondary,
+body.high-contrast .text-success,
+body.high-contrast .text-danger,
+body.high-contrast .text-warning,
+body.high-contrast .text-info,
+.high-contrast .text-primary,
+.high-contrast .text-secondary,
+.high-contrast .text-success,
+.high-contrast .text-danger,
+.high-contrast .text-warning,
+.high-contrast .text-info {
+    color: #000000 !important;
+}
+
+/* ============================================
+   BOTÕES btn-primary e btn-secondary - ALTO CONTRASTE
+   Garantir que texto seja visível
+   ============================================ */
+body.high-contrast .btn-primary,
+body.high-contrast .btn-secondary,
+body.high-contrast .btn-success,
+body.high-contrast .btn-danger,
+body.high-contrast .btn-warning,
+body.high-contrast .btn-info,
+.high-contrast .btn-primary,
+.high-contrast .btn-secondary,
+.high-contrast .btn-success,
+.high-contrast .btn-danger,
+.high-contrast .btn-warning,
+.high-contrast .btn-info {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #ffffff !important;
+}
+
+body.high-contrast .btn-primary:hover,
+body.high-contrast .btn-secondary:hover,
+body.high-contrast .btn-success:hover,
+body.high-contrast .btn-danger:hover,
+.high-contrast .btn-primary:hover,
+.high-contrast .btn-secondary:hover,
+.high-contrast .btn-success:hover,
+.high-contrast .btn-danger:hover {
+    background: #ffff00 !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+/* Ícones dentro de botões */
+body.high-contrast .btn-primary i,
+body.high-contrast .btn-secondary i,
+body.high-contrast .btn-success i,
+body.high-contrast .btn-danger i,
+.high-contrast .btn-primary i,
+.high-contrast .btn-secondary i,
+.high-contrast .btn-success i,
+.high-contrast .btn-danger i {
+    color: inherit !important;
+}
+
+/* Botões btn-outline - ALTO CONTRASTE */
+body.high-contrast .btn-outline-primary,
+body.high-contrast .btn-outline-secondary,
+body.high-contrast .btn-outline-success,
+body.high-contrast .btn-outline-danger,
+body.high-contrast .btn-outline-warning,
+body.high-contrast .btn-outline-info,
+.high-contrast .btn-outline-primary,
+.high-contrast .btn-outline-secondary,
+.high-contrast .btn-outline-success,
+.high-contrast .btn-outline-danger,
+.high-contrast .btn-outline-warning,
+.high-contrast .btn-outline-info {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+body.high-contrast .btn-outline-primary:hover,
+body.high-contrast .btn-outline-secondary:hover,
+body.high-contrast .btn-outline-success:hover,
+body.high-contrast .btn-outline-danger:hover,
+.high-contrast .btn-outline-primary:hover,
+.high-contrast .btn-outline-secondary:hover,
+.high-contrast .btn-outline-success:hover,
+.high-contrast .btn-outline-danger:hover {
+    background: #ffff00 !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+/* ============================================
+   CARDS HOVER - ALTO CONTRASTE
+   ============================================ */
+body.high-contrast .hover-shadow:hover,
+body.high-contrast .card:hover,
+.high-contrast .hover-shadow:hover,
+.high-contrast .card:hover {
+    box-shadow: 0 0 0 3px #ffff00 !important;
+}
+
+body.high-contrast .border,
+.high-contrast .border {
+    border-color: #000000 !important;
 }
 
 /* Barra de acessibilidade em modo contraste */
@@ -194,77 +858,25 @@ body.high-contrast .navbar .nav-link:hover,
 }
 
 .high-contrast p,
-.high-contrast span,
-.high-contrast div,
+.high-contrast span:not(.navbar span),
+.high-contrast div:not(.navbar div),
 .high-contrast li,
 .high-contrast small,
-.high-contrast .text-muted,
-.high-contrast .badge {
+.high-contrast .text-muted {
     color: #000000 !important;
 }
 
-/* Links */
-.high-contrast a {
+/* Links em área de conteúdo (não navbar/footer) */
+.high-contrast main a,
+.high-contrast .content a,
+.high-contrast section:not(.navbar):not(.footer) a {
     color: #0000ee !important;
     text-decoration: underline !important;
 }
 
-.high-contrast a:visited {
-    color: #551a8b !important;
-}
-
-.high-contrast a:hover {
-    color: #0000ee !important;
-    text-decoration: underline !important;
+.high-contrast main a:hover,
+.high-contrast .content a:hover {
     background: #ffff00 !important;
-}
-
-/* Botões gerais */
-.high-contrast button:not(.accessibility-bar button),
-.high-contrast .btn:not(.accessibility-bar button) {
-    background: #000000 !important;
-    color: #ffffff !important;
-    border: 2px solid #000000 !important;
-}
-
-.high-contrast button:not(.accessibility-bar button):hover,
-.high-contrast .btn:not(.accessibility-bar button):hover {
-    background: #ffffff !important;
-    color: #000000 !important;
-    border: 2px solid #000000 !important;
-}
-
-/* Cards e formulários */
-.high-contrast .card,
-.high-contrast .form-card {
-    background: #ffffff !important;
-    border: 3px solid #000000 !important;
-    color: #000000 !important;
-}
-
-/* Inputs */
-.high-contrast input,
-.high-contrast select,
-.high-contrast textarea {
-    background: #ffffff !important;
-    color: #000000 !important;
-    border: 2px solid #000000 !important;
-}
-
-/* Footer */
-.high-contrast .footer {
-    background: #000000 !important;
-    color: #ffffff !important;
-}
-
-.high-contrast .footer a,
-.high-contrast .footer p,
-.high-contrast .footer h5 {
-    color: #ffffff !important;
-}
-
-.high-contrast .footer a:hover {
-    color: #ffff00 !important;
 }
 
 /* Imagens */

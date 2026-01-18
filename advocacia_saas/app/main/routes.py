@@ -289,6 +289,34 @@ def lgpd_info():
     return render_template("lgpd_info.html", title="Conformidade LGPD")
 
 
+@bp.route("/ajuda")
+def help_page():
+    """Página de FAQ e Ajuda - Segmentada por tipo de usuário"""
+    # Determinar tipo de usuário para personalizar conteúdo
+    user_context = {
+        "is_authenticated": False,
+        "user_type": None,
+        "is_master": False,
+        "has_office": False,
+        "is_office_owner": False,
+    }
+    
+    if current_user.is_authenticated:
+        user_context["is_authenticated"] = True
+        user_context["user_type"] = getattr(current_user, "user_type", "advogado")
+        user_context["is_master"] = getattr(current_user, "is_master", False)
+        user_context["has_office"] = getattr(current_user, "office_id", None) is not None
+        user_context["is_office_owner"] = (
+            hasattr(current_user, "is_office_owner") and current_user.is_office_owner()
+        )
+    
+    return render_template(
+        "help/index.html",
+        title="Central de Ajuda",
+        user_context=user_context
+    )
+
+
 def _build_quick_actions_for(user):
     return build_dashboard_actions(user.get_quick_actions())
 

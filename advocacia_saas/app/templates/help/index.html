@@ -1,0 +1,967 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-5 mb-3">
+                <i class="fas fa-question-circle text-primary"></i> Central de Ajuda
+            </h1>
+            <p class="lead text-muted">
+                Encontre respostas para suas dúvidas sobre o Petitio
+            </p>
+            
+            <!-- Barra de busca na ajuda -->
+            <div class="row justify-content-center mt-4">
+                <div class="col-md-8 col-lg-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control" id="helpSearch" 
+                               placeholder="Buscar na ajuda..." 
+                               aria-label="Buscar na ajuda">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegação por Perfil -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-pills nav-fill flex-column flex-md-row" id="helpTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if not user_context.is_authenticated or user_context.user_type == 'advogado' and not user_context.has_office %}active{% endif %}" 
+                            id="lawyer-tab" data-bs-toggle="pill" data-bs-target="#lawyer-content" 
+                            type="button" role="tab">
+                        <i class="fas fa-user-tie me-2"></i>Advogado Individual
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if user_context.has_office %}active{% endif %}" 
+                            id="office-tab" data-bs-toggle="pill" data-bs-target="#office-content" 
+                            type="button" role="tab">
+                        <i class="fas fa-building me-2"></i>Escritório
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if user_context.is_master %}active{% endif %}" 
+                            id="admin-tab" data-bs-toggle="pill" data-bs-target="#admin-content" 
+                            type="button" role="tab">
+                        <i class="fas fa-user-shield me-2"></i>Administrador
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="client-tab" data-bs-toggle="pill" 
+                            data-bs-target="#client-content" type="button" role="tab">
+                        <i class="fas fa-users me-2"></i>Portal do Cliente
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Conteúdo das Abas -->
+    <div class="tab-content" id="helpTabsContent">
+        
+        <!-- ==================== ADVOGADO INDIVIDUAL ==================== -->
+        <div class="tab-pane fade {% if not user_context.is_authenticated or user_context.user_type == 'advogado' and not user_context.has_office %}show active{% endif %}" 
+             id="lawyer-content" role="tabpanel">
+            
+            <div class="row">
+                <!-- Início Rápido -->
+                <div class="col-12 mb-4">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-rocket me-2"></i>Início Rápido</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <div class="display-6 text-primary mb-2">1</div>
+                                        <h6>Cadastre seus Clientes</h6>
+                                        <small class="text-muted">Acesse "Clientes" no menu e adicione seus clientes com dados completos.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <div class="display-6 text-primary mb-2">2</div>
+                                        <h6>Crie Processos</h6>
+                                        <small class="text-muted">Vincule processos aos clientes para acompanhar prazos e andamentos.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <div class="display-6 text-primary mb-2">3</div>
+                                        <h6>Gere Petições</h6>
+                                        <small class="text-muted">Use o Peticionador com IA para criar petições automaticamente.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <div class="display-6 text-primary mb-2">4</div>
+                                        <h6>Acompanhe Prazos</h6>
+                                        <small class="text-muted">Receba alertas de prazos e nunca perca uma audiência.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Advogado Individual -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-file-contract text-warning me-2"></i>Peticionador</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqPetitioner">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pet1">
+                                            Como criar uma petição com IA?
+                                        </button>
+                                    </h2>
+                                    <div id="pet1" class="accordion-collapse collapse" data-bs-parent="#faqPetitioner">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Acesse <strong>Peticionador</strong> no menu lateral</li>
+                                                <li>Escolha o tipo de petição (Ex: Petição Inicial, Recurso)</li>
+                                                <li>Preencha os campos do formulário dinâmico</li>
+                                                <li>Clique em <strong>"Gerar com IA"</strong> para criar o conteúdo</li>
+                                                <li>Revise, edite se necessário e gere o PDF</li>
+                                            </ol>
+                                            <div class="alert alert-info mt-2 mb-0">
+                                                <small><i class="fas fa-lightbulb me-1"></i> Dica: Quanto mais detalhes você fornecer, melhor será o resultado da IA.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pet2">
+                                            O que são créditos de IA?
+                                        </button>
+                                    </h2>
+                                    <div id="pet2" class="accordion-collapse collapse" data-bs-parent="#faqPetitioner">
+                                        <div class="accordion-body">
+                                            <p>Créditos de IA são usados para gerar conteúdo automático. Cada operação consome créditos:</p>
+                                            <ul>
+                                                <li><strong>Gerar seção:</strong> 1 crédito</li>
+                                                <li><strong>Melhorar texto:</strong> 1 crédito</li>
+                                                <li><strong>Petição completa:</strong> 5 créditos</li>
+                                                <li><strong>Análise de documento:</strong> 4 créditos</li>
+                                            </ul>
+                                            <p class="mb-0">Você pode comprar mais créditos em <strong>Minha Conta → Créditos IA</strong>.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pet3">
+                                            Posso editar a petição gerada?
+                                        </button>
+                                    </h2>
+                                    <div id="pet3" class="accordion-collapse collapse" data-bs-parent="#faqPetitioner">
+                                        <div class="accordion-body">
+                                            <p><strong>Sim!</strong> Todas as petições podem ser editadas antes de gerar o PDF final.</p>
+                                            <p>Você pode:</p>
+                                            <ul>
+                                                <li>Editar qualquer seção manualmente</li>
+                                                <li>Adicionar ou remover parágrafos</li>
+                                                <li>Usar a IA para melhorar trechos específicos</li>
+                                                <li>Salvar rascunhos para continuar depois</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-users text-info me-2"></i>Clientes</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqClients">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cli1">
+                                            Como cadastrar um novo cliente?
+                                        </button>
+                                    </h2>
+                                    <div id="cli1" class="accordion-collapse collapse" data-bs-parent="#faqClients">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Acesse <strong>Clientes</strong> no menu</li>
+                                                <li>Clique em <strong>"Novo Cliente"</strong></li>
+                                                <li>Preencha os dados pessoais (nome, CPF, endereço)</li>
+                                                <li>Adicione informações de contato</li>
+                                                <li>Salve o cadastro</li>
+                                            </ol>
+                                            <p class="mb-0">Os dados do cliente são preenchidos automaticamente nas petições!</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cli2">
+                                            Como dar acesso ao Portal do Cliente?
+                                        </button>
+                                    </h2>
+                                    <div id="cli2" class="accordion-collapse collapse" data-bs-parent="#faqClients">
+                                        <div class="accordion-body">
+                                            <p>O Portal do Cliente permite que seu cliente acompanhe o processo:</p>
+                                            <ol>
+                                                <li>Acesse a ficha do cliente</li>
+                                                <li>Clique em <strong>"Gerar Acesso ao Portal"</strong></li>
+                                                <li>O sistema cria um link único para o cliente</li>
+                                                <li>Envie o link por e-mail ou WhatsApp</li>
+                                            </ol>
+                                            <p class="mb-0">O cliente pode ver andamentos, documentos e se comunicar com você.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cli3">
+                                            Posso importar clientes de outro sistema?
+                                        </button>
+                                    </h2>
+                                    <div id="cli3" class="accordion-collapse collapse" data-bs-parent="#faqClients">
+                                        <div class="accordion-body">
+                                            <p>Sim! Você pode importar clientes via arquivo CSV ou Excel.</p>
+                                            <p>Acesse <strong>Clientes → Importar</strong> e siga as instruções para mapear os campos.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-gavel text-success me-2"></i>Processos e Prazos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqProcesses">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#proc1">
+                                            Como cadastrar um processo?
+                                        </button>
+                                    </h2>
+                                    <div id="proc1" class="accordion-collapse collapse" data-bs-parent="#faqProcesses">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Acesse <strong>Processos → Novo Processo</strong></li>
+                                                <li>Selecione o cliente vinculado</li>
+                                                <li>Informe o número do processo (CNJ)</li>
+                                                <li>Preencha tribunal, vara e tipo de ação</li>
+                                                <li>Adicione a parte contrária se desejar</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#proc2">
+                                            Como funcionam os alertas de prazo?
+                                        </button>
+                                    </h2>
+                                    <div id="proc2" class="accordion-collapse collapse" data-bs-parent="#faqProcesses">
+                                        <div class="accordion-body">
+                                            <p>O sistema envia alertas automáticos para prazos:</p>
+                                            <ul>
+                                                <li><strong>7 dias antes:</strong> Lembrete inicial</li>
+                                                <li><strong>3 dias antes:</strong> Alerta de urgência</li>
+                                                <li><strong>1 dia antes:</strong> Alerta crítico</li>
+                                                <li><strong>No dia:</strong> Notificação final</li>
+                                            </ul>
+                                            <p class="mb-0">Configure seus alertas em <strong>Configurações → Notificações</strong>.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#proc3">
+                                            Posso cadastrar audiências?
+                                        </button>
+                                    </h2>
+                                    <div id="proc3" class="accordion-collapse collapse" data-bs-parent="#faqProcesses">
+                                        <div class="accordion-body">
+                                            <p>Sim! Audiências são um tipo de prazo especial:</p>
+                                            <ol>
+                                                <li>Acesse o processo desejado</li>
+                                                <li>Clique em <strong>"Novo Prazo"</strong></li>
+                                                <li>Selecione tipo <strong>"Audiência"</strong></li>
+                                                <li>Informe data, hora e local</li>
+                                            </ol>
+                                            <p class="mb-0">Audiências aparecem destacadas no calendário.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-file-alt text-danger me-2"></i>Documentos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqDocs">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#doc1">
+                                            Como fazer upload de documentos?
+                                        </button>
+                                    </h2>
+                                    <div id="doc1" class="accordion-collapse collapse" data-bs-parent="#faqDocs">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Acesse <strong>Documentos</strong> no menu</li>
+                                                <li>Clique em <strong>"Enviar Documento"</strong></li>
+                                                <li>Selecione o arquivo (PDF, DOC, imagens)</li>
+                                                <li>Vincule a um cliente ou processo</li>
+                                                <li>Adicione uma descrição</li>
+                                            </ol>
+                                            <div class="alert alert-warning mt-2 mb-0">
+                                                <small><i class="fas fa-info-circle me-1"></i> Limite: 10MB por arquivo. Formatos: PDF, DOC, DOCX, JPG, PNG.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#doc2">
+                                            Posso analisar documentos com IA?
+                                        </button>
+                                    </h2>
+                                    <div id="doc2" class="accordion-collapse collapse" data-bs-parent="#faqDocs">
+                                        <div class="accordion-body">
+                                            <p><strong>Sim!</strong> A IA pode analisar documentos jurídicos:</p>
+                                            <ul>
+                                                <li>Resumir contratos longos</li>
+                                                <li>Identificar cláusulas importantes</li>
+                                                <li>Extrair informações-chave</li>
+                                                <li>Sugerir argumentos jurídicos</li>
+                                            </ul>
+                                            <p class="mb-0">Custo: 4 créditos por análise.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-calculator text-secondary me-2"></i>Calculadora Jurídica</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqCalc">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#calc1">
+                                            O que a calculadora pode fazer?
+                                        </button>
+                                    </h2>
+                                    <div id="calc1" class="accordion-collapse collapse" data-bs-parent="#faqCalc">
+                                        <div class="accordion-body">
+                                            <p>A calculadora jurídica oferece:</p>
+                                            <ul>
+                                                <li><strong>Correção monetária:</strong> INPC, IPCA, IGP-M, TR</li>
+                                                <li><strong>Juros:</strong> Simples, compostos, Selic</li>
+                                                <li><strong>Honorários:</strong> Cálculo automático sobre valores</li>
+                                                <li><strong>Trabalhista:</strong> Verbas rescisórias, FGTS</li>
+                                            </ul>
+                                            <p class="mb-0">Acesse pelo botão flutuante <i class="fas fa-calculator"></i> no canto da tela.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-file-signature text-primary me-2"></i>Procurações</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqProcuracao">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#procur1">
+                                            Como gerar uma procuração?
+                                        </button>
+                                    </h2>
+                                    <div id="procur1" class="accordion-collapse collapse" data-bs-parent="#faqProcuracao">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Acesse <strong>Procurações</strong> no menu</li>
+                                                <li>Clique em <strong>"Nova Procuração"</strong></li>
+                                                <li>Selecione o cliente (dados preenchidos automaticamente)</li>
+                                                <li>Escolha o tipo (Ad Judicia, Ad Negotia, etc.)</li>
+                                                <li>Defina os poderes específicos</li>
+                                                <li>Gere o PDF para impressão ou assinatura digital</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ESCRITÓRIO ==================== -->
+        <div class="tab-pane fade {% if user_context.has_office %}show active{% endif %}" id="office-content" role="tabpanel">
+            
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="alert alert-info">
+                        <i class="fas fa-building me-2"></i>
+                        <strong>Escritório:</strong> Funcionalidades para gestão de equipes e colaboradores.
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-building text-primary me-2"></i>Gerenciar Escritório</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqOffice">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#off1">
+                                            Como criar um escritório?
+                                        </button>
+                                    </h2>
+                                    <div id="off1" class="accordion-collapse collapse" data-bs-parent="#faqOffice">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Acesse <strong>Escritório</strong> no menu</li>
+                                                <li>Clique em <strong>"Criar Escritório"</strong></li>
+                                                <li>Preencha nome, CNPJ e endereço</li>
+                                                <li>Você se torna automaticamente o <strong>Proprietário</strong></li>
+                                            </ol>
+                                            <p class="mb-0">Como proprietário, você pode convidar membros e definir permissões.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#off2">
+                                            Como convidar membros?
+                                        </button>
+                                    </h2>
+                                    <div id="off2" class="accordion-collapse collapse" data-bs-parent="#faqOffice">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Acesse <strong>Escritório → Membros</strong></li>
+                                                <li>Clique em <strong>"Convidar Membro"</strong></li>
+                                                <li>Informe o e-mail do colaborador</li>
+                                                <li>Selecione a função:
+                                                    <ul>
+                                                        <li><strong>Advogado:</strong> Acesso completo a clientes e processos</li>
+                                                        <li><strong>Secretária:</strong> Acesso limitado, sem IA</li>
+                                                        <li><strong>Administrador:</strong> Pode gerenciar outros membros</li>
+                                                    </ul>
+                                                </li>
+                                                <li>O convite é enviado por e-mail</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#off3">
+                                            Como funciona o compartilhamento de clientes?
+                                        </button>
+                                    </h2>
+                                    <div id="off3" class="accordion-collapse collapse" data-bs-parent="#faqOffice">
+                                        <div class="accordion-body">
+                                            <p>No modo escritório, você pode:</p>
+                                            <ul>
+                                                <li><strong>Clientes privados:</strong> Apenas você vê</li>
+                                                <li><strong>Clientes do escritório:</strong> Todos os membros veem</li>
+                                                <li><strong>Clientes atribuídos:</strong> Apenas membros específicos</li>
+                                            </ul>
+                                            <p class="mb-0">Configure a visibilidade ao cadastrar ou editar o cliente.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-user-friends text-success me-2"></i>Funções e Permissões</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqRoles">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#role1">
+                                            Quais são as funções disponíveis?
+                                        </button>
+                                    </h2>
+                                    <div id="role1" class="accordion-collapse collapse" data-bs-parent="#faqRoles">
+                                        <div class="accordion-body">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Função</th>
+                                                        <th>Permissões</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td><span class="badge bg-warning text-dark">Proprietário</span></td>
+                                                        <td>Acesso total, pode excluir o escritório</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><span class="badge bg-danger">Administrador</span></td>
+                                                        <td>Gerencia membros, não pode excluir escritório</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><span class="badge bg-primary">Advogado</span></td>
+                                                        <td>Clientes, processos, petições, IA</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><span class="badge bg-info">Secretária</span></td>
+                                                        <td>Clientes, processos, prazos (sem IA)</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#role2">
+                                            Posso mudar a função de um membro?
+                                        </button>
+                                    </h2>
+                                    <div id="role2" class="accordion-collapse collapse" data-bs-parent="#faqRoles">
+                                        <div class="accordion-body">
+                                            <p>Sim, se você for <strong>Proprietário</strong> ou <strong>Administrador</strong>:</p>
+                                            <ol>
+                                                <li>Acesse <strong>Escritório → Membros</strong></li>
+                                                <li>Encontre o membro desejado</li>
+                                                <li>Clique no ícone de edição</li>
+                                                <li>Selecione a nova função</li>
+                                            </ol>
+                                            <div class="alert alert-warning mt-2 mb-0">
+                                                <small><i class="fas fa-exclamation-triangle me-1"></i> Administradores não podem alterar outros administradores.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-coins text-warning me-2"></i>Assinatura e Planos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqPlans">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#plan1">
+                                            Como funciona a cobrança do escritório?
+                                        </button>
+                                    </h2>
+                                    <div id="plan1" class="accordion-collapse collapse" data-bs-parent="#faqPlans">
+                                        <div class="accordion-body">
+                                            <p>A cobrança é feita por <strong>quantidade de membros ativos</strong>:</p>
+                                            <ul>
+                                                <li>Plano Base: inclui 1 usuário</li>
+                                                <li>Cada membro adicional tem custo extra</li>
+                                                <li>Créditos de IA são compartilhados pelo escritório</li>
+                                            </ul>
+                                            <p class="mb-0">Veja detalhes em <strong>Minha Conta → Assinatura</strong>.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ADMINISTRADOR (MASTER) ==================== -->
+        <div class="tab-pane fade {% if user_context.is_master %}show active{% endif %}" id="admin-content" role="tabpanel">
+            
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-user-shield me-2"></i>
+                        <strong>Administrador:</strong> Área restrita para gestão do sistema Petitio.
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Painel Administrativo</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqAdmin">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#adm1">
+                                            Como acessar o painel admin?
+                                        </button>
+                                    </h2>
+                                    <div id="adm1" class="accordion-collapse collapse" data-bs-parent="#faqAdmin">
+                                        <div class="accordion-body">
+                                            <p>O painel administrativo está em <strong>/admin</strong> e oferece:</p>
+                                            <ul>
+                                                <li><strong>Dashboard:</strong> Estatísticas gerais do sistema</li>
+                                                <li><strong>Usuários:</strong> Gerenciar todas as contas</li>
+                                                <li><strong>Cupons:</strong> Criar e gerenciar cupons de desconto</li>
+                                                <li><strong>Petições:</strong> Configurar tipos e seções</li>
+                                                <li><strong>Logs:</strong> Auditoria de ações</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#adm2">
+                                            Como gerenciar usuários?
+                                        </button>
+                                    </h2>
+                                    <div id="adm2" class="accordion-collapse collapse" data-bs-parent="#faqAdmin">
+                                        <div class="accordion-body">
+                                            <p>Em <strong>Admin → Usuários</strong> você pode:</p>
+                                            <ul>
+                                                <li>Ver lista de todos os usuários</li>
+                                                <li>Filtrar por tipo, status, plano</li>
+                                                <li>Ativar/desativar contas</li>
+                                                <li>Ajustar créditos de IA</li>
+                                                <li>Ver histórico de uso</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#adm3">
+                                            Como criar cupons de desconto?
+                                        </button>
+                                    </h2>
+                                    <div id="adm3" class="accordion-collapse collapse" data-bs-parent="#faqAdmin">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Acesse <strong>Admin → Cupons</strong></li>
+                                                <li>Clique em <strong>"Novo Cupom"</strong></li>
+                                                <li>Defina o código (ex: DESCONTO20)</li>
+                                                <li>Configure: desconto %, validade, limite de uso</li>
+                                                <li>Ative o cupom</li>
+                                            </ol>
+                                            <p class="mb-0">Usuários aplicam o cupom na página de pagamento.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Configurações do Sistema</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqConfig">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfg1">
+                                            Como configurar custos de IA?
+                                        </button>
+                                    </h2>
+                                    <div id="cfg1" class="accordion-collapse collapse" data-bs-parent="#faqConfig">
+                                        <div class="accordion-body">
+                                            <p>Em <strong>Admin → Configuração IA</strong> você define:</p>
+                                            <ul>
+                                                <li>Custo em créditos por operação</li>
+                                                <li>Ativar/desativar funcionalidades</li>
+                                                <li>Definir operações premium (GPT-4)</li>
+                                            </ul>
+                                            <p class="mb-0">Alterações são aplicadas imediatamente.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfg2">
+                                            Como adicionar tipos de petição?
+                                        </button>
+                                    </h2>
+                                    <div id="cfg2" class="accordion-collapse collapse" data-bs-parent="#faqConfig">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Acesse <strong>Admin → Tipos de Petição</strong></li>
+                                                <li>Clique em <strong>"Novo Tipo"</strong></li>
+                                                <li>Defina nome, descrição e ícone</li>
+                                                <li>Configure as seções do formulário</li>
+                                                <li>Ative para usuários</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PORTAL DO CLIENTE ==================== -->
+        <div class="tab-pane fade" id="client-content" role="tabpanel">
+            
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="alert alert-success">
+                        <i class="fas fa-users me-2"></i>
+                        <strong>Portal do Cliente:</strong> Informações para clientes que acessam o portal.
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-door-open me-2"></i>Acessando o Portal</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqPortal">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#portal1">
+                                            Como acesso meu portal?
+                                        </button>
+                                    </h2>
+                                    <div id="portal1" class="accordion-collapse collapse" data-bs-parent="#faqPortal">
+                                        <div class="accordion-body">
+                                            <p>Seu advogado enviou um link de acesso único para você.</p>
+                                            <ol>
+                                                <li>Clique no link recebido por e-mail ou WhatsApp</li>
+                                                <li>Crie uma senha na primeira vez</li>
+                                                <li>Pronto! Você pode acompanhar seu processo</li>
+                                            </ol>
+                                            <p class="mb-0">Se perdeu o link, solicite um novo ao seu advogado.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#portal2">
+                                            O que posso ver no portal?
+                                        </button>
+                                    </h2>
+                                    <div id="portal2" class="accordion-collapse collapse" data-bs-parent="#faqPortal">
+                                        <div class="accordion-body">
+                                            <p>No seu portal você pode:</p>
+                                            <ul>
+                                                <li><i class="fas fa-gavel text-primary me-2"></i>Ver andamento do processo</li>
+                                                <li><i class="fas fa-file-alt text-success me-2"></i>Acessar documentos compartilhados</li>
+                                                <li><i class="fas fa-calendar text-warning me-2"></i>Ver próximas audiências</li>
+                                                <li><i class="fas fa-comments text-info me-2"></i>Enviar mensagens ao advogado</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#portal3">
+                                            Como envio documentos?
+                                        </button>
+                                    </h2>
+                                    <div id="portal3" class="accordion-collapse collapse" data-bs-parent="#faqPortal">
+                                        <div class="accordion-body">
+                                            <p>Se seu advogado habilitou essa opção:</p>
+                                            <ol>
+                                                <li>Acesse a aba <strong>"Documentos"</strong></li>
+                                                <li>Clique em <strong>"Enviar Documento"</strong></li>
+                                                <li>Selecione o arquivo</li>
+                                                <li>Adicione uma descrição</li>
+                                            </ol>
+                                            <p class="mb-0">Seu advogado será notificado do envio.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-question-circle text-warning me-2"></i>Dúvidas Comuns</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="faqClientCommon">
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#common1">
+                                            Meu processo está demorando, o que fazer?
+                                        </button>
+                                    </h2>
+                                    <div id="common1" class="accordion-collapse collapse" data-bs-parent="#faqClientCommon">
+                                        <div class="accordion-body">
+                                            <p>O tempo de um processo depende de vários fatores:</p>
+                                            <ul>
+                                                <li>Complexidade do caso</li>
+                                                <li>Fila do tribunal</li>
+                                                <li>Recursos da parte contrária</li>
+                                            </ul>
+                                            <p class="mb-0">Use o chat do portal para perguntar diretamente ao seu advogado sobre a previsão.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item faq-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#common2">
+                                            Esqueci minha senha do portal
+                                        </button>
+                                    </h2>
+                                    <div id="common2" class="accordion-collapse collapse" data-bs-parent="#faqClientCommon">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Na tela de login, clique em <strong>"Esqueci a senha"</strong></li>
+                                                <li>Informe seu e-mail cadastrado</li>
+                                                <li>Você receberá um link para redefinir</li>
+                                            </ol>
+                                            <p class="mb-0">Se não receber o e-mail, verifique a pasta de spam ou contate seu advogado.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Atalhos de Teclado -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-keyboard me-2"></i>Atalhos de Teclado</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Navegação</h6>
+                            <ul class="list-unstyled">
+                                <li><kbd>Alt + 1</kbd> - Página inicial</li>
+                                <li><kbd>Alt + 2</kbd> - Dashboard</li>
+                                <li><kbd>Alt + 3</kbd> - Clientes</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Ferramentas</h6>
+                            <ul class="list-unstyled">
+                                <li><kbd>Ctrl + K</kbd> - Busca global</li>
+                                <li><kbd>Alt + A</kbd> - Acessibilidade</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Geral</h6>
+                            <ul class="list-unstyled">
+                                <li><kbd>Tab</kbd> - Navegar entre elementos</li>
+                                <li><kbd>Esc</kbd> - Fechar modais/menus</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contato -->
+    <div class="row mt-4 mb-4">
+        <div class="col-12 text-center">
+            <div class="card bg-light">
+                <div class="card-body py-4">
+                    <h5>Não encontrou o que procura?</h5>
+                    <p class="text-muted mb-3">Entre em contato conosco</p>
+                    <a href="mailto:suporte@petitio.com.br" class="btn btn-primary me-2">
+                        <i class="fas fa-envelope me-1"></i> suporte@petitio.com.br
+                    </a>
+                    <a href="https://wa.me/5511999999999" target="_blank" class="btn btn-success">
+                        <i class="fab fa-whatsapp me-1"></i> WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script de busca na ajuda -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('helpSearch');
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        const faqItems = document.querySelectorAll('.faq-item');
+        
+        faqItems.forEach(function(item) {
+            const text = item.textContent.toLowerCase();
+            const matches = query === '' || text.includes(query);
+            
+            item.style.display = matches ? '' : 'none';
+            
+            // Expandir se encontrou e há busca
+            if (matches && query.length > 2) {
+                const collapse = item.querySelector('.accordion-collapse');
+                if (collapse && !collapse.classList.contains('show')) {
+                    new bootstrap.Collapse(collapse, { toggle: true });
+                }
+            }
+        });
+        
+        // Mostrar todas as abas se buscando
+        if (query.length > 0) {
+            document.querySelectorAll('.tab-pane').forEach(function(pane) {
+                pane.classList.add('show', 'active');
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
