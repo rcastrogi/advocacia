@@ -1290,24 +1290,26 @@ OFFICE_ROLES = {
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    
+
     # Escritório ao qual o cliente pertence (principal vínculo)
     # Se NULL, usa lawyer_id para determinar o escritório (compatibilidade)
-    office_id = db.Column(db.Integer, db.ForeignKey("offices.id"), nullable=True, index=True)
-    
+    office_id = db.Column(
+        db.Integer, db.ForeignKey("offices.id"), nullable=True, index=True
+    )
+
     # Advogado que cadastrou/responsável principal (mantido para compatibilidade)
     lawyer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    
+
     # Usuário do cliente para acesso ao portal (opcional)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
-    
+
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
         db.DateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
-    
+
     # Relacionamento com escritório
     office = db.relationship("Office", backref=db.backref("clients", lazy="dynamic"))
 
@@ -1471,18 +1473,18 @@ class Client(db.Model):
     def get_effective_office_id(self):
         """
         Retorna o office_id efetivo do cliente.
-        
+
         Se office_id está definido, usa ele.
         Caso contrário, busca o office_id do advogado que cadastrou.
         """
         if self.office_id:
             return self.office_id
-        
+
         # Fallback: buscar office do advogado que cadastrou
         lawyer = db.session.get(User, self.lawyer_id)
         if lawyer and lawyer.office_id:
             return lawyer.office_id
-        
+
         return None
 
 

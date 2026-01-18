@@ -300,20 +300,20 @@ def help_page():
         "has_office": False,
         "is_office_owner": False,
     }
-    
+
     if current_user.is_authenticated:
         user_context["is_authenticated"] = True
         user_context["user_type"] = getattr(current_user, "user_type", "advogado")
         user_context["is_master"] = getattr(current_user, "is_master", False)
-        user_context["has_office"] = getattr(current_user, "office_id", None) is not None
+        user_context["has_office"] = (
+            getattr(current_user, "office_id", None) is not None
+        )
         user_context["is_office_owner"] = (
             hasattr(current_user, "is_office_owner") and current_user.is_office_owner()
         )
-    
+
     return render_template(
-        "help/index.html",
-        title="Central de Ajuda",
-        user_context=user_context
+        "help/index.html", title="Central de Ajuda", user_context=user_context
     )
 
 
