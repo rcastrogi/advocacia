@@ -116,35 +116,35 @@ def index():
     else:
         roadmap_stats["progress"] = 0
 
-    # Buscar itens em destaque para mostrar na home (3 itens: 1 concluído, 1 em progresso, 1 planejado)
+    # Buscar itens em destaque para mostrar na home
     featured_roadmap = []
 
-    # Um item concluído
-    completed_item = (
+    # Buscar itens concluídos (até 3)
+    completed_items = (
         RoadmapItem.query.filter_by(visible_to_users=True, status="completed")
         .order_by(RoadmapItem.actual_completion_date.desc().nullslast())
-        .first()
+        .limit(3)
+        .all()
     )
-    if completed_item:
-        featured_roadmap.append(completed_item)
+    featured_roadmap.extend(completed_items)
 
-    # Um item em progresso
-    in_progress_item = (
+    # Buscar itens em progresso (até 3)
+    in_progress_items = (
         RoadmapItem.query.filter_by(visible_to_users=True, status="in_progress")
         .order_by(RoadmapItem.priority.desc())
-        .first()
+        .limit(3)
+        .all()
     )
-    if in_progress_item:
-        featured_roadmap.append(in_progress_item)
+    featured_roadmap.extend(in_progress_items)
 
-    # Um item planejado
-    planned_item = (
+    # Buscar itens planejados (até 6 para o carrossel)
+    planned_items = (
         RoadmapItem.query.filter_by(visible_to_users=True, status="planned")
-        .order_by(RoadmapItem.priority.desc())
-        .first()
+        .order_by(RoadmapItem.priority.desc(), RoadmapItem.planned_completion_date.asc().nullslast())
+        .limit(6)
+        .all()
     )
-    if planned_item:
-        featured_roadmap.append(planned_item)
+    featured_roadmap.extend(planned_items)
 
     return render_template(
         "index.html",
@@ -153,6 +153,7 @@ def index():
         testimonials=testimonials,
         roadmap_stats=roadmap_stats,
         featured_roadmap=featured_roadmap,
+        planned_roadmap=planned_items,  # Lista separada para carrossel
     )
 
 

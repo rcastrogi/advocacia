@@ -1663,55 +1663,90 @@
             </div>
         </div>
 
-        <!-- Featured Roadmap Items -->
-        <div class="row g-4">
-            {% for item in featured_roadmap %}
-            <div class="col-md-6 col-lg-4">
-                <div class="roadmap-item-card {{ item.status.replace('_', '-') }}">
-                    <div class="roadmap-item-header">
-                        <div class="roadmap-item-status">
-                            {% if item.status == 'completed' %}
-                            <i class="fas fa-check-circle"></i>
-                            <span>Concluído</span>
-                            {% elif item.status == 'in_progress' %}
-                            <i class="fas fa-clock"></i>
-                            <span>Em Desenvolvimento</span>
-                            {% else %}
-                            <i class="fas fa-calendar"></i>
-                            <span>Planejado</span>
-                            {% endif %}
+        <!-- Featured Roadmap Items - Carrossel -->
+        <div id="roadmapCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+            <div class="carousel-inner">
+                {% set items_per_slide = 3 %}
+                {% for batch in featured_roadmap|batch(items_per_slide) %}
+                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                    <div class="row g-4 justify-content-center px-4">
+                        {% for item in batch %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="roadmap-item-card {{ item.status.replace('_', '-') }}">
+                                <div class="roadmap-item-header">
+                                    <div class="roadmap-item-status">
+                                        {% if item.status == 'completed' %}
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Concluído</span>
+                                        {% elif item.status == 'in_progress' %}
+                                        <i class="fas fa-clock"></i>
+                                        <span>Em Desenvolvimento</span>
+                                        {% else %}
+                                        <i class="fas fa-calendar"></i>
+                                        <span>Planejado</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if item.category %}
+                                    <div class="roadmap-item-category">
+                                        <i class="fas {{ item.category.icon or 'fa-folder' }}"></i>
+                                        {{ item.category.name }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <h5 class="roadmap-item-title">{{ item.title }}</h5>
+                                <p class="roadmap-item-description">
+                                    {{ item.description[:120] }}{% if item.description|length > 120 %}...{% endif %}
+                                </p>
+                                <div class="roadmap-item-date">
+                                    {% if item.status == 'completed' and item.actual_completion_date %}
+                                    <i class="fas fa-calendar-check"></i>
+                                    Implementado em {{ item.actual_completion_date.strftime('%m/%Y') }}
+                                    {% elif item.planned_completion_date %}
+                                    <i class="fas fa-calendar"></i>
+                                    Previsão: {{ item.planned_completion_date.strftime('%m/%Y') }}
+                                    {% else %}
+                                    <i class="fas fa-calendar"></i>
+                                    Em breve
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
-                        {% if item.category %}
-                        <div class="roadmap-item-category">
-                            <i class="fas {{ item.category.icon or 'fa-folder' }}"></i>
-                            {{ item.category.name }}
-                        </div>
-                        {% endif %}
-                    </div>
-                    <h5 class="roadmap-item-title">{{ item.title }}</h5>
-                    <p class="roadmap-item-description">
-                        {{ item.description[:120] }}{% if item.description|length > 120 %}...{% endif %}
-                    </p>
-                    <div class="roadmap-item-date">
-                        {% if item.status == 'completed' and item.actual_completion_date %}
-                        <i class="fas fa-calendar-check"></i>
-                        Implementado em {{ item.actual_completion_date.strftime('%m/%Y') }}
-                        {% elif item.planned_completion_date %}
-                        <i class="fas fa-calendar"></i>
-                        Previsão: {{ item.planned_completion_date.strftime('%m/%Y') }}
-                        {% else %}
-                        <i class="fas fa-calendar"></i>
-                        Em breve
-                        {% endif %}
+                        {% endfor %}
                     </div>
                 </div>
+                {% else %}
+                <!-- Fallback se não houver itens -->
+                <div class="carousel-item active">
+                    <div class="row">
+                        <div class="col-12 text-center py-5">
+                            <p class="text-muted">Estamos trabalhando em novas funcionalidades. Em breve teremos novidades!</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-            {% else %}
-            <!-- Fallback se não houver itens -->
-            <div class="col-12 text-center">
-                <p class="text-muted">Estamos trabalhando em novas funcionalidades. Em breve teremos novidades!</p>
+            
+            <!-- Controles do carrossel -->
+            {% if featured_roadmap|length > 3 %}
+            <button class="carousel-control-prev" type="button" data-bs-target="#roadmapCarousel" data-bs-slide="prev" style="width: 5%; left: -30px;">
+                <span class="carousel-control-prev-icon bg-primary rounded-circle p-3" aria-hidden="true"></span>
+                <span class="visually-hidden">Anterior</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#roadmapCarousel" data-bs-slide="next" style="width: 5%; right: -30px;">
+                <span class="carousel-control-next-icon bg-primary rounded-circle p-3" aria-hidden="true"></span>
+                <span class="visually-hidden">Próximo</span>
+            </button>
+            
+            <!-- Indicadores -->
+            <div class="carousel-indicators position-relative mt-4">
+                {% for batch in featured_roadmap|batch(3) %}
+                <button type="button" data-bs-target="#roadmapCarousel" data-bs-slide-to="{{ loop.index0 }}" 
+                        {% if loop.first %}class="active" aria-current="true"{% endif %}
+                        aria-label="Slide {{ loop.index }}"
+                        style="background-color: #0d6efd; width: 12px; height: 12px; border-radius: 50%;"></button>
+                {% endfor %}
             </div>
-            {% endfor %}
+            {% endif %}
         </div>
 
         <!-- View Full Roadmap Button -->
