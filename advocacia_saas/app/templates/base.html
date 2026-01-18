@@ -354,6 +354,8 @@
     <!-- Calculadora Modal CSS (para usuários logados) -->
     {% if current_user.is_authenticated %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator-modal.css') }}">
+    <!-- Global Search CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global-search.css') }}">
     {% endif %}
 </head>
 <body x-data="petitioApp" @keydown.escape="closeModals()" class="{% block body_class %}{% if current_user.is_authenticated %}page-gray-bg{% endif %}{% endblock %}">
@@ -626,6 +628,18 @@
                 </ul>
                 
                 <ul class="navbar-nav align-items-center">
+                    <!-- Botão Busca Global -->
+                    <li class="nav-item me-2">
+                        <button type="button" 
+                                class="btn btn-link nav-icon-btn p-0" 
+                                id="globalSearchNavBtn"
+                                onclick="GlobalSearch.open()"
+                                title="Busca Global (Ctrl+K)"
+                                aria-label="Abrir busca global">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </li>
+                    
                     <!-- Botão Calculadora Modal -->
                     <li class="nav-item me-2">
                         <button type="button" 
@@ -1184,6 +1198,11 @@
     
     <!-- Onboarding Manager -->
     <script src="{{ static_url('js/onboarding-manager.js') }}"></script>
+    
+    <!-- Global Search -->
+    {% if current_user.is_authenticated %}
+    <script src="{{ static_url('js/global-search.js') }}"></script>
+    {% endif %}
     
     <!-- Driver.js for guided tours (LOCAL - não depende de CDN) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/driver.min.css') }}">
