@@ -140,7 +140,10 @@ def index():
     # Buscar itens planejados (até 6 para o carrossel)
     planned_items = (
         RoadmapItem.query.filter_by(visible_to_users=True, status="planned")
-        .order_by(RoadmapItem.priority.desc(), RoadmapItem.planned_completion_date.asc().nullslast())
+        .order_by(
+            RoadmapItem.priority.desc(),
+            RoadmapItem.planned_completion_date.asc().nullslast(),
+        )
         .limit(6)
         .all()
     )
