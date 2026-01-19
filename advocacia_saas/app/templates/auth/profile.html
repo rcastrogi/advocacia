@@ -278,7 +278,7 @@
                     <p><strong>Usuário:</strong> {{ current_user.username }}</p>
                     <p><strong>Tipo:</strong> 
                         {% if current_user.user_type == 'master' %}
-                            <span class="badge bg-warning">Admin</span>
+                            <span class="badge bg-warning">Administrador</span>
                         {% elif current_user.user_type == 'escritorio' %}
                             <span class="badge bg-info">Escritório</span>
                         {% else %}

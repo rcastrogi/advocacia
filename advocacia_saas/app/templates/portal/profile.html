@@ -1,0 +1,150 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Meu Perfil - Portal do Cliente{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="fas fa-user-cog me-2"></i>Meu Perfil</h2>
+        <p class="text-muted">Visualize suas informações cadastrais</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informações Pessoais -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-id-card me-2"></i>Informações Pessoais</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">Nome Completo</label>
+                        <p class="fw-medium mb-0">{{ client.name or '-' }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">E-mail</label>
+                        <p class="fw-medium mb-0">{{ client.email or '-' }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">CPF/CNPJ</label>
+                        <p class="fw-medium mb-0">{{ client.cpf_cnpj or '-' }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">Telefone</label>
+                        <p class="fw-medium mb-0">{{ client.phone or '-' }}</p>
+                    </div>
+                    {% if client.birth_date %}
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">Data de Nascimento</label>
+                        <p class="fw-medium mb-0">{{ client.birth_date.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                    {% endif %}
+                    {% if client.rg %}
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">RG</label>
+                        <p class="fw-medium mb-0">{{ client.rg }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Endereço -->
+        {% if client.address or client.city or client.state %}
+        <div class="card shadow-sm mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Endereço</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if client.address %}
+                    <div class="col-12 mb-3">
+                        <label class="form-label text-muted small">Endereço</label>
+                        <p class="fw-medium mb-0">{{ client.address }}</p>
+                    </div>
+                    {% endif %}
+                    {% if client.city or client.state %}
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">Cidade</label>
+                        <p class="fw-medium mb-0">{{ client.city or '-' }}</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label text-muted small">Estado</label>
+                        <p class="fw-medium mb-0">{{ client.state or '-' }}</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label text-muted small">CEP</label>
+                        <p class="fw-medium mb-0">{{ client.cep or '-' }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Avatar Card -->
+        <div class="card shadow-sm mb-4 text-center">
+            <div class="card-body py-4">
+                <div class="avatar-circle mx-auto mb-3" style="width: 100px; height: 100px; font-size: 2.5rem;">
+                    {{ client.name[0].upper() if client.name else 'C' }}
+                </div>
+                <h5 class="mb-1">{{ client.name }}</h5>
+                <p class="text-muted mb-0">{{ client.email }}</p>
+            </div>
+        </div>
+
+        <!-- Status Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Situação da Conta</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span>Situação</span>
+                    {% if client.is_active %}
+                    <span class="badge bg-success">Ativo</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Inativo</span>
+                    {% endif %}
+                </div>
+                {% if client.created_at %}
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Cliente desde</span>
+                    <span class="text-muted">{{ client.created_at.strftime('%d/%m/%Y') }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Ajuda -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="mb-3">Precisa alterar seus dados?</h6>
+                <p class="text-muted small mb-3">
+                    Para atualizar suas informações cadastrais, entre em contato com seu advogado pelo chat.
+                </p>
+                <a href="{{ url_for('portal.chat') }}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="fas fa-comments me-2"></i>Ir para o Chat
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+</style>
+{% endblock %}

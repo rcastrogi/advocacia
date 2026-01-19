@@ -68,7 +68,7 @@
                                             </span>
                                         {% elif log.action == 'logout' %}
                                             <span class="badge badge-secondary">
-                                                <i class="fas fa-sign-out-alt"></i> Logout
+                                                <i class="fas fa-sign-out-alt"></i> Desconectou
                                             </span>
                                         {% else %}
                                             <span class="badge badge-light">{{ log.action.title() }}</span>
@@ -77,7 +77,7 @@
                                 </tr>
                                 <tr>
                                     <th>Descrição:</th>
-                                    <td>{{ log.description or 'N/A' }}</td>
+                                    <td>{{ log.description or 'N/D' }}</td>
                                 </tr>
                             </table>
                         </div>
@@ -88,29 +88,29 @@
                             <table class="table table-sm">
                                 <tr>
                                     <th width="150">Endereço IP:</th>
-                                    <td><code>{{ log.ip_address or 'N/A' }}</code></td>
+                                    <td><code>{{ log.ip_address or 'N/D' }}</code></td>
                                 </tr>
                                 <tr>
-                                    <th>User Agent:</th>
+                                    <th>Navegador:</th>
                                     <td>
-                                        <small class="text-muted">{{ log.user_agent or 'N/A' }}</small>
+                                        <small class="text-muted">{{ log.user_agent or 'N/D' }}</small>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th>Session ID:</th>
+                                    <th>ID da Sessão:</th>
                                     <td>
-                                        <code>{{ log.session_id or 'N/A' }}</code>
+                                        <code>{{ log.session_id or 'N/D' }}</code>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th>URL da Requisição:</th>
                                     <td>
-                                        <small>{{ log.request_url or 'N/A' }}</small>
+                                        <small>{{ log.request_url or 'N/D' }}</small>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th>Método HTTP:</th>
-                                    <td><code>{{ log.http_method or 'N/A' }}</code></td>
+                                    <td><code>{{ log.http_method or 'N/D' }}</code></td>
                                 </tr>
                             </table>
                         </div>

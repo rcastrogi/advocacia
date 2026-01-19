@@ -121,11 +121,11 @@
                             </div>
                         </div>
 
-                        <!-- Preview -->
+                        <!-- Pré-visualização -->
                         <div class="alert alert-light border mb-4" id="preview">
-                            <h6 class="mb-2"><i class="fas fa-eye me-2"></i>Preview do Cupom</h6>
+                            <h6 class="mb-2"><i class="fas fa-eye me-2"></i>Pré-visualização do Cupom</h6>
                             <div id="preview-content">
-                                <span class="text-muted">Configure os benefícios para ver o preview</span>
+                                <span class="text-muted">Configure os benefícios para visualizar</span>
                             </div>
                         </div>
 
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const code = codeInput.value.toUpperCase() || 'PETITIO-XXXX';
         
         if (days === 0 && credits === 0) {
-            previewContent.innerHTML = '<span class="text-muted">Configure os benefícios para ver o preview</span>';
+            previewContent.innerHTML = '<span class="text-muted">Configure os benefícios para visualizar</span>';
             return;
         }
         

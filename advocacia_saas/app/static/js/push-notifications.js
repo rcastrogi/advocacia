@@ -150,12 +150,14 @@ class PushNotificationManager {
     updateUI(subscribed) {
         const btn = document.getElementById('pushNotificationToggle');
         if (btn) {
+            // Preservar classes de layout, apenas mudar cor e conteúdo
+            const layoutClasses = 'w-100 h-100 py-4 d-flex flex-column align-items-center justify-content-center';
             if (subscribed) {
-                btn.className = 'btn btn-success me-2';
-                btn.innerHTML = '<i class="fas fa-bell-slash me-2"></i>Desativar Notificações';
+                btn.className = `btn btn-success ${layoutClasses}`;
+                btn.innerHTML = '<i class="fas fa-bell-slash fa-2x mb-2"></i><span class="small">Desativar Notificações</span>';
             } else {
-                btn.className = 'btn btn-outline-primary me-2';
-                btn.innerHTML = '<i class="fas fa-bell me-2"></i>Ativar Notificações';
+                btn.className = `btn btn-outline-danger ${layoutClasses}`;
+                btn.innerHTML = '<i class="fas fa-bell fa-2x mb-2"></i><span class="small">Notificações</span>';
             }
         }
     }

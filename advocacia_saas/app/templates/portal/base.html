@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}Portal do Cliente - Petitio{% endblock %}</title>
     
     <!-- Google Fonts - Modern Professional Typography -->
@@ -122,6 +123,56 @@
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Cormorant Garamond', serif;
         }
+        
+        /* Dashboard Cards */
+        .dashboard-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        }
+        
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            line-height: 1.2;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .stats-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        
+        /* Badge circular para ícones */
+        .badge.rounded-circle {
+            width: 50px;
+            height: 50px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -175,8 +226,8 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'portal.deadlines' %}active{% endif %}" 
-                       href="{{ url_for('portal.deadlines') }}">
+                    <a class="nav-link {% if request.endpoint == 'portal.calendar' %}active{% endif %}" 
+                       href="{{ url_for('portal.calendar') }}">
                         <i class="fas fa-calendar-alt me-2"></i>
                         Prazos
                     </a>
@@ -185,14 +236,14 @@
                     <a class="nav-link {% if request.endpoint == 'portal.chat' %}active{% endif %}" 
                        href="{{ url_for('portal.chat') }}">
                         <i class="fas fa-comments me-2"></i>
-                        Chat
+                        Mensagens
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'portal.timeline' %}active{% endif %}" 
                        href="{{ url_for('portal.timeline') }}">
                         <i class="fas fa-stream me-2"></i>
-                        Timeline
+                        Histórico
                     </a>
                 </li>
                 <li class="nav-item">

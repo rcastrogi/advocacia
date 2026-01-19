@@ -430,27 +430,30 @@ def chat():
         client = Client.query.filter_by(user_id=current_user.id).first_or_404()
         portal_logger.debug(f"Cliente encontrado para chat: {client.id}")
 
-        # Buscar ou criar sala de chat
-        chat_room = ChatRoom.query.filter_by(client_id=client.id).first()
-        if not chat_room:
-            portal_logger.info(f"Criando nova sala de chat para cliente {client.id}")
-            chat_room = ChatRoom(client_id=client.id)
-            db.session.add(chat_room)
-            db.session.commit()
-        else:
-            portal_logger.debug(f"Sala de chat existente encontrada: {chat_room.id}")
+        # Verificar se cliente tem advogado associado (necessário para chat)
+        chat_room = client.lawyer_id is not None
 
-        # Buscar mensagens
-        messages = (
-            Message.query.filter_by(chat_room_id=chat_room.id)
-            .order_by(Message.created_at.asc())
-            .all()
-        )
+        # Buscar mensagens entre cliente e advogado
+        # Mensagens onde o cliente é sender ou recipient
+        messages = []
+        if chat_room:
+            messages = (
+                Message.query.filter(
+                    db.or_(
+                        db.and_(Message.sender_id == current_user.id, Message.recipient_id == client.lawyer_id),
+                        db.and_(Message.sender_id == client.lawyer_id, Message.recipient_id == current_user.id),
+                        # Incluir mensagens do bot também
+                        db.and_(Message.client_id == client.id, Message.message_type == "bot")
+                    )
+                )
+                .order_by(Message.created_at.asc())
+                .all()
+            )
         portal_logger.debug(
-            f"{len(messages)} mensagens encontradas na sala {chat_room.id}"
+            f"{len(messages)} mensagens encontradas para cliente {client.id}"
         )
 
-        return render_template("portal/chat.html", messages=messages)
+        return render_template("portal/chat.html", messages=messages, client=client, chat_room=chat_room)
 
     except Exception as e:
         portal_logger.error(
@@ -466,26 +469,37 @@ def chat():
 def get_chat_messages():
     """API para buscar mensagens do chat"""
     client = Client.query.filter_by(user_id=current_user.id).first_or_404()
-    chat_room = ChatRoom.query.filter_by(client_id=client.id).first()
 
-    if not chat_room:
-        return jsonify([])
-
+    # Buscar mensagens entre cliente e advogado
     messages = (
-        Message.query.filter_by(chat_room_id=chat_room.id)
+        Message.query.filter(
+            db.or_(
+                db.and_(Message.sender_id == current_user.id, Message.recipient_id == client.lawyer_id),
+                db.and_(Message.sender_id == client.lawyer_id, Message.recipient_id == current_user.id)
+            )
+        )
         .order_by(Message.created_at.asc())
         .all()
     )
 
     messages_data = []
     for message in messages:
+        # Determinar tipo do remetente
+        if message.sender_id == current_user.id:
+            sender_type = "client"
+        elif message.message_type == "bot":
+            sender_type = "bot"
+        else:
+            sender_type = "lawyer"
+        
         messages_data.append(
             {
                 "id": message.id,
                 "content": message.content,
                 "created_at": message.created_at.isoformat(),
                 "is_read": message.is_read,
-                "sender_type": message.sender_type,
+                "sender_type": sender_type,
+                "message_type": message.message_type,
             }
         )
 
@@ -497,50 +511,71 @@ def get_chat_messages():
 @limiter.limit("20 per minute")
 @validate_with_schema(ChatMessageSchema, location="json")
 def send_chat_message():
-    """API para enviar mensagem no chat"""
+    """API para enviar mensagem no chat com resposta automática do bot"""
     try:
+        from app.services.chatbot_service import ChatBotService
+        
         data = request.validated_data
-        content = data.get("message", "").strip()
-        ai_mode = data.get("ai_mode", False)
+        # Aceitar tanto 'message' quanto 'content'
+        content = (data.get("message") or data.get("content", "")).strip()
+        use_bot = data.get("use_bot", True)
+
+        if not content:
+            return jsonify({"success": False, "message": "Mensagem não pode ser vazia"}), 400
 
         client = Client.query.filter_by(user_id=current_user.id).first_or_404()
-        chat_room = ChatRoom.query.filter_by(client_id=client.id).first()
 
-        if not chat_room:
-            portal_logger.info(
-                f"Criando sala de chat para cliente {client.id} durante envio de mensagem"
-            )
-            chat_room = ChatRoom(client_id=client.id)
-            db.session.add(chat_room)
-            db.session.commit()
-
-        message = Message(
-            chat_room_id=chat_room.id,
+        # Criar mensagem do cliente para o advogado
+        client_message = Message(
             sender_id=current_user.id,
-            sender_type="client",
+            recipient_id=client.lawyer_id,
+            client_id=client.id,
             content=content,
-            message_type=message_type,
+            message_type="text",
             is_read=False,
         )
 
-        db.session.add(message)
+        db.session.add(client_message)
         db.session.commit()
 
         portal_logger.info(
-            f"Mensagem enviada com sucesso: ID {message.id} para sala {chat_room.id}"
+            f"Mensagem enviada com sucesso: ID {client_message.id} de cliente {client.id}"
         )
 
-        return jsonify(
-            {
-                "success": True,
-                "message": {
-                    "id": message.id,
-                    "content": message.content,
-                    "created_at": message.created_at.isoformat(),
-                    "is_read": message.is_read,
-                },
+        response_data = {
+            "success": True,
+            "message": {
+                "id": client_message.id,
+                "content": client_message.content,
+                "created_at": client_message.created_at.isoformat(),
+                "is_read": client_message.is_read,
+                "sender_type": "client",
+            },
+        }
+
+        # Processar com bot se habilitado
+        if use_bot:
+            bot = ChatBotService(client)
+            bot_response, bot_data = bot.process_message(content)
+            
+            # Criar mensagem do bot
+            bot_message = bot.create_bot_message(bot_response)
+            db.session.commit()
+            
+            response_data["bot_response"] = {
+                "id": bot_message.id,
+                "content": bot_message.content,
+                "created_at": bot_message.created_at.isoformat(),
+                "is_read": True,
+                "sender_type": "bot",
+                "data": bot_data,
             }
-        )
+            
+            portal_logger.info(
+                f"Bot respondeu mensagem {client_message.id} com resposta {bot_message.id}"
+            )
+
+        return jsonify(response_data)
 
     except Exception as e:
         portal_logger.error(
@@ -558,13 +593,14 @@ def clear_chat():
     """Limpar histórico do chat"""
     try:
         client = Client.query.filter_by(user_id=current_user.id).first_or_404()
-        chat_room = ChatRoom.query.filter_by(client_id=client.id).first()
 
-        if not chat_room:
-            return jsonify({"error": "Chat não encontrado"}), 404
-
-        # Deletar todas as mensagens do chat
-        Message.query.filter_by(chat_room_id=chat_room.id).delete()
+        # Marcar mensagens como deletadas pelo cliente (soft delete)
+        Message.query.filter(
+            db.or_(
+                db.and_(Message.sender_id == current_user.id, Message.recipient_id == client.lawyer_id),
+                db.and_(Message.sender_id == client.lawyer_id, Message.recipient_id == current_user.id)
+            )
+        ).update({Message.is_deleted_by_sender: True, Message.is_deleted_by_recipient: True})
         db.session.commit()
 
         return jsonify({"success": True, "message": "Chat limpo com sucesso"})
@@ -620,6 +656,14 @@ def profile():
     client = Client.query.filter_by(user_id=current_user.id).first_or_404()
 
     return render_template("portal/profile.html", client=client)
+
+
+@bp.route("/help")
+@client_required
+def help():
+    """Página de ajuda do portal do cliente"""
+    client = Client.query.filter_by(user_id=current_user.id).first()
+    return render_template("portal/help.html", client=client)
 
 
 @bp.route("/logs")

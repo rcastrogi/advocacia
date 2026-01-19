@@ -1,6 +1,6 @@
 {% extends "portal/base.html" %}
 
-{% block title %}Chat - Portal do Cliente{% endblock %}
+{% block title %}Mensagens - Portal do Cliente{% endblock %}
 
 {% block head %}
 <style>
@@ -57,6 +57,24 @@
         background: white;
         color: #333;
         border: 1px solid #e9ecef;
+    }
+
+    .message.bot .message-bubble {
+        background: linear-gradient(135deg, #6f42c1, #5a2d9e);
+        color: white;
+    }
+
+    .message.bot .bot-avatar {
+        width: 28px;
+        height: 28px;
+        background: #6f42c1;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: white;
+        margin-right: 8px;
     }
 
     .message-time {
@@ -194,11 +212,11 @@
     <div class="col-12">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('portal.index') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Chat</li>
+                <li class="breadcrumb-item"><a href="{{ url_for('portal.index') }}">Início</a></li>
+                <li class="breadcrumb-item active">Mensagens</li>
             </ol>
         </nav>
-        <h2><i class="fas fa-comments me-2"></i>Chat com Advogado</h2>
+        <h2><i class="fas fa-comments me-2"></i>Mensagens</h2>
         <p class="text-muted">Converse diretamente com seu advogado responsável</p>
     </div>
 </div>
@@ -209,8 +227,8 @@
         <div class="card shadow-sm">
             <div class="card-body text-center py-5">
                 <i class="fas fa-comments fa-3x text-muted mb-3"></i>
-                <h5>Chat Indisponível</h5>
-                <p class="text-muted">Ainda não há um chat ativo com seu advogado. Entre em contato conosco para iniciar uma conversa.</p>
+                <h5>Mensagens Indisponíveis</h5>
+                <p class="text-muted">Ainda não há uma conversa ativa com seu advogado. Entre em contato conosco para iniciar.</p>
                 <a href="{{ url_for('portal.help') }}" class="btn btn-primary">
                     <i class="fas fa-question-circle me-2"></i>
                     Central de Ajuda
@@ -228,14 +246,14 @@
                 <div>
                     <h5 class="mb-0">
                         <span class="online-status"></span>
-                        Chat Ativo
+                        Conversa Ativa
                     </h5>
                     <small class="text-muted">Converse com seu advogado</small>
                 </div>
                 <div>
                     <button class="btn btn-sm btn-outline-secondary" id="clearChatBtn">
                         <i class="fas fa-trash me-1"></i>
-                        Limpar Chat
+                        Limpar Conversa
                     </button>
                 </div>
             </div>
@@ -243,15 +261,21 @@
             <div class="chat-container">
                 <div class="chat-messages" id="chatMessages">
                     {% for message in messages %}
-                    <div class="message {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
+                    <div class="message {% if message.sender_id == current_user.id %}sent{% elif message.message_type == 'bot' %}bot received{% else %}received{% endif %}">
                         <div class="message-bubble">
+                            {% if message.message_type == 'bot' %}
+                                <div class="mb-1">
+                                    <span class="bot-avatar"><i class="fas fa-robot"></i></span>
+                                    <small class="fw-bold">Assistente Virtual</small>
+                                </div>
+                            {% endif %}
                             {% if message.message_type == 'file' %}
                                 <div class="file-message">
                                     <i class="fas fa-file me-2"></i>
                                     <a href="#" class="text-decoration-none">{{ message.content }}</a>
                                 </div>
                             {% else %}
-                                {{ message.content }}
+                                {{ message.content|safe }}
                             {% endif %}
                         </div>
                         <div class="message-time">
@@ -282,6 +306,23 @@
                 </div>
 
                 <div class="chat-input-area">
+                    <div class="bg-light rounded p-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="botToggle" checked>
+                                <label class="form-check-label small" for="botToggle">
+                                    <i class="fas fa-robot me-1"></i>Respostas rápidas
+                                </label>
+                            </div>
+                            <small class="text-muted" id="botStatus">
+                                <span class="text-success"><i class="fas fa-circle me-1" style="font-size: 8px;"></i>Respostas rápidas ativas</span>
+                            </small>
+                        </div>
+                        <small class="text-muted d-block mt-1" style="font-size: 11px;">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Todas as mensagens são enviadas ao advogado, que responderá assim que possível.
+                        </small>
+                    </div>
                     <form id="messageForm" class="d-flex align-items-end">
                         <textarea
                             class="form-control message-input flex-grow-1"
@@ -303,12 +344,12 @@
     </div>
 </div>
 
-<!-- Modal de confirmação para limpar chat -->
+<!-- Modal de confirmação para limpar conversa -->
 <div class="modal fade" id="clearChatModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Limpar Chat</h5>
+                <h5 class="modal-title">Limpar Conversa</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -317,7 +358,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="confirmClear">Limpar Chat</button>
+                <button type="button" class="btn btn-danger" id="confirmClear">Limpar Conversa</button>
             </div>
         </div>
     </div>
@@ -331,6 +372,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatMessages = document.getElementById('chatMessages');
     const clearChatBtn = document.getElementById('clearChatBtn');
     const fileBtn = document.getElementById('fileBtn');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const botToggle = document.getElementById('botToggle');
+    const botStatus = document.getElementById('botStatus');
+
+    // Toggle bot on/off
+    botToggle.addEventListener('change', function() {
+        if (this.checked) {
+            botStatus.innerHTML = '<span class="text-success"><i class="fas fa-circle me-1" style="font-size: 8px;"></i>Respostas rápidas ativas</span>';
+            messageInput.placeholder = 'Digite sua mensagem...';
+        } else {
+            botStatus.innerHTML = '<span class="text-info"><i class="fas fa-user-tie me-1"></i>Apenas advogado</span>';
+            messageInput.placeholder = 'Sua mensagem será enviada ao advogado...';
+        }
+    });
 
     // Auto-resize textarea
     messageInput.addEventListener('input', function() {
@@ -357,39 +412,118 @@ document.addEventListener('DOMContentLoaded', function() {
         sendMessage();
     });
 
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function addMessageToChat(message, type) {
+        // Remove typing indicator if present
+        typingIndicator.style.display = 'none';
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        
+        let bubbleContent = '';
+        if (type === 'bot received') {
+            bubbleContent = `
+                <div class="mb-1">
+                    <span class="bot-avatar"><i class="fas fa-robot"></i></span>
+                    <small class="fw-bold">Assistente Virtual</small>
+                </div>
+                ${message.content}
+            `;
+        } else {
+            bubbleContent = message.content;
+        }
+
+        messageDiv.innerHTML = `
+            <div class="message-bubble">${bubbleContent}</div>
+            <div class="message-time">
+                ${formatDate(message.created_at)}
+                ${type === 'sent' ? '<span class="message-status"><i class="fas fa-check text-muted"></i></span>' : ''}
+            </div>
+        `;
+
+        // Insert before typing indicator
+        chatMessages.insertBefore(messageDiv, typingIndicator);
+        scrollToBottom();
+    }
+
+    function showTypingIndicator() {
+        typingIndicator.style.display = 'block';
+        scrollToBottom();
+    }
+
     async function sendMessage() {
         const content = messageInput.value.trim();
         if (!content) return;
+
+        const useBot = botToggle.checked;
+
+        // Immediately add user message to chat
+        const userMessage = {
+            content: escapeHtml(content),
+            created_at: new Date().toISOString()
+        };
+        addMessageToChat(userMessage, 'sent');
+
+        // Clear input
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        sendBtn.disabled = true;
+
+        // Show typing indicator only if bot is enabled
+        if (useBot) {
+            showTypingIndicator();
+        }
 
         try {
             const response = await fetch('/portal/api/chat/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
                 },
                 body: JSON.stringify({
                     content: content,
-                    message_type: 'text'
+                    message_type: 'text',
+                    use_bot: useBot
                 })
             });
 
-            if (response.ok) {
-                messageInput.value = '';
-                messageInput.style.height = 'auto';
-                sendBtn.disabled = true;
+            const data = await response.json();
 
-                // Scroll to bottom
-                scrollToBottom();
-
-                // Refresh messages (in a real app, use WebSocket)
-                setTimeout(() => location.reload(), 1000);
+            if (response.ok && data.success) {
+                // Add bot response if present
+                if (data.bot_response) {
+                    setTimeout(() => {
+                        addMessageToChat(data.bot_response, 'bot received');
+                    }, 500);
+                } else if (!useBot) {
+                    // Mensagem enviada diretamente para o advogado
+                    showNotification('✉️ Mensagem enviada! Seu advogado responderá assim que possível.', 'success');
+                }
             } else {
-                showNotification('Erro ao enviar mensagem', 'error');
+                typingIndicator.style.display = 'none';
+                showNotification(data.message || 'Erro ao enviar mensagem', 'error');
             }
         } catch (error) {
             console.error('Error sending message:', error);
+            typingIndicator.style.display = 'none';
             showNotification('Erro ao enviar mensagem', 'error');
         }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
     }
 
     // Clear chat
@@ -401,17 +535,20 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('confirmClear').addEventListener('click', async function() {
         try {
             const response = await fetch('/portal/api/chat/clear', {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                }
             });
 
             if (response.ok) {
                 location.reload();
             } else {
-                showNotification('Erro ao limpar chat', 'error');
+                showNotification('Erro ao limpar conversa', 'error');
             }
         } catch (error) {
-            console.error('Error clearing chat:', error);
-            showNotification('Erro ao limpar chat', 'error');
+            console.error('Erro ao limpar conversa:', error);
+            showNotification('Erro ao limpar conversa', 'error');
         }
     });
 
@@ -435,6 +572,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function showNotification(message, type = 'info') {
         if (window.showNotification) {
             window.showNotification(message, type);
+        } else {
+            alert(message);
         }
     }
 });

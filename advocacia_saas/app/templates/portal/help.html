@@ -1,0 +1,191 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Ajuda - Portal do Cliente{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="fas fa-question-circle me-2"></i>Central de Ajuda</h2>
+        <p class="text-muted">Tire suas dúvidas sobre como usar o portal do cliente</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- FAQ -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list-ul me-2"></i>Perguntas Frequentes</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="faqAccordion">
+                    <!-- Pergunta 1 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#faq1" aria-expanded="true" aria-controls="faq1">
+                                Como envio documentos para meu advogado?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>Para enviar documentos:</p>
+                                <ol>
+                                    <li>Acesse a seção <strong>Documentos</strong> no menu lateral</li>
+                                    <li>Clique no botão <strong>Enviar Documento</strong></li>
+                                    <li>Selecione o arquivo do seu computador (PDF, imagem ou documento)</li>
+                                    <li>Adicione uma descrição para facilitar a identificação</li>
+                                    <li>Clique em <strong>Enviar</strong></li>
+                                </ol>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Formatos aceitos: PDF, JPG, PNG, DOC, DOCX (máx. 10MB)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pergunta 2 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#faq2" aria-expanded="false" aria-controls="faq2">
+                                Como acompanho os prazos do meu processo?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>Você pode acompanhar os prazos de duas formas:</p>
+                                <ul>
+                                    <li><strong>Página Inicial:</strong> Na página inicial você vê os próximos prazos</li>
+                                    <li><strong>Calendário:</strong> Acesse "Prazos" no menu para ver todos em formato de calendário</li>
+                                </ul>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-bell me-1"></i>
+                                    Você receberá notificações quando prazos importantes estiverem próximos.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pergunta 3 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#faq3" aria-expanded="false" aria-controls="faq3">
+                                Como falo com meu advogado?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>Use as <strong>Mensagens</strong> para comunicação rápida e segura:</p>
+                                <ol>
+                                    <li>Acesse "Mensagens" no menu lateral</li>
+                                    <li>Digite sua mensagem na caixa de texto</li>
+                                    <li>Clique em Enviar ou pressione Enter</li>
+                                </ol>
+                                <p class="mb-0">
+                                    <i class="fas fa-lock me-1 text-success"></i>
+                                    Todas as mensagens são criptografadas e seguras.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pergunta 4 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#faq4" aria-expanded="false" aria-controls="faq4">
+                                O que é a Timeline?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>O <strong>Histórico</strong> mostra todo o histórico do seu processo em ordem cronológica:</p>
+                                <ul>
+                                    <li>Andamentos processuais</li>
+                                    <li>Documentos enviados e recebidos</li>
+                                    <li>Audiências realizadas e agendadas</li>
+                                    <li>Decisões e despachos</li>
+                                </ul>
+                                <p class="text-muted mb-0">
+                                    É uma forma visual de acompanhar a evolução do seu caso.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pergunta 5 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#faq5" aria-expanded="false" aria-controls="faq5">
+                                Esqueci minha senha, o que faço?
+                            </button>
+                        </h2>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>Para recuperar sua senha:</p>
+                                <ol>
+                                    <li>Na tela de login, clique em "Esqueci minha senha"</li>
+                                    <li>Digite seu e-mail cadastrado</li>
+                                    <li>Você receberá um link para criar uma nova senha</li>
+                                </ol>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-clock me-1"></i>
+                                    O link expira em 24 horas. Caso não receba, verifique sua pasta de spam.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contato e Suporte -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-headset me-2"></i>Precisa de mais ajuda?</h5>
+            </div>
+            <div class="card-body">
+                <p>Se não encontrou a resposta para sua dúvida, entre em contato conosco:</p>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('portal.chat') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-comments me-2"></i>Falar pelo Chat
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Dicas Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Mantenha seus documentos organizados com descrições claras
+                    </li>
+                    <li class="mb-3">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Verifique o portal regularmente para novidades
+                    </li>
+                    <li class="mb-3">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Use o chat para dúvidas rápidas
+                    </li>
+                    <li class="mb-0">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Acompanhe a timeline para ver o progresso do seu caso
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

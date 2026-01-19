@@ -7,7 +7,7 @@
     <div class="col-12">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('portal.index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('portal.index') }}">Início</a></li>
                 <li class="breadcrumb-item active">Documentos</li>
             </ol>
         </nav>
@@ -16,7 +16,7 @@
                 <h2><i class="fas fa-folder-open me-2"></i>Meus Documentos</h2>
                 <p class="text-muted">Visualize e baixe todos os documentos do seu processo</p>
             </div>
-            <a href="{{ url_for('portal.upload_document') }}" class="btn btn-primary">
+            <a href="{{ url_for('portal.upload') }}" class="btn btn-primary">
                 <i class="fas fa-cloud-upload-alt me-2"></i>
                 Enviar Documento
             </a>
@@ -95,7 +95,7 @@
                     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                     <h5>Nenhum documento encontrado</h5>
                     <p class="text-muted">Não há documentos disponíveis no momento.</p>
-                    <a href="{{ url_for('portal.upload_document') }}" class="btn btn-primary">
+                    <a href="{{ url_for('portal.upload') }}" class="btn btn-primary">
                         <i class="fas fa-cloud-upload-alt me-2"></i>
                         Enviar Primeiro Documento
                     </a>

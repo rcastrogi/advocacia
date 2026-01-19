@@ -4,7 +4,7 @@ Marshmallow schemas para validação de dados
 
 from datetime import datetime
 
-from marshmallow import EXCLUDE, Schema, fields, post_load, pre_load, validate
+from marshmallow import EXCLUDE, Schema, ValidationError, fields, post_load, pre_load, validate, validates_schema
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 # ============================================================================
@@ -591,15 +591,32 @@ class ChatMessageSchema(Schema):
     """Validação de mensagens de chat"""
 
     message = fields.Str(
-        required=True,
+        required=False,
         validate=validate.Length(min=1, max=2000),
         error_messages={
-            "required": "Mensagem é obrigatória",
+            "validate": "Mensagem deve ter entre 1 e 2000 caracteres",
+        },
+    )
+    content = fields.Str(
+        required=False,
+        validate=validate.Length(min=1, max=2000),
+        error_messages={
             "validate": "Mensagem deve ter entre 1 e 2000 caracteres",
         },
     )
     conversation_id = fields.Int(allow_none=True)
     ai_mode = fields.Bool(dump_default=False)
+    use_bot = fields.Bool(dump_default=True)
+    message_type = fields.Str(
+        validate=validate.OneOf(["text", "file"]),
+        dump_default="text"
+    )
+
+    @validates_schema
+    def validate_message_or_content(self, data, **kwargs):
+        """Validar que pelo menos message ou content foi fornecido"""
+        if not data.get("message") and not data.get("content"):
+            raise ValidationError({"message": ["Mensagem é obrigatória"]})
 
 
 class UserPreferencesSchema(Schema):

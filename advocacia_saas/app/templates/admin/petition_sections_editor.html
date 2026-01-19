@@ -15,7 +15,7 @@
                         <span class="badge bg-warning text-dark ms-2">BETA</span>
                     </h1>
                     <p class="text-muted mb-0">
-                        Crie e edite seções de petição com interface drag-and-drop
+                        Crie e edite seções de petição com interface arrastar e soltar
                     </p>
                 </div>
                 <div>
@@ -37,7 +37,7 @@
                 <i class="fas fa-info-circle fa-2x me-3"></i>
                 <div>
                     <strong>Editor Visual (Beta)</strong><br>
-                    Este é um editor experimental com interface drag-and-drop. 
+                    Este é um editor experimental com interface arrastar e soltar. 
                     O editor clássico continua disponível e funcional.
                     Após validação, este editor substituirá o antigo.
                 </div>
@@ -124,7 +124,7 @@
                                                 class="btn btn-sm btn-outline-info" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#previewModal{{ section.id }}"
-                                                title="Preview">
+                                                title="Visualizar">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                     </td>
@@ -149,7 +149,7 @@
     </div>
 </div>
 
-<!-- Preview Modals -->
+<!-- Modais de Pré-visualização -->
 {% for section in sections %}
 <div class="modal fade" id="previewModal{{ section.id }}" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -157,7 +157,7 @@
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas {{ section.icon or 'fa-file-alt' }} text-{{ section.color or 'primary' }} me-2"></i>
-                    Preview: {{ section.name }}
+                    Pré-visualização: {{ section.name }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>

@@ -104,6 +104,7 @@ def create_app(config_class=Config):
             ],
             "font-src": [
                 "'self'",
+                "data:",  # Fontes inline base64 (alguns ícones usam isso)
                 "fonts.gstatic.com",  # Google Fonts arquivos
                 "cdnjs.cloudflare.com",  # Font Awesome fonts
             ],

@@ -52,7 +52,7 @@
                                     {% elif 'login' in log.action %}
                                         <span class="badge badge-info">{{ log.action.replace('_', ' ').title() }}</span>
                                     {% elif log.action == 'logout' %}
-                                        <span class="badge badge-secondary">Logout</span>
+                                        <span class="badge badge-secondary">Desconectou</span>
                                     {% else %}
                                         <span class="badge badge-light">{{ log.action.title() }}</span>
                                     {% endif %}
