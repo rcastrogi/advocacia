@@ -135,7 +135,7 @@ def new():
 
     # GET
     clients = (
-        Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+        Client.query.filter_by(user_id=current_user.id).order_by(Client.full_name).all()
     )
     return render_template("deadlines/new.html", clients=clients)
 
@@ -185,7 +185,7 @@ def edit(deadline_id):
             flash(f"Erro ao atualizar prazo: {str(e)}", "error")
 
     clients = (
-        Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+        Client.query.filter_by(user_id=current_user.id).order_by(Client.full_name).all()
     )
     return render_template("deadlines/edit.html", deadline=deadline, clients=clients)
 

@@ -3493,9 +3493,9 @@ class ChatRoom(db.Model):
         return {
             "id": self.id,
             "lawyer_id": self.lawyer_id,
-            "lawyer_name": self.lawyer.name if self.lawyer else None,
+            "lawyer_name": self.lawyer.full_name if self.lawyer else None,
             "client_id": self.client_id,
-            "client_name": self.client.name if self.client else None,
+            "client_name": self.client.full_name if self.client else None,
             "title": self.title,
             "is_active": self.is_active,
             "last_message_at": self.last_message_at.isoformat()
@@ -3656,7 +3656,7 @@ class Document(db.Model):
             "last_accessed_at": (
                 self.last_accessed_at.isoformat() if self.last_accessed_at else None
             ),
-            "client": {"id": self.client.id, "name": self.client.name}
+            "client": {"id": self.client.id, "name": self.client.full_name}
             if self.client
             else None,
         }
@@ -4059,7 +4059,7 @@ class RoadmapFeedback(db.Model):
             "user": (
                 {
                     "id": self.user.id,
-                    "name": self.user.name,
+                    "name": self.user.full_name,
                     "email": self.user.email,
                 }
                 if not self.is_anonymous and self.user
@@ -4068,7 +4068,7 @@ class RoadmapFeedback(db.Model):
             "responder": (
                 {
                     "id": self.responder.id,
-                    "name": self.responder.name,
+                    "name": self.responder.full_name,
                 }
                 if self.responder
                 else None

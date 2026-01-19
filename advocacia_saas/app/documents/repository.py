@@ -145,7 +145,7 @@ class ClientRepository:
     @staticmethod
     def get_by_user(user_id: int) -> List[Client]:
         """Lista clientes do usuário."""
-        return Client.query.filter_by(user_id=user_id).order_by(Client.name).all()
+        return Client.query.filter_by(user_id=user_id).order_by(Client.full_name).all()
 
     @staticmethod
     def find_by_id_and_user(client_id: int, user_id: int) -> Optional[Client]:

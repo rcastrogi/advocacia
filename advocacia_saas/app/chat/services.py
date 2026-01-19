@@ -12,13 +12,12 @@ from typing import List, Optional, Tuple
 from flask import current_app
 from werkzeug.utils import secure_filename
 
-from app import db
 from app.chat.repository import (
     ChatRoomRepository,
     ClientRepository,
     MessageRepository,
 )
-from app.models import ChatRoom, Message
+from app.models import ChatRoom, Client, Message
 
 
 @dataclass
@@ -27,7 +26,7 @@ class ChatRoomInfo:
 
     room: ChatRoom
     messages: List[Message]
-    client: "Client"
+    client: Client
 
 
 class ChatService:
@@ -106,7 +105,7 @@ class ChatService:
         chat_room = ChatRoomRepository.create(
             lawyer_id=lawyer_id,
             client_id=client_id,
-            title=f"Chat com {client.name}",
+            title=f"Chat com {client.full_name}",
         )
 
         # Mensagem de sistema
@@ -115,7 +114,7 @@ class ChatService:
             sender_id=lawyer_id,
             recipient_id=recipient_id,
             client_id=client_id,
-            content=f"Chat iniciado com {client.name}",
+            content=f"Chat iniciado com {client.full_name}",
             message_type="system",
         )
 

@@ -117,7 +117,7 @@ class ChatBotService:
             greeting = "Boa noite"
         
         response = f"""
-{greeting}, {self.client.name.split()[0]}! 👋
+{greeting}, {self.client.full_name.split()[0]}! 👋
 
 Sou o assistente virtual do escritório. Posso ajudar com:
 

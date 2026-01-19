@@ -13,7 +13,7 @@ from app.models import ChatRoom, Message
 def handle_connect():
     """Cliente conectou ao WebSocket"""
     if current_user.is_authenticated:
-        print(f"Cliente conectado: {current_user.name} (ID: {current_user.id})")
+        print(f"Cliente conectado: {current_user.full_name} (ID: {current_user.id})")
         emit("connected", {"message": "Conectado ao chat"})
     else:
         return False  # Rejeitar conexão não autenticada
@@ -23,7 +23,7 @@ def handle_connect():
 def handle_disconnect():
     """Cliente desconectou"""
     if current_user.is_authenticated:
-        print(f"Cliente desconectado: {current_user.name}")
+        print(f"Cliente desconectado: {current_user.full_name}")
 
 
 @socketio.on("join")
@@ -44,7 +44,7 @@ def handle_join(data):
 
     emit(
         "joined",
-        {"room_id": room_id, "message": f"{current_user.name} entrou no chat"},
+        {"room_id": room_id, "message": f"{current_user.full_name} entrou no chat"},
         room=room,
     )
 
@@ -62,7 +62,7 @@ def handle_leave(data):
 
     emit(
         "left",
-        {"room_id": room_id, "message": f"{current_user.name} saiu do chat"},
+        {"room_id": room_id, "message": f"{current_user.full_name} saiu do chat"},
         room=room,
     )
 
@@ -120,7 +120,7 @@ def handle_typing(data):
         "user_typing",
         {
             "user_id": current_user.id,
-            "user_name": current_user.name,
+            "user_name": current_user.full_name,
             "room_id": room_id,
         },
         room=room,

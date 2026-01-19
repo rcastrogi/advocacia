@@ -749,11 +749,11 @@ def create_balance_pix():
             "payment_method_id": "pix",
             "payer": {
                 "email": current_user.email,
-                "first_name": current_user.name.split()[0]
-                if current_user.name
+                "first_name": current_user.full_name.split()[0]
+                if current_user.full_name
                 else "Usuario",
-                "last_name": " ".join(current_user.name.split()[1:])
-                if current_user.name and len(current_user.name.split()) > 1
+                "last_name": " ".join(current_user.full_name.split()[1:])
+                if current_user.full_name and len(current_user.full_name.split()) > 1
                 else "Petitio",
             },
             "metadata": {

@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional, Tuple
 from flask import current_app
 from werkzeug.utils import secure_filename
 
-from app import db
 from app.documents.repository import ClientRepository, DocumentRepository
 from app.models import Client, Document
 from app.utils.pagination import PaginationHelper

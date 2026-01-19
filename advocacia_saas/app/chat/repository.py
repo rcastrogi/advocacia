@@ -4,12 +4,7 @@ Chat Repository - Camada de Acesso a Dados.
 Operações de banco de dados para o sistema de chat.
 """
 
-import os
-from datetime import datetime
 from typing import List, Optional
-
-from flask import current_app
-from werkzeug.utils import secure_filename
 
 from app import db
 from app.models import ChatRoom, Client, Message

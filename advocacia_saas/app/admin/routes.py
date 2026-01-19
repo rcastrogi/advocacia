@@ -3912,7 +3912,7 @@ def roadmap_feedback_export():
             [
                 fb.id,
                 fb.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-                fb.user.name if not fb.is_anonymous and fb.user else "Anônimo",
+                fb.user.full_name if not fb.is_anonymous and fb.user else "Anônimo",
                 fb.roadmap_item.title,
                 fb.roadmap_item.category.name,
                 fb.rating,
