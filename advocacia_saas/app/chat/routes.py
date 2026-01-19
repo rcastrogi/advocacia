@@ -1,13 +1,11 @@
 """
-Rotas HTTP do sistema de chat
-"""
+Chat Routes - Rotas HTTP do sistema de chat.
 
-import os
-from datetime import datetime
+Controllers delegando para os serviços especializados.
+"""
 
 from flask import (
     abort,
-    current_app,
     jsonify,
     redirect,
     render_template,
@@ -16,30 +14,18 @@ from flask import (
     url_for,
 )
 from flask_login import current_user, login_required
-from werkzeug.utils import secure_filename
 
-from app import db
 from app.chat import bp
+from app.chat.services import ChatService, FileUploadService, MessageService
 from app.decorators import require_feature
-from app.models import ChatRoom, Client, Message
 
 
 @bp.route("/")
 @login_required
 @require_feature("client_chat")
 def index():
-    """Página principal do chat - lista de conversas"""
-    # Buscar todas as salas de chat do usuário
-    if current_user.user_type == "lawyer" or current_user.user_type == "master":
-        chat_rooms = (
-            ChatRoom.query.filter_by(lawyer_id=current_user.id)
-            .order_by(ChatRoom.last_message_at.desc().nullslast())
-            .all()
-        )
-    else:
-        # Para clientes (se tiverem acesso)
-        chat_rooms = []
-
+    """Página principal do chat - lista de conversas."""
+    chat_rooms = ChatService.get_user_rooms(current_user.id, current_user.user_type)
     return render_template("chat/index.html", chat_rooms=chat_rooms)
 
 
@@ -47,111 +33,51 @@ def index():
 @login_required
 @require_feature("client_chat")
 def room(room_id):
-    """Sala de chat específica"""
-    chat_room = ChatRoom.query.get_or_404(room_id)
+    """Sala de chat específica."""
+    room_info, error = ChatService.get_room_details(room_id, current_user.id)
 
-    # Verificar permissão
-    if current_user.id != chat_room.lawyer_id:
+    if error:
         abort(403)
 
-    # Buscar mensagens
-    messages = (
-        Message.query.filter(
-            db.or_(
-                db.and_(
-                    Message.sender_id == current_user.id,
-                    Message.recipient_id == chat_room.client.user_id,
-                ),
-                db.and_(
-                    Message.sender_id == chat_room.client.user_id,
-                    Message.recipient_id == current_user.id,
-                ),
-            )
-        )
-        .order_by(Message.created_at.asc())
-        .all()
-    )
-
     # Marcar mensagens como lidas
-    chat_room.mark_as_read_by(current_user.id)
-    for msg in messages:
-        if msg.recipient_id == current_user.id and not msg.is_read:
-            msg.mark_as_read()
+    ChatService.mark_room_as_read(
+        room_info.room, current_user.id, room_info.messages
+    )
 
     return render_template(
         "chat/room.html",
-        chat_room=chat_room,
-        messages=messages,
-        client=chat_room.client,
+        chat_room=room_info.room,
+        messages=room_info.messages,
+        client=room_info.client,
     )
 
 
 @bp.route("/start/<int:client_id>", methods=["GET", "POST"])
 @login_required
 def start_chat(client_id):
-    """Inicia novo chat com cliente"""
-    client = Client.query.get_or_404(client_id)
-
-    # Verificar se já existe sala de chat
-    chat_room = ChatRoom.query.filter_by(
-        lawyer_id=current_user.id, client_id=client_id
-    ).first()
-
-    if not chat_room:
-        # Criar nova sala
-        chat_room = ChatRoom(
-            lawyer_id=current_user.id,
-            client_id=client_id,
-            title=f"Chat com {client.name}",
-        )
-        db.session.add(chat_room)
-        db.session.commit()
-
-        # Mensagem de sistema
-        system_msg = Message(
-            sender_id=current_user.id,
-            recipient_id=client.user_id if client.user_id else current_user.id,
-            client_id=client_id,
-            content=f"Chat iniciado com {client.name}",
-            message_type="system",
-        )
-        db.session.add(system_msg)
-        db.session.commit()
-
-    return redirect(url_for("chat.room", room_id=chat_room.id))
+    """Inicia novo chat com cliente."""
+    try:
+        chat_room, _ = ChatService.start_chat(current_user.id, client_id)
+        return redirect(url_for("chat.room", room_id=chat_room.id))
+    except ValueError:
+        abort(404)
 
 
 @bp.route("/api/send", methods=["POST"])
 @login_required
 def send_message():
-    """API para enviar mensagem"""
+    """API para enviar mensagem."""
     data = request.get_json()
 
-    recipient_id = data.get("recipient_id")
-    content = data.get("content")
-    client_id = data.get("client_id")
-
-    if not recipient_id or not content:
-        return jsonify({"error": "Dados incompletos"}), 400
-
-    # Criar mensagem
-    message = Message(
+    message, error = MessageService.send_message(
         sender_id=current_user.id,
-        recipient_id=recipient_id,
-        client_id=client_id,
-        content=content,
-        message_type="text",
+        recipient_id=data.get("recipient_id"),
+        content=data.get("content"),
+        client_id=data.get("client_id"),
     )
-    db.session.add(message)
-    db.session.commit()
 
-    # Atualizar chat room
-    chat_room = ChatRoom.query.filter_by(
-        lawyer_id=current_user.id, client_id=client_id
-    ).first()
-
-    if chat_room:
-        chat_room.update_last_message(message)
+    if error:
+        return jsonify({"error": error}), 400
 
     return jsonify({"success": True, "message": message.to_dict()})
 
@@ -159,30 +85,11 @@ def send_message():
 @bp.route("/api/messages/<int:room_id>")
 @login_required
 def get_messages(room_id):
-    """API para buscar mensagens de uma sala"""
-    chat_room = ChatRoom.query.get_or_404(room_id)
+    """API para buscar mensagens de uma sala."""
+    messages, error = MessageService.get_room_messages(room_id, current_user.id)
 
-    # Verificar permissão
-    if current_user.id != chat_room.lawyer_id:
-        return jsonify({"error": "Sem permissão"}), 403
-
-    # Buscar mensagens
-    messages = (
-        Message.query.filter(
-            db.or_(
-                db.and_(
-                    Message.sender_id == current_user.id,
-                    Message.recipient_id == chat_room.client.user_id,
-                ),
-                db.and_(
-                    Message.sender_id == chat_room.client.user_id,
-                    Message.recipient_id == current_user.id,
-                ),
-            )
-        )
-        .order_by(Message.created_at.asc())
-        .all()
-    )
+    if error:
+        return jsonify({"error": error}), 403
 
     return jsonify({"messages": [msg.to_dict() for msg in messages]})
 
@@ -190,13 +97,11 @@ def get_messages(room_id):
 @bp.route("/api/mark-read/<int:message_id>", methods=["POST"])
 @login_required
 def mark_read(message_id):
-    """Marca mensagem como lida"""
-    message = Message.query.get_or_404(message_id)
+    """Marca mensagem como lida."""
+    success, error = MessageService.mark_message_read(message_id, current_user.id)
 
-    if message.recipient_id != current_user.id:
-        return jsonify({"error": "Sem permissão"}), 403
-
-    message.mark_as_read()
+    if not success:
+        return jsonify({"error": error}), 403
 
     return jsonify({"success": True})
 
@@ -204,55 +109,20 @@ def mark_read(message_id):
 @bp.route("/upload", methods=["POST"])
 @login_required
 def upload_file():
-    """Upload de arquivo no chat"""
-    if "file" not in request.files:
-        return jsonify({"error": "Nenhum arquivo enviado"}), 400
-
-    file = request.files["file"]
+    """Upload de arquivo no chat."""
+    file = request.files.get("file")
     recipient_id = request.form.get("recipient_id")
     client_id = request.form.get("client_id")
 
-    if file.filename == "":
-        return jsonify({"error": "Nenhum arquivo selecionado"}), 400
-
-    if not recipient_id:
-        return jsonify({"error": "Destinatário não especificado"}), 400
-
-    # Salvar arquivo
-    filename = secure_filename(file.filename)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{timestamp}_{filename}"
-
-    upload_folder = os.path.join(current_app.root_path, "static", "uploads", "chat")
-    os.makedirs(upload_folder, exist_ok=True)
-
-    filepath = os.path.join(upload_folder, filename)
-    file.save(filepath)
-
-    # Criar mensagem
-    file_size = os.path.getsize(filepath)
-    message = Message(
+    message, error = FileUploadService.upload_file(
+        file=file,
         sender_id=current_user.id,
-        recipient_id=int(recipient_id),
+        recipient_id=int(recipient_id) if recipient_id else None,
         client_id=int(client_id) if client_id else None,
-        content=f"Arquivo enviado: {file.filename}",
-        message_type="file",
-        attachment_filename=file.filename,
-        attachment_path=f"uploads/chat/{filename}",
-        attachment_size=file_size,
-        attachment_type=file.content_type,
     )
-    db.session.add(message)
-    db.session.commit()
 
-    # Atualizar chat room
-    if client_id:
-        chat_room = ChatRoom.query.filter_by(
-            lawyer_id=current_user.id, client_id=int(client_id)
-        ).first()
-
-        if chat_room:
-            chat_room.update_last_message(message)
+    if error:
+        return jsonify({"error": error}), 400
 
     return jsonify({"success": True, "message": message.to_dict()})
 
@@ -260,50 +130,29 @@ def upload_file():
 @bp.route("/download/<int:message_id>")
 @login_required
 def download_file(message_id):
-    """Download de arquivo anexado"""
-    message = Message.query.get_or_404(message_id)
+    """Download de arquivo anexado."""
+    file_info, error = FileUploadService.get_file_path(message_id, current_user.id)
 
-    # Verificar permissão
-    if message.sender_id != current_user.id and message.recipient_id != current_user.id:
-        abort(403)
+    if error:
+        abort(403 if "permissão" in error else 404)
 
-    if not message.attachment_path:
-        abort(404)
-
-    # Extrair diretório e arquivo
-    directory = os.path.dirname(
-        os.path.join(current_app.root_path, "static", message.attachment_path)
-    )
-    filename = os.path.basename(message.attachment_path)
-
+    directory, filename, download_name = file_info
     return send_from_directory(
-        directory,
-        filename,
-        as_attachment=True,
-        download_name=message.attachment_filename,
+        directory, filename, as_attachment=True, download_name=download_name
     )
 
 
 @bp.route("/api/rooms")
 @login_required
 def get_rooms():
-    """API para listar salas de chat"""
-    if current_user.user_type == "lawyer" or current_user.user_type == "master":
-        chat_rooms = (
-            ChatRoom.query.filter_by(lawyer_id=current_user.id)
-            .order_by(ChatRoom.last_message_at.desc().nullslast())
-            .all()
-        )
-    else:
-        chat_rooms = []
-
+    """API para listar salas de chat."""
+    chat_rooms = ChatService.get_user_rooms(current_user.id, current_user.user_type)
     return jsonify({"rooms": [room.to_dict() for room in chat_rooms]})
 
 
 @bp.route("/api/unread-count")
 @login_required
 def unread_count():
-    """API para contar mensagens não lidas"""
-    count = Message.query.filter_by(recipient_id=current_user.id, is_read=False).count()
-
+    """API para contar mensagens não lidas."""
+    count = MessageService.get_unread_count(current_user.id)
     return jsonify({"count": count})
