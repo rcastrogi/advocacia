@@ -123,10 +123,12 @@ def api_share():
     """Registra compartilhamento do link."""
     referral_code = ReferralCode.get_or_create(current_user)
 
-    # Log do compartilhamento (opcional)
-    platform = request.json.get("platform", "unknown")
+    # Log do compartilhamento
+    data = request.get_json() or {}
+    platform = data.get("platform", "unknown")
     current_app.logger.info(
-        f"Referral share: user={current_user.id}, code={referral_code.code}, platform={platform}"
+        f"Referral share: user={current_user.id}, "
+        f"code={referral_code.code}, platform={platform}"
     )
 
     return jsonify({"success": True})

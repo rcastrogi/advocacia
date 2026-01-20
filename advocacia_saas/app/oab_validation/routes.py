@@ -6,9 +6,8 @@ from flask import Blueprint, jsonify, request
 
 from app import limiter
 from app.decorators import validate_with_schema
+from app.oab_validation.services import OABValidationService
 from app.schemas import OABValidationSchema
-from app.utils.error_messages import format_error_for_user
-from app.utils.oab_validator import consultar_oab_online, validar_oab_com_nome
 
 bp = Blueprint("oab_validation", __name__, url_prefix="/api/oab")
 
@@ -23,35 +22,37 @@ def validar_oab():
     POST /api/oab/validar
     Body: {
         "oab_number": "123456",
-        "state": "SP",
-        "name": "João Silva" (opcional)
+        "state": "SP"
     }
 
     Returns:
         JSON com resultado da validação
     """
-    try:
-        data = request.validated_data
-        numero_oab = data.get("oab_number")
-        state = data.get("state")
-        nome = data.get("name")
+    data = request.validated_data
+    numero_oab = data.get("oab_number")
+    state = data.get("state")
 
-        full_oab = f"{state}{numero_oab}"
+    resultado = OABValidationService.validate(numero_oab, state)
 
-        if nome:
-            resultado = validar_oab_com_nome(full_oab, nome)
-        else:
-            resultado = consultar_oab_online(full_oab)
+    if resultado.valid:
+        return jsonify(
+            {
+                "valid": True,
+                "numero": resultado.numero,
+                "uf": resultado.uf,
+                "nome": resultado.nome,
+                "situacao": resultado.situacao,
+                "oab_formatada": OABValidationService.format_oab(
+                    resultado.numero, resultado.uf
+                ),
+            }
+        )
 
-        status_code = 200 if resultado.get("formato_valido") else 400
-
-        return jsonify(resultado), status_code
-    except Exception as e:
-        error_msg = format_error_for_user(e, "Erro ao validar OAB")
-        return jsonify({"error": error_msg}), 500
+    return jsonify({"valid": False, "error": resultado.error}), 400
 
 
 @bp.route("/validar/<numero_oab>", methods=["GET"])
+@limiter.limit("10 per minute")
 def validar_oab_get(numero_oab):
     """
     Endpoint GET para validação rápida de OAB
@@ -61,7 +62,25 @@ def validar_oab_get(numero_oab):
     Returns:
         JSON com resultado da validação
     """
-    resultado = consultar_oab_online(numero_oab)
-    status_code = 200 if resultado["formato_valido"] else 400
+    # Extrair UF dos primeiros 2 caracteres
+    if len(numero_oab) < 3:
+        return jsonify({"valid": False, "error": "Formato inválido"}), 400
 
-    return jsonify(resultado), status_code
+    uf = numero_oab[:2].upper()
+    numero = numero_oab[2:]
+
+    resultado = OABValidationService.validate(numero, uf)
+
+    if resultado.valid:
+        return jsonify(
+            {
+                "valid": True,
+                "numero": resultado.numero,
+                "uf": resultado.uf,
+                "nome": resultado.nome,
+                "situacao": resultado.situacao,
+            }
+        )
+
+    return jsonify({"valid": False, "error": resultado.error}), 400
+
