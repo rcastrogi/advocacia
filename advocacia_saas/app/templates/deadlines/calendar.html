@@ -1,0 +1,617 @@
+{% extends "base.html" %}
+
+{% block title %}Calendário de Prazos - Petitio{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
+{% endblock %}
+
+{% block content %}
+{# 
+  Este CSS está FORA de @layer, então tem prioridade máxima.
+  Não precisa de !important - o CSS Layers cuida disso.
+#}
+<style>
+/* ========================================
+   CALENDÁRIO - Estilo Google Calendar
+   ======================================== */
+
+/* Variáveis locais */
+.calendar-page {
+    --cal-primary: #1a73e8;
+    --cal-danger: #d93025;
+    --cal-text: #3c4043;
+    --cal-text-light: #5f6368;
+    --cal-border: #dadce0;
+    --cal-bg: #ffffff;
+    --cal-hover: #f1f3f4;
+}
+
+/* Container principal - full width, fundo branco */
+.calendar-page {
+    background: var(--cal-bg);
+    min-height: calc(100vh - 120px);
+    margin: -1rem;
+    padding: 0;
+}
+
+/* ===== HEADER ===== */
+.cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--cal-border);
+    background: var(--cal-bg);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.cal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.cal-header-left h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--cal-text);
+    margin: 0;
+}
+
+.cal-header-left i {
+    color: var(--cal-primary);
+    font-size: 24px;
+}
+
+.cal-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cal-nav button {
+    padding: 8px 16px;
+    border: 1px solid var(--cal-border);
+    background: var(--cal-bg);
+    color: var(--cal-text);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.cal-nav button:hover {
+    background: var(--cal-hover);
+}
+
+.cal-nav .nav-arrows {
+    display: flex;
+    gap: 4px;
+}
+
+.cal-nav .nav-arrows button {
+    padding: 8px 12px;
+    border-radius: 50%;
+    border: none;
+}
+
+.cal-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--cal-text);
+    margin-left: 8px;
+}
+
+.cal-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cal-views {
+    display: flex;
+    border: 1px solid var(--cal-border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.cal-views button {
+    padding: 8px 16px;
+    border: none;
+    border-right: 1px solid var(--cal-border);
+    background: var(--cal-bg);
+    color: var(--cal-text);
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.cal-views button:last-child {
+    border-right: none;
+}
+
+.cal-views button:hover {
+    background: var(--cal-hover);
+}
+
+.cal-views button.active {
+    background: #e8f0fe;
+    color: var(--cal-primary);
+}
+
+.cal-actions a {
+    padding: 8px 20px;
+    background: var(--cal-primary);
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cal-actions a:hover {
+    background: #1557b0;
+    color: white;
+}
+
+/* ===== LAYOUT PRINCIPAL ===== */
+.cal-body {
+    display: flex;
+    height: calc(100vh - 180px);
+}
+
+.cal-main {
+    flex: 1;
+    padding: 0;
+    overflow: auto;
+    background: var(--cal-bg);
+}
+
+.cal-sidebar {
+    width: 300px;
+    border-left: 1px solid var(--cal-border);
+    background: var(--cal-bg);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== FULLCALENDAR OVERRIDES ===== */
+.calendar-page .fc {
+    height: 100%;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.calendar-page .fc-theme-standard td,
+.calendar-page .fc-theme-standard th {
+    border-color: var(--cal-border);
+}
+
+.calendar-page .fc-theme-standard .fc-scrollgrid {
+    border: none;
+}
+
+.calendar-page .fc .fc-toolbar {
+    display: none;
+}
+
+/* Header dos dias da semana */
+.calendar-page .fc .fc-col-header-cell {
+    background: var(--cal-primary);
+    padding: 12px 0;
+}
+
+.calendar-page .fc .fc-col-header-cell-cushion {
+    color: white;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+}
+
+/* Células dos dias */
+.calendar-page .fc .fc-daygrid-day {
+    background: var(--cal-bg);
+    cursor: pointer;
+}
+
+.calendar-page .fc .fc-daygrid-day:hover {
+    background: var(--cal-hover);
+}
+
+/* Número do dia - QUADRADO PERFEITO E CENTRALIZADO */
+.calendar-page .fc .fc-daygrid-day-top {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px;
+    height: 40px;
+}
+
+.calendar-page .fc .fc-daygrid-day-number {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 14px;
+    color: var(--cal-text);
+    text-decoration: none;
+    padding: 0;
+    margin: 0;
+}
+
+.calendar-page .fc .fc-day-today .fc-daygrid-day-number {
+    background: var(--cal-primary);
+    color: white;
+    font-weight: 500;
+}
+
+/* Frame do dia */
+.calendar-page .fc .fc-daygrid-day-frame {
+    min-height: 100px;
+}
+
+/* Eventos */
+.calendar-page .fc .fc-event {
+    border: none;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    margin: 1px 4px;
+}
+
+.calendar-page .fc .fc-daygrid-event-dot {
+    display: none;
+}
+
+/* ===== SIDEBAR - EVENTOS DO DIA ===== */
+.cal-sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--cal-border);
+    text-align: center;
+}
+
+.cal-sidebar-weekday {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--cal-text-light);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.cal-sidebar-day {
+    font-size: 48px;
+    font-weight: 400;
+    color: var(--cal-primary);
+    line-height: 1.2;
+}
+
+.cal-sidebar-content {
+    padding: 16px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.cal-event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s;
+}
+
+.cal-event-item:hover {
+    background: var(--cal-hover);
+}
+
+.cal-event-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+}
+
+.cal-event-info {
+    flex: 1;
+}
+
+.cal-event-time {
+    font-size: 12px;
+    color: var(--cal-text-light);
+    margin-bottom: 2px;
+}
+
+.cal-event-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cal-text);
+}
+
+.cal-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--cal-text-light);
+}
+
+.cal-empty i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.4;
+}
+
+/* ===== LEGENDA ===== */
+.cal-legend {
+    padding: 16px 20px;
+    border-top: 1px solid var(--cal-border);
+}
+
+.cal-legend-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--cal-text-light);
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+.cal-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--cal-text);
+}
+
+.cal-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 992px) {
+    .cal-sidebar {
+        display: none;
+    }
+    
+    .cal-body {
+        height: calc(100vh - 200px);
+    }
+}
+
+@media (max-width: 768px) {
+    .cal-header {
+        padding: 12px 16px;
+    }
+    
+    .cal-header-left h1 {
+        font-size: 18px;
+    }
+    
+    .cal-views {
+        display: none;
+    }
+    
+    .cal-title {
+        font-size: 16px;
+    }
+    
+    .cal-nav button {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 576px) {
+    .cal-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .cal-header-left,
+    .cal-nav,
+    .cal-header-right {
+        justify-content: center;
+    }
+    
+    .cal-actions {
+        width: 100%;
+    }
+    
+    .cal-actions a {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<div class="calendar-page">
+    <!-- Header -->
+    <header class="cal-header">
+        <div class="cal-header-left">
+            <i class="fas fa-calendar-alt"></i>
+            <h1>Calendário de Prazos</h1>
+        </div>
+        
+        <div class="cal-nav">
+            <button id="todayBtn">Hoje</button>
+            <div class="nav-arrows">
+                <button id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+                <button id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <span class="cal-title" id="calendarTitle">Janeiro 2026</span>
+        </div>
+        
+        <div class="cal-header-right">
+            <div class="cal-views">
+                <button class="active" data-view="dayGridMonth">Mês</button>
+                <button data-view="timeGridWeek">Semana</button>
+                <button data-view="listWeek">Agenda</button>
+            </div>
+            <div class="cal-actions">
+                <a href="{{ url_for('deadlines.new') }}">
+                    <i class="fas fa-plus"></i> Novo Prazo
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Body -->
+    <div class="cal-body">
+        <!-- Calendário -->
+        <main class="cal-main">
+            <div id="calendar"></div>
+        </main>
+        
+        <!-- Sidebar - Eventos do dia -->
+        <aside class="cal-sidebar">
+            <div class="cal-sidebar-header">
+                <div class="cal-sidebar-weekday" id="dayWeekday">Terça-feira</div>
+                <div class="cal-sidebar-day" id="dayNumber">21</div>
+            </div>
+            
+            <div class="cal-sidebar-content" id="dayEvents">
+                <div class="cal-empty">
+                    <i class="far fa-calendar-check"></i>
+                    <p>Clique em um dia para ver os eventos</p>
+                </div>
+            </div>
+            
+            <div class="cal-legend">
+                <div class="cal-legend-title">Legenda</div>
+                <div class="cal-legend-item">
+                    <span class="cal-legend-color" style="background: #1a73e8;"></span>
+                    <span>Prazos Processuais</span>
+                </div>
+                <div class="cal-legend-item">
+                    <span class="cal-legend-color" style="background: #d93025;"></span>
+                    <span>Prazos Urgentes</span>
+                </div>
+                <div class="cal-legend-item">
+                    <span class="cal-legend-color" style="background: #616161;"></span>
+                    <span>Bloqueios</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const events = {{ events|tojson }};
+    const calendarEl = document.getElementById('calendar');
+    
+    // Inicializar FullCalendar
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'pt-br',
+        headerToolbar: false,
+        height: '100%',
+        dayMaxEvents: 3,
+        fixedWeekCount: false,
+        eventSources: [
+            { events: events },
+            { url: '/deadlines/api/blocks', failure: function() {} }
+        ],
+        dateClick: function(info) {
+            showDayEvents(info.dateStr);
+        },
+        eventClick: function(info) {
+            info.jsEvent.preventDefault();
+            if (info.event.url) {
+                window.location.href = info.event.url;
+            }
+        },
+        datesSet: function() {
+            updateTitle();
+        }
+    });
+    
+    calendar.render();
+    
+    // Mostrar eventos de hoje
+    const today = new Date().toISOString().split('T')[0];
+    showDayEvents(today);
+    
+    // Navegação
+    document.getElementById('todayBtn').onclick = () => {
+        calendar.today();
+        showDayEvents(new Date().toISOString().split('T')[0]);
+    };
+    document.getElementById('prevBtn').onclick = () => calendar.prev();
+    document.getElementById('nextBtn').onclick = () => calendar.next();
+    
+    // Views
+    document.querySelectorAll('.cal-views button').forEach(btn => {
+        btn.onclick = function() {
+            calendar.changeView(this.dataset.view);
+            document.querySelectorAll('.cal-views button').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        };
+    });
+    
+    function updateTitle() {
+        const date = calendar.getDate();
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        document.getElementById('calendarTitle').textContent = `${months[date.getMonth()]} ${date.getFullYear()}`;
+    }
+    
+    function showDayEvents(dateStr) {
+        const weekdays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const date = new Date(dateStr + 'T12:00:00');
+        
+        document.getElementById('dayWeekday').textContent = weekdays[date.getDay()];
+        document.getElementById('dayNumber').textContent = date.getDate();
+        
+        const dayEvents = events.filter(e => e.start && e.start.startsWith(dateStr))
+            .sort((a, b) => new Date(a.start) - new Date(b.start));
+        
+        const container = document.getElementById('dayEvents');
+        
+        if (dayEvents.length === 0) {
+            container.innerHTML = `
+                <div class="cal-empty">
+                    <i class="far fa-calendar-check"></i>
+                    <p>Nenhum evento neste dia</p>
+                </div>`;
+            return;
+        }
+        
+        let html = '';
+        dayEvents.forEach(event => {
+            const time = new Date(event.start).toLocaleTimeString('pt-BR', { 
+                hour: '2-digit', minute: '2-digit' 
+            });
+            const color = event.color || '#1a73e8';
+            
+            html += `
+                <a href="${event.url || '#'}" class="cal-event-item">
+                    <span class="cal-event-dot" style="background: ${color}"></span>
+                    <div class="cal-event-info">
+                        <div class="cal-event-time">${time}</div>
+                        <div class="cal-event-title">${event.title}</div>
+                    </div>
+                </a>`;
+        });
+        
+        container.innerHTML = html;
+    }
+});
+</script>
+{% endblock %}

@@ -284,12 +284,13 @@ def upload():
                 original_filename = secure_filename(file.filename)
                 # Extrair extensão do arquivo
                 file_ext = os.path.splitext(original_filename)[1].lower()
-                
+
                 # Gerar nome único: cliente_ID_YYYYMMDD_HHMMSS_extensao
                 from datetime import datetime
+
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 unique_filename = f"cliente_{client.id}_{timestamp}{file_ext}"
-                
+
                 portal_logger.debug(
                     f"Arquivo original: {original_filename}, renomeado para: {unique_filename}"
                 )
@@ -322,7 +323,7 @@ def upload():
                     title=title,
                     document_type=document_type,
                     filename=original_filename,  # Nome original para exibição
-                    file_path=file_path,         # Caminho com nome único
+                    file_path=file_path,  # Caminho com nome único
                     file_type=file.content_type,
                     file_size=file_size,
                 )
@@ -361,6 +362,7 @@ def download_document(document_id):
 
     # Construir caminho absoluto a partir da raiz da aplicação
     from flask import current_app
+
     full_path = os.path.join(current_app.root_path, "..", document.file_path)
     base_path = os.path.abspath(os.path.dirname(full_path))
     stored_filename = os.path.basename(document.file_path)
@@ -369,7 +371,9 @@ def download_document(document_id):
         base_path,
         stored_filename,
         as_attachment=as_attachment,
-        download_name=document.filename if as_attachment else None,  # Nome original no download
+        download_name=document.filename
+        if as_attachment
+        else None,  # Nome original no download
     )
 
 
@@ -465,10 +469,19 @@ def chat():
             messages = (
                 Message.query.filter(
                     db.or_(
-                        db.and_(Message.sender_id == current_user.id, Message.recipient_id == client.lawyer_id),
-                        db.and_(Message.sender_id == client.lawyer_id, Message.recipient_id == current_user.id),
+                        db.and_(
+                            Message.sender_id == current_user.id,
+                            Message.recipient_id == client.lawyer_id,
+                        ),
+                        db.and_(
+                            Message.sender_id == client.lawyer_id,
+                            Message.recipient_id == current_user.id,
+                        ),
                         # Incluir mensagens do bot também
-                        db.and_(Message.client_id == client.id, Message.message_type == "bot")
+                        db.and_(
+                            Message.client_id == client.id,
+                            Message.message_type == "bot",
+                        ),
                     )
                 )
                 .order_by(Message.created_at.asc())
@@ -478,7 +491,9 @@ def chat():
             f"{len(messages)} mensagens encontradas para cliente {client.id}"
         )
 
-        return render_template("portal/chat.html", messages=messages, client=client, chat_room=chat_room)
+        return render_template(
+            "portal/chat.html", messages=messages, client=client, chat_room=chat_room
+        )
 
     except Exception as e:
         portal_logger.error(
@@ -499,8 +514,14 @@ def get_chat_messages():
     messages = (
         Message.query.filter(
             db.or_(
-                db.and_(Message.sender_id == current_user.id, Message.recipient_id == client.lawyer_id),
-                db.and_(Message.sender_id == client.lawyer_id, Message.recipient_id == current_user.id)
+                db.and_(
+                    Message.sender_id == current_user.id,
+                    Message.recipient_id == client.lawyer_id,
+                ),
+                db.and_(
+                    Message.sender_id == client.lawyer_id,
+                    Message.recipient_id == current_user.id,
+                ),
             )
         )
         .order_by(Message.created_at.asc())
@@ -516,7 +537,7 @@ def get_chat_messages():
             sender_type = "bot"
         else:
             sender_type = "lawyer"
-        
+
         messages_data.append(
             {
                 "id": message.id,
@@ -539,14 +560,16 @@ def send_chat_message():
     """API para enviar mensagem no chat com resposta automática do bot"""
     try:
         from app.services.chatbot_service import ChatBotService
-        
+
         data = request.validated_data
         # Aceitar tanto 'message' quanto 'content'
         content = (data.get("message") or data.get("content", "")).strip()
         use_bot = data.get("use_bot", True)
 
         if not content:
-            return jsonify({"success": False, "message": "Mensagem não pode ser vazia"}), 400
+            return jsonify(
+                {"success": False, "message": "Mensagem não pode ser vazia"}
+            ), 400
 
         client = Client.query.filter_by(user_id=current_user.id).first_or_404()
 
@@ -582,11 +605,11 @@ def send_chat_message():
         if use_bot:
             bot = ChatBotService(client)
             bot_response, bot_data = bot.process_message(content)
-            
+
             # Criar mensagem do bot
             bot_message = bot.create_bot_message(bot_response)
             db.session.commit()
-            
+
             response_data["bot_response"] = {
                 "id": bot_message.id,
                 "content": bot_message.content,
@@ -595,7 +618,7 @@ def send_chat_message():
                 "sender_type": "bot",
                 "data": bot_data,
             }
-            
+
             portal_logger.info(
                 f"Bot respondeu mensagem {client_message.id} com resposta {bot_message.id}"
             )
@@ -625,15 +648,17 @@ def clear_chat():
             db.or_(
                 Message.sender_id == current_user.id,
                 Message.recipient_id == current_user.id,
-                Message.client_id == client.id
+                Message.client_id == client.id,
             )
         ).delete(synchronize_session=False)
         db.session.commit()
 
-        return jsonify({
-            "success": True, 
-            "message": f"Chat limpo com sucesso. {deleted_count} mensagens removidas."
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Chat limpo com sucesso. {deleted_count} mensagens removidas.",
+            }
+        )
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
