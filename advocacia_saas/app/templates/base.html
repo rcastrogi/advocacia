@@ -104,8 +104,14 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- ApexCharts -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.css">
-    <!-- Custom CSS -->
+    
+    <!-- CSS Layers - Define prioridade de estilos (DEVE vir antes de style.css) -->
+    <link href="{{ static_url('css/css-layers.css') }}" rel="stylesheet">
+    
+    <!-- Custom CSS (na layer "base" - pode ser sobrescrito por pages/utilities) -->
     <link href="{{ static_url('css/style.css') }}" rel="stylesheet">
+    <!-- Reset Scope - Para páginas com CSS customizado -->
+    <link href="{{ static_url('css/reset-scope.css') }}" rel="stylesheet">
     <!-- Accessibility CSS -->
     <link href="{{ static_url('css/accessibility.css') }}" rel="stylesheet">
     <!-- Calculadora Jurídica CSS -->

@@ -281,9 +281,17 @@ def upload():
                 return redirect(request.url)
 
             if file:
-                filename = secure_filename(file.filename)
+                original_filename = secure_filename(file.filename)
+                # Extrair extensão do arquivo
+                file_ext = os.path.splitext(original_filename)[1].lower()
+                
+                # Gerar nome único: cliente_ID_YYYYMMDD_HHMMSS_extensao
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                unique_filename = f"cliente_{client.id}_{timestamp}{file_ext}"
+                
                 portal_logger.debug(
-                    f"Arquivo seguro: {filename}, tipo: {file.content_type}"
+                    f"Arquivo original: {original_filename}, renomeado para: {unique_filename}"
                 )
 
                 # Criar diretório se não existir
@@ -293,8 +301,8 @@ def upload():
                     f"Diretório de upload criado/verificado: {upload_dir}"
                 )
 
-                # Salvar arquivo
-                file_path = os.path.join(upload_dir, filename)
+                # Salvar arquivo com nome único
+                file_path = os.path.join(upload_dir, unique_filename)
                 file.save(file_path)
 
                 # Verificar tamanho do arquivo
@@ -303,11 +311,18 @@ def upload():
                     f"Arquivo salvo: {file_path}, tamanho: {file_size} bytes"
                 )
 
-                # Salvar no banco
+                # Obter dados do formulário
+                title = request.form.get("title", original_filename)
+                document_type = request.form.get("document_type", "outros")
+
+                # Salvar no banco (filename guarda o nome original para exibição)
                 document = Document(
+                    user_id=current_user.id,
                     client_id=client.id,
-                    filename=filename,
-                    file_path=file_path,
+                    title=title,
+                    document_type=document_type,
+                    filename=original_filename,  # Nome original para exibição
+                    file_path=file_path,         # Caminho com nome único
                     file_type=file.content_type,
                     file_size=file_size,
                 )
@@ -334,17 +349,27 @@ def upload():
 @bp.route("/download/<int:document_id>")
 @client_required
 def download_document(document_id):
-    """Download de documento"""
+    """Download ou visualização de documento"""
     client = Client.query.filter_by(user_id=current_user.id).first_or_404()
 
     document = Document.query.filter_by(
         id=document_id, client_id=client.id
     ).first_or_404()
 
+    # Se ?download=1, força download; senão, abre no navegador
+    as_attachment = request.args.get("download") == "1"
+
+    # Construir caminho absoluto a partir da raiz da aplicação
+    from flask import current_app
+    full_path = os.path.join(current_app.root_path, "..", document.file_path)
+    base_path = os.path.abspath(os.path.dirname(full_path))
+    stored_filename = os.path.basename(document.file_path)
+
     return send_from_directory(
-        os.path.dirname(document.file_path),
-        os.path.basename(document.file_path),
-        as_attachment=True,
+        base_path,
+        stored_filename,
+        as_attachment=as_attachment,
+        download_name=document.filename if as_attachment else None,  # Nome original no download
     )
 
 
@@ -594,16 +619,21 @@ def clear_chat():
     try:
         client = Client.query.filter_by(user_id=current_user.id).first_or_404()
 
-        # Marcar mensagens como deletadas pelo cliente (soft delete)
-        Message.query.filter(
+        # Deletar todas as mensagens relacionadas a este cliente
+        # Inclui: mensagens enviadas pelo cliente, recebidas pelo cliente, e do bot
+        deleted_count = Message.query.filter(
             db.or_(
-                db.and_(Message.sender_id == current_user.id, Message.recipient_id == client.lawyer_id),
-                db.and_(Message.sender_id == client.lawyer_id, Message.recipient_id == current_user.id)
+                Message.sender_id == current_user.id,
+                Message.recipient_id == current_user.id,
+                Message.client_id == client.id
             )
-        ).update({Message.is_deleted_by_sender: True, Message.is_deleted_by_recipient: True})
+        ).delete(synchronize_session=False)
         db.session.commit()
 
-        return jsonify({"success": True, "message": "Chat limpo com sucesso"})
+        return jsonify({
+            "success": True, 
+            "message": f"Chat limpo com sucesso. {deleted_count} mensagens removidas."
+        })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

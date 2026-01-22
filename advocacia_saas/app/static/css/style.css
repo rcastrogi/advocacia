@@ -1,3 +1,20 @@
+/**
+ * Petitio - Estilos Base
+ * ======================
+ * Este arquivo está na @layer base, o que significa que pode ser
+ * sobrescrito por estilos na layer "pages" ou "utilities", ou
+ * por qualquer estilo SEM @layer (maior prioridade).
+ * 
+ * Para sobrescrever em uma página específica, use:
+ * <style>
+ *   .minha-classe { color: red; }
+ * </style>
+ * 
+ * Não precisa de !important - o CSS Layer cuida da prioridade.
+ */
+
+@layer base {
+
 /* Custom styles for Petitio - Inspired by Counsel Law Professional Template */
 
 /* ===== Color Palette - Professional Law Firm Style ===== */
@@ -2757,3 +2774,5 @@ textarea.form-control {
     .nav-custom-links li a i {
         display: none;    }
 }
+
+} /* Fecha @layer base */

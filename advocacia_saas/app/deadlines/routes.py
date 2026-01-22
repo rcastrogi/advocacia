@@ -57,42 +57,8 @@ def index():
 @bp.route("/calendar")
 @login_required
 def calendar():
-    """Calendário visual de prazos"""
-    # Buscar todos os prazos do mês atual
-    today = datetime.utcnow()
-    start_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-    # Próximos 3 meses
-    end_month = start_month + timedelta(days=90)
-
-    deadlines = (
-        Deadline.query.filter(
-            Deadline.user_id == current_user.id,
-            Deadline.deadline_date >= start_month,
-            Deadline.deadline_date <= end_month,
-            Deadline.status == "pending",
-        )
-        .order_by(Deadline.deadline_date)
-        .all()
-    )
-
-    # Formatar para FullCalendar
-    events = []
-    for deadline in deadlines:
-        color = "#dc3545" if deadline.is_urgent() else "#007bff"
-        events.append(
-            {
-                "id": deadline.id,
-                "title": deadline.title,
-                "start": deadline.deadline_date.isoformat(),
-                "description": deadline.description,
-                "type": deadline.deadline_type,
-                "color": color,
-                "url": url_for("deadlines.view", deadline_id=deadline.id),
-            }
-        )
-
-    return render_template("deadlines/calendar.html", events=events)
+    """Redireciona para o calendário principal."""
+    return redirect(url_for("advanced.calendar"))
 
 
 @bp.route("/new", methods=["GET", "POST"])

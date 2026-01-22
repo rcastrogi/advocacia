@@ -1,0 +1,146 @@
+/* ===================================================================
+   RESET SCOPE - Isolamento de CSS para páginas customizadas
+   ===================================================================
+   
+   Use a classe .reset-scope em um container para "escapar" do CSS base
+   e ter controle total sobre os estilos daquela área.
+   
+   Exemplo:
+   <div class="reset-scope">
+       <!-- Aqui dentro, Bootstrap puro funciona sem interferência -->
+   </div>
+   
+   Ou para página inteira, adicione no block content:
+   {% block content %}
+   <div class="reset-scope full-page">
+       ...
+   </div>
+   {% endblock %}
+   
+=================================================================== */
+
+/* Reset básico - remove overrides do style.css */
+.reset-scope {
+    /* Cores */
+    color: #212529;
+}
+
+/* Cards dentro de reset-scope usam Bootstrap puro */
+.reset-scope .card {
+    background-color: #fff;
+    border: 1px solid rgba(0,0,0,.125);
+    border-radius: 0.375rem;
+    box-shadow: none;
+}
+
+.reset-scope .card-header {
+    background: rgba(0,0,0,.03);
+    color: inherit;
+    border-radius: 0;
+}
+
+.reset-scope .card-header h1,
+.reset-scope .card-header h2,
+.reset-scope .card-header h3,
+.reset-scope .card-header h4,
+.reset-scope .card-header h5,
+.reset-scope .card-header h6 {
+    color: inherit;
+}
+
+.reset-scope .card-body {
+    background-color: transparent;
+}
+
+/* Forms - Bootstrap puro */
+.reset-scope .form-control,
+.reset-scope .form-select,
+.reset-scope textarea.form-control {
+    background-color: #fff;
+    color: #212529;
+    border: 1px solid #ced4da;
+}
+
+.reset-scope .form-control:focus,
+.reset-scope .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+}
+
+.reset-scope .form-label,
+.reset-scope label {
+    color: #212529;
+}
+
+/* Headings - fonte padrão do sistema */
+.reset-scope h1,
+.reset-scope h2,
+.reset-scope h3,
+.reset-scope h4,
+.reset-scope h5,
+.reset-scope h6 {
+    font-family: inherit;
+    color: #212529;
+}
+
+/* Text utilities */
+.reset-scope .text-muted {
+    color: #6c757d;
+}
+
+/* Full page mode - remove padding do container pai */
+.reset-scope.full-page {
+    margin: -1.5rem;
+    padding: 0;
+    min-height: calc(100vh - 120px);
+    background: #fff;
+}
+
+/* ===================================================================
+   UTILITY CLASSES - Alternativas aos estilos problemáticos
+=================================================================== */
+
+/* Backgrounds sem !important */
+.bg-white-clean { background-color: #ffffff; }
+.bg-gray-clean { background-color: #f8f9fa; }
+.bg-dark-clean { background-color: #212529; }
+
+/* Text colors sem !important */
+.text-dark-clean { color: #212529; }
+.text-white-clean { color: #ffffff; }
+.text-muted-clean { color: #6c757d; }
+
+/* Cards limpos */
+.card-clean {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+}
+
+.card-clean .card-header {
+    background: #f8f9fa;
+    color: #212529;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem 1.25rem;
+}
+
+.card-clean .card-body {
+    padding: 1.25rem;
+}
+
+/* ===================================================================
+   CSS LAYERS - Futuro: organização por camadas de prioridade
+   (Suporte em browsers modernos)
+=================================================================== */
+
+/* 
+   @layer reset, base, components, utilities, overrides;
+   
+   Quando migrarmos para CSS Layers, a ordem de prioridade será:
+   1. reset - normalize
+   2. base - Bootstrap
+   3. components - nossos componentes
+   4. utilities - classes utilitárias
+   5. overrides - customizações específicas de página
+*/

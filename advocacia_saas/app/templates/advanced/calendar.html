@@ -1,453 +1,1010 @@
 {% extends "base.html" %}
 
-{% block title %}Calendário Jurídico{% endblock %}
+{% block title %}Agenda - Petitio{% endblock %}
 
 {% block head %}
-<!-- FullCalendar CSS -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
-
-<style>
-    #calendar {
-        max-width: 100%;
-        margin: 0 auto;
-    }
-
-    .fc-event {
-        cursor: pointer;
-        border: none;
-        border-radius: 4px;
-        font-size: 0.85em;
-        padding: 2px 4px;
-    }
-
-    .fc-event:hover {
-        opacity: 0.8;
-    }
-
-    .event-tooltip {
-        max-width: 300px;
-    }
-
-    .event-type-badge {
-        display: inline-block;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-size: 0.75em;
-        font-weight: bold;
-        color: white;
-    }
-
-    .event-priority-high {
-        background-color: #dc3545;
-    }
-
-    .event-priority-urgent {
-        background-color: #8b0000;
-    }
-
-    .calendar-controls {
-        margin-bottom: 20px;
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .calendar-controls .btn {
-        white-space: nowrap;
-    }
-
-    @media (max-width: 768px) {
-        .calendar-controls {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .calendar-controls .btn {
-            width: 100%;
-        }
-    }
-</style>
+{{ super() }}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="h3 mb-0">Calendário Jurídico</h1>
-                    <p class="text-muted">Gerencie audiências, prazos e compromissos processuais</p>
-                </div>
-                <div class="d-flex gap-2 flex-wrap">
-                    <a href="{{ url_for('deadlines.blocks_list') }}" class="btn btn-outline-secondary" title="Gerenciar bloqueios de agenda">
-                        <i class="fas fa-ban me-1"></i>Bloqueios
-                    </a>
-                    <a href="{{ url_for('advanced.new_calendar_event') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-1"></i>Novo Evento
-                    </a>
-                    <a href="{{ url_for('advanced.schedule_client_meeting') }}" class="btn btn-success">
-                        <i class="fas fa-user-plus me-1"></i>Agendar com Cliente
-                    </a>
-                    <a href="{{ url_for('advanced.meeting_requests') }}" class="btn btn-warning">
-                        <i class="fas fa-clock me-1"></i>Solicitações
-                        {% if pending_requests_count %}
-                        <span class="badge bg-danger">{{ pending_requests_count }}</span>
-                        {% endif %}
-                    </a>
-                </div>
+<style>
+/* ========================================
+   AGENDA JURÍDICA - Estilo Google Calendar
+   ======================================== */
+
+.gc-container {
+    --gc-primary: #1a73e8;
+    --gc-primary-light: #e8f0fe;
+    --gc-text: #3c4043;
+    --gc-text-secondary: #5f6368;
+    --gc-text-light: #70757a;
+    --gc-border: #dadce0;
+    --gc-bg: #ffffff;
+    --gc-hover: #f1f3f4;
+    --gc-red: #d50000;
+    --gc-green: #0b8043;
+    --gc-yellow: #f4b400;
+    --gc-purple: #8e24aa;
+    
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 56px);
+    margin: -1rem;
+    background: var(--gc-bg);
+    font-family: 'Google Sans', 'Roboto', -apple-system, sans-serif;
+}
+
+/* ===== HEADER SUPERIOR ===== */
+.gc-header {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--gc-border);
+    background: var(--gc-bg);
+    min-height: 64px;
+    gap: 16px;
+}
+
+.gc-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--gc-text-secondary);
+    font-size: 22px;
+    font-weight: 400;
+    text-decoration: none;
+    min-width: 200px;
+}
+
+.gc-logo i {
+    color: var(--gc-primary);
+    font-size: 24px;
+}
+
+.gc-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gc-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--gc-border);
+    border-radius: 4px;
+    background: var(--gc-bg);
+    color: var(--gc-text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.gc-btn:hover {
+    background: var(--gc-hover);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.gc-btn-icon {
+    padding: 8px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--gc-text-secondary);
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gc-btn-icon:hover {
+    background: var(--gc-hover);
+}
+
+.gc-title {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--gc-text);
+    margin-left: 8px;
+}
+
+.gc-header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gc-view-select {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    border: 1px solid var(--gc-border);
+    border-radius: 4px;
+    background: var(--gc-bg);
+    color: var(--gc-text);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.gc-view-select:hover {
+    background: var(--gc-hover);
+}
+
+/* Botões de Ação no Header */
+.gc-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.gc-action-btn:hover {
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    transform: translateY(-1px);
+}
+
+.gc-action-btn i {
+    font-size: 14px;
+}
+
+.gc-action-primary {
+    background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
+    color: white;
+}
+
+.gc-action-primary:hover {
+    background: linear-gradient(135deg, #1557b0 0%, #0d47a1 100%);
+    color: white;
+}
+
+.gc-action-success {
+    background: linear-gradient(135deg, #0b8043 0%, #056b32 100%);
+    color: white;
+}
+
+.gc-action-success:hover {
+    background: linear-gradient(135deg, #056b32 0%, #045528 100%);
+    color: white;
+}
+
+.gc-action-warning {
+    background: linear-gradient(135deg, #f4b400 0%, #e6a800 100%);
+    color: #202124;
+}
+
+.gc-action-warning:hover {
+    background: linear-gradient(135deg, #e6a800 0%, #cc9600 100%);
+    color: #202124;
+}
+
+.gc-action-secondary {
+    background: linear-gradient(135deg, #5f6368 0%, #4a4e51 100%);
+    color: white;
+}
+
+.gc-action-secondary:hover {
+    background: linear-gradient(135deg, #4a4e51 0%, #3c3f42 100%);
+    color: white;
+}
+
+.gc-badge {
+    background: #d50000;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 4px;
+}
+
+@media (max-width: 1200px) {
+    .gc-action-btn span:not(.gc-badge) {
+        display: none;
+    }
+    
+    .gc-action-btn {
+        padding: 10px 14px;
+    }
+}
+
+/* ===== LAYOUT PRINCIPAL ===== */
+.gc-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ===== SIDEBAR ESQUERDA ===== */
+.gc-sidebar {
+    width: 256px;
+    border-right: 1px solid var(--gc-border);
+    padding: 16px;
+    overflow-y: auto;
+    flex-shrink: 0;
+    background: var(--gc-bg);
+}
+
+.gc-create-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px 14px 16px;
+    border: none;
+    border-radius: 24px;
+    background: var(--gc-bg);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    color: var(--gc-text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    margin-bottom: 20px;
+    text-decoration: none;
+}
+
+.gc-create-btn:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.2);
+    color: var(--gc-text);
+}
+
+.gc-create-btn i {
+    font-size: 24px;
+    color: var(--gc-text);
+}
+
+/* Mini calendário */
+.gc-mini-cal {
+    margin-bottom: 20px;
+}
+
+.gc-mini-cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+.gc-mini-cal-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gc-text);
+}
+
+.gc-mini-cal-nav {
+    display: flex;
+    gap: 4px;
+}
+
+.gc-mini-cal-nav button {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--gc-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.gc-mini-cal-nav button:hover {
+    background: var(--gc-hover);
+}
+
+.gc-mini-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    text-align: center;
+}
+
+.gc-mini-cal-day-header {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--gc-text-light);
+    padding: 4px;
+    text-transform: uppercase;
+}
+
+.gc-mini-cal-day {
+    font-size: 12px;
+    color: var(--gc-text);
+    padding: 4px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: 1px auto;
+}
+
+.gc-mini-cal-day:hover {
+    background: var(--gc-hover);
+}
+
+.gc-mini-cal-day.today {
+    background: var(--gc-primary);
+    color: white;
+    font-weight: 500;
+}
+
+.gc-mini-cal-day.other-month {
+    color: var(--gc-text-light);
+}
+
+.gc-mini-cal-day.selected {
+    background: var(--gc-primary-light);
+    color: var(--gc-primary);
+}
+
+/* Seções da sidebar */
+.gc-section {
+    margin-bottom: 16px;
+}
+
+.gc-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    cursor: pointer;
+}
+
+.gc-section-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gc-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.gc-section-add {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--gc-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gc-section-add:hover {
+    background: var(--gc-hover);
+}
+
+.gc-agenda-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--gc-text);
+    text-decoration: none;
+}
+
+.gc-agenda-item:hover {
+    background: var(--gc-hover);
+}
+
+.gc-agenda-checkbox {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.gc-agenda-checkbox.checked {
+    background: currentColor;
+}
+
+.gc-agenda-checkbox.checked::after {
+    content: '✓';
+    color: white;
+    font-size: 10px;
+}
+
+/* ===== ÁREA DO CALENDÁRIO ===== */
+.gc-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--gc-bg);
+}
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 992px) {
+    .gc-sidebar {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .gc-header {
+        flex-wrap: wrap;
+        padding: 8px;
+    }
+    
+    .gc-logo {
+        min-width: auto;
+    }
+    
+    .gc-title {
+        font-size: 18px;
+    }
+    
+    .gc-header-right {
+        width: 100%;
+        justify-content: center;
+        margin-top: 8px;
+    }
+}
+
+/* ===== FULLCALENDAR OVERRIDES ===== */
+.gc-main .fc {
+    height: 100%;
+    font-family: inherit;
+}
+
+.gc-main .fc-theme-standard td,
+.gc-main .fc-theme-standard th {
+    border-color: var(--gc-border);
+}
+
+.gc-main .fc-theme-standard .fc-scrollgrid {
+    border: none;
+}
+
+.gc-main .fc .fc-toolbar {
+    display: none;
+}
+
+/* Header dos dias da semana */
+.gc-main .fc .fc-col-header-cell {
+    background: var(--gc-bg);
+    border-bottom: 1px solid var(--gc-border);
+    padding: 8px 0;
+    vertical-align: middle;
+}
+
+.gc-main .fc .fc-col-header-cell-cushion {
+    color: var(--gc-text-secondary);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px;
+}
+
+.gc-main .fc .fc-day-today .fc-col-header-cell-cushion {
+    color: var(--gc-primary);
+}
+
+/* Timegrid */
+.gc-main .fc-timegrid-slot {
+    height: 48px;
+}
+
+.gc-main .fc-timegrid-slot-label {
+    font-size: 10px;
+    color: var(--gc-text-light);
+    vertical-align: top;
+    padding-top: 0;
+}
+
+.gc-main .fc-timegrid-axis-cushion {
+    max-width: none;
+}
+
+/* Linha de hora atual */
+.gc-main .fc .fc-timegrid-now-indicator-line {
+    border-color: var(--gc-red);
+    border-width: 2px;
+}
+
+.gc-main .fc .fc-timegrid-now-indicator-arrow {
+    border-color: var(--gc-red);
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+}
+
+/* Eventos */
+.gc-main .fc-event {
+    border: none;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    box-shadow: none;
+}
+
+.gc-main .fc-timegrid-event {
+    border-radius: 4px;
+}
+
+.gc-main .fc-event-title {
+    font-weight: 500;
+}
+
+/* Day Grid (mês) */
+.gc-main .fc-daygrid-day {
+    background: var(--gc-bg);
+}
+
+.gc-main .fc-daygrid-day:hover {
+    background: var(--gc-hover);
+}
+
+.gc-main .fc-daygrid-day-top {
+    display: flex;
+    justify-content: center;
+    padding-top: 4px;
+}
+
+.gc-main .fc-daygrid-day-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--gc-text);
+    text-decoration: none;
+}
+
+.gc-main .fc-day-today .fc-daygrid-day-number {
+    background: var(--gc-primary);
+    color: white;
+}
+
+.gc-main .fc-daygrid-event {
+    border-radius: 4px;
+    margin: 1px 2px;
+}
+
+.gc-main .fc-daygrid-event-dot {
+    display: none;
+}
+
+/* View Lista */
+.gc-main .fc-list {
+    border: none;
+}
+
+.gc-main .fc-list-day-cushion {
+    background: var(--gc-hover);
+}
+
+.gc-main .fc-list-event:hover td {
+    background: var(--gc-hover);
+}
+</style>
+
+<div class="gc-container">
+    <!-- Header Superior -->
+    <header class="gc-header">
+        <a href="#" class="gc-logo">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Agenda</span>
+        </a>
+        
+        <div class="gc-nav">
+            <button class="gc-btn" id="todayBtn">Hoje</button>
+            <button class="gc-btn-icon" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+            <button class="gc-btn-icon" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+            <span class="gc-title" id="calendarTitle">Janeiro de 2026</span>
+        </div>
+        
+        <div class="gc-header-right">
+            <!-- Botões de Ação -->
+            <a href="{{ url_for('deadlines.blocks_list') }}" class="gc-action-btn gc-action-secondary">
+                <i class="fas fa-ban"></i>
+                <span>Bloqueios</span>
+            </a>
+            <a href="{{ url_for('advanced.meeting_requests') }}" class="gc-action-btn gc-action-warning">
+                <i class="fas fa-bell"></i>
+                <span>Solicitações</span>
+                {% if pending_requests_count %}<span class="gc-badge">{{ pending_requests_count }}</span>{% endif %}
+            </a>
+            <a href="{{ url_for('advanced.schedule_client_meeting') }}" class="gc-action-btn gc-action-success">
+                <i class="fas fa-user-plus"></i>
+                <span>Agendar Reunião</span>
+            </a>
+            <a href="{{ url_for('advanced.new_calendar_event') }}" class="gc-action-btn gc-action-primary">
+                <i class="fas fa-plus"></i>
+                <span>Novo Evento</span>
+            </a>
+            
+            <div class="dropdown">
+                <button class="gc-view-select dropdown-toggle" data-bs-toggle="dropdown">
+                    <span id="currentViewLabel">Semana</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" data-view="timeGridDay">Dia</a></li>
+                    <li><a class="dropdown-item" href="#" data-view="timeGridWeek">Semana</a></li>
+                    <li><a class="dropdown-item" href="#" data-view="dayGridMonth">Mês</a></li>
+                    <li><a class="dropdown-item" href="#" data-view="timeGridFourDay">4 dias</a></li>
+                    <li><a class="dropdown-item" href="#" data-view="listMonth">Agenda</a></li>
+                </ul>
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- Controles do Calendário -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="calendar-controls">
-                        <button id="todayBtn" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-calendar-day"></i> Hoje
-                        </button>
-                        <button id="prevBtn" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-chevron-left"></i> Anterior
-                        </button>
-                        <button id="nextBtn" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-chevron-right"></i> Próximo
-                        </button>
-                        <span id="currentDate" class="fw-bold text-primary mx-3"></span>
-                        <div class="btn-group btn-group-sm" role="group">
-                            <button id="monthView" class="btn btn-outline-primary active">Mês</button>
-                            <button id="weekView" class="btn btn-outline-primary">Semana</button>
-                            <button id="dayView" class="btn btn-outline-primary">Dia</button>
-                            <button id="listView" class="btn btn-outline-primary">Lista</button>
-                        </div>
+    <!-- Body -->
+    <div class="gc-body">
+        <!-- Sidebar Esquerda -->
+        <aside class="gc-sidebar">
+            <!-- Botão Criar -->
+            <a href="{{ url_for('advanced.new_calendar_event') }}" class="gc-create-btn">
+                <i class="fas fa-plus"></i>
+                <span>Criar</span>
+            </a>
+            
+            <!-- Mini Calendário -->
+            <div class="gc-mini-cal">
+                <div class="gc-mini-cal-header">
+                    <span class="gc-mini-cal-title" id="miniCalTitle">Janeiro de 2026</span>
+                    <div class="gc-mini-cal-nav">
+                        <button id="miniCalPrev"><i class="fas fa-chevron-left"></i></button>
+                        <button id="miniCalNext"><i class="fas fa-chevron-right"></i></button>
                     </div>
                 </div>
+                <div class="gc-mini-cal-grid" id="miniCalGrid">
+                    <!-- Gerado via JS -->
+                </div>
             </div>
-        </div>
-    </div>
+            
+            <!-- Ações Rápidas -->
+            <div class="gc-section">
+                <div class="gc-section-header">
+                    <span class="gc-section-title">Ações</span>
+                </div>
+                <a href="{{ url_for('advanced.schedule_client_meeting') }}" class="gc-agenda-item">
+                    <i class="fas fa-user-plus" style="color: var(--gc-green);"></i>
+                    <span>Agendar com cliente</span>
+                </a>
+                <a href="{{ url_for('advanced.meeting_requests') }}" class="gc-agenda-item">
+                    <i class="fas fa-clock" style="color: var(--gc-yellow);"></i>
+                    <span>Solicitações{% if pending_requests_count %} ({{ pending_requests_count }}){% endif %}</span>
+                </a>
+                <a href="{{ url_for('deadlines.blocks_list') }}" class="gc-agenda-item">
+                    <i class="fas fa-ban" style="color: var(--gc-red);"></i>
+                    <span>Bloqueios de horário</span>
+                </a>
+            </div>
+            
+            <!-- Minhas Agendas -->
+            <div class="gc-section">
+                <div class="gc-section-header">
+                    <span class="gc-section-title">Tipos de Evento</span>
+                </div>
+                <div class="gc-agenda-item" data-filter="audiencia">
+                    <span class="gc-agenda-checkbox checked" style="border-color: #d50000; color: #d50000;"></span>
+                    <span>Audiências</span>
+                </div>
+                <div class="gc-agenda-item" data-filter="prazo">
+                    <span class="gc-agenda-checkbox checked" style="border-color: #f4b400; color: #f4b400;"></span>
+                    <span>Prazos</span>
+                </div>
+                <div class="gc-agenda-item" data-filter="reuniao">
+                    <span class="gc-agenda-checkbox checked" style="border-color: #1a73e8; color: #1a73e8;"></span>
+                    <span>Reuniões</span>
+                </div>
+                <div class="gc-agenda-item" data-filter="compromisso">
+                    <span class="gc-agenda-checkbox checked" style="border-color: #0b8043; color: #0b8043;"></span>
+                    <span>Compromissos</span>
+                </div>
+            </div>
+            
+            <!-- Outras agendas -->
+            <div class="gc-section">
+                <div class="gc-section-header">
+                    <span class="gc-section-title">Outras</span>
+                    <button class="gc-section-add"><i class="fas fa-plus"></i></button>
+                </div>
+                <div class="gc-agenda-item">
+                    <span class="gc-agenda-checkbox checked" style="border-color: #8e24aa; color: #8e24aa;"></span>
+                    <span>Feriados</span>
+                </div>
+            </div>
+        </aside>
 
-    <!-- Calendário -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div id="calendar"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Legenda -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0">Legenda</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <div class="badge bg-danger me-2" style="width: 20px; height: 20px;"></div>
-                                <span>Audiências</span>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <div class="badge bg-warning me-2" style="width: 20px; height: 20px;"></div>
-                                <span>Prazos</span>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <div class="badge bg-primary me-2" style="width: 20px; height: 20px;"></div>
-                                <span>Reuniões</span>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <div class="badge bg-success me-2" style="width: 20px; height: 20px;"></div>
-                                <span>Compromissos</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mt-2">
-                        <div class="col-12">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle"></i>
-                                Cores mais escuras indicam prioridade alta ou urgente
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Área Principal do Calendário -->
+        <main class="gc-main">
+            <div id="calendar"></div>
+        </main>
     </div>
 </div>
 
 <!-- Modal de Detalhes do Evento -->
 <div class="modal fade" id="eventModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="eventModalTitle">Detalhes do Evento</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="eventModalBody">
-                <!-- Conteúdo será carregado dinamicamente -->
-            </div>
+            <div class="modal-body" id="eventModalBody"></div>
             <div class="modal-footer">
+                <a href="#" class="btn btn-outline-primary" id="eventEditBtn"><i class="fas fa-edit"></i> Editar</a>
+                <button type="button" class="btn btn-outline-danger" id="eventDeleteBtn"><i class="fas fa-trash"></i> Excluir</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <div id="eventModalActions">
-                    <!-- Ações serão carregadas dinamicamente -->
-                </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
-<!-- FullCalendar JS -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/pt-br.js"></script>
-
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/pt-br.global.min.js'></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let calendar;
-    let currentView = 'dayGridMonth';
-
-    // Inicializar calendário
     const calendarEl = document.getElementById('calendar');
-    calendar = new FullCalendar.Calendar(calendarEl, {
+    let miniCalDate = new Date();
+    const viewLabels = {
+        'timeGridDay': 'Dia',
+        'timeGridWeek': 'Semana',
+        'dayGridMonth': 'Mês',
+        'timeGridFourDay': '4 dias',
+        'listMonth': 'Agenda'
+    };
+    
+    // Inicializar FullCalendar
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
         locale: 'pt-br',
-        initialView: 'dayGridMonth',
-        headerToolbar: false, // Usaremos controles customizados
-        height: 'auto',
+        headerToolbar: false,
+        height: '100%',
+        allDaySlot: true,
+        allDayText: 'Dia todo',
+        slotMinTime: '06:00:00',
+        slotMaxTime: '22:00:00',
+        slotDuration: '00:30:00',
+        slotLabelInterval: '01:00',
+        slotLabelFormat: {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        },
+        nowIndicator: true,
+        dayMaxEvents: true,
+        views: {
+            timeGridFourDay: {
+                type: 'timeGrid',
+                duration: { days: 4 },
+                buttonText: '4 dias'
+            }
+        },
         events: {
             url: '{{ url_for("advanced.get_calendar_events") }}',
             failure: function() {
-                showToast('Erro ao carregar eventos do calendário', 'error');
+                console.error('Erro ao carregar eventos');
             }
         },
         eventClick: function(info) {
-            showEventDetails(info.event);
+            info.jsEvent.preventDefault();
+            showEventModal(info.event);
         },
-        eventMouseEnter: function(info) {
-            showEventTooltip(info);
+        dateClick: function(info) {
+            // Navegar para criar evento
+            window.location.href = `{{ url_for('advanced.new_calendar_event') }}?date=${info.dateStr}`;
         },
-        eventMouseLeave: function() {
-            hideEventTooltip();
-        },
-        dayMaxEvents: 3,
-        moreLinkClick: 'popover'
-    });
-
-    calendar.render();
-
-    // Atualizar título da data atual
-    updateCurrentDate();
-
-    // Controles do calendário
-    document.getElementById('todayBtn').addEventListener('click', function() {
-        calendar.today();
-        updateCurrentDate();
-    });
-
-    document.getElementById('prevBtn').addEventListener('click', function() {
-        calendar.prev();
-        updateCurrentDate();
-    });
-
-    document.getElementById('nextBtn').addEventListener('click', function() {
-        calendar.next();
-        updateCurrentDate();
-    });
-
-    // Controles de visualização
-    document.getElementById('monthView').addEventListener('click', function() {
-        setActiveView('monthView');
-        calendar.changeView('dayGridMonth');
-        currentView = 'dayGridMonth';
-        updateCurrentDate();
-    });
-
-    document.getElementById('weekView').addEventListener('click', function() {
-        setActiveView('weekView');
-        calendar.changeView('timeGridWeek');
-        currentView = 'timeGridWeek';
-        updateCurrentDate();
-    });
-
-    document.getElementById('dayView').addEventListener('click', function() {
-        setActiveView('dayView');
-        calendar.changeView('timeGridDay');
-        currentView = 'timeGridDay';
-        updateCurrentDate();
-    });
-
-    document.getElementById('listView').addEventListener('click', function() {
-        setActiveView('listView');
-        calendar.changeView('listMonth');
-        currentView = 'listMonth';
-        updateCurrentDate();
-    });
-
-    function setActiveView(activeId) {
-        ['monthView', 'weekView', 'dayView', 'listView'].forEach(id => {
-            document.getElementById(id).classList.remove('active');
-        });
-        document.getElementById(activeId).classList.add('active');
-    }
-
-    function updateCurrentDate() {
-        const date = calendar.getDate();
-        const view = calendar.view;
-        let dateText = '';
-
-        if (view.type === 'dayGridMonth') {
-            dateText = new Intl.DateTimeFormat('pt-BR', {
-                year: 'numeric',
-                month: 'long'
-            }).format(date);
-        } else if (view.type === 'timeGridWeek') {
-            const start = view.activeStart;
-            const end = view.activeEnd;
-            dateText = `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`;
-        } else if (view.type === 'timeGridDay') {
-            dateText = date.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        } else {
-            dateText = view.title;
+        datesSet: function() {
+            updateTitle();
         }
-
-        document.getElementById('currentDate').textContent = dateText;
+    });
+    
+    calendar.render();
+    
+    // Navegação
+    document.getElementById('todayBtn').onclick = () => calendar.today();
+    document.getElementById('prevBtn').onclick = () => calendar.prev();
+    document.getElementById('nextBtn').onclick = () => calendar.next();
+    
+    // Seletor de view
+    document.querySelectorAll('[data-view]').forEach(item => {
+        item.onclick = function(e) {
+            e.preventDefault();
+            const view = this.dataset.view;
+            calendar.changeView(view);
+            document.getElementById('currentViewLabel').textContent = viewLabels[view] || view;
+        };
+    });
+    
+    function updateTitle() {
+        const date = calendar.getDate();
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        document.getElementById('calendarTitle').textContent = `${months[date.getMonth()]} de ${date.getFullYear()}`;
     }
-
-    function showEventDetails(event) {
+    
+    // ===== MINI CALENDÁRIO =====
+    function renderMiniCal() {
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const days = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+        
+        document.getElementById('miniCalTitle').textContent = `${months[miniCalDate.getMonth()]} de ${miniCalDate.getFullYear()}`;
+        
+        const grid = document.getElementById('miniCalGrid');
+        let html = '';
+        
+        // Headers
+        days.forEach(d => {
+            html += `<div class="gc-mini-cal-day-header">${d}</div>`;
+        });
+        
+        // Dias
+        const firstDay = new Date(miniCalDate.getFullYear(), miniCalDate.getMonth(), 1);
+        const lastDay = new Date(miniCalDate.getFullYear(), miniCalDate.getMonth() + 1, 0);
+        const startDay = firstDay.getDay();
+        const today = new Date();
+        
+        // Dias do mês anterior
+        const prevMonth = new Date(miniCalDate.getFullYear(), miniCalDate.getMonth(), 0);
+        for (let i = startDay - 1; i >= 0; i--) {
+            const day = prevMonth.getDate() - i;
+            html += `<div class="gc-mini-cal-day other-month">${day}</div>`;
+        }
+        
+        // Dias do mês atual
+        for (let i = 1; i <= lastDay.getDate(); i++) {
+            const isToday = today.getDate() === i && 
+                           today.getMonth() === miniCalDate.getMonth() && 
+                           today.getFullYear() === miniCalDate.getFullYear();
+            const cls = isToday ? 'gc-mini-cal-day today' : 'gc-mini-cal-day';
+            html += `<div class="${cls}" data-date="${miniCalDate.getFullYear()}-${String(miniCalDate.getMonth()+1).padStart(2,'0')}-${String(i).padStart(2,'0')}">${i}</div>`;
+        }
+        
+        // Dias do próximo mês
+        const remaining = 42 - (startDay + lastDay.getDate());
+        for (let i = 1; i <= remaining && remaining < 7; i++) {
+            html += `<div class="gc-mini-cal-day other-month">${i}</div>`;
+        }
+        
+        grid.innerHTML = html;
+        
+        // Click nos dias
+        grid.querySelectorAll('.gc-mini-cal-day:not(.other-month)').forEach(day => {
+            day.onclick = () => {
+                const dateStr = day.dataset.date;
+                if (dateStr) {
+                    calendar.gotoDate(dateStr);
+                }
+            };
+        });
+    }
+    
+    document.getElementById('miniCalPrev').onclick = () => {
+        miniCalDate.setMonth(miniCalDate.getMonth() - 1);
+        renderMiniCal();
+    };
+    
+    document.getElementById('miniCalNext').onclick = () => {
+        miniCalDate.setMonth(miniCalDate.getMonth() + 1);
+        renderMiniCal();
+    };
+    
+    renderMiniCal();
+    
+    // ===== FILTROS DE AGENDA =====
+    document.querySelectorAll('[data-filter]').forEach(item => {
+        item.onclick = function() {
+            const checkbox = this.querySelector('.gc-agenda-checkbox');
+            checkbox.classList.toggle('checked');
+            // TODO: Implementar filtro de eventos
+        };
+    });
+    
+    // ===== MODAL DE EVENTO =====
+    let currentEvent = null;
+    
+    function showEventModal(event) {
+        currentEvent = event;
         const modal = new bootstrap.Modal(document.getElementById('eventModal'));
-        const modalTitle = document.getElementById('eventModalTitle');
-        const modalBody = document.getElementById('eventModalBody');
-        const modalActions = document.getElementById('eventModalActions');
-
-        modalTitle.textContent = event.title;
-
-        // Construir conteúdo do modal
-        let content = `
-            <div class="row">
-                <div class="col-md-8">
-                    <h6>Detalhes do Evento</h6>
-                    <table class="table table-sm">
-                        <tr>
-                            <td><strong>Tipo:</strong></td>
-                            <td>${getEventTypeDisplay(event.extendedProps.type)}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Data/Hora:</strong></td>
-                            <td>${formatEventDateTime(event.start, event.end, event.allDay)}</td>
-                        </tr>
-                        ${event.extendedProps.location ? `
-                        <tr>
-                            <td><strong>Local:</strong></td>
-                            <td>${event.extendedProps.location}</td>
-                        </tr>
-                        ` : ''}
-                        ${event.extendedProps.priority !== 'normal' ? `
-                        <tr>
-                            <td><strong>Prioridade:</strong></td>
-                            <td><span class="badge bg-${event.extendedProps.priority === 'urgent' ? 'danger' : 'warning'}">${event.extendedProps.priority.toUpperCase()}</span></td>
-                        </tr>
-                        ` : ''}
-                    </table>
-
-                    ${event.extendedProps.description ? `
-                    <h6>Descrição</h6>
-                    <p>${event.extendedProps.description}</p>
-                    ` : ''}
-
-                    ${event.extendedProps.notes ? `
-                    <h6>Observações</h6>
-                    <p class="text-muted">${event.extendedProps.notes}</p>
-                    ` : ''}
-                </div>
-                <div class="col-md-4">
-                    <h6>Ações</h6>
-                    <div class="d-grid gap-2">
-                        <a href="/advanced/calendar/event/${event.id}/edit" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>
-                        <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent(${event.id})">
-                            <i class="fas fa-trash"></i> Excluir
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        modalBody.innerHTML = content;
-        modal.show();
-    }
-
-    function getEventTypeDisplay(type) {
-        const types = {
+        
+        document.getElementById('eventModalTitle').textContent = event.title;
+        
+        const props = event.extendedProps || {};
+        const startDate = event.start;
+        const endDate = event.end;
+        
+        let timeStr = '';
+        if (event.allDay) {
+            timeStr = startDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+        } else {
+            timeStr = `${startDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })} · ${startDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+            if (endDate) {
+                timeStr += ` - ${endDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+            }
+        }
+        
+        const typeLabels = {
             'audiencia': 'Audiência',
             'prazo': 'Prazo Processual',
             'reuniao': 'Reunião',
             'compromisso': 'Compromisso'
         };
-        return types[type] || type;
+        
+        let html = `
+            <div class="mb-3">
+                <i class="fas fa-clock me-2 text-muted"></i>
+                <span>${timeStr}</span>
+            </div>
+            ${props.location ? `
+            <div class="mb-3">
+                <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                <span>${props.location}</span>
+            </div>` : ''}
+            ${props.type ? `
+            <div class="mb-3">
+                <i class="fas fa-tag me-2 text-muted"></i>
+                <span>${typeLabels[props.type] || props.type}</span>
+            </div>` : ''}
+            ${props.description ? `
+            <div class="mb-3">
+                <i class="fas fa-align-left me-2 text-muted"></i>
+                <span>${props.description}</span>
+            </div>` : ''}
+        `;
+        
+        document.getElementById('eventModalBody').innerHTML = html;
+        document.getElementById('eventEditBtn').href = `/advanced/calendar/event/${event.id}/edit`;
+        
+        modal.show();
     }
-
-    function formatEventDateTime(start, end, allDay) {
-        if (allDay) {
-            if (start.toDateString() === end.toDateString()) {
-                return start.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            } else {
-                return `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`;
-            }
-        } else {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-            if (start.toDateString() === end.toDateString()) {
-                return `${start.toLocaleDateString('pt-BR', options)} - ${end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
-            } else {
-                return `${start.toLocaleString('pt-BR', options)} - ${end.toLocaleString('pt-BR', options)}`;
-            }
-        }
-    }
-
-    function showEventTooltip(info) {
-        // Implementar tooltip se necessário
-    }
-
-    function hideEventTooltip() {
-        // Implementar esconder tooltip se necessário
-    }
-
-    // Função global para deletar evento
-    window.deleteEvent = async function(eventId) {
-        const confirmed = await confirmDelete('este evento');
-        if (confirmed) {
-            fetch(`/advanced/calendar/event/${eventId}/delete`, {
+    
+    document.getElementById('eventDeleteBtn').onclick = async function() {
+        if (!currentEvent || !confirm('Tem certeza que deseja excluir este evento?')) return;
+        
+        try {
+            const response = await fetch(`/advanced/calendar/event/${currentEvent.id}/delete`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value || ''
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
                 }
-            })
-            .then(response => {
-                if (response.ok) {
-                    calendar.refetchEvents();
-                    bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-                    showToast('Evento excluído com sucesso!', 'success');
-                } else {
-                    showToast('Erro ao excluir evento.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                showToast('Erro ao excluir evento.', 'error');
             });
+            
+            if (response.ok) {
+                calendar.refetchEvents();
+                bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+                showToast('Evento excluído com sucesso!', 'success');
+            } else {
+                showToast('Erro ao excluir evento.', 'error');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            showToast('Erro ao excluir evento.', 'error');
         }
     };
 });

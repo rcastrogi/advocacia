@@ -1,0 +1,163 @@
+/**
+ * CSS LAYERS - Sistema de Prioridade de Estilos
+ * =============================================
+ * 
+ * CSS Layers (@layer) permite definir prioridade entre diferentes fontes de CSS.
+ * Camadas definidas depois têm MAIOR prioridade.
+ * 
+ * Ordem de prioridade (menor → maior):
+ * 1. reset      - Normalização básica
+ * 2. base       - Estilos base do Petitio (style.css)
+ * 3. components - Componentes reutilizáveis
+ * 4. pages      - Estilos específicos de páginas
+ * 5. utilities  - Classes utilitárias (maior prioridade)
+ * 
+ * IMPORTANTE: Estilos SEM @layer têm prioridade MÁXIMA (acima de todas as layers)
+ * Isso significa que CSS inline em páginas sempre vai sobrescrever.
+ * 
+ * Como usar em páginas:
+ * ---------------------
+ * <style>
+ *   @layer pages {
+ *     .minha-classe { color: red; }
+ *   }
+ * </style>
+ * 
+ * Ou para máxima prioridade (sem layer):
+ * <style>
+ *   .minha-classe { color: red; }
+ * </style>
+ */
+
+/* Declarar a ordem das layers */
+@layer reset, base, components, pages, utilities;
+
+/* ===== RESET LAYER ===== */
+@layer reset {
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+    
+    /* Reset de links */
+    a {
+        text-decoration: none;
+    }
+}
+
+/* ===== UTILITIES LAYER ===== */
+@layer utilities {
+    /* Classes para escapar do tema base */
+    
+    /* Fundo branco puro */
+    .bg-white-pure {
+        background-color: #ffffff;
+        background: #ffffff;
+    }
+    
+    /* Fundo transparente */
+    .bg-transparent {
+        background-color: transparent;
+        background: transparent;
+    }
+    
+    /* Texto escuro (para fundos claros) */
+    .text-dark-pure {
+        color: #212529;
+    }
+    
+    /* Texto claro (para fundos escuros) */
+    .text-light-pure {
+        color: #ffffff;
+    }
+    
+    /* Card limpo - sem estilos do tema */
+    .card-pure {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        box-shadow: none;
+    }
+    
+    .card-pure .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        color: #212529;
+    }
+    
+    .card-pure .card-body {
+        background: #ffffff;
+        color: #212529;
+    }
+    
+    /* Form controls limpos */
+    .form-control-pure {
+        background: #ffffff;
+        color: #212529;
+        border: 1px solid #ced4da;
+    }
+    
+    .form-control-pure:focus {
+        background: #ffffff;
+        color: #212529;
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    /* Reset de especificidade - Wrapper que reseta tudo dentro */
+    .theme-reset {
+        --card-bg: #ffffff;
+        --card-header-bg: #f8f9fa;
+        --card-border: #dee2e6;
+        --text-primary: #212529;
+        --text-secondary: #6c757d;
+        --input-bg: #ffffff;
+        --input-border: #ced4da;
+    }
+    
+    .theme-reset .card {
+        background: var(--card-bg);
+        border-color: var(--card-border);
+    }
+    
+    .theme-reset .card-header {
+        background: var(--card-header-bg);
+        color: var(--text-primary);
+        border-color: var(--card-border);
+    }
+    
+    .theme-reset .card-body {
+        background: var(--card-bg);
+        color: var(--text-primary);
+    }
+    
+    .theme-reset .form-control,
+    .theme-reset .form-select {
+        background: var(--input-bg);
+        color: var(--text-primary);
+        border-color: var(--input-border);
+    }
+    
+    .theme-reset h1,
+    .theme-reset h2,
+    .theme-reset h3,
+    .theme-reset h4,
+    .theme-reset h5,
+    .theme-reset h6 {
+        color: var(--text-primary);
+    }
+    
+    .theme-reset .text-muted {
+        color: var(--text-secondary);
+    }
+    
+    /* Full page reset - para páginas inteiras com design custom */
+    .full-page-reset {
+        background: #ffffff;
+        color: #212529;
+        min-height: 100vh;
+    }
+    
+    .full-page-reset * {
+        color: inherit;
+    }
+}

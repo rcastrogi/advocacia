@@ -275,7 +275,7 @@
                                     <a href="#" class="text-decoration-none">{{ message.content }}</a>
                                 </div>
                             {% else %}
-                                {{ message.content|safe }}
+                                {{ message.content|replace('\n', '<br>')|safe }}
                             {% endif %}
                         </div>
                         <div class="message-time">
@@ -424,6 +424,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
         
+        // Converter quebras de linha para <br> e markdown básico
+        let formattedContent = message.content
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        
         let bubbleContent = '';
         if (type === 'bot received') {
             bubbleContent = `
@@ -431,10 +436,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="bot-avatar"><i class="fas fa-robot"></i></span>
                     <small class="fw-bold">Assistente Virtual</small>
                 </div>
-                ${message.content}
+                ${formattedContent}
             `;
         } else {
-            bubbleContent = message.content;
+            bubbleContent = formattedContent;
         }
 
         messageDiv.innerHTML = `
