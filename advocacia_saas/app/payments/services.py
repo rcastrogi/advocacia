@@ -121,7 +121,9 @@ class WebhookSecurityService:
             x_request_id = headers.get("x-request-id")
 
             if not x_signature or not x_request_id:
-                current_app.logger.warning("Headers x-signature ou x-request-id ausentes")
+                current_app.logger.warning(
+                    "Headers x-signature ou x-request-id ausentes"
+                )
                 return False
 
             # Parse x-signature
@@ -184,19 +186,25 @@ class PIXPaymentService:
             return None, "Erro ao criar pagamento"
 
         # Salvar no banco
-        payment = PaymentRepository.create({
-            "user_id": user.id,
-            "amount": Decimal(str(amount)),
-            "payment_type": "one_time",
-            "payment_method": "pix",
-            "status": "pending",
-            "gateway": "mercadopago",
-            "gateway_payment_id": str(gateway_response["id"]),
-            "description": description,
-            "pix_code": gateway_response["point_of_interaction"]["transaction_data"]["qr_code"],
-            "pix_qr_code": gateway_response["point_of_interaction"]["transaction_data"]["qr_code_base64"],
-            "pix_expires_at": datetime.now(timezone.utc) + timedelta(hours=24),
-        })
+        payment = PaymentRepository.create(
+            {
+                "user_id": user.id,
+                "amount": Decimal(str(amount)),
+                "payment_type": "one_time",
+                "payment_method": "pix",
+                "status": "pending",
+                "gateway": "mercadopago",
+                "gateway_payment_id": str(gateway_response["id"]),
+                "description": description,
+                "pix_code": gateway_response["point_of_interaction"][
+                    "transaction_data"
+                ]["qr_code"],
+                "pix_qr_code": gateway_response["point_of_interaction"][
+                    "transaction_data"
+                ]["qr_code_base64"],
+                "pix_expires_at": datetime.now(timezone.utc) + timedelta(hours=24),
+            }
+        )
 
         AuditManager.log_payment_created(payment, user)
 
@@ -268,15 +276,17 @@ class SubscriptionService:
             return None, "Erro ao criar assinatura"
 
         # Salvar no banco
-        subscription = SubscriptionRepository.create({
-            "user_id": user.id,
-            "plan_type": plan.plan_type,
-            "billing_period": billing_period,
-            "amount": Decimal(str(amount)),
-            "status": "pending",
-            "gateway": "mercadopago",
-            "gateway_subscription_id": gateway_response["id"],
-        })
+        subscription = SubscriptionRepository.create(
+            {
+                "user_id": user.id,
+                "plan_type": plan.plan_type,
+                "billing_period": billing_period,
+                "amount": Decimal(str(amount)),
+                "status": "pending",
+                "gateway": "mercadopago",
+                "gateway_subscription_id": gateway_response["id"],
+            }
+        )
 
         AuditManager.log_subscription_created(subscription, user)
 
@@ -286,7 +296,9 @@ class SubscriptionService:
         }, None
 
     @staticmethod
-    def cancel_subscription(user, immediate: bool = False, reason: str = None) -> tuple[bool, str | None]:
+    def cancel_subscription(
+        user, immediate: bool = False, reason: str = None
+    ) -> tuple[bool, str | None]:
         """Cancela assinatura do usuário"""
         subscription = SubscriptionRepository.get_active_by_user(user.id)
         if not subscription:
@@ -294,7 +306,9 @@ class SubscriptionService:
 
         subscription.cancel(immediate=immediate)
         AuditManager.log_subscription_cancelled(
-            subscription, reason=reason or "Solicitado pelo usuário", immediate=immediate
+            subscription,
+            reason=reason or "Solicitado pelo usuário",
+            immediate=immediate,
         )
 
         return True, None
@@ -327,7 +341,9 @@ class WebhookProcessorService:
                         UserPaymentRepository.update_billing_status(user, "active")
 
                 # Processar referral
-                ReferralConversionService.process(payment.user_id, payment.id, payment.amount)
+                ReferralConversionService.process(
+                    payment.user_id, payment.id, payment.amount
+                )
 
                 AuditManager.log_payment_completed(payment)
                 current_app.logger.info(f"✅ Pagamento aprovado: {payment_id}")
@@ -339,7 +355,9 @@ class WebhookProcessorService:
 
             if payment and payment.status == "pending":
                 PaymentRepository.update_status(payment, "failed")
-                AuditManager.log_payment_failed(payment, f"Status: {payment_data['status']}")
+                AuditManager.log_payment_failed(
+                    payment, f"Status: {payment_data['status']}"
+                )
 
     @staticmethod
     def process_preapproval_webhook(preapproval_id: str) -> None:
@@ -361,7 +379,9 @@ class WebhookProcessorService:
             user = UserPaymentRepository.get_by_id(subscription.user_id)
             UserPaymentRepository.update_billing_status(user, "active")
 
-            ReferralConversionService.process(subscription.user_id, None, subscription.price)
+            ReferralConversionService.process(
+                subscription.user_id, None, subscription.price
+            )
             AuditManager.log_subscription_activated(subscription)
             current_app.logger.info(f"✅ Assinatura ativada: {preapproval_id}")
 
@@ -371,7 +391,9 @@ class WebhookProcessorService:
             if SubscriptionRepository.count_active_by_user(user.id) == 0:
                 UserPaymentRepository.update_billing_status(user, "inactive")
 
-            AuditManager.log_subscription_cancelled(subscription, reason="Cancelamento via gateway")
+            AuditManager.log_subscription_cancelled(
+                subscription, reason="Cancelamento via gateway"
+            )
             current_app.logger.info(f"❌ Assinatura cancelada: {preapproval_id}")
 
         elif status == "paused":
@@ -379,7 +401,9 @@ class WebhookProcessorService:
             user = UserPaymentRepository.get_by_id(subscription.user_id)
             UserPaymentRepository.update_billing_status(user, "inactive")
 
-            AuditManager.log_subscription_status_change(subscription, old_status, "paused", "Pausada via gateway")
+            AuditManager.log_subscription_status_change(
+                subscription, old_status, "paused", "Pausada via gateway"
+            )
             current_app.logger.warning(f"⏸️ Assinatura pausada: {preapproval_id}")
 
         elif status == "expired":
@@ -387,7 +411,9 @@ class WebhookProcessorService:
             user = UserPaymentRepository.get_by_id(subscription.user_id)
             UserPaymentRepository.update_billing_status(user, "inactive")
 
-            AuditManager.log_subscription_status_change(subscription, old_status, "expired", "Expirada")
+            AuditManager.log_subscription_status_change(
+                subscription, old_status, "expired", "Expirada"
+            )
             current_app.logger.warning(f"⏰ Assinatura expirada: {preapproval_id}")
 
 
@@ -416,18 +442,27 @@ class BalanceDepositService:
             return None, "Erro ao criar pagamento PIX"
 
         # Salvar no banco
-        payment = PaymentRepository.create({
-            "user_id": user.id,
-            "external_id": str(gateway_response["id"]),
-            "payment_method": "pix",
-            "amount": amount,
-            "status": "pending",
-            "description": "Depósito de saldo para petições",
-            "pix_code": gateway_response["point_of_interaction"]["transaction_data"]["qr_code"],
-            "pix_qr_code": gateway_response["point_of_interaction"]["transaction_data"]["qr_code_base64"],
-            "pix_expires_at": datetime.now(timezone.utc) + timedelta(hours=24),
-            "extra_data": {"type": "balance_deposit", "mp_response": gateway_response},
-        })
+        payment = PaymentRepository.create(
+            {
+                "user_id": user.id,
+                "external_id": str(gateway_response["id"]),
+                "payment_method": "pix",
+                "amount": amount,
+                "status": "pending",
+                "description": "Depósito de saldo para petições",
+                "pix_code": gateway_response["point_of_interaction"][
+                    "transaction_data"
+                ]["qr_code"],
+                "pix_qr_code": gateway_response["point_of_interaction"][
+                    "transaction_data"
+                ]["qr_code_base64"],
+                "pix_expires_at": datetime.now(timezone.utc) + timedelta(hours=24),
+                "extra_data": {
+                    "type": "balance_deposit",
+                    "mp_response": gateway_response,
+                },
+            }
+        )
 
         return {
             "payment_id": payment.id,
@@ -467,13 +502,18 @@ class BalanceDepositService:
 
             # Criar notificação
             try:
-                NotificationRepository.create({
-                    "user_id": user.id,
-                    "type": "payment",
-                    "title": "Depósito confirmado!",
-                    "message": f"Seu depósito de R$ {payment.amount:.2f} foi confirmado. Saldo atual: R$ {balance.balance:.2f}",
-                    "data": {"payment_id": payment.id, "amount": float(payment.amount)},
-                })
+                NotificationRepository.create(
+                    {
+                        "user_id": user.id,
+                        "type": "payment",
+                        "title": "Depósito confirmado!",
+                        "message": f"Seu depósito de R$ {payment.amount:.2f} foi confirmado. Saldo atual: R$ {balance.balance:.2f}",
+                        "data": {
+                            "payment_id": payment.id,
+                            "amount": float(payment.amount),
+                        },
+                    }
+                )
             except Exception as e:
                 current_app.logger.warning(f"Erro ao criar notificação: {e}")
 

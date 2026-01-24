@@ -551,14 +551,20 @@ def new_testimonial():
         form.display_name.data = current_user.full_name
 
     if form.validate_on_submit():
-        TestimonialRepository.create({
-            "user_id": current_user.id,
-            "content": form.content.data.strip(),
-            "rating": int(form.rating.data),
-            "display_name": form.display_name.data.strip(),
-            "display_role": form.display_role.data.strip() if form.display_role.data else None,
-            "display_location": form.display_location.data.strip() if form.display_location.data else None,
-        })
+        TestimonialRepository.create(
+            {
+                "user_id": current_user.id,
+                "content": form.content.data.strip(),
+                "rating": int(form.rating.data),
+                "display_name": form.display_name.data.strip(),
+                "display_role": form.display_role.data.strip()
+                if form.display_role.data
+                else None,
+                "display_location": form.display_location.data.strip()
+                if form.display_location.data
+                else None,
+            }
+        )
         flash(
             "Seu depoimento foi enviado e está aguardando aprovação. Obrigado!",
             "success",
@@ -594,13 +600,20 @@ def edit_testimonial(testimonial_id):
     form = TestimonialForm(obj=testimonial)
 
     if form.validate_on_submit():
-        TestimonialRepository.update(testimonial, {
-            "content": form.content.data.strip(),
-            "rating": int(form.rating.data),
-            "display_name": form.display_name.data.strip(),
-            "display_role": form.display_role.data.strip() if form.display_role.data else None,
-            "display_location": form.display_location.data.strip() if form.display_location.data else None,
-        })
+        TestimonialRepository.update(
+            testimonial,
+            {
+                "content": form.content.data.strip(),
+                "rating": int(form.rating.data),
+                "display_name": form.display_name.data.strip(),
+                "display_role": form.display_role.data.strip()
+                if form.display_role.data
+                else None,
+                "display_location": form.display_location.data.strip()
+                if form.display_location.data
+                else None,
+            },
+        )
         flash("Depoimento atualizado com sucesso!", "success")
         return redirect(url_for("main.testimonials"))
 
@@ -747,10 +760,12 @@ def mark_all_notifications_read():
     """Marca todas as notificações como lidas."""
     count = NotificationRepository.mark_all_as_read(current_user.id)
 
-    return jsonify({
-        "status": "success",
-        "message": f"{count} notificações marcadas como lidas",
-    }), 200
+    return jsonify(
+        {
+            "status": "success",
+            "message": f"{count} notificações marcadas como lidas",
+        }
+    ), 200
 
 
 @bp.route("/notifications/settings", methods=["GET", "POST"])
@@ -762,44 +777,47 @@ def notification_settings():
     form = NotificationPreferencesForm(obj=prefs)
 
     if form.validate_on_submit():
-        NotificationPreferencesRepository.update(prefs, {
-            # Canais
-            "email_enabled": form.email_enabled.data,
-            "push_enabled": form.push_enabled.data,
-            "in_app_enabled": form.in_app_enabled.data,
-            # Tipos - Prazos
-            "deadline_email": form.deadline_email.data,
-            "deadline_push": form.deadline_push.data,
-            "deadline_in_app": form.deadline_in_app.data,
-            # Tipos - Movimentações
-            "movement_email": form.movement_email.data,
-            "movement_push": form.movement_push.data,
-            "movement_in_app": form.movement_in_app.data,
-            # Tipos - Pagamentos
-            "payment_email": form.payment_email.data,
-            "payment_push": form.payment_push.data,
-            "payment_in_app": form.payment_in_app.data,
-            # Tipos - Petições/IA
-            "petition_email": form.petition_email.data,
-            "petition_push": form.petition_push.data,
-            "petition_in_app": form.petition_in_app.data,
-            # Tipos - Sistema
-            "system_email": form.system_email.data,
-            "system_push": form.system_push.data,
-            "system_in_app": form.system_in_app.data,
-            # Horário de Silêncio
-            "quiet_hours_enabled": form.quiet_hours_enabled.data,
-            "quiet_hours_start": form.quiet_hours_start.data,
-            "quiet_hours_end": form.quiet_hours_end.data,
-            "quiet_hours_weekends": form.quiet_hours_weekends.data,
-            # Digest
-            "digest_enabled": form.digest_enabled.data,
-            "digest_frequency": form.digest_frequency.data,
-            "digest_time": form.digest_time.data,
-            # Prioridade
-            "min_priority_email": int(form.min_priority_email.data),
-            "min_priority_push": int(form.min_priority_push.data),
-        })
+        NotificationPreferencesRepository.update(
+            prefs,
+            {
+                # Canais
+                "email_enabled": form.email_enabled.data,
+                "push_enabled": form.push_enabled.data,
+                "in_app_enabled": form.in_app_enabled.data,
+                # Tipos - Prazos
+                "deadline_email": form.deadline_email.data,
+                "deadline_push": form.deadline_push.data,
+                "deadline_in_app": form.deadline_in_app.data,
+                # Tipos - Movimentações
+                "movement_email": form.movement_email.data,
+                "movement_push": form.movement_push.data,
+                "movement_in_app": form.movement_in_app.data,
+                # Tipos - Pagamentos
+                "payment_email": form.payment_email.data,
+                "payment_push": form.payment_push.data,
+                "payment_in_app": form.payment_in_app.data,
+                # Tipos - Petições/IA
+                "petition_email": form.petition_email.data,
+                "petition_push": form.petition_push.data,
+                "petition_in_app": form.petition_in_app.data,
+                # Tipos - Sistema
+                "system_email": form.system_email.data,
+                "system_push": form.system_push.data,
+                "system_in_app": form.system_in_app.data,
+                # Horário de Silêncio
+                "quiet_hours_enabled": form.quiet_hours_enabled.data,
+                "quiet_hours_start": form.quiet_hours_start.data,
+                "quiet_hours_end": form.quiet_hours_end.data,
+                "quiet_hours_weekends": form.quiet_hours_weekends.data,
+                # Digest
+                "digest_enabled": form.digest_enabled.data,
+                "digest_frequency": form.digest_frequency.data,
+                "digest_time": form.digest_time.data,
+                # Prioridade
+                "min_priority_email": int(form.min_priority_email.data),
+                "min_priority_push": int(form.min_priority_push.data),
+            },
+        )
         flash("Preferências de notificação atualizadas com sucesso!", "success")
         return redirect(url_for("main.notification_settings"))
 

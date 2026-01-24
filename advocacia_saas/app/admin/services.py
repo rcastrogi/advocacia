@@ -9,7 +9,6 @@ from io import StringIO
 from typing import Any
 
 # current_app removed - unused
-
 from app import db
 from app.admin.repository import (
     AICreditConfigRepository,
@@ -33,7 +32,6 @@ from app.models import (
     User,
 )
 from app.utils.pagination import PaginationHelper
-
 
 # =============================================================================
 # USER SERVICES
@@ -107,11 +105,13 @@ class UserAdminService:
 
         result = []
         for user in users:
-            result.append({
-                "user": user,
-                "petition_count": petition_counts.get(user.id, 0),
-                "ai_count": ai_counts.get(user.id, 0),
-            })
+            result.append(
+                {
+                    "user": user,
+                    "petition_count": petition_counts.get(user.id, 0),
+                    "ai_count": ai_counts.get(user.id, 0),
+                }
+            )
 
         return result
 
@@ -175,8 +175,12 @@ class UserAdminService:
                 PetitionUsage.user_id == user.id,
                 PetitionUsage.generated_at >= month_start,
             ).count(),
-            "total_ai_generations": AIGeneration.query.filter_by(user_id=user.id).count(),
-            "total_payments": Payment.query.filter_by(user_id=user.id, status="approved").count(),
+            "total_ai_generations": AIGeneration.query.filter_by(
+                user_id=user.id
+            ).count(),
+            "total_payments": Payment.query.filter_by(
+                user_id=user.id, status="approved"
+            ).count(),
         }
 
     @staticmethod
@@ -204,7 +208,11 @@ class UserAdminService:
             return False, "Usuário não encontrado", 0
 
         new_balance = UserCreditsAdminRepository.add_credits(user_id, amount, reason)
-        return True, f"{amount} créditos adicionados. Novo saldo: {new_balance}", new_balance
+        return (
+            True,
+            f"{amount} créditos adicionados. Novo saldo: {new_balance}",
+            new_balance,
+        )
 
     @staticmethod
     def export_users_csv() -> StringIO:
@@ -215,24 +223,38 @@ class UserAdminService:
         writer = csv.writer(output)
 
         # Cabeçalho
-        writer.writerow([
-            "ID", "Username", "Email", "Nome Completo", "OAB", "Tipo",
-            "Status", "Billing Status", "Créditos IA", "Criado em",
-        ])
+        writer.writerow(
+            [
+                "ID",
+                "Username",
+                "Email",
+                "Nome Completo",
+                "OAB",
+                "Tipo",
+                "Status",
+                "Billing Status",
+                "Créditos IA",
+                "Criado em",
+            ]
+        )
 
         for user in users:
-            writer.writerow([
-                user.id,
-                user.username,
-                user.email,
-                user.full_name or "",
-                user.oab_number or "",
-                user.user_type,
-                "Ativo" if user.is_active else "Inativo",
-                user.billing_status,
-                user.ai_credits,
-                user.created_at.strftime("%Y-%m-%d %H:%M") if user.created_at else "",
-            ])
+            writer.writerow(
+                [
+                    user.id,
+                    user.username,
+                    user.email,
+                    user.full_name or "",
+                    user.oab_number or "",
+                    user.user_type,
+                    "Ativo" if user.is_active else "Inativo",
+                    user.billing_status,
+                    user.ai_credits,
+                    user.created_at.strftime("%Y-%m-%d %H:%M")
+                    if user.created_at
+                    else "",
+                ]
+            )
 
         output.seek(0)
         return output
@@ -259,15 +281,17 @@ class PetitionTypeAdminService:
 
             slug = generate_unique_slug(form_data["name"], "petition_type")
 
-            petition_type = PetitionTypeAdminRepository.create({
-                "name": form_data["name"],
-                "slug": slug,
-                "description": form_data.get("description"),
-                "category": form_data.get("category", "geral"),
-                "icon": form_data.get("icon", "fas fa-file"),
-                "is_active": form_data.get("is_active", True),
-                "use_dynamic_form": form_data.get("use_dynamic_form", False),
-            })
+            petition_type = PetitionTypeAdminRepository.create(
+                {
+                    "name": form_data["name"],
+                    "slug": slug,
+                    "description": form_data.get("description"),
+                    "category": form_data.get("category", "geral"),
+                    "icon": form_data.get("icon", "fas fa-file"),
+                    "is_active": form_data.get("is_active", True),
+                    "use_dynamic_form": form_data.get("use_dynamic_form", False),
+                }
+            )
 
             return petition_type, None
 
@@ -329,15 +353,17 @@ class PetitionSectionAdminService:
             if isinstance(fields_schema, str):
                 fields_schema = json.loads(fields_schema)
 
-            section = PetitionSectionAdminRepository.create({
-                "name": form_data["name"],
-                "slug": slug,
-                "description": form_data.get("description"),
-                "icon": form_data.get("icon", "fas fa-file-alt"),
-                "color": form_data.get("color", "#6c757d"),
-                "fields_schema": fields_schema or [],
-                "is_active": form_data.get("is_active", True),
-            })
+            section = PetitionSectionAdminRepository.create(
+                {
+                    "name": form_data["name"],
+                    "slug": slug,
+                    "description": form_data.get("description"),
+                    "icon": form_data.get("icon", "fas fa-file-alt"),
+                    "color": form_data.get("color", "#6c757d"),
+                    "fields_schema": fields_schema or [],
+                    "is_active": form_data.get("is_active", True),
+                }
+            )
 
             return section, None
 
@@ -403,7 +429,9 @@ class RoadmapAdminService:
             return None, str(e)
 
     @staticmethod
-    def update_category(category_id: int, form_data: dict[str, Any]) -> tuple[bool, str]:
+    def update_category(
+        category_id: int, form_data: dict[str, Any]
+    ) -> tuple[bool, str]:
         """Atualiza categoria"""
         category = RoadmapCategoryRepository.get_by_id(category_id)
         if not category:
@@ -597,11 +625,16 @@ class AICreditConfigService:
             return False, "Configuração não encontrada"
 
         try:
-            AICreditConfigRepository.update(config, {
-                "credit_cost": int(form_data.get("credit_cost", config.credit_cost)),
-                "is_premium": form_data.get("is_premium", config.is_premium),
-                "is_active": form_data.get("is_active", config.is_active),
-            })
+            AICreditConfigRepository.update(
+                config,
+                {
+                    "credit_cost": int(
+                        form_data.get("credit_cost", config.credit_cost)
+                    ),
+                    "is_premium": form_data.get("is_premium", config.is_premium),
+                    "is_active": form_data.get("is_active", config.is_active),
+                },
+            )
             return True, f"Configuração '{config.name}' atualizada"
         except Exception as e:
             db.session.rollback()
@@ -711,19 +744,23 @@ class DashboardService:
         ).count()
 
         if trial_expiring > 0:
-            alerts.append({
-                "type": "warning",
-                "icon": "fas fa-clock",
-                "message": f"{trial_expiring} usuários com trial expirando nos próximos 7 dias",
-            })
+            alerts.append(
+                {
+                    "type": "warning",
+                    "icon": "fas fa-clock",
+                    "message": f"{trial_expiring} usuários com trial expirando nos próximos 7 dias",
+                }
+            )
 
         # Alerta de usuários inadimplentes
         delinquent = User.query.filter(User.billing_status == "delinquent").count()
         if delinquent > 0:
-            alerts.append({
-                "type": "danger",
-                "icon": "fas fa-exclamation-triangle",
-                "message": f"{delinquent} usuários inadimplentes",
-            })
+            alerts.append(
+                {
+                    "type": "danger",
+                    "icon": "fas fa-exclamation-triangle",
+                    "message": f"{delinquent} usuários inadimplentes",
+                }
+            )
 
         return alerts

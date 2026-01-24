@@ -51,7 +51,9 @@ class DeadlineService:
         }
 
     @staticmethod
-    def get_deadline_with_access_check(deadline_id: int, user_id: int) -> tuple[Any, str | None]:
+    def get_deadline_with_access_check(
+        deadline_id: int, user_id: int
+    ) -> tuple[Any, str | None]:
         """Obtém prazo verificando acesso do usuário"""
         deadline = DeadlineRepository.get_by_id(deadline_id)
 
@@ -70,7 +72,9 @@ class DeadlineService:
         return {"clients": clients}
 
     @staticmethod
-    def create_deadline(user_id: int, form_data: dict[str, Any]) -> tuple[Any, str | None]:
+    def create_deadline(
+        user_id: int, form_data: dict[str, Any]
+    ) -> tuple[Any, str | None]:
         """Cria um novo prazo"""
         try:
             deadline_date = datetime.strptime(
@@ -81,16 +85,18 @@ class DeadlineService:
             if client_id:
                 client_id = int(client_id)
 
-            deadline = DeadlineRepository.create({
-                "user_id": user_id,
-                "title": form_data["title"],
-                "description": form_data.get("description"),
-                "deadline_type": form_data.get("deadline_type"),
-                "deadline_date": deadline_date,
-                "alert_days_before": int(form_data.get("alert_days_before", 7)),
-                "count_business_days": form_data.get("count_business_days") == "on",
-                "client_id": client_id,
-            })
+            deadline = DeadlineRepository.create(
+                {
+                    "user_id": user_id,
+                    "title": form_data["title"],
+                    "description": form_data.get("description"),
+                    "deadline_type": form_data.get("deadline_type"),
+                    "deadline_date": deadline_date,
+                    "alert_days_before": int(form_data.get("alert_days_before", 7)),
+                    "count_business_days": form_data.get("count_business_days") == "on",
+                    "client_id": client_id,
+                }
+            )
 
             return deadline, None
 
@@ -103,7 +109,9 @@ class DeadlineService:
         deadline_id: int, user_id: int, form_data: dict[str, Any]
     ) -> tuple[bool, str]:
         """Atualiza um prazo"""
-        deadline, error = DeadlineService.get_deadline_with_access_check(deadline_id, user_id)
+        deadline, error = DeadlineService.get_deadline_with_access_check(
+            deadline_id, user_id
+        )
         if error:
             return False, error
 
@@ -112,14 +120,17 @@ class DeadlineService:
                 form_data["deadline_date"], "%Y-%m-%dT%H:%M"
             )
 
-            DeadlineRepository.update(deadline, {
-                "title": form_data["title"],
-                "description": form_data.get("description"),
-                "deadline_type": form_data.get("deadline_type"),
-                "deadline_date": deadline_date,
-                "alert_days_before": int(form_data.get("alert_days_before", 7)),
-                "count_business_days": form_data.get("count_business_days") == "on",
-            })
+            DeadlineRepository.update(
+                deadline,
+                {
+                    "title": form_data["title"],
+                    "description": form_data.get("description"),
+                    "deadline_type": form_data.get("deadline_type"),
+                    "deadline_date": deadline_date,
+                    "alert_days_before": int(form_data.get("alert_days_before", 7)),
+                    "count_business_days": form_data.get("count_business_days") == "on",
+                },
+            )
 
             return True, "Prazo atualizado com sucesso!"
 
@@ -128,9 +139,13 @@ class DeadlineService:
             return False, f"Erro ao atualizar prazo: {str(e)}"
 
     @staticmethod
-    def complete_deadline(deadline_id: int, user_id: int, notes: str | None = None) -> tuple[bool, str]:
+    def complete_deadline(
+        deadline_id: int, user_id: int, notes: str | None = None
+    ) -> tuple[bool, str]:
         """Marca prazo como cumprido"""
-        deadline, error = DeadlineService.get_deadline_with_access_check(deadline_id, user_id)
+        deadline, error = DeadlineService.get_deadline_with_access_check(
+            deadline_id, user_id
+        )
         if error:
             return False, error
 
@@ -140,7 +155,9 @@ class DeadlineService:
     @staticmethod
     def delete_deadline(deadline_id: int, user_id: int) -> tuple[bool, str]:
         """Exclui um prazo"""
-        deadline, error = DeadlineService.get_deadline_with_access_check(deadline_id, user_id)
+        deadline, error = DeadlineService.get_deadline_with_access_check(
+            deadline_id, user_id
+        )
         if error:
             return False, error
 
@@ -163,11 +180,15 @@ class DeadlineAlertService:
         expected_key = os.environ.get("CRON_API_KEY")
 
         if not expected_key:
-            current_app.logger.warning("CRON_API_KEY não configurada - endpoint desabilitado")
+            current_app.logger.warning(
+                "CRON_API_KEY não configurada - endpoint desabilitado"
+            )
             return False, "Endpoint não configurado"
 
         if not api_key or api_key != expected_key:
-            current_app.logger.warning("Tentativa de acesso não autorizado ao cron de alertas")
+            current_app.logger.warning(
+                "Tentativa de acesso não autorizado ao cron de alertas"
+            )
             return False, "API key inválida"
 
         return True, None
@@ -218,7 +239,9 @@ class AgendaBlockService:
         return AgendaBlockRepository.get_by_user(user_id)
 
     @staticmethod
-    def get_block_with_access_check(block_id: int, user_id: int) -> tuple[Any, str | None]:
+    def get_block_with_access_check(
+        block_id: int, user_id: int
+    ) -> tuple[Any, str | None]:
         """Obtém bloqueio verificando acesso"""
         block = AgendaBlockRepository.get_by_id(block_id)
 
@@ -260,20 +283,22 @@ class AgendaBlockService:
             if end_date_str:
                 end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
-            block = AgendaBlockRepository.create({
-                "user_id": user_id,
-                "title": form_data["title"],
-                "description": form_data.get("description"),
-                "block_type": form_data.get("block_type", "recurring"),
-                "weekdays": weekdays_json,
-                "start_time": start_time,
-                "end_time": end_time,
-                "all_day": all_day,
-                "day_period": day_period,
-                "start_date": start_date,
-                "end_date": end_date,
-                "color": form_data.get("color", "#6c757d"),
-            })
+            block = AgendaBlockRepository.create(
+                {
+                    "user_id": user_id,
+                    "title": form_data["title"],
+                    "description": form_data.get("description"),
+                    "block_type": form_data.get("block_type", "recurring"),
+                    "weekdays": weekdays_json,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "all_day": all_day,
+                    "day_period": day_period,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "color": form_data.get("color", "#6c757d"),
+                }
+            )
 
             return block, None
 
@@ -317,19 +342,22 @@ class AgendaBlockService:
             if end_date_str:
                 end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
-            AgendaBlockRepository.update(block, {
-                "title": form_data["title"],
-                "description": form_data.get("description"),
-                "block_type": form_data.get("block_type", "recurring"),
-                "weekdays": weekdays_json,
-                "start_time": start_time,
-                "end_time": end_time,
-                "all_day": all_day,
-                "day_period": day_period,
-                "start_date": start_date,
-                "end_date": end_date,
-                "color": form_data.get("color", "#6c757d"),
-            })
+            AgendaBlockRepository.update(
+                block,
+                {
+                    "title": form_data["title"],
+                    "description": form_data.get("description"),
+                    "block_type": form_data.get("block_type", "recurring"),
+                    "weekdays": weekdays_json,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "all_day": all_day,
+                    "day_period": day_period,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "color": form_data.get("color", "#6c757d"),
+                },
+            )
 
             return True, "Bloqueio atualizado com sucesso!"
 

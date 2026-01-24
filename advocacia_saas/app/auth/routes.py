@@ -48,7 +48,6 @@ from app.models import User
 from app.rate_limits import LOGIN_LIMIT
 from app.utils.audit import AuditManager
 
-
 # =============================================================================
 # MIDDLEWARE
 # =============================================================================
@@ -196,7 +195,9 @@ def register():
             neighborhood=form.neighborhood.data,
             complement=form.complement.data,
             user_type=form.user_type.data,
-            specialties=form.specialties.data if form.user_type.data == "advogado" else None,
+            specialties=form.specialties.data
+            if form.user_type.data == "advogado"
+            else None,
             consent_personal_data=form.consent_personal_data.data,
             consent_marketing=form.consent_marketing.data,
             consent_terms=form.consent_terms.data,
@@ -217,11 +218,15 @@ def register():
 
         if plan_id:
             flash("Complete o pagamento para ativar seu plano.", "info")
-            return redirect(url_for("checkout.create_checkout_session", plan_id=plan_id))
+            return redirect(
+                url_for("checkout.create_checkout_session", plan_id=plan_id)
+            )
 
         return redirect(url_for("main.dashboard"))
 
-    return render_template("auth/register.html", title="Cadastro", form=form, plan_id=plan_id)
+    return render_template(
+        "auth/register.html", title="Cadastro", form=form, plan_id=plan_id
+    )
 
 
 @bp.route("/logout")
@@ -284,7 +289,9 @@ def profile():
         form.specialties.data = current_user.get_specialties()
         form.quick_actions.data = current_user.get_quick_actions()
 
-    return render_template("auth/profile.html", title="Perfil", form=form, is_demo=is_demo)
+    return render_template(
+        "auth/profile.html", title="Perfil", form=form, is_demo=is_demo
+    )
 
 
 @bp.route("/upload_logo", methods=["POST"])
@@ -385,13 +392,21 @@ def setup_2fa():
             current_user.email_2fa_code = code
 
             from datetime import timedelta
+
             from app import db
 
-            current_user.email_2fa_code_expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+            current_user.email_2fa_code_expires = datetime.now(
+                timezone.utc
+            ) + timedelta(minutes=10)
             db.session.commit()
 
-            if EmailService.send_2fa_code_email(current_user.email, code, method="email"):
-                flash(f"Código enviado para {current_user.email}. Verifique seu email.", "info")
+            if EmailService.send_2fa_code_email(
+                current_user.email, code, method="email"
+            ):
+                flash(
+                    f"Código enviado para {current_user.email}. Verifique seu email.",
+                    "info",
+                )
                 session["pending_2fa_method"] = "email"
                 return render_template(
                     "auth/verify_2fa_setup.html",
@@ -559,7 +574,12 @@ def download_backup_codes():
             ("GRID", (0, 0), (-1, -1), 1, colors.HexColor("#d1d5db")),
             ("FONTNAME", (0, 1), (-1, -1), "Courier"),
             ("FONTSIZE", (0, 1), (-1, -1), 10),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f9fafb")]),
+            (
+                "ROWBACKGROUNDS",
+                (0, 1),
+                (-1, -1),
+                [colors.white, colors.HexColor("#f9fafb")],
+            ),
             ("PADDING", (0, 0), (-1, -1), 8),
         ]
     )
@@ -617,7 +637,7 @@ def verify_2fa():
 def notification_settings():
     """Configurações de notificações do usuário."""
     from app import db
-    
+
     if request.method == "POST":
         # Validar e sanitizar inputs
         try:
@@ -625,17 +645,17 @@ def notification_settings():
             alert_days = max(1, min(30, alert_days))  # Entre 1 e 30 dias
         except (ValueError, TypeError):
             alert_days = 10
-        
+
         # Atualizar configurações
         current_user.deadline_alert_days = alert_days
         current_user.deadline_alert_enabled = "deadline_alert_enabled" in request.form
         current_user.deadline_alert_email = "deadline_alert_email" in request.form
         current_user.deadline_alert_push = "deadline_alert_push" in request.form
-        
+
         db.session.commit()
         flash("Configurações de notificação atualizadas com sucesso!", "success")
         return redirect(url_for("auth.notification_settings"))
-    
+
     return render_template(
         "auth/notification_settings.html",
         title="Configurações de Notificação",

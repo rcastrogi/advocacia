@@ -66,16 +66,19 @@ def new():
             )
             client_id = request.form.get("client_id")
 
-            deadline = DeadlineRepository.create({
-                "user_id": current_user.id,
-                "title": request.form.get("title"),
-                "description": request.form.get("description"),
-                "deadline_type": request.form.get("deadline_type"),
-                "deadline_date": deadline_date,
-                "alert_days_before": int(request.form.get("alert_days_before", 7)),
-                "count_business_days": request.form.get("count_business_days") == "on",
-                "client_id": int(client_id) if client_id else None,
-            })
+            deadline = DeadlineRepository.create(
+                {
+                    "user_id": current_user.id,
+                    "title": request.form.get("title"),
+                    "description": request.form.get("description"),
+                    "deadline_type": request.form.get("deadline_type"),
+                    "deadline_date": deadline_date,
+                    "alert_days_before": int(request.form.get("alert_days_before", 7)),
+                    "count_business_days": request.form.get("count_business_days")
+                    == "on",
+                    "client_id": int(client_id) if client_id else None,
+                }
+            )
 
             flash("Prazo criado com sucesso!", "success")
             return redirect(url_for("deadlines.view", deadline_id=deadline.id))
@@ -125,14 +128,18 @@ def edit(deadline_id):
                 request.form.get("deadline_date"), "%Y-%m-%dT%H:%M"
             )
 
-            DeadlineRepository.update(deadline, {
-                "title": request.form.get("title"),
-                "description": request.form.get("description"),
-                "deadline_type": request.form.get("deadline_type"),
-                "deadline_date": deadline_date,
-                "alert_days_before": int(request.form.get("alert_days_before", 7)),
-                "count_business_days": request.form.get("count_business_days") == "on",
-            })
+            DeadlineRepository.update(
+                deadline,
+                {
+                    "title": request.form.get("title"),
+                    "description": request.form.get("description"),
+                    "deadline_type": request.form.get("deadline_type"),
+                    "deadline_date": deadline_date,
+                    "alert_days_before": int(request.form.get("alert_days_before", 7)),
+                    "count_business_days": request.form.get("count_business_days")
+                    == "on",
+                },
+            )
 
             flash("Prazo atualizado com sucesso!", "success")
             return redirect(url_for("deadlines.view", deadline_id=deadline.id))
@@ -322,20 +329,22 @@ def block_new():
                 else None
             )
 
-            AgendaBlockRepository.create({
-                "user_id": current_user.id,
-                "title": request.form.get("title"),
-                "description": request.form.get("description"),
-                "block_type": request.form.get("block_type", "recurring"),
-                "weekdays": weekdays_json,
-                "start_time": start_time,
-                "end_time": end_time,
-                "all_day": all_day,
-                "day_period": day_period,
-                "start_date": start_date,
-                "end_date": end_date,
-                "color": request.form.get("color", "#6c757d"),
-            })
+            AgendaBlockRepository.create(
+                {
+                    "user_id": current_user.id,
+                    "title": request.form.get("title"),
+                    "description": request.form.get("description"),
+                    "block_type": request.form.get("block_type", "recurring"),
+                    "weekdays": weekdays_json,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "all_day": all_day,
+                    "day_period": day_period,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "color": request.form.get("color", "#6c757d"),
+                }
+            )
 
             flash("Bloqueio de agenda criado com sucesso!", "success")
             return redirect(url_for("deadlines.blocks_list"))
@@ -366,9 +375,7 @@ def block_edit(block_id):
         try:
             # Dias da semana
             weekdays = request.form.getlist("weekdays")
-            weekdays_json = (
-                json.dumps([int(d) for d in weekdays]) if weekdays else None
-            )
+            weekdays_json = json.dumps([int(d) for d in weekdays]) if weekdays else None
 
             # Período do dia ou horário específico
             time_type = request.form.get("time_type", "period")
@@ -413,19 +420,22 @@ def block_edit(block_id):
                 else None
             )
 
-            AgendaBlockRepository.update(block, {
-                "title": request.form.get("title"),
-                "description": request.form.get("description"),
-                "block_type": request.form.get("block_type", "recurring"),
-                "weekdays": weekdays_json,
-                "start_time": start_time,
-                "end_time": end_time,
-                "all_day": all_day,
-                "day_period": day_period,
-                "start_date": start_date,
-                "end_date": end_date,
-                "color": request.form.get("color", "#6c757d"),
-            })
+            AgendaBlockRepository.update(
+                block,
+                {
+                    "title": request.form.get("title"),
+                    "description": request.form.get("description"),
+                    "block_type": request.form.get("block_type", "recurring"),
+                    "weekdays": weekdays_json,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "all_day": all_day,
+                    "day_period": day_period,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "color": request.form.get("color", "#6c757d"),
+                },
+            )
 
             flash("Bloqueio atualizado com sucesso!", "success")
             return redirect(url_for("deadlines.blocks_list"))

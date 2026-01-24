@@ -4,7 +4,16 @@ Marshmallow schemas para validação de dados
 
 from datetime import datetime
 
-from marshmallow import EXCLUDE, Schema, ValidationError, fields, post_load, pre_load, validate, validates_schema
+from marshmallow import (
+    EXCLUDE,
+    Schema,
+    ValidationError,
+    fields,
+    post_load,
+    pre_load,
+    validate,
+    validates_schema,
+)
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 # ============================================================================
@@ -545,7 +554,7 @@ class PetitionSaveSchema(Schema):
     action = fields.Str(
         allow_none=True,
         validate=validate.OneOf(["save", "complete", "cancel"]),
-        load_default="save"
+        load_default="save",
     )
 
 
@@ -615,8 +624,7 @@ class ChatMessageSchema(Schema):
     ai_mode = fields.Bool(dump_default=False)
     use_bot = fields.Bool(dump_default=True)
     message_type = fields.Str(
-        validate=validate.OneOf(["text", "file"]),
-        dump_default="text"
+        validate=validate.OneOf(["text", "file"]), dump_default="text"
     )
 
     @validates_schema

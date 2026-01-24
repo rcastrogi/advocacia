@@ -28,7 +28,7 @@ class PortalAuthService:
     def validate_login(email: str, password: str) -> tuple[bool, str, Any]:
         """
         Valida credenciais de login do cliente
-        
+
         Returns:
             tuple: (success, message, user)
         """
@@ -55,7 +55,7 @@ class PortalAuthService:
     def validate_next_url(next_url: str) -> bool:
         """
         Valida URL de redirecionamento para prevenir Open Redirect
-        
+
         Returns:
             bool: True se URL é segura (relativa)
         """
@@ -76,7 +76,7 @@ class PortalDashboardService:
     def get_dashboard_data(user_id: int) -> dict[str, Any]:
         """
         Obtém dados do dashboard do cliente
-        
+
         Returns:
             dict com estatísticas e dados do dashboard
         """
@@ -102,14 +102,26 @@ class PortalDashboardService:
 class PortalDocumentService:
     """Serviço de documentos do portal"""
 
-    ALLOWED_EXTENSIONS = {"pdf", "doc", "docx", "xls", "xlsx", "jpg", "jpeg", "png", "gif"}
+    ALLOWED_EXTENSIONS = {
+        "pdf",
+        "doc",
+        "docx",
+        "xls",
+        "xlsx",
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+    }
 
     @staticmethod
     def get_client_documents(user_id: int) -> tuple[Any, list]:
         """Lista documentos do cliente"""
         client = PortalRepository.get_client_by_user_id_or_404(user_id)
         documents = PortalRepository.get_client_documents(client.id)
-        portal_logger.info(f"{len(documents)} documentos encontrados para cliente {client.id}")
+        portal_logger.info(
+            f"{len(documents)} documentos encontrados para cliente {client.id}"
+        )
         return client, documents
 
     @staticmethod
@@ -121,7 +133,7 @@ class PortalDocumentService:
     ) -> tuple[bool, str, Any]:
         """
         Faz upload de documento
-        
+
         Returns:
             tuple: (success, message, document)
         """
@@ -146,7 +158,9 @@ class PortalDocumentService:
             file.save(file_path)
 
             file_size = os.path.getsize(file_path)
-            portal_logger.debug(f"Arquivo salvo: {file_path}, tamanho: {file_size} bytes")
+            portal_logger.debug(
+                f"Arquivo salvo: {file_path}, tamanho: {file_size} bytes"
+            )
 
             # Criar documento no banco
             document = PortalRepository.create_document(
@@ -160,7 +174,9 @@ class PortalDocumentService:
                 file_size=file_size,
             )
 
-            portal_logger.info(f"Upload bem-sucedido: {original_filename} para cliente {client.id}")
+            portal_logger.info(
+                f"Upload bem-sucedido: {original_filename} para cliente {client.id}"
+            )
             return True, "Arquivo enviado com sucesso!", document
 
         except Exception as e:
@@ -170,16 +186,22 @@ class PortalDocumentService:
             return False, "Erro ao fazer upload do arquivo. Tente novamente.", None
 
     @staticmethod
-    def get_document_for_download(user_id: int, document_id: int) -> tuple[Any, str, str]:
+    def get_document_for_download(
+        user_id: int, document_id: int
+    ) -> tuple[Any, str, str]:
         """
         Obtém documento para download
-        
+
         Returns:
             tuple: (document, base_path, stored_filename)
         """
         client = PortalRepository.get_client_by_user_id_or_404(user_id)
-        document = PortalRepository.get_document_by_id_and_client(document_id, client.id)
-        base_path, stored_filename = PortalRepository.get_absolute_file_path(document.file_path)
+        document = PortalRepository.get_document_by_id_and_client(
+            document_id, client.id
+        )
+        base_path, stored_filename = PortalRepository.get_absolute_file_path(
+            document.file_path
+        )
         return document, base_path, stored_filename
 
 
@@ -190,7 +212,7 @@ class PortalChatService:
     def get_chat_data(user_id: int) -> tuple[Any, list, bool]:
         """
         Obtém dados do chat
-        
+
         Returns:
             tuple: (client, messages, has_chat_room)
         """
@@ -203,14 +225,18 @@ class PortalChatService:
                 user_id, client.lawyer_id, client.id
             )
 
-        portal_logger.debug(f"{len(messages)} mensagens encontradas para cliente {client.id}")
+        portal_logger.debug(
+            f"{len(messages)} mensagens encontradas para cliente {client.id}"
+        )
         return client, messages, has_chat_room
 
     @staticmethod
     def get_messages_as_dict(user_id: int) -> list[dict]:
         """Lista mensagens formatadas como dicionário"""
         client = PortalRepository.get_client_by_user_id_or_404(user_id)
-        messages = PortalRepository.get_chat_messages(user_id, client.lawyer_id, client.id)
+        messages = PortalRepository.get_chat_messages(
+            user_id, client.lawyer_id, client.id
+        )
 
         messages_data = []
         for message in messages:
@@ -221,14 +247,16 @@ class PortalChatService:
             else:
                 sender_type = "lawyer"
 
-            messages_data.append({
-                "id": message.id,
-                "content": message.content,
-                "created_at": message.created_at.isoformat(),
-                "is_read": message.is_read,
-                "sender_type": sender_type,
-                "message_type": message.message_type,
-            })
+            messages_data.append(
+                {
+                    "id": message.id,
+                    "content": message.content,
+                    "created_at": message.created_at.isoformat(),
+                    "is_read": message.is_read,
+                    "sender_type": sender_type,
+                    "message_type": message.message_type,
+                }
+            )
 
         return messages_data
 
@@ -240,7 +268,7 @@ class PortalChatService:
     ) -> tuple[bool, str, dict]:
         """
         Envia mensagem no chat
-        
+
         Returns:
             tuple: (success, message, response_data)
         """
@@ -263,7 +291,9 @@ class PortalChatService:
                 is_read=False,
             )
 
-            portal_logger.info(f"Mensagem enviada: ID {client_message.id} de cliente {client.id}")
+            portal_logger.info(
+                f"Mensagem enviada: ID {client_message.id} de cliente {client.id}"
+            )
 
             response_data = {
                 "message": {
@@ -305,14 +335,18 @@ class PortalChatService:
     def clear_chat(user_id: int) -> tuple[bool, str, int]:
         """
         Limpa histórico do chat
-        
+
         Returns:
             tuple: (success, message, deleted_count)
         """
         try:
             client = PortalRepository.get_client_by_user_id_or_404(user_id)
             deleted_count = PortalRepository.delete_client_messages(user_id, client.id)
-            return True, f"Chat limpo. {deleted_count} mensagens removidas.", deleted_count
+            return (
+                True,
+                f"Chat limpo. {deleted_count} mensagens removidas.",
+                deleted_count,
+            )
         except Exception as e:
             return False, str(e), 0
 
@@ -332,28 +366,32 @@ class PortalTimelineService:
             # Movimentações
             movements = PortalRepository.get_process_movements(process.id)
             for movement in movements:
-                timeline_events.append({
-                    "id": f"movement_{movement.id}",
-                    "type": "movement",
-                    "title": movement.description,
-                    "date": movement.created_at,
-                    "process_title": process.title,
-                    "status": "completed",
-                    "category": "judicial",
-                })
+                timeline_events.append(
+                    {
+                        "id": f"movement_{movement.id}",
+                        "type": "movement",
+                        "title": movement.description,
+                        "date": movement.created_at,
+                        "process_title": process.title,
+                        "status": "completed",
+                        "category": "judicial",
+                    }
+                )
 
             # Custos
             costs = PortalRepository.get_process_costs(process.id)
             for cost in costs:
-                timeline_events.append({
-                    "id": f"cost_{cost.id}",
-                    "type": "cost",
-                    "title": f"Custo: R$ {cost.amount:.2f}",
-                    "date": cost.created_at,
-                    "process_title": process.title,
-                    "status": "completed",
-                    "category": "financial",
-                })
+                timeline_events.append(
+                    {
+                        "id": f"cost_{cost.id}",
+                        "type": "cost",
+                        "title": f"Custo: R$ {cost.amount:.2f}",
+                        "date": cost.created_at,
+                        "process_title": process.title,
+                        "status": "completed",
+                        "category": "financial",
+                    }
+                )
 
         # Ordenar por data decrescente
         timeline_events.sort(key=lambda x: x["date"], reverse=True)
@@ -382,17 +420,19 @@ class PortalCalendarService:
             else:
                 color = "#28a745"
 
-            events.append({
-                "id": f"deadline_{deadline.id}",
-                "title": deadline.title,
-                "start": deadline.deadline_date.isoformat(),
-                "description": deadline.description,
-                "status": deadline.status,
-                "type": "deadline",
-                "backgroundColor": color,
-                "borderColor": color,
-                "urgent": is_overdue,
-            })
+            events.append(
+                {
+                    "id": f"deadline_{deadline.id}",
+                    "title": deadline.title,
+                    "start": deadline.deadline_date.isoformat(),
+                    "description": deadline.description,
+                    "status": deadline.status,
+                    "type": "deadline",
+                    "backgroundColor": color,
+                    "borderColor": color,
+                    "urgent": is_overdue,
+                }
+            )
 
         # Eventos de calendário
         calendar_events = PortalRepository.get_client_calendar_events(client.id)
@@ -411,21 +451,23 @@ class PortalCalendarService:
                 event_color = event_colors.get(event.event_type, "#6c757d")
                 title = event.title
 
-            events.append({
-                "id": f"event_{event.id}",
-                "title": title,
-                "start": event.start_datetime.isoformat(),
-                "end": event.end_datetime.isoformat(),
-                "description": event.description,
-                "location": event.location,
-                "virtual_link": event.virtual_link,
-                "status": event.status,
-                "type": "meeting",
-                "event_type": event.event_type,
-                "backgroundColor": event_color,
-                "borderColor": event_color,
-                "allDay": event.all_day,
-            })
+            events.append(
+                {
+                    "id": f"event_{event.id}",
+                    "title": title,
+                    "start": event.start_datetime.isoformat(),
+                    "end": event.end_datetime.isoformat(),
+                    "description": event.description,
+                    "location": event.location,
+                    "virtual_link": event.virtual_link,
+                    "status": event.status,
+                    "type": "meeting",
+                    "event_type": event.event_type,
+                    "backgroundColor": event_color,
+                    "borderColor": event_color,
+                    "allDay": event.all_day,
+                }
+            )
 
         return events
 
@@ -442,7 +484,7 @@ class PortalCalendarService:
     ) -> tuple[bool, str]:
         """
         Agenda solicitação de reunião
-        
+
         Returns:
             tuple: (success, message)
         """
@@ -459,7 +501,9 @@ class PortalCalendarService:
             end_datetime = start_datetime + timedelta(minutes=int(duration))
 
             # Criar evento
-            description_with_client = f"Solicitado por {client.full_name}: {description}"
+            description_with_client = (
+                f"Solicitado por {client.full_name}: {description}"
+            )
             PortalRepository.create_meeting_request(
                 user_id=user_id,
                 client_id=client.id,
@@ -501,7 +545,7 @@ class PortalLogsService:
     def get_log_content() -> tuple[list[str], str]:
         """
         Lê conteúdo do arquivo de log
-        
+
         Returns:
             tuple: (log_lines, log_file_path)
         """

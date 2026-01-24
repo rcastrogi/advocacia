@@ -120,9 +120,15 @@ class SavedPetitionRepository:
         """Obtém estatísticas de petições do usuário"""
         return {
             "total": SavedPetition.query.filter_by(user_id=user_id).count(),
-            "draft": SavedPetition.query.filter_by(user_id=user_id, status="draft").count(),
-            "completed": SavedPetition.query.filter_by(user_id=user_id, status="completed").count(),
-            "cancelled": SavedPetition.query.filter_by(user_id=user_id, status="cancelled").count(),
+            "draft": SavedPetition.query.filter_by(
+                user_id=user_id, status="draft"
+            ).count(),
+            "completed": SavedPetition.query.filter_by(
+                user_id=user_id, status="completed"
+            ).count(),
+            "cancelled": SavedPetition.query.filter_by(
+                user_id=user_id, status="cancelled"
+            ).count(),
         }
 
     @staticmethod
@@ -189,9 +195,11 @@ class PetitionAttachmentRepository:
     @staticmethod
     def get_total_size(petition_id: int) -> int:
         """Obtém tamanho total de anexos de uma petição"""
-        result = db.session.query(
-            db.func.sum(PetitionAttachment.file_size)
-        ).filter_by(saved_petition_id=petition_id).scalar()
+        result = (
+            db.session.query(db.func.sum(PetitionAttachment.file_size))
+            .filter_by(saved_petition_id=petition_id)
+            .scalar()
+        )
         return result or 0
 
     @staticmethod

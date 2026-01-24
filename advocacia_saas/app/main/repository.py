@@ -11,15 +11,14 @@ from app import db
 from app.models import (
     BillingPlan,
     Client,
+    Notification,
     NotificationPreferences,
     PetitionType,
     PetitionUsage,
-
     RoadmapFeedback,
     RoadmapItem,
     TablePreference,
     Testimonial,
-    Notification,
 )
 
 
@@ -53,7 +52,9 @@ class TestimonialRepository:
         if featured_only:
             query = query.filter_by(is_featured=True)
         return (
-            query.order_by(Testimonial.is_featured.desc(), Testimonial.created_at.desc())
+            query.order_by(
+                Testimonial.is_featured.desc(), Testimonial.created_at.desc()
+            )
             .limit(limit)
             .all()
         )
@@ -283,7 +284,9 @@ class NotificationPreferencesRepository:
         return NotificationPreferences.get_or_create(user_id)
 
     @staticmethod
-    def update(prefs: NotificationPreferences, data: dict[str, Any]) -> NotificationPreferences:
+    def update(
+        prefs: NotificationPreferences, data: dict[str, Any]
+    ) -> NotificationPreferences:
         for key, value in data.items():
             if hasattr(prefs, key):
                 setattr(prefs, key, value)
@@ -296,7 +299,11 @@ class BillingPlanRepository:
 
     @staticmethod
     def get_active_plans() -> list[BillingPlan]:
-        return BillingPlan.query.filter_by(active=True).order_by(BillingPlan.monthly_fee).all()
+        return (
+            BillingPlan.query.filter_by(active=True)
+            .order_by(BillingPlan.monthly_fee)
+            .all()
+        )
 
 
 class PetitionTypeRepository:
@@ -324,7 +331,9 @@ class PetitionUsageRepository:
 
     @staticmethod
     def count_by_cycle(user_id: int, cycle: str) -> int:
-        return PetitionUsage.query.filter_by(user_id=user_id, billing_cycle=cycle).count()
+        return PetitionUsage.query.filter_by(
+            user_id=user_id, billing_cycle=cycle
+        ).count()
 
     @staticmethod
     def get_billable_amount(user_id: int, cycle: str) -> float:
@@ -344,7 +353,9 @@ class TablePreferenceRepository:
 
     @staticmethod
     def get_for_user(user_id: int, view_key: str) -> dict | None:
-        pref = TablePreference.query.filter_by(user_id=user_id, view_key=view_key).first()
+        pref = TablePreference.query.filter_by(
+            user_id=user_id, view_key=view_key
+        ).first()
         return pref.preferences if pref else None
 
     @staticmethod

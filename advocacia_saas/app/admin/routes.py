@@ -2258,16 +2258,18 @@ def petition_section_new():
 
         try:
             # Criar seção via repository
-            section = PetitionSectionAdminRepository.create({
-                "name": name,
-                "slug": slug,
-                "description": description,
-                "icon": icon,
-                "color": color,
-                "order": order,
-                "is_active": is_active,
-                "fields_schema": fields_schema,
-            })
+            section = PetitionSectionAdminRepository.create(
+                {
+                    "name": name,
+                    "slug": slug,
+                    "description": description,
+                    "icon": icon,
+                    "color": color,
+                    "order": order,
+                    "is_active": is_active,
+                    "fields_schema": fields_schema,
+                }
+            )
             current_app.logger.info(
                 f"✅ [SECTIONS] Seção criada com sucesso - ID: {section.id}"
             )
@@ -2671,16 +2673,19 @@ def petition_section_editor_save():
             section = PetitionSectionAdminRepository.get_by_id(section_id)
             if not section:
                 return jsonify({"success": False, "error": "Seção não encontrada"}), 404
-            
-            PetitionSectionAdminRepository.update(section, {
-                "name": name,
-                "description": description,
-                "icon": icon,
-                "color": color,
-                "order": order,
-                "is_active": is_active,
-                "fields_schema": validated_fields,
-            })
+
+            PetitionSectionAdminRepository.update(
+                section,
+                {
+                    "name": name,
+                    "description": description,
+                    "icon": icon,
+                    "color": color,
+                    "order": order,
+                    "is_active": is_active,
+                    "fields_schema": validated_fields,
+                },
+            )
 
             current_app.logger.info(
                 f"[EDITOR] Seção atualizada via editor visual - ID: {section.id}"
@@ -2697,16 +2702,18 @@ def petition_section_editor_save():
             # Criar nova seção
             slug = generate_unique_slug(name, PetitionSection)
 
-            section = PetitionSectionAdminRepository.create({
-                "name": name,
-                "slug": slug,
-                "description": description,
-                "icon": icon,
-                "color": color,
-                "order": order,
-                "is_active": is_active,
-                "fields_schema": validated_fields,
-            })
+            section = PetitionSectionAdminRepository.create(
+                {
+                    "name": name,
+                    "slug": slug,
+                    "description": description,
+                    "icon": icon,
+                    "color": color,
+                    "order": order,
+                    "is_active": is_active,
+                    "fields_schema": validated_fields,
+                }
+            )
 
             current_app.logger.info(
                 f"[EDITOR] Seção criada via editor visual - ID: {section.id}"
@@ -2849,17 +2856,19 @@ def petition_type_new():
         slug = generate_unique_slug(data["name"], PetitionType)
 
         # Criar via repository
-        PetitionTypeAdminRepository.create({
-            "name": data["name"],
-            "slug": slug,
-            "description": data.get("description"),
-            "category": data.get("category", "civel"),
-            "icon": data.get("icon", "fa-file-alt"),
-            "color": data.get("color", "primary"),
-            "is_billable": data.get("is_billable", False),
-            "base_price": Decimal(data.get("base_price", "0.00")),
-            "use_dynamic_form": data.get("use_dynamic_form", False),
-        })
+        PetitionTypeAdminRepository.create(
+            {
+                "name": data["name"],
+                "slug": slug,
+                "description": data.get("description"),
+                "category": data.get("category", "civel"),
+                "icon": data.get("icon", "fa-file-alt"),
+                "color": data.get("color", "primary"),
+                "is_billable": data.get("is_billable", False),
+                "base_price": Decimal(data.get("base_price", "0.00")),
+                "use_dynamic_form": data.get("use_dynamic_form", False),
+            }
+        )
 
         flash(f"Tipo de petição '{data['name']}' criado com sucesso!", "success")
         return redirect(url_for("admin.petition_types_list"))
@@ -2901,18 +2910,21 @@ def petition_type_edit(type_id):
         new_slug = generate_unique_slug(name, PetitionType, petition_type.slug)
 
         # Atualizar via repository
-        PetitionTypeAdminRepository.update(petition_type, {
-            "name": name,
-            "slug": new_slug,
-            "description": description,
-            "category": category,
-            "icon": icon,
-            "color": color,
-            "is_billable": is_billable,
-            "base_price": base_price,
-            "use_dynamic_form": use_dynamic_form,
-            "is_active": is_active,
-        })
+        PetitionTypeAdminRepository.update(
+            petition_type,
+            {
+                "name": name,
+                "slug": new_slug,
+                "description": description,
+                "category": category,
+                "icon": icon,
+                "color": color,
+                "is_billable": is_billable,
+                "base_price": base_price,
+                "use_dynamic_form": use_dynamic_form,
+                "is_active": is_active,
+            },
+        )
 
         flash(f"Tipo de petição '{petition_type.name}' atualizado!", "success")
         return redirect(url_for("admin.petition_types_list"))
@@ -3232,14 +3244,16 @@ def new_roadmap_category():
             if not isinstance(color, str):
                 color = str(color)
 
-            category = RoadmapCategoryRepository.create({
-                "name": name,
-                "slug": slug,
-                "description": description,
-                "icon": icon,
-                "color": color,
-                "order": order,
-            })
+            category = RoadmapCategoryRepository.create(
+                {
+                    "name": name,
+                    "slug": slug,
+                    "description": description,
+                    "icon": icon,
+                    "color": color,
+                    "order": order,
+                }
+            )
 
             flash("Categoria criada com sucesso!", "success")
             return redirect(url_for("admin.roadmap_categories"))
@@ -3476,30 +3490,32 @@ def new_roadmap_item():
                 flash("Slug já existe. Escolha outro.", "error")
                 return redirect(request.url)
 
-            item = RoadmapItemRepository.create({
-                "category_id": category_id,
-                "title": title,
-                "slug": slug,
-                "description": description,
-                "detailed_description": detailed_description,
-                "status": status,
-                "priority": priority,
-                "estimated_effort": estimated_effort,
-                "visible_to_users": visible_to_users,
-                "internal_only": internal_only,
-                "show_new_badge": show_new_badge,
-                "planned_start_date": planned_start_date,
-                "planned_completion_date": planned_completion_date,
-                "business_value": business_value,
-                "technical_complexity": technical_complexity,
-                "user_impact": user_impact,
-                "dependencies": dependencies,
-                "blockers": blockers,
-                "tags": tags,
-                "notes": notes,
-                "assigned_to": assigned_to,
-                "created_by": current_user.id,
-            })
+            item = RoadmapItemRepository.create(
+                {
+                    "category_id": category_id,
+                    "title": title,
+                    "slug": slug,
+                    "description": description,
+                    "detailed_description": detailed_description,
+                    "status": status,
+                    "priority": priority,
+                    "estimated_effort": estimated_effort,
+                    "visible_to_users": visible_to_users,
+                    "internal_only": internal_only,
+                    "show_new_badge": show_new_badge,
+                    "planned_start_date": planned_start_date,
+                    "planned_completion_date": planned_completion_date,
+                    "business_value": business_value,
+                    "technical_complexity": technical_complexity,
+                    "user_impact": user_impact,
+                    "dependencies": dependencies,
+                    "blockers": blockers,
+                    "tags": tags,
+                    "notes": notes,
+                    "assigned_to": assigned_to,
+                    "created_by": current_user.id,
+                }
+            )
 
             flash("Item do roadmap criado com sucesso!", "success")
             return redirect(url_for("admin.roadmap_items"))
@@ -3651,7 +3667,7 @@ def toggle_roadmap_item_visibility(item_id):
     item = RoadmapItemRepository.get_by_id(item_id)
     if not item:
         abort(404)
-    
+
     RoadmapItemRepository.toggle_visibility(item)
 
     status = "visível" if item.visible_to_users else "oculto"
@@ -4014,15 +4030,17 @@ def petition_model_new():
         # Gerar slug único baseado no nome
         slug = generate_unique_slug(f"Modelo - {name}", PetitionModel)
 
-        petition_model = PetitionModelAdminRepository.create({
-            "name": f"Modelo - {name}",
-            "slug": slug,
-            "description": description,
-            "petition_type_id": petition_type_id,
-            "is_active": is_active,
-            "use_dynamic_form": use_dynamic_form,
-            "template_content": template_content,
-        })
+        petition_model = PetitionModelAdminRepository.create(
+            {
+                "name": f"Modelo - {name}",
+                "slug": slug,
+                "description": description,
+                "petition_type_id": petition_type_id,
+                "is_active": is_active,
+                "use_dynamic_form": use_dynamic_form,
+                "template_content": template_content,
+            }
+        )
         current_app.logger.info(
             f"Modelo criado com sucesso: {petition_model.name} (ID: {petition_model.id})"
         )
@@ -5146,18 +5164,20 @@ def petition_template_feedback():
     data = request.get_json() or {}
 
     try:
-        feedback = AIGenerationFeedbackRepository.create({
-            "petition_model_id": data.get("model_id"),
-            "generated_template": data.get("template", ""),
-            "rating": data.get("rating", 3),
-            "feedback_type": data.get("feedback_type", "neutral"),
-            "feedback_text": data.get("feedback_text"),
-            "action_taken": data.get("action_taken"),
-            "edited_template": data.get("edited_template"),
-            "prompt_used": data.get("prompt_used"),
-            "sections_used": data.get("sections_used"),
-            "user_id": current_user.id,
-        })
+        feedback = AIGenerationFeedbackRepository.create(
+            {
+                "petition_model_id": data.get("model_id"),
+                "generated_template": data.get("template", ""),
+                "rating": data.get("rating", 3),
+                "feedback_type": data.get("feedback_type", "neutral"),
+                "feedback_text": data.get("feedback_text"),
+                "action_taken": data.get("action_taken"),
+                "edited_template": data.get("edited_template"),
+                "prompt_used": data.get("prompt_used"),
+                "sections_used": data.get("sections_used"),
+                "user_id": current_user.id,
+            }
+        )
 
         return jsonify({"success": True, "feedback_id": feedback.id})
 
@@ -5189,16 +5209,18 @@ def petition_template_example_new():
 
     if request.method == "POST":
         try:
-            example = TemplateExampleRepository.create({
-                "name": request.form.get("name"),
-                "description": request.form.get("description"),
-                "template_content": request.form.get("template_content"),
-                "petition_type_id": request.form.get("petition_type_id") or None,
-                "tags": request.form.get("tags"),
-                "quality_score": int(request.form.get("quality_score", 5)),
-                "source": "manual",
-                "created_by": current_user.id,
-            })
+            example = TemplateExampleRepository.create(
+                {
+                    "name": request.form.get("name"),
+                    "description": request.form.get("description"),
+                    "template_content": request.form.get("template_content"),
+                    "petition_type_id": request.form.get("petition_type_id") or None,
+                    "tags": request.form.get("tags"),
+                    "quality_score": int(request.form.get("quality_score", 5)),
+                    "source": "manual",
+                    "created_by": current_user.id,
+                }
+            )
 
             flash("Template exemplar criado com sucesso!", "success")
             return redirect(url_for("admin.petition_template_examples_list"))
@@ -5227,14 +5249,17 @@ def petition_template_example_edit(example_id):
 
     if request.method == "POST":
         try:
-            TemplateExampleRepository.update(example, {
-                "name": request.form.get("name"),
-                "description": request.form.get("description"),
-                "template_content": request.form.get("template_content"),
-                "petition_type_id": request.form.get("petition_type_id") or None,
-                "tags": request.form.get("tags"),
-                "quality_score": int(request.form.get("quality_score", 5)),
-            })
+            TemplateExampleRepository.update(
+                example,
+                {
+                    "name": request.form.get("name"),
+                    "description": request.form.get("description"),
+                    "template_content": request.form.get("template_content"),
+                    "petition_type_id": request.form.get("petition_type_id") or None,
+                    "tags": request.form.get("tags"),
+                    "quality_score": int(request.form.get("quality_score", 5)),
+                },
+            )
 
             flash("Template exemplar atualizado com sucesso!", "success")
             return redirect(url_for("admin.petition_template_examples_list"))
@@ -5295,23 +5320,30 @@ def petition_model_save_as_example(model_id):
 
         if existing:
             # Atualizar existente
-            TemplateExampleRepository.update(existing, {
-                "template_content": petition_model.template_content,
-                "quality_score": min(existing.quality_score + 1, 10),  # Aumentar score
-            })
+            TemplateExampleRepository.update(
+                existing,
+                {
+                    "template_content": petition_model.template_content,
+                    "quality_score": min(
+                        existing.quality_score + 1, 10
+                    ),  # Aumentar score
+                },
+            )
             flash("Template exemplar atualizado!", "success")
         else:
             # Criar novo
-            TemplateExampleRepository.create({
-                "name": petition_model.name,
-                "description": petition_model.description,
-                "template_content": petition_model.template_content,
-                "petition_type_id": petition_model.petition_type_id,
-                "source": "ai_approved",
-                "original_model_id": model_id,
-                "created_by": current_user.id,
-                "quality_score": 7,  # Score inicial bom para templates aprovados
-            })
+            TemplateExampleRepository.create(
+                {
+                    "name": petition_model.name,
+                    "description": petition_model.description,
+                    "template_content": petition_model.template_content,
+                    "petition_type_id": petition_model.petition_type_id,
+                    "source": "ai_approved",
+                    "original_model_id": model_id,
+                    "created_by": current_user.id,
+                    "quality_score": 7,  # Score inicial bom para templates aprovados
+                }
+            )
             flash("Template salvo como exemplo de alta qualidade!", "success")
 
         return jsonify({"success": True})
@@ -5512,19 +5544,23 @@ def save_template_as_example(model_id):
         tags = data.get("tags", "")
 
         # Criar o exemplo
-        example = TemplateExampleRepository.create({
-            "name": petition_model.name,
-            "description": petition_model.description
-            or f"Template exemplar: {petition_model.name}",
-            "template_content": petition_model.template_content,
-            "petition_type_id": petition_model.petition_type_id,
-            "tags": str(tags)[:500] if tags else "",  # Limitar tamanho das tags
-            "quality_score": min(max(float(quality_score), 1.0), 5.0),  # Entre 1 e 5
-            "source": "approved_model",
-            "original_model_id": model_id,
-            "created_by": current_user.id,
-            "is_active": True,
-        })
+        example = TemplateExampleRepository.create(
+            {
+                "name": petition_model.name,
+                "description": petition_model.description
+                or f"Template exemplar: {petition_model.name}",
+                "template_content": petition_model.template_content,
+                "petition_type_id": petition_model.petition_type_id,
+                "tags": str(tags)[:500] if tags else "",  # Limitar tamanho das tags
+                "quality_score": min(
+                    max(float(quality_score), 1.0), 5.0
+                ),  # Entre 1 e 5
+                "source": "approved_model",
+                "original_model_id": model_id,
+                "created_by": current_user.id,
+                "is_active": True,
+            }
+        )
 
         flash(
             f"Template '{petition_model.name}' salvo como exemplo de referência!",
@@ -5570,24 +5606,28 @@ def save_ai_generation_feedback(model_id):
                 {"success": False, "error": "Rating deve ser um número entre 1 e 5."}
             ), 400
 
-        feedback = AIGenerationFeedbackRepository.create({
-            "petition_model_id": model_id,
-            "generated_template": data.get("generated_template", "")[
-                :50000
-            ],  # Limitar tamanho
-            "rating": rating_int,
-            "feedback_type": data.get(
-                "feedback_type", "general"
-            ),  # positive, negative, suggestion, general
-            "feedback_text": data.get("feedback_text", "")[:1000],  # Limitar tamanho
-            "action_taken": data.get(
-                "action_taken", "none"
-            ),  # used, edited, discarded, none
-            "edited_template": data.get("edited_template"),
-            "prompt_used": data.get("prompt_used"),
-            "sections_used": data.get("sections_used"),
-            "user_id": current_user.id,
-        })
+        feedback = AIGenerationFeedbackRepository.create(
+            {
+                "petition_model_id": model_id,
+                "generated_template": data.get("generated_template", "")[
+                    :50000
+                ],  # Limitar tamanho
+                "rating": rating_int,
+                "feedback_type": data.get(
+                    "feedback_type", "general"
+                ),  # positive, negative, suggestion, general
+                "feedback_text": data.get("feedback_text", "")[
+                    :1000
+                ],  # Limitar tamanho
+                "action_taken": data.get(
+                    "action_taken", "none"
+                ),  # used, edited, discarded, none
+                "edited_template": data.get("edited_template"),
+                "prompt_used": data.get("prompt_used"),
+                "sections_used": data.get("sections_used"),
+                "user_id": current_user.id,
+            }
+        )
 
         # Se feedback muito positivo (4-5 estrelas) e foi usado/editado, sugerir salvar como exemplo
         suggest_save = rating_int >= 4 and data.get("action_taken") in [
@@ -6134,7 +6174,7 @@ def ai_config_update(config_id):
 
     # Preparar dados para atualização
     update_data = {}
-    
+
     if "credit_cost" in data:
         credit_cost = int(data["credit_cost"])
         if credit_cost < 0 or credit_cost > 100:

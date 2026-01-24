@@ -146,7 +146,10 @@ class OfficeMemberService:
             return False, "Apenas o proprietário pode remover administradores."
 
         if member.id == user.id:
-            return False, "Você não pode se remover do escritório. Use 'Sair do Escritório' ao invés."
+            return (
+                False,
+                "Você não pode se remover do escritório. Use 'Sair do Escritório' ao invés.",
+            )
 
         member_name = member.full_name or member.username
         OfficeMemberRepository.remove_member(office, member)
@@ -160,7 +163,10 @@ class OfficeMemberService:
             return False, "Escritório não encontrado."
 
         if user.is_office_owner():
-            return False, "Você é o proprietário. Transfira a propriedade antes de sair ou exclua o escritório."
+            return (
+                False,
+                "Você é o proprietário. Transfira a propriedade antes de sair ou exclua o escritório.",
+            )
 
         office_name = office.name
         OfficeMemberRepository.remove_member(office, user)
@@ -196,9 +202,7 @@ class OfficeInviteService:
     """Serviço para gerenciamento de convites"""
 
     @staticmethod
-    def send_invite(
-        user: User, email: str, role: str
-    ) -> tuple[bool, str, str | None]:
+    def send_invite(user: User, email: str, role: str) -> tuple[bool, str, str | None]:
         """Envia um convite para novo membro"""
         office = user.get_office()
         if not office:
@@ -206,7 +210,11 @@ class OfficeInviteService:
 
         if not OfficeRepository.can_add_member(office):
             max_members = OfficeRepository.get_max_members(office)
-            return False, f"Limite de {max_members} membros atingido. Faça upgrade do plano para adicionar mais.", None
+            return (
+                False,
+                f"Limite de {max_members} membros atingido. Faça upgrade do plano para adicionar mais.",
+                None,
+            )
 
         email = email.lower()
 
@@ -229,12 +237,18 @@ class OfficeInviteService:
             return False, "Erro ao criar convite.", None
 
         email_sent = send_office_invite_email(invite)
-        invite_url = url_for("office.accept_invite_page", token=invite.token, _external=True)
+        invite_url = url_for(
+            "office.accept_invite_page", token=invite.token, _external=True
+        )
 
         if email_sent:
             return True, f"Convite enviado para {email}!", None
         else:
-            return True, "Convite criado, mas não foi possível enviar o email.", invite_url
+            return (
+                True,
+                "Convite criado, mas não foi possível enviar o email.",
+                invite_url,
+            )
 
     @staticmethod
     def cancel_invite(user: User, invite_id: int) -> tuple[bool, str]:
@@ -263,12 +277,18 @@ class OfficeInviteService:
 
         OfficeInviteRepository.resend(invite)
         email_sent = send_office_invite_email(invite)
-        invite_url = url_for("office.accept_invite_page", token=invite.token, _external=True)
+        invite_url = url_for(
+            "office.accept_invite_page", token=invite.token, _external=True
+        )
 
         if email_sent:
             return True, f"Convite reenviado para {invite.email}.", None
         else:
-            return True, "Convite renovado, mas não foi possível enviar o email.", invite_url
+            return (
+                True,
+                "Convite renovado, mas não foi possível enviar o email.",
+                invite_url,
+            )
 
     @staticmethod
     def validate_invite(token: str, user: User) -> tuple[bool, str, dict | None]:
@@ -285,17 +305,25 @@ class OfficeInviteService:
             return False, "Este convite foi enviado para outro e-mail.", None
 
         if user.office_id:
-            return False, "Você já pertence a um escritório. Saia primeiro para aceitar este convite.", None
+            return (
+                False,
+                "Você já pertence a um escritório. Saia primeiro para aceitar este convite.",
+                None,
+            )
 
         inviter = User.query.get(invite.invited_by_id)
         role_info = OFFICE_ROLES.get(invite.role, {})
 
-        return True, "", {
-            "invite": invite,
-            "office": invite.office,
-            "inviter": inviter,
-            "role_info": role_info,
-        }
+        return (
+            True,
+            "",
+            {
+                "invite": invite,
+                "office": invite.office,
+                "inviter": inviter,
+                "role_info": role_info,
+            },
+        )
 
     @staticmethod
     def accept_invite(token: str, user: User) -> tuple[bool, str]:

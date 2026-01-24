@@ -59,15 +59,17 @@ def give_consent():
             return jsonify({"error": f"Campo obrigatório: {field}"}), 400
 
     # Criar consentimento
-    consent = ConsentRepository.create({
-        "user_id": current_user.id,
-        "consent_type": data["consent_type"],
-        "consent_purpose": data["consent_purpose"],
-        "consent_version": data.get("consent_version", "1.0"),
-        "ip_address": request.remote_addr,
-        "user_agent": request.headers.get("User-Agent"),
-        "consent_method": "web_form",
-    })
+    consent = ConsentRepository.create(
+        {
+            "user_id": current_user.id,
+            "consent_type": data["consent_type"],
+            "consent_purpose": data["consent_purpose"],
+            "consent_version": data.get("consent_version", "1.0"),
+            "ip_address": request.remote_addr,
+            "user_agent": request.headers.get("User-Agent"),
+            "consent_method": "web_form",
+        }
+    )
 
     # Log do processamento
     log_processing(
@@ -78,10 +80,12 @@ def give_consent():
         "User consented to data processing",
     )
 
-    return jsonify({
-        "message": "Consentimento registrado com sucesso",
-        "consent_id": consent.id,
-    }), 201
+    return jsonify(
+        {
+            "message": "Consentimento registrado com sucesso",
+            "consent_id": consent.id,
+        }
+    ), 201
 
 
 @lgpd_bp.route("/consent/<int:consent_id>", methods=["DELETE"])
@@ -127,10 +131,12 @@ def request_data_deletion():
     existing_request = DeletionRequestRepository.get_pending_by_user(current_user.id)
 
     if existing_request:
-        return jsonify({
-            "error": "Já existe uma solicitação de exclusão pendente",
-            "request_id": existing_request.id,
-        }), 409
+        return jsonify(
+            {
+                "error": "Já existe uma solicitação de exclusão pendente",
+                "request_id": existing_request.id,
+            }
+        ), 409
 
     # Criar solicitação
     deletion_request = DeletionRequestRepository.create(
@@ -148,11 +154,13 @@ def request_data_deletion():
         "User requested data deletion",
     )
 
-    return jsonify({
-        "message": "Solicitação de exclusão registrada",
-        "request_id": deletion_request.id,
-        "status": "pending",
-    }), 201
+    return jsonify(
+        {
+            "message": "Solicitação de exclusão registrada",
+            "request_id": deletion_request.id,
+            "status": "pending",
+        }
+    ), 201
 
 
 @lgpd_bp.route("/deletion-request", methods=["GET"])
@@ -178,13 +186,17 @@ def request_anonymization():
         return jsonify({"error": "Motivo da solicitação é obrigatório"}), 400
 
     # Verificar se já existe uma solicitação pendente
-    existing_request = AnonymizationRequestRepository.get_pending_by_user(current_user.id)
+    existing_request = AnonymizationRequestRepository.get_pending_by_user(
+        current_user.id
+    )
 
     if existing_request:
-        return jsonify({
-            "error": "Já existe uma solicitação de anonimização pendente",
-            "request_id": existing_request.id,
-        }), 409
+        return jsonify(
+            {
+                "error": "Já existe uma solicitação de anonimização pendente",
+                "request_id": existing_request.id,
+            }
+        ), 409
 
     # Criar solicitação
     anonymization_request = AnonymizationRequestRepository.create(
@@ -203,11 +215,13 @@ def request_anonymization():
         "User requested data anonymization",
     )
 
-    return jsonify({
-        "message": "Solicitação de anonimização registrada",
-        "request_id": anonymization_request.id,
-        "status": "pending",
-    }), 201
+    return jsonify(
+        {
+            "message": "Solicitação de anonimização registrada",
+            "request_id": anonymization_request.id,
+            "status": "pending",
+        }
+    ), 201
 
 
 @lgpd_bp.route("/anonymization-request", methods=["GET"])
@@ -270,20 +284,22 @@ def approve_deletion_request(request_id):
         )
 
         # Log de auditoria adicional
-        ProcessingLogRepository.create({
-            "user_id": request_obj.user_id,
-            "action": "deletion_request_approved",
-            "data_category": "user_account",
-            "purpose": "right_to_erasure",
-            "legal_basis": "LGPD Art. 18",
-            "endpoint": request.path,
-            "additional_data": {
-                "request_id": request_id,
-                "admin_notes": admin_notes,
-                "audit_data": audit_data,
-                "processed_by": current_user.email,
-            },
-        })
+        ProcessingLogRepository.create(
+            {
+                "user_id": request_obj.user_id,
+                "action": "deletion_request_approved",
+                "data_category": "user_account",
+                "purpose": "right_to_erasure",
+                "legal_basis": "LGPD Art. 18",
+                "endpoint": request.path,
+                "additional_data": {
+                    "request_id": request_id,
+                    "admin_notes": admin_notes,
+                    "audit_data": audit_data,
+                    "processed_by": current_user.email,
+                },
+            }
+        )
 
         return jsonify(
             {"message": "Solicitação de exclusão aprovada e dados removidos"}
@@ -319,20 +335,22 @@ def reject_deletion_request(request_id):
         )
 
         # Log de auditoria
-        ProcessingLogRepository.create({
-            "user_id": request_obj.user_id,
-            "action": "deletion_request_rejected",
-            "data_category": "request_metadata",
-            "purpose": "gdpr_compliance",
-            "legal_basis": "LGPD Art. 18",
-            "endpoint": request.path,
-            "additional_data": {
-                "request_id": request_id,
-                "rejection_reason": rejection_reason,
-                "admin_notes": admin_notes,
-                "processed_by": current_user.email,
-            },
-        })
+        ProcessingLogRepository.create(
+            {
+                "user_id": request_obj.user_id,
+                "action": "deletion_request_rejected",
+                "data_category": "request_metadata",
+                "purpose": "gdpr_compliance",
+                "legal_basis": "LGPD Art. 18",
+                "endpoint": request.path,
+                "additional_data": {
+                    "request_id": request_id,
+                    "rejection_reason": rejection_reason,
+                    "admin_notes": admin_notes,
+                    "processed_by": current_user.email,
+                },
+            }
+        )
 
         return jsonify({"message": "Solicitação de exclusão rejeitada"})
 
@@ -447,19 +465,21 @@ def approve_anonymization_request(request_id):
         )
 
         # Log de auditoria
-        ProcessingLogRepository.create({
-            "user_id": request_obj.user_id,
-            "action": "data_anonymization",
-            "data_category": request_obj.data_categories or "personal_data",
-            "purpose": "data_minimization",
-            "legal_basis": "LGPD Art. 12",
-            "endpoint": request.path,
-            "additional_data": {
-                "request_id": request_id,
-                "admin_notes": admin_notes,
-                "processed_by": current_user.email,
-            },
-        })
+        ProcessingLogRepository.create(
+            {
+                "user_id": request_obj.user_id,
+                "action": "data_anonymization",
+                "data_category": request_obj.data_categories or "personal_data",
+                "purpose": "data_minimization",
+                "legal_basis": "LGPD Art. 12",
+                "endpoint": request.path,
+                "additional_data": {
+                    "request_id": request_id,
+                    "admin_notes": admin_notes,
+                    "processed_by": current_user.email,
+                },
+            }
+        )
 
         return jsonify(
             {"message": "Solicitação de anonimização aprovada e dados anonimizados"}
@@ -495,20 +515,22 @@ def reject_anonymization_request(request_id):
         )
 
         # Log de auditoria
-        ProcessingLogRepository.create({
-            "user_id": request_obj.user_id,
-            "action": "anonymization_request_rejected",
-            "data_category": "request_metadata",
-            "purpose": "gdpr_compliance",
-            "legal_basis": "LGPD Art. 12",
-            "endpoint": request.path,
-            "additional_data": {
-                "request_id": request_id,
-                "rejection_reason": rejection_reason,
-                "admin_notes": admin_notes,
-                "processed_by": current_user.email,
-            },
-        })
+        ProcessingLogRepository.create(
+            {
+                "user_id": request_obj.user_id,
+                "action": "anonymization_request_rejected",
+                "data_category": "request_metadata",
+                "purpose": "gdpr_compliance",
+                "legal_basis": "LGPD Art. 12",
+                "endpoint": request.path,
+                "additional_data": {
+                    "request_id": request_id,
+                    "rejection_reason": rejection_reason,
+                    "admin_notes": admin_notes,
+                    "processed_by": current_user.email,
+                },
+            }
+        )
 
         return jsonify({"message": "Solicitação de anonimização rejeitada"})
 
@@ -539,7 +561,9 @@ def request_deanonymization():
         return jsonify({"error": "Motivo da solicitação é obrigatório"}), 400
 
     # Verificar se já existe uma solicitação pendente
-    existing_request = DeanonymizationRequestRepository.get_pending_by_user(current_user.id)
+    existing_request = DeanonymizationRequestRepository.get_pending_by_user(
+        current_user.id
+    )
 
     if existing_request:
         return (
@@ -553,7 +577,9 @@ def request_deanonymization():
         )
 
     # Buscar a solicitação de anonimização original
-    original_anonymization = AnonymizationRequestRepository.get_completed_by_user(current_user.id)
+    original_anonymization = AnonymizationRequestRepository.get_completed_by_user(
+        current_user.id
+    )
 
     if not original_anonymization:
         return (
@@ -677,20 +703,22 @@ def approve_deanonymization_request(request_id):
         )
 
         # Log de auditoria
-        ProcessingLogRepository.create({
-            "user_id": request_obj.user_id,
-            "action": "deanonymization_approved",
-            "data_category": "personal_data",
-            "purpose": "data_restoration",
-            "legal_basis": "LGPD Art. 18",
-            "endpoint": request.path,
-            "additional_data": {
-                "request_id": request_id,
-                "admin_notes": admin_notes,
-                "processed_by": current_user.email,
-                "restored_fields": restored_data.get("restored_fields"),
-            },
-        })
+        ProcessingLogRepository.create(
+            {
+                "user_id": request_obj.user_id,
+                "action": "deanonymization_approved",
+                "data_category": "personal_data",
+                "purpose": "data_restoration",
+                "legal_basis": "LGPD Art. 18",
+                "endpoint": request.path,
+                "additional_data": {
+                    "request_id": request_id,
+                    "admin_notes": admin_notes,
+                    "processed_by": current_user.email,
+                    "restored_fields": restored_data.get("restored_fields"),
+                },
+            }
+        )
 
         return jsonify(
             {"message": "Solicitação de deanonimização aprovada e dados restaurados"}
@@ -728,20 +756,22 @@ def reject_deanonymization_request(request_id):
         )
 
         # Log de auditoria
-        ProcessingLogRepository.create({
-            "user_id": request_obj.user_id,
-            "action": "deanonymization_rejected",
-            "data_category": "request_metadata",
-            "purpose": "gdpr_compliance",
-            "legal_basis": "LGPD Art. 18",
-            "endpoint": request.path,
-            "additional_data": {
-                "request_id": request_id,
-                "rejection_reason": rejection_reason,
-                "admin_notes": admin_notes,
-                "processed_by": current_user.email,
-            },
-        })
+        ProcessingLogRepository.create(
+            {
+                "user_id": request_obj.user_id,
+                "action": "deanonymization_rejected",
+                "data_category": "request_metadata",
+                "purpose": "gdpr_compliance",
+                "legal_basis": "LGPD Art. 18",
+                "endpoint": request.path,
+                "additional_data": {
+                    "request_id": request_id,
+                    "rejection_reason": rejection_reason,
+                    "admin_notes": admin_notes,
+                    "processed_by": current_user.email,
+                },
+            }
+        )
 
         return jsonify({"message": "Solicitação de deanonimização rejeitada"})
 

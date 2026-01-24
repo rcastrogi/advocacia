@@ -136,7 +136,9 @@ class OfficeInviteRepository:
 
     @staticmethod
     def get_pending_count(office_id: int) -> int:
-        return OfficeInvite.query.filter_by(office_id=office_id, status="pending").count()
+        return OfficeInvite.query.filter_by(
+            office_id=office_id, status="pending"
+        ).count()
 
     @staticmethod
     def get_pending_by_office(office: Office) -> list[OfficeInvite]:

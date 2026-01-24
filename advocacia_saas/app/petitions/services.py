@@ -30,7 +30,18 @@ from app.utils.pagination import PaginationHelper
 # Constantes
 MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024  # 20 MB por arquivo
 MAX_TOTAL_SIZE_PER_PETITION = 50 * 1024 * 1024  # 50 MB total por petição
-ALLOWED_EXTENSIONS = {"pdf", "doc", "docx", "png", "jpg", "jpeg", "gif", "txt", "xls", "xlsx"}
+ALLOWED_EXTENSIONS = {
+    "pdf",
+    "doc",
+    "docx",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "txt",
+    "xls",
+    "xlsx",
+}
 
 
 class PetitionTypeService:
@@ -42,6 +53,7 @@ class PetitionTypeService:
         petition_type = PetitionTypeRepository.get_by_slug(slug)
         if not petition_type:
             from flask import abort
+
             abort(404)
         return petition_type
 
@@ -60,6 +72,7 @@ class PetitionModelService:
         model = PetitionModelRepository.get_by_slug(slug)
         if not model:
             from flask import abort
+
             abort(404)
         return model
 
@@ -83,20 +96,22 @@ class DynamicFormService:
                     if field.get("linked_section_id"):
                         linked_sections_map[field.get("linked_section_id")] = section.id
 
-                sections.append({
-                    "section": {
-                        "id": section.id,
-                        "name": section.name,
-                        "slug": section.slug,
-                        "description": section.description,
-                        "icon": section.icon,
-                        "color": section.color,
-                        "fields_schema": section.fields_schema or [],
-                    },
-                    "is_required": config.is_required,
-                    "is_expanded": config.is_expanded,
-                    "field_overrides": config.field_overrides or {},
-                })
+                sections.append(
+                    {
+                        "section": {
+                            "id": section.id,
+                            "name": section.name,
+                            "slug": section.slug,
+                            "description": section.description,
+                            "icon": section.icon,
+                            "color": section.color,
+                            "fields_schema": section.fields_schema or [],
+                        },
+                        "is_required": config.is_required,
+                        "is_expanded": config.is_expanded,
+                        "field_overrides": config.field_overrides or {},
+                    }
+                )
 
         # Adicionar seções vinculadas
         sections_with_linked = []
@@ -107,24 +122,29 @@ class DynamicFormService:
             for linked_id, parent_id in linked_sections_map.items():
                 if parent_id == section_id:
                     if not any(s["section"]["id"] == linked_id for s in sections):
-                        linked_section = PetitionSectionRepository.get_active_by_id(linked_id)
+                        linked_section = PetitionSectionRepository.get_active_by_id(
+                            linked_id
+                        )
                         if linked_section:
-                            sections_with_linked.append({
-                                "section": {
-                                    "id": linked_section.id,
-                                    "name": linked_section.name,
-                                    "slug": linked_section.slug,
-                                    "description": linked_section.description,
-                                    "icon": linked_section.icon,
-                                    "color": linked_section.color,
-                                    "fields_schema": linked_section.fields_schema or [],
-                                },
-                                "is_required": False,
-                                "is_expanded": False,
-                                "field_overrides": {},
-                                "is_linked_section": True,
-                                "linked_to_fields": [],
-                            })
+                            sections_with_linked.append(
+                                {
+                                    "section": {
+                                        "id": linked_section.id,
+                                        "name": linked_section.name,
+                                        "slug": linked_section.slug,
+                                        "description": linked_section.description,
+                                        "icon": linked_section.icon,
+                                        "color": linked_section.color,
+                                        "fields_schema": linked_section.fields_schema
+                                        or [],
+                                    },
+                                    "is_required": False,
+                                    "is_expanded": False,
+                                    "field_overrides": {},
+                                    "is_linked_section": True,
+                                    "linked_to_fields": [],
+                                }
+                            )
 
         sections_json = json.dumps(sections_with_linked, ensure_ascii=False)
         return sections_with_linked, sections_json
@@ -138,15 +158,18 @@ class DynamicFormService:
             return None, []
 
         locked_fields = petition.get_locked_fields()
-        edit_data = json.dumps({
-            "id": petition.id,
-            "form_data": petition.form_data or {},
-            "status": petition.status,
-            "title": petition.title,
-            "process_number": petition.process_number,
-            "is_paid": petition.is_paid,
-            "locked_fields": locked_fields,
-        }, ensure_ascii=False)
+        edit_data = json.dumps(
+            {
+                "id": petition.id,
+                "form_data": petition.form_data or {},
+                "status": petition.status,
+                "title": petition.title,
+                "process_number": petition.process_number,
+                "is_paid": petition.is_paid,
+                "locked_fields": locked_fields,
+            },
+            ensure_ascii=False,
+        )
 
         return edit_data, locked_fields
 
@@ -156,11 +179,38 @@ class PDFGenerationService:
 
     # Tags HTML permitidas
     ALLOWED_TAGS = [
-        "p", "br", "strong", "b", "em", "i", "u", "s", "strike",
-        "h1", "h2", "h3", "h4", "h5", "h6",
-        "ul", "ol", "li",
-        "table", "thead", "tbody", "tr", "th", "td",
-        "span", "div", "blockquote", "a", "img", "hr", "sub", "sup",
+        "p",
+        "br",
+        "strong",
+        "b",
+        "em",
+        "i",
+        "u",
+        "s",
+        "strike",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "ul",
+        "ol",
+        "li",
+        "table",
+        "thead",
+        "tbody",
+        "tr",
+        "th",
+        "td",
+        "span",
+        "div",
+        "blockquote",
+        "a",
+        "img",
+        "hr",
+        "sub",
+        "sup",
     ]
 
     ALLOWED_ATTRIBUTES = {
@@ -228,11 +278,15 @@ class PDFGenerationService:
         form_data: dict[str, Any],
     ) -> tuple[BytesIO | None, str | None]:
         """Gera PDF a partir de template Jinja2"""
-        if not petition_model.template_content or not petition_model.template_content.strip():
+        if (
+            not petition_model.template_content
+            or not petition_model.template_content.strip()
+        ):
             return None, "Template não configurado"
 
         try:
             from jinja2 import Template
+
             template = Template(petition_model.template_content)
             rendered_content = template.render(**form_data)
 
@@ -285,7 +339,9 @@ class PDFGenerationService:
                 template_content += f"<h2>{section.name}</h2>\n"
 
                 fields_list = (
-                    section.fields_schema if isinstance(section.fields_schema, list) else []
+                    section.fields_schema
+                    if isinstance(section.fields_schema, list)
+                    else []
                 )
 
                 for field in fields_list:
@@ -338,7 +394,9 @@ class PDFGenerationService:
         </html>
         """
 
-        return PDFGenerationService.render_pdf_from_html(html_content, petition_type.name)
+        return PDFGenerationService.render_pdf_from_html(
+            html_content, petition_type.name
+        )
 
 
 class SavedPetitionService:
@@ -351,7 +409,9 @@ class SavedPetitionService:
         search: str = "",
     ) -> dict[str, Any]:
         """Obtém petições paginadas com estatísticas"""
-        query = SavedPetitionRepository.get_by_user_filtered(user_id, status_filter, search)
+        query = SavedPetitionRepository.get_by_user_filtered(
+            user_id, status_filter, search
+        )
 
         pagination = PaginationHelper(
             query=query,
@@ -409,7 +469,9 @@ class SavedPetitionService:
 
         try:
             if petition_id:
-                petition = SavedPetitionRepository.get_by_user_and_id(petition_id, user_id)
+                petition = SavedPetitionRepository.get_by_user_and_id(
+                    petition_id, user_id
+                )
                 if not petition:
                     return None, "Petição não encontrada"
                 if petition.status == "cancelled":
@@ -424,7 +486,9 @@ class SavedPetitionService:
 
             # Atualizar dados
             petition.form_data = form_data
-            petition.process_number = form_data.get("processo_numero") or form_data.get("processo_number")
+            petition.process_number = form_data.get("processo_numero") or form_data.get(
+                "processo_number"
+            )
 
             # Ações
             if action == "complete":
@@ -482,7 +546,9 @@ class SavedPetitionService:
     @staticmethod
     def cancel(petition_id: int, user_id: int) -> tuple[bool, str]:
         """Cancela uma petição"""
-        petition, error = SavedPetitionService.get_with_access_check(petition_id, user_id)
+        petition, error = SavedPetitionService.get_with_access_check(
+            petition_id, user_id
+        )
         if error:
             return False, error
 
@@ -495,7 +561,9 @@ class SavedPetitionService:
     @staticmethod
     def restore(petition_id: int, user_id: int) -> tuple[bool, str]:
         """Restaura uma petição cancelada"""
-        petition, error = SavedPetitionService.get_with_access_check(petition_id, user_id)
+        petition, error = SavedPetitionService.get_with_access_check(
+            petition_id, user_id
+        )
         if error:
             return False, error
 
@@ -508,7 +576,9 @@ class SavedPetitionService:
     @staticmethod
     def delete(petition_id: int, user_id: int) -> tuple[bool, str]:
         """Exclui uma petição permanentemente"""
-        petition, error = SavedPetitionService.get_with_access_check(petition_id, user_id)
+        petition, error = SavedPetitionService.get_with_access_check(
+            petition_id, user_id
+        )
         if error:
             return False, error
 
@@ -526,7 +596,9 @@ class AttachmentService:
     @staticmethod
     def allowed_file(filename: str) -> bool:
         """Verifica se extensão é permitida"""
-        return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+        return (
+            "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+        )
 
     @staticmethod
     def get_upload_dir() -> str:
@@ -555,7 +627,9 @@ class AttachmentService:
         return False
 
     @staticmethod
-    def list_attachments(petition_id: int, user_id: int) -> tuple[list | None, str | None]:
+    def list_attachments(
+        petition_id: int, user_id: int
+    ) -> tuple[list | None, str | None]:
         """Lista anexos de uma petição"""
         petition = SavedPetitionRepository.get_by_user_and_id(petition_id, user_id)
         if not petition:
@@ -563,17 +637,21 @@ class AttachmentService:
 
         attachments = []
         for att in petition.attachments:
-            attachments.append({
-                "id": att.id,
-                "filename": att.filename,
-                "file_type": att.file_type,
-                "file_size": att.file_size,
-                "file_size_display": att.get_file_size_display(),
-                "category": att.category,
-                "description": att.description,
-                "icon": att.get_icon(),
-                "uploaded_at": att.uploaded_at.isoformat() if att.uploaded_at else None,
-            })
+            attachments.append(
+                {
+                    "id": att.id,
+                    "filename": att.filename,
+                    "file_type": att.file_type,
+                    "file_size": att.file_size,
+                    "file_size_display": att.get_file_size_display(),
+                    "category": att.category,
+                    "description": att.description,
+                    "icon": att.get_icon(),
+                    "uploaded_at": att.uploaded_at.isoformat()
+                    if att.uploaded_at
+                    else None,
+                }
+            )
 
         return attachments, None
 
@@ -597,7 +675,10 @@ class AttachmentService:
             return None, "Nenhum arquivo enviado"
 
         if not AttachmentService.allowed_file(file.filename):
-            return None, f"Tipo de arquivo não permitido. Permitidos: {', '.join(ALLOWED_EXTENSIONS)}"
+            return (
+                None,
+                f"Tipo de arquivo não permitido. Permitidos: {', '.join(ALLOWED_EXTENSIONS)}",
+            )
 
         # Verificar tamanho
         file.seek(0, 2)
@@ -612,11 +693,18 @@ class AttachmentService:
         current_total = PetitionAttachmentRepository.get_total_size(petition_id)
         if current_total + file_size > MAX_TOTAL_SIZE_PER_PETITION:
             remaining = (MAX_TOTAL_SIZE_PER_PETITION - current_total) // (1024 * 1024)
-            return None, f"Limite total de 50MB excedido. Espaço disponível: {remaining}MB"
+            return (
+                None,
+                f"Limite total de 50MB excedido. Espaço disponível: {remaining}MB",
+            )
 
         # Gerar nome único
         original_filename = secure_filename(file.filename)
-        ext = original_filename.rsplit(".", 1)[1].lower() if "." in original_filename else ""
+        ext = (
+            original_filename.rsplit(".", 1)[1].lower()
+            if "." in original_filename
+            else ""
+        )
         stored_filename = f"{uuid.uuid4().hex}.{ext}"
 
         # Salvar arquivo
@@ -625,16 +713,18 @@ class AttachmentService:
         file.save(file_path)
 
         # Criar registro
-        attachment = PetitionAttachmentRepository.create({
-            "saved_petition_id": petition.id,
-            "filename": original_filename,
-            "stored_filename": stored_filename,
-            "file_type": file.content_type,
-            "file_size": file_size,
-            "category": category,
-            "description": description,
-            "uploaded_by_id": user_id,
-        })
+        attachment = PetitionAttachmentRepository.create(
+            {
+                "saved_petition_id": petition.id,
+                "filename": original_filename,
+                "stored_filename": stored_filename,
+                "file_type": file.content_type,
+                "file_size": file_size,
+                "category": category,
+                "description": description,
+                "uploaded_by_id": user_id,
+            }
+        )
 
         return {
             "id": attachment.id,
@@ -658,7 +748,9 @@ class AttachmentService:
         return True, "Anexo removido!"
 
     @staticmethod
-    def get_file_path(attachment_id: int, user_id: int) -> tuple[str | None, str | None, str | None]:
+    def get_file_path(
+        attachment_id: int, user_id: int
+    ) -> tuple[str | None, str | None, str | None]:
         """Obtém caminho do arquivo para download"""
         attachment = PetitionAttachmentRepository.get_by_id(attachment_id)
         if not attachment:

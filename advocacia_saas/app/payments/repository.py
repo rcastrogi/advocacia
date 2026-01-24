@@ -3,6 +3,7 @@ Payments Repository - Camada de acesso a dados
 """
 
 from datetime import datetime, timedelta, timezone
+
 # Decimal removed - unused
 from typing import Any
 
@@ -138,7 +139,9 @@ class SubscriptionRepository:
         return subscription
 
     @staticmethod
-    def activate(subscription: Subscription, billing_period: str = "monthly") -> Subscription:
+    def activate(
+        subscription: Subscription, billing_period: str = "monthly"
+    ) -> Subscription:
         subscription.status = "active"
         subscription.started_at = datetime.now(timezone.utc)
 
@@ -193,7 +196,9 @@ class BalanceRepository:
         return UserPetitionBalance.query.filter_by(user_id=user_id).first()
 
     @staticmethod
-    def get_transactions(user_id: int, limit: int = 50) -> list[PetitionBalanceTransaction]:
+    def get_transactions(
+        user_id: int, limit: int = 50
+    ) -> list[PetitionBalanceTransaction]:
         return (
             PetitionBalanceTransaction.query.filter_by(user_id=user_id)
             .order_by(PetitionBalanceTransaction.created_at.desc())

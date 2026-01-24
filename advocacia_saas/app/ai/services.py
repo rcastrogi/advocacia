@@ -70,19 +70,23 @@ class CreditsService:
         }
 
     @staticmethod
-    def add_credits(user_id: int, amount: int, source: str, description: str) -> tuple[dict, int]:
+    def add_credits(
+        user_id: int, amount: int, source: str, description: str
+    ) -> tuple[dict, int]:
         """Adiciona créditos a um usuário"""
         if amount <= 0:
             return {"success": False, "error": "Quantidade inválida"}, 400
 
         user_credits = UserCreditsRepository.add_credits(user_id, amount, source)
 
-        CreditTransactionRepository.create({
-            "user_id": user_id,
-            "transaction_type": source,
-            "amount": amount,
-            "description": description,
-        })
+        CreditTransactionRepository.create(
+            {
+                "user_id": user_id,
+                "transaction_type": source,
+                "amount": amount,
+                "description": description,
+            }
+        )
 
         db.session.commit()
 
@@ -127,8 +131,13 @@ class AIGenerationService:
     """Serviço para geração de conteúdo com IA"""
 
     FUNDAMENTOS_SECTIONS = {
-        "direito", "fundamentos", "fundamentacao", "fundamentacao-juridica",
-        "fundamentos-juridicos", "do-direito", "dos-fundamentos",
+        "direito",
+        "fundamentos",
+        "fundamentacao",
+        "fundamentacao-juridica",
+        "fundamentos-juridicos",
+        "do-direito",
+        "dos-fundamentos",
     }
 
     @staticmethod
@@ -138,8 +147,12 @@ class AIGenerationService:
 
     @staticmethod
     def generate_section(
-        user, section_type: str, petition_type: str, context: dict,
-        existing_content: str = "", premium: bool = False
+        user,
+        section_type: str,
+        petition_type: str,
+        context: dict,
+        existing_content: str = "",
+        premium: bool = False,
     ) -> tuple[dict, int]:
         """Gera uma seção de petição"""
         if not AIGenerationService.is_configured():
@@ -149,7 +162,10 @@ class AIGenerationService:
             }, 503
 
         # Verifica se é fundamentação
-        is_fundamentos = section_type.lower().replace("_", "-") in AIGenerationService.FUNDAMENTOS_SECTIONS
+        is_fundamentos = (
+            section_type.lower().replace("_", "-")
+            in AIGenerationService.FUNDAMENTOS_SECTIONS
+        )
         generation_type = "fundamentos" if is_fundamentos else "section"
         credit_cost = ai_service.get_credit_cost(generation_type)
 
@@ -183,30 +199,34 @@ class AIGenerationService:
 
             user_credits = CreditsService.get_user_credits(user.id)
 
-            generation = AIGenerationRepository.create({
-                "user_id": user.id,
-                "generation_type": generation_type,
-                "credits_used": actual_cost,
-                "model_used": metadata.get("model", "gpt-4o-mini"),
-                "tokens_input": metadata.get("tokens_input"),
-                "tokens_output": metadata.get("tokens_output"),
-                "tokens_total": metadata.get("tokens_total"),
-                "response_time_ms": metadata.get("response_time_ms"),
-                "petition_type_slug": petition_type,
-                "section_name": section_type,
-                "input_data": context,
-                "output_content": content,
-                "status": "completed",
-            })
+            generation = AIGenerationRepository.create(
+                {
+                    "user_id": user.id,
+                    "generation_type": generation_type,
+                    "credits_used": actual_cost,
+                    "model_used": metadata.get("model", "gpt-4o-mini"),
+                    "tokens_input": metadata.get("tokens_input"),
+                    "tokens_output": metadata.get("tokens_output"),
+                    "tokens_total": metadata.get("tokens_total"),
+                    "response_time_ms": metadata.get("response_time_ms"),
+                    "petition_type_slug": petition_type,
+                    "section_name": section_type,
+                    "input_data": context,
+                    "output_content": content,
+                    "status": "completed",
+                }
+            )
 
             if actual_cost > 0:
-                CreditTransactionRepository.create({
-                    "user_id": user.id,
-                    "transaction_type": "usage",
-                    "amount": -actual_cost,
-                    "description": f"Geração de seção: {section_type}",
-                    "generation_id": generation.id,
-                })
+                CreditTransactionRepository.create(
+                    {
+                        "user_id": user.id,
+                        "transaction_type": "usage",
+                        "amount": -actual_cost,
+                        "description": f"Geração de seção: {section_type}",
+                        "generation_id": generation.id,
+                    }
+                )
 
             db.session.commit()
 
@@ -224,15 +244,17 @@ class AIGenerationService:
 
         except Exception as e:
             db.session.rollback()
-            AIGenerationRepository.create({
-                "user_id": user.id,
-                "generation_type": generation_type,
-                "credits_used": 0,
-                "petition_type_slug": petition_type,
-                "section_name": section_type,
-                "status": "failed",
-                "error_message": str(e),
-            })
+            AIGenerationRepository.create(
+                {
+                    "user_id": user.id,
+                    "generation_type": generation_type,
+                    "credits_used": 0,
+                    "petition_type_slug": petition_type,
+                    "section_name": section_type,
+                    "status": "failed",
+                    "error_message": str(e),
+                }
+            )
             db.session.commit()
 
             return {"success": False, "error": f"Erro ao gerar conteúdo: {str(e)}"}, 500
@@ -272,29 +294,33 @@ class AIGenerationService:
 
             user_credits = CreditsService.get_user_credits(user.id)
 
-            generation = AIGenerationRepository.create({
-                "user_id": user.id,
-                "generation_type": "full_petition",
-                "credits_used": actual_cost,
-                "model_used": metadata.get("model", "gpt-4o"),
-                "tokens_input": metadata.get("tokens_input"),
-                "tokens_output": metadata.get("tokens_output"),
-                "tokens_total": metadata.get("tokens_total"),
-                "response_time_ms": metadata.get("response_time_ms"),
-                "petition_type_slug": petition_type,
-                "input_data": context,
-                "output_content": content,
-                "status": "completed",
-            })
+            generation = AIGenerationRepository.create(
+                {
+                    "user_id": user.id,
+                    "generation_type": "full_petition",
+                    "credits_used": actual_cost,
+                    "model_used": metadata.get("model", "gpt-4o"),
+                    "tokens_input": metadata.get("tokens_input"),
+                    "tokens_output": metadata.get("tokens_output"),
+                    "tokens_total": metadata.get("tokens_total"),
+                    "response_time_ms": metadata.get("response_time_ms"),
+                    "petition_type_slug": petition_type,
+                    "input_data": context,
+                    "output_content": content,
+                    "status": "completed",
+                }
+            )
 
             if actual_cost > 0:
-                CreditTransactionRepository.create({
-                    "user_id": user.id,
-                    "transaction_type": "usage",
-                    "amount": -actual_cost,
-                    "description": f"Geração de petição completa: {petition_type}",
-                    "generation_id": generation.id,
-                })
+                CreditTransactionRepository.create(
+                    {
+                        "user_id": user.id,
+                        "transaction_type": "usage",
+                        "amount": -actual_cost,
+                        "description": f"Geração de petição completa: {petition_type}",
+                        "generation_id": generation.id,
+                    }
+                )
 
             db.session.commit()
 
@@ -312,20 +338,24 @@ class AIGenerationService:
 
         except Exception as e:
             db.session.rollback()
-            AIGenerationRepository.create({
-                "user_id": user.id,
-                "generation_type": "full_petition",
-                "credits_used": 0,
-                "petition_type_slug": petition_type,
-                "status": "failed",
-                "error_message": str(e),
-            })
+            AIGenerationRepository.create(
+                {
+                    "user_id": user.id,
+                    "generation_type": "full_petition",
+                    "credits_used": 0,
+                    "petition_type_slug": petition_type,
+                    "status": "failed",
+                    "error_message": str(e),
+                }
+            )
             db.session.commit()
 
             return {"success": False, "error": f"Erro ao gerar petição: {str(e)}"}, 500
 
     @staticmethod
-    def improve_text(user, text: str, context: str = "", premium: bool = False) -> tuple[dict, int]:
+    def improve_text(
+        user, text: str, context: str = "", premium: bool = False
+    ) -> tuple[dict, int]:
         """Melhora um texto existente"""
         if not AIGenerationService.is_configured():
             return {"success": False, "error": "Serviço de IA não configurado."}, 503
@@ -357,27 +387,31 @@ class AIGenerationService:
 
             user_credits = CreditsService.get_user_credits(user.id)
 
-            generation = AIGenerationRepository.create({
-                "user_id": user.id,
-                "generation_type": "improve",
-                "credits_used": actual_cost,
-                "model_used": metadata.get("model", "gpt-4o-mini"),
-                "tokens_input": metadata.get("tokens_input"),
-                "tokens_output": metadata.get("tokens_output"),
-                "tokens_total": metadata.get("tokens_total"),
-                "input_data": {"text": text[:500], "context": context},
-                "output_content": content,
-                "status": "completed",
-            })
+            generation = AIGenerationRepository.create(
+                {
+                    "user_id": user.id,
+                    "generation_type": "improve",
+                    "credits_used": actual_cost,
+                    "model_used": metadata.get("model", "gpt-4o-mini"),
+                    "tokens_input": metadata.get("tokens_input"),
+                    "tokens_output": metadata.get("tokens_output"),
+                    "tokens_total": metadata.get("tokens_total"),
+                    "input_data": {"text": text[:500], "context": context},
+                    "output_content": content,
+                    "status": "completed",
+                }
+            )
 
             if actual_cost > 0:
-                CreditTransactionRepository.create({
-                    "user_id": user.id,
-                    "transaction_type": "usage",
-                    "amount": -actual_cost,
-                    "description": "Melhoria de texto",
-                    "generation_id": generation.id,
-                })
+                CreditTransactionRepository.create(
+                    {
+                        "user_id": user.id,
+                        "transaction_type": "usage",
+                        "amount": -actual_cost,
+                        "description": "Melhoria de texto",
+                        "generation_id": generation.id,
+                    }
+                )
 
             db.session.commit()
 
@@ -393,7 +427,9 @@ class AIGenerationService:
             return {"success": False, "error": f"Erro ao melhorar texto: {str(e)}"}, 500
 
     @staticmethod
-    def submit_feedback(user_id: int, generation_id: int, data: dict) -> tuple[dict, int]:
+    def submit_feedback(
+        user_id: int, generation_id: int, data: dict
+    ) -> tuple[dict, int]:
         """Registra feedback sobre uma geração"""
         generation = AIGenerationRepository.get_by_id(generation_id, user_id)
         if not generation:
@@ -448,16 +484,18 @@ class DocumentAnalysisService:
             session["last_document_analysis"] = analysis
             session["last_document_name"] = file.filename
 
-            AIGenerationRepository.create({
-                "user_id": user.id,
-                "generation_type": "analyze_document",
-                "prompt": f"Análise de: {file.filename}",
-                "result": analysis[:5000],
-                "tokens_used": ai_metadata.get("tokens_total", 0),
-                "model_used": ai_metadata.get("model", "gpt-4o"),
-                "credits_used": credit_cost,
-                "status": "completed",
-            })
+            AIGenerationRepository.create(
+                {
+                    "user_id": user.id,
+                    "generation_type": "analyze_document",
+                    "prompt": f"Análise de: {file.filename}",
+                    "result": analysis[:5000],
+                    "tokens_used": ai_metadata.get("tokens_total", 0),
+                    "model_used": ai_metadata.get("model", "gpt-4o"),
+                    "credits_used": credit_cost,
+                    "status": "completed",
+                }
+            )
             db.session.commit()
 
             return {
@@ -491,7 +529,9 @@ class DocumentAnalysisService:
             }, 402
 
         document_text = data.get("document_text") or session.get("last_document_text")
-        document_analysis = data.get("document_analysis") or session.get("last_document_analysis")
+        document_analysis = data.get("document_analysis") or session.get(
+            "last_document_analysis"
+        )
 
         if not document_text and not document_analysis:
             return {
@@ -510,16 +550,18 @@ class DocumentAnalysisService:
             if not CreditsService.is_master_user(user):
                 CreditsService.use_credits_if_needed(user, credit_cost)
 
-            AIGenerationRepository.create({
-                "user_id": user.id,
-                "generation_type": "fundamentos",
-                "prompt": "Fundamentação baseada em documento",
-                "result": fundamentos[:5000],
-                "tokens_used": ai_metadata.get("tokens_total", 0),
-                "model_used": ai_metadata.get("model", "gpt-4o"),
-                "credits_used": credit_cost,
-                "status": "completed",
-            })
+            AIGenerationRepository.create(
+                {
+                    "user_id": user.id,
+                    "generation_type": "fundamentos",
+                    "prompt": "Fundamentação baseada em documento",
+                    "result": fundamentos[:5000],
+                    "tokens_used": ai_metadata.get("tokens_total", 0),
+                    "model_used": ai_metadata.get("model", "gpt-4o"),
+                    "credits_used": credit_cost,
+                    "status": "completed",
+                }
+            )
             db.session.commit()
 
             return {
@@ -598,22 +640,26 @@ class RiskAnalysisService:
             except json.JSONDecodeError:
                 analysis = {"raw_analysis": analysis_json, "parse_error": True}
 
-            CreditTransactionRepository.create({
-                "user_id": user.id,
-                "transaction_type": "usage",
-                "amount": -credit_cost,
-                "description": f"Análise de riscos: {petition_type or 'Petição'}",
-            })
+            CreditTransactionRepository.create(
+                {
+                    "user_id": user.id,
+                    "transaction_type": "usage",
+                    "amount": -credit_cost,
+                    "description": f"Análise de riscos: {petition_type or 'Petição'}",
+                }
+            )
 
-            AIGenerationRepository.create({
-                "user_id": user.id,
-                "generation_type": "analyze_risk",
-                "credits_used": credit_cost,
-                "input_data": {"petition_type": petition_type},
-                "output_content": str(analysis)[:5000],
-                "model_used": ai_metadata.get("model", "gpt-4o"),
-                "status": "completed",
-            })
+            AIGenerationRepository.create(
+                {
+                    "user_id": user.id,
+                    "generation_type": "analyze_risk",
+                    "credits_used": credit_cost,
+                    "input_data": {"petition_type": petition_type},
+                    "output_content": str(analysis)[:5000],
+                    "model_used": ai_metadata.get("model", "gpt-4o"),
+                    "status": "completed",
+                }
+            )
 
             db.session.commit()
 
@@ -639,7 +685,9 @@ class PaymentService:
     """Serviço para pagamentos de créditos"""
 
     @staticmethod
-    def create_checkout_preference(user, package_slug: str, host_url: str) -> tuple[dict, int]:
+    def create_checkout_preference(
+        user, package_slug: str, host_url: str
+    ) -> tuple[dict, int]:
         """Cria preferência de pagamento no Mercado Pago"""
         package = CreditPackageRepository.get_by_slug(package_slug)
         if not package:
@@ -651,18 +699,22 @@ class PaymentService:
 
         mp_sdk = mercadopago.SDK(mp_access_token)
 
-        success_url = host_url.rstrip("/") + url_for("ai.credits_success", package_id=package.id)
+        success_url = host_url.rstrip("/") + url_for(
+            "ai.credits_success", package_id=package.id
+        )
         failure_url = host_url.rstrip("/") + url_for("ai.credits_failure")
         pending_url = host_url.rstrip("/") + url_for("ai.credits_pending")
 
         preference_data = {
-            "items": [{
-                "title": package.name,
-                "description": f"{package.total_credits} créditos de IA para geração de petições",
-                "quantity": 1,
-                "currency_id": "BRL",
-                "unit_price": float(package.price),
-            }],
+            "items": [
+                {
+                    "title": package.name,
+                    "description": f"{package.total_credits} créditos de IA para geração de petições",
+                    "quantity": 1,
+                    "currency_id": "BRL",
+                    "unit_price": float(package.price),
+                }
+            ],
             "payer": {
                 "name": user.full_name or user.username,
                 "email": user.email,
@@ -715,8 +767,12 @@ class PaymentService:
             "payment_method_id": "pix",
             "payer": {
                 "email": user.email,
-                "first_name": user.full_name.split()[0] if user.full_name else user.username,
-                "last_name": user.full_name.split()[-1] if user.full_name and len(user.full_name.split()) > 1 else "",
+                "first_name": user.full_name.split()[0]
+                if user.full_name
+                else user.username,
+                "last_name": user.full_name.split()[-1]
+                if user.full_name and len(user.full_name.split()) > 1
+                else "",
             },
             "metadata": {
                 "user_id": user.id,
@@ -733,7 +789,9 @@ class PaymentService:
             payment = payment_response["response"]
 
             if payment.get("status") == "pending":
-                pix_data = payment.get("point_of_interaction", {}).get("transaction_data", {})
+                pix_data = payment.get("point_of_interaction", {}).get(
+                    "transaction_data", {}
+                )
                 return {
                     "success": True,
                     "payment_id": payment["id"],
@@ -768,7 +826,9 @@ class PaymentService:
             if status == "approved":
                 metadata = payment.get("metadata", {})
                 if metadata.get("user_id") == user_id and metadata.get("package_id"):
-                    existing = CreditTransactionRepository.get_by_payment_id(str(payment_id))
+                    existing = CreditTransactionRepository.get_by_payment_id(
+                        str(payment_id)
+                    )
                     if not existing:
                         PaymentService._process_credit_purchase(
                             payment_id, user_id, metadata.get("package_id"), metadata
@@ -785,7 +845,9 @@ class PaymentService:
             return {"error": "Erro ao verificar pagamento"}, 500
 
     @staticmethod
-    def _process_credit_purchase(payment_id: int, user_id: int, package_id: int, metadata: dict) -> bool:
+    def _process_credit_purchase(
+        payment_id: int, user_id: int, package_id: int, metadata: dict
+    ) -> bool:
         """Processa compra de créditos após pagamento aprovado"""
         try:
             package = CreditPackageRepository.get_by_id(package_id)
@@ -801,24 +863,28 @@ class PaymentService:
 
             # Credits updated via repository
 
-            CreditTransactionRepository.create({
-                "user_id": user_id,
-                "transaction_type": "purchase",
-                "amount": credits_to_add,
-                "description": f"Compra PIX - {package.name}",
-                "package_id": package_id,
-                "payment_intent_id": str(payment_id),
-                "metadata": {"payment_method": "pix", "bonus": bonus_to_add},
-            })
+            CreditTransactionRepository.create(
+                {
+                    "user_id": user_id,
+                    "transaction_type": "purchase",
+                    "amount": credits_to_add,
+                    "description": f"Compra PIX - {package.name}",
+                    "package_id": package_id,
+                    "payment_intent_id": str(payment_id),
+                    "metadata": {"payment_method": "pix", "bonus": bonus_to_add},
+                }
+            )
 
             if bonus_to_add > 0:
-                CreditTransactionRepository.create({
-                    "user_id": user_id,
-                    "transaction_type": "bonus",
-                    "amount": bonus_to_add,
-                    "description": f"Bônus - {package.name}",
-                    "package_id": package_id,
-                })
+                CreditTransactionRepository.create(
+                    {
+                        "user_id": user_id,
+                        "transaction_type": "bonus",
+                        "amount": bonus_to_add,
+                        "description": f"Bônus - {package.name}",
+                        "package_id": package_id,
+                    }
+                )
 
             db.session.commit()
 
@@ -843,26 +909,32 @@ class PaymentService:
             UserCreditsRepository.add_credits(user.id, package.credits, "purchase")
 
             if package.bonus_credits:
-                UserCreditsRepository.add_credits(user.id, package.bonus_credits, "bonus")
+                UserCreditsRepository.add_credits(
+                    user.id, package.bonus_credits, "bonus"
+                )
 
-            CreditTransactionRepository.create({
-                "user_id": user.id,
-                "transaction_type": "purchase",
-                "amount": package.credits,
-                "description": f"Compra de {package.name}",
-                "package_id": package.id,
-                "payment_intent_id": payment_id,
-                "metadata": {"payment_id": payment_id, "gateway": "mercadopago"},
-            })
+            CreditTransactionRepository.create(
+                {
+                    "user_id": user.id,
+                    "transaction_type": "purchase",
+                    "amount": package.credits,
+                    "description": f"Compra de {package.name}",
+                    "package_id": package.id,
+                    "payment_intent_id": payment_id,
+                    "metadata": {"payment_id": payment_id, "gateway": "mercadopago"},
+                }
+            )
 
             if package.bonus_credits:
-                CreditTransactionRepository.create({
-                    "user_id": user.id,
-                    "transaction_type": "bonus",
-                    "amount": package.bonus_credits,
-                    "description": f"Bônus de {package.name}",
-                    "package_id": package.id,
-                })
+                CreditTransactionRepository.create(
+                    {
+                        "user_id": user.id,
+                        "transaction_type": "bonus",
+                        "amount": package.bonus_credits,
+                        "description": f"Bônus de {package.name}",
+                        "package_id": package.id,
+                    }
+                )
 
             db.session.commit()
 

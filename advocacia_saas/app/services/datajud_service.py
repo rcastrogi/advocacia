@@ -90,18 +90,18 @@ SEGMENTO_JUSTICA = {
     "1": "STF",  # Supremo Tribunal Federal
     "2": "CNJ",  # Conselho Nacional de Justiça
     "3": "STJ",  # Superior Tribunal de Justiça
-    "4": "JF",   # Justiça Federal
-    "5": "JT",   # Justiça do Trabalho
-    "6": "JE",   # Justiça Eleitoral
-    "7": "JM",   # Justiça Militar da União
-    "8": "JE",   # Justiça dos Estados e do DF
+    "4": "JF",  # Justiça Federal
+    "5": "JT",  # Justiça do Trabalho
+    "6": "JE",  # Justiça Eleitoral
+    "7": "JM",  # Justiça Militar da União
+    "8": "JE",  # Justiça dos Estados e do DF
     "9": "JME",  # Justiça Militar Estadual
 }
 
 # Código do TRF no número do processo (dígitos 16-17 para Justiça Federal)
 CODIGO_TRF = {
     "01": "TRF1",
-    "02": "TRF2", 
+    "02": "TRF2",
     "03": "TRF3",
     "04": "TRF4",
     "05": "TRF5",
@@ -150,7 +150,7 @@ def sanitize_process_number(numero: str) -> str:
 def detect_tribunal_from_number(numero: str) -> Optional[str]:
     """
     Detecta o tribunal a partir do número do processo.
-    
+
     Formato CNJ: NNNNNNN-DD.AAAA.J.TR.OOOO
     - NNNNNNN: Número sequencial (7 dígitos)
     - DD: Dígito verificador (2 dígitos)
@@ -160,16 +160,16 @@ def detect_tribunal_from_number(numero: str) -> Optional[str]:
     - OOOO: Código da Origem (4 dígitos)
     """
     numero_limpo = sanitize_process_number(numero)
-    
+
     if len(numero_limpo) < 18:
         return None
-    
+
     # Dígito 14 (posição 13): Segmento de Justiça
     segmento = numero_limpo[13]
-    
+
     # Dígitos 15-16 (posições 14-15): Código do Tribunal
     codigo_tribunal = numero_limpo[14:16]
-    
+
     if segmento == "4":  # Justiça Federal
         return CODIGO_TRF.get(codigo_tribunal)
     elif segmento == "8":  # Justiça Estadual
@@ -180,189 +180,174 @@ def detect_tribunal_from_number(numero: str) -> Optional[str]:
         return "STF"
     elif segmento == "3":
         return "STJ"
-    
+
     return None
 
 
 class DataJudService:
     """Serviço para consultas à API pública do DataJud."""
-    
+
     BASE_URL = "https://api-publica.datajud.cnj.jus.br"
     DEFAULT_TIMEOUT = 30
-    
+
     @classmethod
     def get_api_key(cls) -> str:
         """Obtém a API Key configurada."""
         return current_app.config.get(
             "DATAJUD_API_KEY",
-            "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw=="
+            "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==",
         )
-    
+
     @classmethod
     def search_process(
-        cls,
-        numero_processo: str,
-        tribunal: Optional[str] = None
+        cls, numero_processo: str, tribunal: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Busca informações de um processo no DataJud.
-        
+
         Args:
             numero_processo: Número do processo (com ou sem formatação)
             tribunal: Sigla do tribunal (ex: TRF1, TJSP). Se não informado,
                      tenta detectar pelo número.
-        
+
         Returns:
             Dict com os dados do processo ou mensagem de erro.
         """
         numero_limpo = sanitize_process_number(numero_processo)
-        
+
         if not numero_limpo or len(numero_limpo) < 15:
             return {
                 "success": False,
-                "message": "Número do processo inválido. Use o formato CNJ completo."
+                "message": "Número do processo inválido. Use o formato CNJ completo.",
             }
-        
+
         # Detecta tribunal se não informado
         if not tribunal:
             tribunal = detect_tribunal_from_number(numero_limpo)
             if not tribunal:
                 return {
                     "success": False,
-                    "message": "Não foi possível detectar o tribunal. Verifique o número do processo."
+                    "message": "Não foi possível detectar o tribunal. Verifique o número do processo.",
                 }
-        
+
         # Obtém endpoint do tribunal
         endpoint = TRIBUNAL_ENDPOINTS.get(tribunal.upper())
         if not endpoint:
             return {
                 "success": False,
-                "message": f"Tribunal '{tribunal}' não suportado pela API DataJud."
+                "message": f"Tribunal '{tribunal}' não suportado pela API DataJud.",
             }
-        
+
         # Monta requisição
         url = f"{cls.BASE_URL}/{endpoint}/_search"
         headers = {
             "Authorization": f"ApiKey {cls.get_api_key()}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
-        payload = {
-            "query": {
-                "match": {
-                    "numeroProcesso": numero_limpo
-                }
-            }
-        }
-        
+        payload = {"query": {"match": {"numeroProcesso": numero_limpo}}}
+
         try:
             logger.info(f"Consultando DataJud: {tribunal} - {numero_limpo}")
-            
+
             response = requests.post(
-                url,
-                headers=headers,
-                json=payload,
-                timeout=cls.DEFAULT_TIMEOUT
+                url, headers=headers, json=payload, timeout=cls.DEFAULT_TIMEOUT
             )
-            
+
             if response.status_code == 401:
                 logger.error("DataJud: API Key inválida")
                 return {
                     "success": False,
-                    "message": "Falha na autenticação com a API DataJud."
+                    "message": "Falha na autenticação com a API DataJud.",
                 }
-            
+
             if response.status_code != 200:
                 logger.error(f"DataJud error: {response.status_code} - {response.text}")
                 return {
                     "success": False,
-                    "message": f"Erro na consulta ao DataJud (HTTP {response.status_code})."
+                    "message": f"Erro na consulta ao DataJud (HTTP {response.status_code}).",
                 }
-            
+
             data = response.json()
             hits = data.get("hits", {}).get("hits", [])
-            
+
             if not hits:
                 return {
                     "success": False,
-                    "message": "Processo não encontrado no DataJud."
+                    "message": "Processo não encontrado no DataJud.",
                 }
-            
+
             # Extrai dados do primeiro resultado
             processo = hits[0].get("_source", {})
-            
+
             return {
                 "success": True,
                 "data": cls._parse_process_data(processo),
-                "raw": processo  # Dados brutos para debug
+                "raw": processo,  # Dados brutos para debug
             }
-            
+
         except requests.Timeout:
             logger.error("DataJud: Timeout na requisição")
             return {
                 "success": False,
-                "message": "Tempo limite excedido. Tente novamente."
+                "message": "Tempo limite excedido. Tente novamente.",
             }
         except requests.RequestException as e:
             logger.error(f"DataJud request error: {e}")
-            return {
-                "success": False,
-                "message": "Erro de conexão com a API DataJud."
-            }
+            return {"success": False, "message": "Erro de conexão com a API DataJud."}
         except Exception as e:
             logger.exception(f"DataJud unexpected error: {e}")
-            return {
-                "success": False,
-                "message": "Erro inesperado na consulta."
-            }
-    
+            return {"success": False, "message": "Erro inesperado na consulta."}
+
     @classmethod
     def _parse_process_data(cls, processo: Dict[str, Any]) -> Dict[str, Any]:
         """
         Transforma os dados do DataJud para o formato do sistema.
-        
+
         Mapeia campos do DataJud para campos do formulário de processo.
         """
         # Extrai classe processual (tipo de ação)
         classe = processo.get("classe", {})
         classe_nome = classe.get("nome", "")
-        
+
         # Extrai órgão julgador
         orgao = processo.get("orgaoJulgador", {})
         orgao_nome = orgao.get("nome", "")
-        
+
         # Extrai assuntos
         assuntos = processo.get("assuntos", [])
         assuntos_nomes = [a.get("nome", "") for a in assuntos if a.get("nome")]
-        
+
         # Extrai tribunal
         tribunal = processo.get("tribunal", "")
-        
+
         # Extrai grau
         grau = processo.get("grau", "")
         grau_mapeado = cls._map_court_instance(grau)
-        
+
         # Extrai data de ajuizamento
         data_ajuizamento = processo.get("dataAjuizamento", "")
         data_ajuizamento_formatada = cls._parse_date(data_ajuizamento)
-        
+
         # Extrai movimentos (últimos 5)
         movimentos = processo.get("movimentos", [])
         ultimos_movimentos = []
         for mov in movimentos[:5]:
-            ultimos_movimentos.append({
-                "codigo": mov.get("codigo"),
-                "nome": mov.get("nome", ""),
-                "data": cls._parse_date(mov.get("dataHora", ""))
-            })
-        
+            ultimos_movimentos.append(
+                {
+                    "codigo": mov.get("codigo"),
+                    "nome": mov.get("nome", ""),
+                    "data": cls._parse_date(mov.get("dataHora", "")),
+                }
+            )
+
         # Monta título sugerido
         titulo_sugerido = classe_nome
         if assuntos_nomes:
             titulo_sugerido = f"{classe_nome} - {assuntos_nomes[0]}"
-        
+
         # Mapeia tipo de justiça
         tipo_justica = cls._map_court_type(tribunal)
-        
+
         return {
             # Campos para preencher o formulário
             "process_number": processo.get("numeroProcesso", ""),
@@ -371,7 +356,6 @@ class DataJudService:
             "court_instance": grau_mapeado,
             "jurisdiction": orgao_nome,
             "distribution_date": data_ajuizamento_formatada,
-            
             # Informações adicionais para exibição
             "tribunal": tribunal,
             "grau": grau,
@@ -386,7 +370,7 @@ class DataJudService:
             ),
             "movimentos": ultimos_movimentos,
         }
-    
+
     @staticmethod
     def _parse_date(date_string: str) -> Optional[str]:
         """Converte data ISO para formato YYYY-MM-DD."""
@@ -399,7 +383,7 @@ class DataJudService:
             return dt.strftime("%Y-%m-%d")
         except (ValueError, AttributeError):
             return None
-    
+
     @staticmethod
     def _map_court_instance(grau: str) -> str:
         """Mapeia grau do DataJud para instância do sistema."""
@@ -411,15 +395,15 @@ class DataJudService:
             "TR": "2ª Instância",  # Turma Recursal
         }
         return grau_map.get(grau, "1ª Instância")
-    
+
     @staticmethod
     def _map_court_type(tribunal: str) -> str:
         """Mapeia sigla do tribunal para tipo de justiça."""
         if not tribunal:
             return ""
-        
+
         tribunal = tribunal.upper()
-        
+
         if tribunal == "STF":
             return "STF"
         elif tribunal == "STJ":
@@ -434,48 +418,43 @@ class DataJudService:
             return "Justiça Estadual"
         elif tribunal.startswith("TRE"):
             return "Justiça Eleitoral"
-        
+
         return "Outro"
-    
+
     @classmethod
     def search_multiple_tribunals(
-        cls,
-        numero_processo: str,
-        tribunais: Optional[list] = None
+        cls, numero_processo: str, tribunais: Optional[list] = None
     ) -> Dict[str, Any]:
         """
         Busca em múltiplos tribunais se não encontrar no detectado.
-        
+
         Útil quando o número do processo está incompleto ou com erro.
         """
         numero_limpo = sanitize_process_number(numero_processo)
-        
+
         if not numero_limpo:
-            return {
-                "success": False,
-                "message": "Número do processo não informado."
-            }
-        
+            return {"success": False, "message": "Número do processo não informado."}
+
         # Tenta detectar o tribunal primeiro
         tribunal_detectado = detect_tribunal_from_number(numero_limpo)
-        
+
         if tribunal_detectado:
             result = cls.search_process(numero_limpo, tribunal_detectado)
             if result.get("success"):
                 return result
-        
+
         # Se não encontrou, tenta nos tribunais mais comuns
         tribunais_tentativa = tribunais or ["TJSP", "TJRJ", "TJMG", "TRF1", "TRF3"]
-        
+
         for tribunal in tribunais_tentativa:
             if tribunal == tribunal_detectado:
                 continue
-            
+
             result = cls.search_process(numero_limpo, tribunal)
             if result.get("success"):
                 return result
-        
+
         return {
             "success": False,
-            "message": "Processo não encontrado nos tribunais consultados."
+            "message": "Processo não encontrado nos tribunais consultados.",
         }

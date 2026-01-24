@@ -34,11 +34,10 @@ class ProcessRepository:
         user = User.query.get(user_id)
         if not user:
             return None
-        
+
         office_user_ids = get_office_user_ids(user)
         return Process.query.filter(
-            Process.id == process_id,
-            Process.user_id.in_(office_user_ids)
+            Process.id == process_id, Process.user_id.in_(office_user_ids)
         ).first()
 
     @staticmethod
@@ -62,7 +61,7 @@ class ProcessRepository:
         user = User.query.get(user_id)
         if not user:
             return []
-        
+
         office_user_ids = get_office_user_ids(user)
         return (
             Process.query.filter(Process.user_id.in_(office_user_ids))
@@ -77,7 +76,7 @@ class ProcessRepository:
         user = User.query.get(user_id)
         if not user:
             return 0
-        
+
         office_user_ids = get_office_user_ids(user)
         today = date.today()
         deadline_limit = today + timedelta(days=days)
@@ -94,7 +93,7 @@ class ProcessRepository:
         user = User.query.get(user_id)
         if not user:
             return {}
-        
+
         office_user_ids = get_office_user_ids(user)
         results = (
             db.session.query(Process.status, func.count(Process.id).label("count"))
@@ -114,7 +113,7 @@ class ProcessRepository:
         user = User.query.get(user_id)
         if not user:
             return Process.query.filter(False)  # Query vazia
-        
+
         office_user_ids = get_office_user_ids(user)
         query = Process.query.filter(Process.user_id.in_(office_user_ids))
 
@@ -159,7 +158,9 @@ class PetitionRepository:
     """Repositório para petições no contexto de processos."""
 
     @staticmethod
-    def get_without_process_number(user_id: int, limit: int = 10) -> List[SavedPetition]:
+    def get_without_process_number(
+        user_id: int, limit: int = 10
+    ) -> List[SavedPetition]:
         """Lista petições sem número de processo."""
         return (
             SavedPetition.query.filter_by(user_id=user_id)
@@ -195,9 +196,7 @@ class ClientRepository:
     def get_choices(lawyer_id: int) -> List[Tuple[str, str]]:
         """Retorna lista de clientes para select."""
         clients = (
-            Client.query.filter_by(lawyer_id=lawyer_id)
-            .order_by(Client.full_name)
-            .all()
+            Client.query.filter_by(lawyer_id=lawyer_id).order_by(Client.full_name).all()
         )
         choices = [("", "Nenhum cliente vinculado")]
         choices.extend([(str(c.id), c.full_name) for c in clients])

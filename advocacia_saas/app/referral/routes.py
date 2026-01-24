@@ -189,11 +189,15 @@ def process_referral_conversion(user_id, payment_id, payment_amount):
     Chamado quando um usuário faz o primeiro pagamento.
     Concede as recompensas ao indicador e indicado.
     """
-    referral = ReferralRecordRepository.process_conversion(user_id, payment_id, payment_amount)
+    referral = ReferralRecordRepository.process_conversion(
+        user_id, payment_id, payment_amount
+    )
 
     if referral and referral.reward_granted:
         # Atualiza contadores
-        code_obj = ReferralCodeRepository.get_by_code(referral.referral_code, active_only=False)
+        code_obj = ReferralCodeRepository.get_by_code(
+            referral.referral_code, active_only=False
+        )
         if code_obj:
             ReferralCodeRepository.increment_conversions(code_obj)
 

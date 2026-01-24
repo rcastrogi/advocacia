@@ -1233,12 +1233,14 @@ def api_save_petition():
         if error:
             return jsonify({"success": False, "error": error}), 400
 
-        return jsonify({
-            "success": True,
-            "petition_id": petition.id,
-            "message": "Petição salva com sucesso!",
-            "status": petition.status,
-        })
+        return jsonify(
+            {
+                "success": True,
+                "petition_id": petition.id,
+                "message": "Petição salva com sucesso!",
+                "status": petition.status,
+            }
+        )
 
     except Exception as e:
         error_msg = format_error_for_user(e, "Erro ao salvar petição")
@@ -1275,7 +1277,9 @@ def api_restore_petition(petition_id):
 @login_required
 def api_delete_petition(petition_id):
     """API para excluir permanentemente uma petição."""
-    success, message = SavedPetitionService.delete_permanently(petition_id, current_user.id)
+    success, message = SavedPetitionService.delete_permanently(
+        petition_id, current_user.id
+    )
 
     if not success:
         return jsonify({"success": False, "error": message}), 400
@@ -1315,17 +1319,19 @@ def api_list_attachments(petition_id):
 
     attachments = []
     for att in petition.attachments:
-        attachments.append({
-            "id": att.id,
-            "filename": att.filename,
-            "file_type": att.file_type,
-            "file_size": att.file_size,
-            "file_size_display": att.get_file_size_display(),
-            "category": att.category,
-            "description": att.description,
-            "icon": att.get_icon(),
-            "uploaded_at": att.uploaded_at.isoformat() if att.uploaded_at else None,
-        })
+        attachments.append(
+            {
+                "id": att.id,
+                "filename": att.filename,
+                "file_type": att.file_type,
+                "file_size": att.file_size,
+                "file_size_display": att.get_file_size_display(),
+                "category": att.category,
+                "description": att.description,
+                "icon": att.get_icon(),
+                "uploaded_at": att.uploaded_at.isoformat() if att.uploaded_at else None,
+            }
+        )
 
     return jsonify(attachments)
 
@@ -1339,10 +1345,12 @@ def api_upload_attachment(petition_id):
         abort(404)
 
     if petition.status == "cancelled":
-        return jsonify({
-            "success": False,
-            "error": "Não é possível anexar arquivos a petições canceladas",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Não é possível anexar arquivos a petições canceladas",
+            }
+        ), 400
 
     if "file" not in request.files:
         return jsonify({"success": False, "error": "Nenhum arquivo enviado"}), 400

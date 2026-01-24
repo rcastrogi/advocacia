@@ -113,7 +113,7 @@ class Config:
     # Documentação: https://datajud-wiki.cnj.jus.br/
     DATAJUD_API_KEY = os.environ.get(
         "DATAJUD_API_KEY",
-        "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw=="
+        "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==",
     )
 
     # Environment settings

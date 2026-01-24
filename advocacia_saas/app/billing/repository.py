@@ -16,6 +16,8 @@ from app.models import (
     PetitionUsage,
     User,
     UserPlan,
+)
+from app.models import (
     plan_features as pf_table,
 )
 
@@ -221,9 +223,7 @@ class FeatureRepository:
         return {row[0]: row[1] for row in result}
 
     @staticmethod
-    def update_plan_features(
-        plan_id: int, features_data: list[dict[str, Any]]
-    ) -> None:
+    def update_plan_features(plan_id: int, features_data: list[dict[str, Any]]) -> None:
         """Atualiza features de um plano"""
         # Limpar features existentes
         db.session.execute(pf_table.delete().where(pf_table.c.plan_id == plan_id))

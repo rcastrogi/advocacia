@@ -33,15 +33,17 @@ class ConsentService:
             if field not in data:
                 return {"error": f"Campo obrigatório: {field}"}, 400
 
-        consent = ConsentRepository.create({
-            "user_id": user_id,
-            "consent_type": data["consent_type"],
-            "consent_purpose": data["consent_purpose"],
-            "consent_version": data.get("consent_version", "1.0"),
-            "ip_address": request.remote_addr if request else None,
-            "user_agent": request.headers.get("User-Agent") if request else None,
-            "consent_method": "web_form",
-        })
+        consent = ConsentRepository.create(
+            {
+                "user_id": user_id,
+                "consent_type": data["consent_type"],
+                "consent_purpose": data["consent_purpose"],
+                "consent_version": data.get("consent_version", "1.0"),
+                "ip_address": request.remote_addr if request else None,
+                "user_agent": request.headers.get("User-Agent") if request else None,
+                "consent_method": "web_form",
+            }
+        )
 
         ProcessingLogRepository.log_action(
             user_id=user_id,
@@ -144,22 +146,26 @@ class DeletionRequestAdminService:
                 deletion_request, admin_id, admin_notes
             )
 
-            ProcessingLogRepository.create({
-                "user_id": deletion_request.user_id,
-                "action": "deletion_request_approved",
-                "data_category": "user_account",
-                "purpose": "right_to_erasure",
-                "legal_basis": "LGPD Art. 18",
-                "endpoint": request.path if request else None,
-                "additional_data": {
-                    "request_id": request_id,
-                    "admin_notes": admin_notes,
-                    "audit_data": audit_data,
-                    "processed_by": admin_email,
-                },
-            })
+            ProcessingLogRepository.create(
+                {
+                    "user_id": deletion_request.user_id,
+                    "action": "deletion_request_approved",
+                    "data_category": "user_account",
+                    "purpose": "right_to_erasure",
+                    "legal_basis": "LGPD Art. 18",
+                    "endpoint": request.path if request else None,
+                    "additional_data": {
+                        "request_id": request_id,
+                        "admin_notes": admin_notes,
+                        "audit_data": audit_data,
+                        "processed_by": admin_email,
+                    },
+                }
+            )
 
-            return {"message": "Solicitação de exclusão aprovada e dados removidos"}, 200
+            return {
+                "message": "Solicitação de exclusão aprovada e dados removidos"
+            }, 200
 
         except Exception as e:
             return {"error": f"Erro ao processar exclusão: {str(e)}"}, 500
@@ -185,20 +191,22 @@ class DeletionRequestAdminService:
                 deletion_request, admin_id, rejection_reason, admin_notes
             )
 
-            ProcessingLogRepository.create({
-                "user_id": deletion_request.user_id,
-                "action": "deletion_request_rejected",
-                "data_category": "request_metadata",
-                "purpose": "gdpr_compliance",
-                "legal_basis": "LGPD Art. 18",
-                "endpoint": request.path if request else None,
-                "additional_data": {
-                    "request_id": request_id,
-                    "rejection_reason": rejection_reason,
-                    "admin_notes": admin_notes,
-                    "processed_by": admin_email,
-                },
-            })
+            ProcessingLogRepository.create(
+                {
+                    "user_id": deletion_request.user_id,
+                    "action": "deletion_request_rejected",
+                    "data_category": "request_metadata",
+                    "purpose": "gdpr_compliance",
+                    "legal_basis": "LGPD Art. 18",
+                    "endpoint": request.path if request else None,
+                    "additional_data": {
+                        "request_id": request_id,
+                        "rejection_reason": rejection_reason,
+                        "admin_notes": admin_notes,
+                        "processed_by": admin_email,
+                    },
+                }
+            )
 
             return {"message": "Solicitação de exclusão rejeitada"}, 200
 
@@ -259,7 +267,9 @@ class AnonymizationAdminService:
         for req in requests:
             data = req.to_dict()
             data["user_email"] = req.user.email if req.user else None
-            data["processed_by_email"] = req.processed_by.email if req.processed_by else None
+            data["processed_by_email"] = (
+                req.processed_by.email if req.processed_by else None
+            )
             result.append(data)
         return result
 
@@ -271,7 +281,9 @@ class AnonymizationAdminService:
 
         data = request_obj.to_dict()
         data["user_email"] = request_obj.user.email if request_obj.user else None
-        data["processed_by_email"] = request_obj.processed_by.email if request_obj.processed_by else None
+        data["processed_by_email"] = (
+            request_obj.processed_by.email if request_obj.processed_by else None
+        )
         return data, 200
 
     @staticmethod
@@ -291,21 +303,26 @@ class AnonymizationAdminService:
                 anonymization_request, admin_id, admin_notes
             )
 
-            ProcessingLogRepository.create({
-                "user_id": anonymization_request.user_id,
-                "action": "data_anonymization",
-                "data_category": anonymization_request.data_categories or "personal_data",
-                "purpose": "data_minimization",
-                "legal_basis": "LGPD Art. 12",
-                "endpoint": request.path if request else None,
-                "additional_data": {
-                    "request_id": request_id,
-                    "admin_notes": admin_notes,
-                    "processed_by": admin_email,
-                },
-            })
+            ProcessingLogRepository.create(
+                {
+                    "user_id": anonymization_request.user_id,
+                    "action": "data_anonymization",
+                    "data_category": anonymization_request.data_categories
+                    or "personal_data",
+                    "purpose": "data_minimization",
+                    "legal_basis": "LGPD Art. 12",
+                    "endpoint": request.path if request else None,
+                    "additional_data": {
+                        "request_id": request_id,
+                        "admin_notes": admin_notes,
+                        "processed_by": admin_email,
+                    },
+                }
+            )
 
-            return {"message": "Solicitação de anonimização aprovada e dados anonimizados"}, 200
+            return {
+                "message": "Solicitação de anonimização aprovada e dados anonimizados"
+            }, 200
 
         except Exception as e:
             return {"error": f"Erro ao processar anonimização: {str(e)}"}, 500
@@ -331,20 +348,22 @@ class AnonymizationAdminService:
                 anonymization_request, admin_id, rejection_reason, admin_notes
             )
 
-            ProcessingLogRepository.create({
-                "user_id": anonymization_request.user_id,
-                "action": "anonymization_request_rejected",
-                "data_category": "request_metadata",
-                "purpose": "gdpr_compliance",
-                "legal_basis": "LGPD Art. 12",
-                "endpoint": request.path if request else None,
-                "additional_data": {
-                    "request_id": request_id,
-                    "rejection_reason": rejection_reason,
-                    "admin_notes": admin_notes,
-                    "processed_by": admin_email,
-                },
-            })
+            ProcessingLogRepository.create(
+                {
+                    "user_id": anonymization_request.user_id,
+                    "action": "anonymization_request_rejected",
+                    "data_category": "request_metadata",
+                    "purpose": "gdpr_compliance",
+                    "legal_basis": "LGPD Art. 12",
+                    "endpoint": request.path if request else None,
+                    "additional_data": {
+                        "request_id": request_id,
+                        "rejection_reason": rejection_reason,
+                        "admin_notes": admin_notes,
+                        "processed_by": admin_email,
+                    },
+                }
+            )
 
             return {"message": "Solicitação de anonimização rejeitada"}, 200
 
@@ -378,7 +397,9 @@ class DeanonymizationService:
                 "request_id": existing.id,
             }, 409
 
-        original_anonymization = AnonymizationRequestRepository.get_completed_by_user(user.id)
+        original_anonymization = AnonymizationRequestRepository.get_completed_by_user(
+            user.id
+        )
         if not original_anonymization:
             return {
                 "error": "Não foi encontrada a solicitação de anonimização original"
@@ -431,7 +452,9 @@ class DeanonymizationAdminService:
 
         data = request_obj.to_dict()
         data["user_email"] = request_obj.user.email if request_obj.user else None
-        data["processed_by_email"] = request_obj.processor.email if request_obj.processor else None
+        data["processed_by_email"] = (
+            request_obj.processor.email if request_obj.processor else None
+        )
         data["anonymization_request_id"] = request_obj.anonymization_request_id
         data["request_reason"] = request_obj.request_reason
         return data, 200
@@ -456,22 +479,26 @@ class DeanonymizationAdminService:
                 deanon_request, admin_id, admin_notes
             )
 
-            ProcessingLogRepository.create({
-                "user_id": deanon_request.user_id,
-                "action": "deanonymization_approved",
-                "data_category": "personal_data",
-                "purpose": "data_restoration",
-                "legal_basis": "LGPD Art. 18",
-                "endpoint": request.path if request else None,
-                "additional_data": {
-                    "request_id": request_id,
-                    "admin_notes": admin_notes,
-                    "processed_by": admin_email,
-                    "restored_fields": restored_data.get("restored_fields"),
-                },
-            })
+            ProcessingLogRepository.create(
+                {
+                    "user_id": deanon_request.user_id,
+                    "action": "deanonymization_approved",
+                    "data_category": "personal_data",
+                    "purpose": "data_restoration",
+                    "legal_basis": "LGPD Art. 18",
+                    "endpoint": request.path if request else None,
+                    "additional_data": {
+                        "request_id": request_id,
+                        "admin_notes": admin_notes,
+                        "processed_by": admin_email,
+                        "restored_fields": restored_data.get("restored_fields"),
+                    },
+                }
+            )
 
-            return {"message": "Solicitação de deanonimização aprovada e dados restaurados"}, 200
+            return {
+                "message": "Solicitação de deanonimização aprovada e dados restaurados"
+            }, 200
 
         except Exception as e:
             return {"error": f"Erro ao processar deanonimização: {str(e)}"}, 500
@@ -497,20 +524,22 @@ class DeanonymizationAdminService:
                 deanon_request, admin_id, rejection_reason, admin_notes
             )
 
-            ProcessingLogRepository.create({
-                "user_id": deanon_request.user_id,
-                "action": "deanonymization_rejected",
-                "data_category": "request_metadata",
-                "purpose": "gdpr_compliance",
-                "legal_basis": "LGPD Art. 18",
-                "endpoint": request.path if request else None,
-                "additional_data": {
-                    "request_id": request_id,
-                    "rejection_reason": rejection_reason,
-                    "admin_notes": admin_notes,
-                    "processed_by": admin_email,
-                },
-            })
+            ProcessingLogRepository.create(
+                {
+                    "user_id": deanon_request.user_id,
+                    "action": "deanonymization_rejected",
+                    "data_category": "request_metadata",
+                    "purpose": "gdpr_compliance",
+                    "legal_basis": "LGPD Art. 18",
+                    "endpoint": request.path if request else None,
+                    "additional_data": {
+                        "request_id": request_id,
+                        "rejection_reason": rejection_reason,
+                        "admin_notes": admin_notes,
+                        "processed_by": admin_email,
+                    },
+                }
+            )
 
             return {"message": "Solicitação de deanonimização rejeitada"}, 200
 

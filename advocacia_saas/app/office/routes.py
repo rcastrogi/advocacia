@@ -274,7 +274,10 @@ def change_member_role(member_id):
 def remove_member(member_id):
     """Remover membro do escritório"""
     success, message = OfficeMemberService.remove_member(current_user, member_id)
-    flash(message, "success" if success else "danger" if "não" in message.lower() else "warning")
+    flash(
+        message,
+        "success" if success else "danger" if "não" in message.lower() else "warning",
+    )
     return redirect(url_for("office.members"))
 
 

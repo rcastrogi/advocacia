@@ -30,7 +30,6 @@ from app.models import (
     UserCredits,
 )
 
-
 # =============================================================================
 # SESSION MANAGER
 # =============================================================================
@@ -133,7 +132,9 @@ class UserCreditsAdminRepository:
     """Repositório para créditos de usuário no admin"""
 
     @staticmethod
-    def add_credits(user_id: int, amount: int, reason: str = "Bônus administrativo") -> int:
+    def add_credits(
+        user_id: int, amount: int, reason: str = "Bônus administrativo"
+    ) -> int:
         """Adiciona créditos de IA para um usuário"""
         user_credits = UserCredits.get_or_create(user_id)
         new_balance = user_credits.add_credits(amount, source="bonus")
@@ -254,7 +255,9 @@ class PetitionModelAdminRepository:
         db.session.commit()
 
     @staticmethod
-    def add_section(model: PetitionModel, section: PetitionSection, order: int) -> PetitionModelSection:
+    def add_section(
+        model: PetitionModel, section: PetitionSection, order: int
+    ) -> PetitionModelSection:
         """Adiciona uma seção ao modelo"""
         model_section = PetitionModelSection(
             petition_model=model, section=section, order=order
@@ -379,7 +382,9 @@ class RoadmapItemRepository:
         if category_id:
             query = query.filter_by(category_id=category_id)
 
-        return query.order_by(RoadmapItem.priority.desc(), RoadmapItem.created_at.desc()).all()
+        return query.order_by(
+            RoadmapItem.priority.desc(), RoadmapItem.created_at.desc()
+        ).all()
 
     @staticmethod
     def get_by_id(item_id: int) -> RoadmapItem | None:
@@ -615,7 +620,9 @@ class DashboardMetricsRepository:
 
         return {
             "total": PetitionUsage.query.count(),
-            "month": PetitionUsage.query.filter(PetitionUsage.generated_at >= month_start).count(),
+            "month": PetitionUsage.query.filter(
+                PetitionUsage.generated_at >= month_start
+            ).count(),
             "saved_total": SavedPetition.query.count(),
         }
 
@@ -627,7 +634,9 @@ class DashboardMetricsRepository:
 
         return {
             "total": AIGeneration.query.count(),
-            "month": AIGeneration.query.filter(AIGeneration.created_at >= month_start).count(),
+            "month": AIGeneration.query.filter(
+                AIGeneration.created_at >= month_start
+            ).count(),
         }
 
     @staticmethod

@@ -162,8 +162,4 @@ class ClientForDeadlineRepository:
 
     @staticmethod
     def get_by_user_ordered(user_id: int) -> list[Client]:
-        return (
-            Client.query.filter_by(user_id=user_id)
-            .order_by(Client.full_name)
-            .all()
-        )
+        return Client.query.filter_by(user_id=user_id).order_by(Client.full_name).all()

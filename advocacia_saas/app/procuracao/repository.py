@@ -15,7 +15,5 @@ class ClientForProcuracaoRepository:
     @staticmethod
     def get_by_lawyer_ordered(lawyer_id: int) -> list[Client]:
         return (
-            Client.query.filter_by(lawyer_id=lawyer_id)
-            .order_by(Client.full_name)
-            .all()
+            Client.query.filter_by(lawyer_id=lawyer_id).order_by(Client.full_name).all()
         )

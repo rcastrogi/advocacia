@@ -81,7 +81,9 @@ class CreditTransactionRepository:
 
     @staticmethod
     def get_by_payment_id(payment_id: str) -> CreditTransaction | None:
-        return CreditTransaction.query.filter_by(payment_intent_id=str(payment_id)).first()
+        return CreditTransaction.query.filter_by(
+            payment_intent_id=str(payment_id)
+        ).first()
 
     @staticmethod
     def create(data: dict[str, Any]) -> CreditTransaction:
@@ -143,11 +145,15 @@ class AIGenerationRepository:
             tokens_output=data.get("tokens_output"),
             tokens_total=data.get("tokens_total"),
             response_time_ms=data.get("response_time_ms"),
-            input_data=json.dumps(data.get("input_data")) if data.get("input_data") else None,
+            input_data=json.dumps(data.get("input_data"))
+            if data.get("input_data")
+            else None,
             output_content=data.get("output_content"),
             status=data.get("status", "completed"),
             error_message=data.get("error_message"),
-            completed_at=datetime.now(timezone.utc) if data.get("status") == "completed" else None,
+            completed_at=datetime.now(timezone.utc)
+            if data.get("status") == "completed"
+            else None,
             prompt=data.get("prompt"),
             result=data.get("result"),
             tokens_used=data.get("tokens_used"),
@@ -157,7 +163,11 @@ class AIGenerationRepository:
         return generation
 
     @staticmethod
-    def update_feedback(generation: AIGeneration, rating: int | None = None, was_used: bool | None = None) -> None:
+    def update_feedback(
+        generation: AIGeneration,
+        rating: int | None = None,
+        was_used: bool | None = None,
+    ) -> None:
         if rating is not None:
             generation.user_rating = min(5, max(1, int(rating)))
         if was_used is not None:

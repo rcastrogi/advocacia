@@ -84,15 +84,17 @@ def record_transaction(
     payment_intent_id=None,
 ):
     """Registra uma transação de créditos"""
-    return CreditTransactionRepository.create({
-        "user_id": user_id,
-        "transaction_type": transaction_type,
-        "amount": amount,
-        "description": description,
-        "package_id": package_id,
-        "generation_id": generation_id,
-        "payment_intent_id": payment_intent_id,
-    })
+    return CreditTransactionRepository.create(
+        {
+            "user_id": user_id,
+            "transaction_type": transaction_type,
+            "amount": amount,
+            "description": description,
+            "package_id": package_id,
+            "generation_id": generation_id,
+            "payment_intent_id": payment_intent_id,
+        }
+    )
 
 
 def record_ai_generation(
@@ -108,22 +110,24 @@ def record_ai_generation(
     error_message=None,
 ):
     """Registra uma geração de IA"""
-    return AIGenerationRepository.create({
-        "user_id": user_id,
-        "generation_type": generation_type,
-        "petition_type_slug": petition_type_slug,
-        "section_name": section_name,
-        "credits_used": credits_used,
-        "model_used": metadata.get("model", "gpt-4o-mini"),
-        "tokens_input": metadata.get("tokens_input"),
-        "tokens_output": metadata.get("tokens_output"),
-        "tokens_total": metadata.get("tokens_total"),
-        "response_time_ms": metadata.get("response_time_ms"),
-        "input_data": input_data,
-        "output_content": output_content,
-        "status": status,
-        "error_message": error_message,
-    })
+    return AIGenerationRepository.create(
+        {
+            "user_id": user_id,
+            "generation_type": generation_type,
+            "petition_type_slug": petition_type_slug,
+            "section_name": section_name,
+            "credits_used": credits_used,
+            "model_used": metadata.get("model", "gpt-4o-mini"),
+            "tokens_input": metadata.get("tokens_input"),
+            "tokens_output": metadata.get("tokens_output"),
+            "tokens_total": metadata.get("tokens_total"),
+            "response_time_ms": metadata.get("response_time_ms"),
+            "input_data": input_data,
+            "output_content": output_content,
+            "status": status,
+            "error_message": error_message,
+        }
+    )
 
 
 # =============================================================================
@@ -721,15 +725,17 @@ def api_analyze_document():
         session["last_document_name"] = file.filename
 
         # Registrar geração via repository
-        AIGenerationRepository.create({
-            "user_id": current_user.id,
-            "generation_type": "analyze_document",
-            "prompt": f"Análise de: {file.filename}",
-            "result": analysis[:5000],
-            "tokens_used": ai_metadata.get("tokens_total", 0),
-            "model_used": ai_metadata.get("model", "gpt-4o"),
-            "credits_used": credit_cost,
-        })
+        AIGenerationRepository.create(
+            {
+                "user_id": current_user.id,
+                "generation_type": "analyze_document",
+                "prompt": f"Análise de: {file.filename}",
+                "result": analysis[:5000],
+                "tokens_used": ai_metadata.get("tokens_total", 0),
+                "model_used": ai_metadata.get("model", "gpt-4o"),
+                "credits_used": credit_cost,
+            }
+        )
         AISessionManager.commit()
 
         return jsonify(
@@ -804,15 +810,17 @@ def api_generate_fundamentos():
             use_credits_if_needed(credit_cost)
 
         # Registrar geração via repository
-        AIGenerationRepository.create({
-            "user_id": current_user.id,
-            "generation_type": "fundamentos",
-            "prompt": "Fundamentação baseada em documento",
-            "result": fundamentos[:5000],
-            "tokens_used": ai_metadata.get("tokens_total", 0),
-            "model_used": ai_metadata.get("model", "gpt-4o"),
-            "credits_used": credit_cost,
-        })
+        AIGenerationRepository.create(
+            {
+                "user_id": current_user.id,
+                "generation_type": "fundamentos",
+                "prompt": "Fundamentação baseada em documento",
+                "result": fundamentos[:5000],
+                "tokens_used": ai_metadata.get("tokens_total", 0),
+                "model_used": ai_metadata.get("model", "gpt-4o"),
+                "credits_used": credit_cost,
+            }
+        )
         AISessionManager.commit()
 
         return jsonify(
@@ -1180,25 +1188,29 @@ def _process_credit_purchase(payment_id, user_id, package_id, metadata):
             user_credits.add_credits(bonus_to_add, source="bonus")
 
         # Registrar transação principal via repository
-        CreditTransactionRepository.create({
-            "user_id": user_id,
-            "transaction_type": "purchase",
-            "amount": credits_to_add,
-            "description": f"Compra PIX - {package.name}",
-            "package_id": package_id,
-            "payment_intent_id": str(payment_id),
-            "metadata": {"payment_method": "pix", "bonus": bonus_to_add},
-        })
+        CreditTransactionRepository.create(
+            {
+                "user_id": user_id,
+                "transaction_type": "purchase",
+                "amount": credits_to_add,
+                "description": f"Compra PIX - {package.name}",
+                "package_id": package_id,
+                "payment_intent_id": str(payment_id),
+                "metadata": {"payment_method": "pix", "bonus": bonus_to_add},
+            }
+        )
 
         # Registrar bônus separadamente
         if bonus_to_add > 0:
-            CreditTransactionRepository.create({
-                "user_id": user_id,
-                "transaction_type": "bonus",
-                "amount": bonus_to_add,
-                "description": f"Bônus - {package.name}",
-                "package_id": package_id,
-            })
+            CreditTransactionRepository.create(
+                {
+                    "user_id": user_id,
+                    "transaction_type": "bonus",
+                    "amount": bonus_to_add,
+                    "description": f"Bônus - {package.name}",
+                    "package_id": package_id,
+                }
+            )
 
         AISessionManager.commit()
 
@@ -1235,24 +1247,28 @@ def credits_success():
             user_credits.add_credits(package.bonus_credits, source="bonus")
 
         # Registrar transação via repository
-        CreditTransactionRepository.create({
-            "user_id": current_user.id,
-            "transaction_type": "purchase",
-            "amount": package.credits,
-            "description": f"Compra de {package.name}",
-            "package_id": package.id,
-            "payment_intent_id": payment_id,
-            "metadata": {"payment_id": payment_id, "gateway": "mercadopago"},
-        })
+        CreditTransactionRepository.create(
+            {
+                "user_id": current_user.id,
+                "transaction_type": "purchase",
+                "amount": package.credits,
+                "description": f"Compra de {package.name}",
+                "package_id": package.id,
+                "payment_intent_id": payment_id,
+                "metadata": {"payment_id": payment_id, "gateway": "mercadopago"},
+            }
+        )
 
         if package.bonus_credits:
-            CreditTransactionRepository.create({
-                "user_id": current_user.id,
-                "transaction_type": "bonus",
-                "amount": package.bonus_credits,
-                "description": f"Bônus de {package.name}",
-                "package_id": package.id,
-            })
+            CreditTransactionRepository.create(
+                {
+                    "user_id": current_user.id,
+                    "transaction_type": "bonus",
+                    "amount": package.bonus_credits,
+                    "description": f"Bônus de {package.name}",
+                    "package_id": package.id,
+                }
+            )
 
         AISessionManager.commit()
 

@@ -75,7 +75,9 @@ class DeletionRequestRepository:
         return DeletionRequest.query.get(request_id)
 
     @staticmethod
-    def create(user_id: int, reason: str, scope: list[str] | None = None) -> DeletionRequest:
+    def create(
+        user_id: int, reason: str, scope: list[str] | None = None
+    ) -> DeletionRequest:
         deletion_request = DeletionRequest(
             user_id=user_id,
             request_reason=reason,
@@ -303,7 +305,9 @@ class ProcessingLogRepository:
             ip_address=data.get("ip_address"),
             user_agent=data.get("user_agent"),
             endpoint=data.get("endpoint"),
-            additional_data=json.dumps(data.get("additional_data", {})) if data.get("additional_data") else None,
+            additional_data=json.dumps(data.get("additional_data", {}))
+            if data.get("additional_data")
+            else None,
         )
         db.session.add(log_entry)
         db.session.commit()
@@ -319,14 +323,16 @@ class ProcessingLogRepository:
         legal_basis: str = "consent",
     ) -> DataProcessingLog:
         """Registra uma ação de processamento de dados"""
-        return ProcessingLogRepository.create({
-            "user_id": user_id,
-            "action": action,
-            "data_category": data_category,
-            "data_fields": data_fields,
-            "purpose": purpose,
-            "legal_basis": legal_basis,
-            "ip_address": request.remote_addr if request else None,
-            "user_agent": request.headers.get("User-Agent") if request else None,
-            "endpoint": request.path if request else None,
-        })
+        return ProcessingLogRepository.create(
+            {
+                "user_id": user_id,
+                "action": action,
+                "data_category": data_category,
+                "data_fields": data_fields,
+                "purpose": purpose,
+                "legal_basis": legal_basis,
+                "ip_address": request.remote_addr if request else None,
+                "user_agent": request.headers.get("User-Agent") if request else None,
+                "endpoint": request.path if request else None,
+            }
+        )

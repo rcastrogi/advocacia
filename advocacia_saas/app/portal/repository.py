@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 from flask import current_app
-from sqlalchemy import or_, and_
+from sqlalchemy import and_, or_
 
 from app import db
 from app.models import (
@@ -135,7 +135,9 @@ class PortalRepository:
         return Message.query.filter_by(recipient_id=user_id, is_read=False).count()
 
     @staticmethod
-    def get_chat_messages(user_id: int, lawyer_id: int, client_id: int) -> list[Message]:
+    def get_chat_messages(
+        user_id: int, lawyer_id: int, client_id: int
+    ) -> list[Message]:
         """Busca mensagens do chat entre cliente e advogado"""
         return (
             Message.query.filter(

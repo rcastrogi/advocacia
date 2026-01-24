@@ -98,7 +98,9 @@ class ReferralRecordRepository:
         return referral
 
     @staticmethod
-    def process_conversion(user_id: int, payment_id: int, payment_amount) -> Optional[Referral]:
+    def process_conversion(
+        user_id: int, payment_id: int, payment_amount
+    ) -> Optional[Referral]:
         """Processa conversão de indicação."""
         return Referral.process_conversion(user_id, payment_id, payment_amount)
 

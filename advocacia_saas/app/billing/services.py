@@ -45,7 +45,9 @@ class BillingPortalService:
         # Filtrar planos por uso e remover plano atual
         available_plans = [p for p in available_plans if p.plan_type != "per_usage"]
         if current_plan:
-            available_plans = [p for p in available_plans if p.id != current_plan.plan.id]
+            available_plans = [
+                p for p in available_plans if p.id != current_plan.plan.id
+            ]
 
         return {
             "current_plan": current_plan,
@@ -69,15 +71,17 @@ class PetitionTypeService:
         if PetitionTypeRepository.get_by_slug(slug):
             return None, "Já existe um tipo com este nome/slug."
 
-        petition_type = PetitionTypeRepository.create({
-            "slug": slug,
-            "name": form_data["name"],
-            "description": form_data.get("description"),
-            "category": form_data.get("category"),
-            "is_billable": form_data.get("is_billable", True),
-            "base_price": form_data.get("base_price"),
-            "active": form_data.get("active", True),
-        })
+        petition_type = PetitionTypeRepository.create(
+            {
+                "slug": slug,
+                "name": form_data["name"],
+                "description": form_data.get("description"),
+                "category": form_data.get("category"),
+                "is_billable": form_data.get("is_billable", True),
+                "base_price": form_data.get("base_price"),
+                "active": form_data.get("active", True),
+            }
+        )
 
         return petition_type, None
 
@@ -97,15 +101,18 @@ class PetitionTypeService:
         if existing and existing.id != type_id:
             return None, "Outro tipo já usa este nome/slug."
 
-        PetitionTypeRepository.update(petition_type, {
-            "slug": new_slug,
-            "name": form_data["name"],
-            "description": form_data.get("description"),
-            "category": form_data.get("category"),
-            "is_billable": form_data.get("is_billable", True),
-            "base_price": form_data.get("base_price"),
-            "active": form_data.get("active", True),
-        })
+        PetitionTypeRepository.update(
+            petition_type,
+            {
+                "slug": new_slug,
+                "name": form_data["name"],
+                "description": form_data.get("description"),
+                "category": form_data.get("category"),
+                "is_billable": form_data.get("is_billable", True),
+                "base_price": form_data.get("base_price"),
+                "active": form_data.get("active", True),
+            },
+        )
 
         return petition_type, None
 
@@ -155,17 +162,20 @@ class BillingPlanService:
         else:
             monthly_limit = None
 
-        plan = BillingPlanRepository.create({
-            "slug": slug,
-            "name": form_data["name"],
-            "description": form_data.get("description"),
-            "plan_type": form_data["plan_type"],
-            "monthly_fee": form_data.get("monthly_fee") or Decimal("0.00"),
-            "monthly_petition_limit": monthly_limit,
-            "supported_periods": form_data.get("supported_periods", ["1m"]),
-            "discount_percentage": form_data.get("discount_percentage") or Decimal("0.00"),
-            "active": form_data.get("active", True),
-        })
+        plan = BillingPlanRepository.create(
+            {
+                "slug": slug,
+                "name": form_data["name"],
+                "description": form_data.get("description"),
+                "plan_type": form_data["plan_type"],
+                "monthly_fee": form_data.get("monthly_fee") or Decimal("0.00"),
+                "monthly_petition_limit": monthly_limit,
+                "supported_periods": form_data.get("supported_periods", ["1m"]),
+                "discount_percentage": form_data.get("discount_percentage")
+                or Decimal("0.00"),
+                "active": form_data.get("active", True),
+            }
+        )
 
         return plan, None
 
@@ -192,17 +202,21 @@ class BillingPlanService:
         else:
             monthly_limit = None
 
-        BillingPlanRepository.update(plan, {
-            "slug": new_slug,
-            "name": form_data["name"],
-            "description": form_data.get("description"),
-            "plan_type": form_data["plan_type"],
-            "monthly_fee": form_data.get("monthly_fee") or Decimal("0.00"),
-            "monthly_petition_limit": monthly_limit,
-            "supported_periods": form_data.get("supported_periods", ["1m"]),
-            "discount_percentage": form_data.get("discount_percentage") or Decimal("0.00"),
-            "active": form_data.get("active", True),
-        })
+        BillingPlanRepository.update(
+            plan,
+            {
+                "slug": new_slug,
+                "name": form_data["name"],
+                "description": form_data.get("description"),
+                "plan_type": form_data["plan_type"],
+                "monthly_fee": form_data.get("monthly_fee") or Decimal("0.00"),
+                "monthly_petition_limit": monthly_limit,
+                "supported_periods": form_data.get("supported_periods", ["1m"]),
+                "discount_percentage": form_data.get("discount_percentage")
+                or Decimal("0.00"),
+                "active": form_data.get("active", True),
+            },
+        )
 
         return plan, None
 
@@ -231,6 +245,7 @@ class UserPlanService:
             plan.status = status
 
         from app import db
+
         db.session.commit()
         return True
 
@@ -252,11 +267,14 @@ class UserPlanService:
             user.billing_status = status
 
         from app import db
+
         db.session.commit()
         return True, None
 
     @staticmethod
-    def assign_plan(user: User, plan_id: int, status: str = "active") -> tuple[bool, str | None]:
+    def assign_plan(
+        user: User, plan_id: int, status: str = "active"
+    ) -> tuple[bool, str | None]:
         """Atribui um plano a um usuário"""
         plan = BillingPlanRepository.get_by_id(plan_id)
         if not plan:
@@ -294,26 +312,34 @@ class FeatureService:
         for feature in all_features:
             if feature.module not in modules:
                 modules[feature.module] = []
-            modules[feature.module].append({
-                "feature": feature,
-                "selected": feature.id in current_features,
-                "limit": current_features.get(feature.id),
-            })
+            modules[feature.module].append(
+                {
+                    "feature": feature,
+                    "selected": feature.id in current_features,
+                    "limit": current_features.get(feature.id),
+                }
+            )
 
         return modules
 
     @staticmethod
-    def update_plan_features(plan_id: int, selected_features: list[str], limits: dict[str, str]) -> None:
+    def update_plan_features(
+        plan_id: int, selected_features: list[str], limits: dict[str, str]
+    ) -> None:
         """Atualiza features de um plano"""
         features_data = []
         for feature_id_str in selected_features:
             feature_id = int(feature_id_str)
             limit_value = limits.get(f"limit_{feature_id}")
-            limit_int = int(limit_value) if limit_value and limit_value.isdigit() else None
+            limit_int = (
+                int(limit_value) if limit_value and limit_value.isdigit() else None
+            )
 
-            features_data.append({
-                "feature_id": feature_id,
-                "limit_value": limit_int,
-            })
+            features_data.append(
+                {
+                    "feature_id": feature_id,
+                    "limit_value": limit_int,
+                }
+            )
 
         FeatureRepository.update_plan_features(plan_id, features_data)

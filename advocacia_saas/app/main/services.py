@@ -32,7 +32,6 @@ from app.main.repository import (
 )
 from app.quick_actions import build_dashboard_actions
 
-
 # Constantes
 CATEGORY_ICONS = {
     "civel": "fa-balance-scale",
@@ -68,9 +67,18 @@ PLAN_TYPE_LABELS = {
 }
 
 MONTH_LABELS = {
-    "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr",
-    "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago",
-    "09": "Set", "10": "Out", "11": "Nov", "12": "Dez",
+    "01": "Jan",
+    "02": "Fev",
+    "03": "Mar",
+    "04": "Abr",
+    "05": "Mai",
+    "06": "Jun",
+    "07": "Jul",
+    "08": "Ago",
+    "09": "Set",
+    "10": "Out",
+    "11": "Nov",
+    "12": "Dez",
 }
 
 
@@ -106,7 +114,9 @@ class HomePageService:
                 "id": plan.id,
                 "name": plan.name,
                 "description": plan.description,
-                "plan_type_label": PLAN_TYPE_LABELS.get(plan.plan_type, plan.plan_type.title()),
+                "plan_type_label": PLAN_TYPE_LABELS.get(
+                    plan.plan_type, plan.plan_type.title()
+                ),
                 "monthly_fee": FormatHelper.format_currency(plan.monthly_fee),
                 "monthly_fee_raw": plan.monthly_fee or 0,
                 "is_per_usage": plan.plan_type == "per_usage",
@@ -132,15 +142,21 @@ class HomePageService:
         types = PetitionTypeRepository.get_implemented()
         result = []
         for pt in types:
-            result.append({
-                "id": pt.id,
-                "name": pt.name,
-                "description": pt.description or "Petição disponível para uso.",
-                "category": pt.category,
-                "category_label": CATEGORY_LABELS.get(pt.category, pt.category.title()),
-                "icon": CATEGORY_ICONS.get(pt.category, "fa-file-alt"),
-                "price": FormatHelper.format_currency(pt.base_price) if pt.is_billable else "Gratuito",
-            })
+            result.append(
+                {
+                    "id": pt.id,
+                    "name": pt.name,
+                    "description": pt.description or "Petição disponível para uso.",
+                    "category": pt.category,
+                    "category_label": CATEGORY_LABELS.get(
+                        pt.category, pt.category.title()
+                    ),
+                    "icon": CATEGORY_ICONS.get(pt.category, "fa-file-alt"),
+                    "price": FormatHelper.format_currency(pt.base_price)
+                    if pt.is_billable
+                    else "Gratuito",
+                }
+            )
         return result
 
     @staticmethod
@@ -227,11 +243,15 @@ class PlanSummaryService:
         }
 
         if user.billing_status == "delinquent":
-            summary["warning"] = "Pagamento pendente detectado. Regularize para continuar gerando petições."
+            summary["warning"] = (
+                "Pagamento pendente detectado. Regularize para continuar gerando petições."
+            )
 
         if user.trial_active:
             if user.is_trial_expired:
-                summary["warning"] = "Seu período de teste expirou. Assine um plano para continuar usando o sistema."
+                summary["warning"] = (
+                    "Seu período de teste expirou. Assine um plano para continuar usando o sistema."
+                )
             else:
                 summary["trial_info"] = {
                     "days_remaining": user.trial_days_remaining,
@@ -239,35 +259,45 @@ class PlanSummaryService:
                 }
 
         if not has_plan:
-            summary.update({
-                "plan_name": None,
-                "plan_type_label": None,
-                "monthly_fee_display": "—",
-                "usage_rate_display": "—",
-                "cycle_usage_total": 0,
-                "cycle_usage_amount_display": "R$ 0,00",
-                "cycle_label": FormatHelper.current_cycle_label(),
-                "started_at_label": None,
-                "renewal_label": None,
-            })
-            summary["empty_message"] = "Você ainda não definiu um plano. Configure pagamentos para liberar todas as funcionalidades."
+            summary.update(
+                {
+                    "plan_name": None,
+                    "plan_type_label": None,
+                    "monthly_fee_display": "—",
+                    "usage_rate_display": "—",
+                    "cycle_usage_total": 0,
+                    "cycle_usage_amount_display": "R$ 0,00",
+                    "cycle_label": FormatHelper.current_cycle_label(),
+                    "started_at_label": None,
+                    "renewal_label": None,
+                }
+            )
+            summary["empty_message"] = (
+                "Você ainda não definiu um plano. Configure pagamentos para liberar todas as funcionalidades."
+            )
             return summary
 
         plan = plan_rel.plan
         cycle = current_billing_cycle()
 
-        summary.update({
-            "plan_name": plan.name,
-            "plan_type_label": PLAN_TYPE_LABELS.get(plan.plan_type, plan.plan_type.title()),
-            "monthly_fee_display": FormatHelper.format_currency(plan.monthly_fee),
-            "cycle_usage_total": PetitionUsageRepository.count_by_cycle(user.id, cycle),
-            "cycle_usage_amount_display": FormatHelper.format_currency(
-                PetitionUsageRepository.get_billable_amount(user.id, cycle)
-            ),
-            "cycle_label": FormatHelper.current_cycle_label(cycle),
-            "started_at_label": FormatHelper.format_date(plan_rel.started_at),
-            "renewal_label": FormatHelper.format_date(plan_rel.renewal_date),
-        })
+        summary.update(
+            {
+                "plan_name": plan.name,
+                "plan_type_label": PLAN_TYPE_LABELS.get(
+                    plan.plan_type, plan.plan_type.title()
+                ),
+                "monthly_fee_display": FormatHelper.format_currency(plan.monthly_fee),
+                "cycle_usage_total": PetitionUsageRepository.count_by_cycle(
+                    user.id, cycle
+                ),
+                "cycle_usage_amount_display": FormatHelper.format_currency(
+                    PetitionUsageRepository.get_billable_amount(user.id, cycle)
+                ),
+                "cycle_label": FormatHelper.current_cycle_label(cycle),
+                "started_at_label": FormatHelper.format_date(plan_rel.started_at),
+                "renewal_label": FormatHelper.format_date(plan_rel.renewal_date),
+            }
+        )
 
         return summary
 
@@ -281,24 +311,31 @@ class TestimonialService:
 
     @staticmethod
     def create(user_id: int, form_data: dict[str, Any]):
-        return TestimonialRepository.create({
-            "user_id": user_id,
-            "content": form_data["content"].strip(),
-            "rating": int(form_data["rating"]),
-            "display_name": form_data["display_name"].strip(),
-            "display_role": form_data.get("display_role", "").strip() or None,
-            "display_location": form_data.get("display_location", "").strip() or None,
-        })
+        return TestimonialRepository.create(
+            {
+                "user_id": user_id,
+                "content": form_data["content"].strip(),
+                "rating": int(form_data["rating"]),
+                "display_name": form_data["display_name"].strip(),
+                "display_role": form_data.get("display_role", "").strip() or None,
+                "display_location": form_data.get("display_location", "").strip()
+                or None,
+            }
+        )
 
     @staticmethod
     def update(testimonial, form_data: dict[str, Any]):
-        return TestimonialRepository.update(testimonial, {
-            "content": form_data["content"].strip(),
-            "rating": int(form_data["rating"]),
-            "display_name": form_data["display_name"].strip(),
-            "display_role": form_data.get("display_role", "").strip() or None,
-            "display_location": form_data.get("display_location", "").strip() or None,
-        })
+        return TestimonialRepository.update(
+            testimonial,
+            {
+                "content": form_data["content"].strip(),
+                "rating": int(form_data["rating"]),
+                "display_name": form_data["display_name"].strip(),
+                "display_role": form_data.get("display_role", "").strip() or None,
+                "display_location": form_data.get("display_location", "").strip()
+                or None,
+            },
+        )
 
     @staticmethod
     def delete(testimonial):
@@ -323,8 +360,12 @@ class TestimonialAdminService:
         return {"testimonials": testimonials, "counts": counts}
 
     @staticmethod
-    def moderate(testimonial, action: str, moderator_id: int, rejection_reason: str | None = None):
-        return TestimonialRepository.moderate(testimonial, action, moderator_id, rejection_reason)
+    def moderate(
+        testimonial, action: str, moderator_id: int, rejection_reason: str | None = None
+    ):
+        return TestimonialRepository.moderate(
+            testimonial, action, moderator_id, rejection_reason
+        )
 
 
 class RoadmapService:
@@ -387,7 +428,9 @@ class RoadmapFeedbackService:
         return RoadmapFeedbackRepository.get_by_user_and_item(user_id, item_id)
 
     @staticmethod
-    def submit_feedback(data: dict[str, Any], existing_feedback=None) -> tuple[bool, str]:
+    def submit_feedback(
+        data: dict[str, Any], existing_feedback=None
+    ) -> tuple[bool, str]:
         """Cria ou atualiza feedback"""
         rating = data.get("rating", 5)
         if not 1 <= rating <= 5:
@@ -398,7 +441,10 @@ class RoadmapFeedbackService:
             return True, "Seu feedback foi atualizado com sucesso!"
         else:
             RoadmapFeedbackRepository.create(data)
-            return True, "Obrigado pelo seu feedback! Ele nos ajuda a melhorar continuamente."
+            return (
+                True,
+                "Obrigado pelo seu feedback! Ele nos ajuda a melhorar continuamente.",
+            )
 
 
 class NotificationService:

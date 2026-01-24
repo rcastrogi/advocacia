@@ -91,7 +91,9 @@ def get_processes():
 def get_process(process_id):
     """API para obter detalhes de um processo específico."""
 
-    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
+    process = Process.query.filter_by(
+        id=process_id, user_id=current_user.id
+    ).first_or_404()
 
     # Buscar petições relacionadas
     related_petitions = (
@@ -117,7 +119,9 @@ def get_process(process_id):
                 "status_display": process.get_status_display()[0],
                 "status_color": process.get_status_color(),
                 "distribution_date": (
-                    process.distribution_date.isoformat() if process.distribution_date else None
+                    process.distribution_date.isoformat()
+                    if process.distribution_date
+                    else None
                 ),
                 "created_at": process.created_at.isoformat(),
                 "updated_at": process.updated_at.isoformat(),
@@ -128,7 +132,9 @@ def get_process(process_id):
                     "title": p.title,
                     "petition_type": p.petition_type.name if p.petition_type else None,
                     "status": p.status,
-                    "completed_at": p.completed_at.isoformat() if p.completed_at else None,
+                    "completed_at": p.completed_at.isoformat()
+                    if p.completed_at
+                    else None,
                 }
                 for p in related_petitions
             ],
@@ -201,7 +207,9 @@ def create_process():
 def update_process(process_id):
     """API para atualizar um processo."""
 
-    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
+    process = Process.query.filter_by(
+        id=process_id, user_id=current_user.id
+    ).first_or_404()
 
     data = request.get_json()
 
@@ -257,7 +265,9 @@ def update_process(process_id):
 def delete_process(process_id):
     """API para excluir um processo."""
 
-    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
+    process = Process.query.filter_by(
+        id=process_id, user_id=current_user.id
+    ).first_or_404()
 
     # Remover relacionamentos com petições
     db.session.execute(
@@ -270,14 +280,20 @@ def delete_process(process_id):
     return jsonify({"message": "Processo excluído com sucesso"})
 
 
-@bp.route("/api/processes/<int:process_id>/petitions/<int:petition_id>", methods=["POST"])
+@bp.route(
+    "/api/processes/<int:process_id>/petitions/<int:petition_id>", methods=["POST"]
+)
 @login_required
 @lawyer_required
 def link_petition_to_process(process_id, petition_id):
     """API para vincular uma petição a um processo."""
 
-    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
-    petition = SavedPetition.query.filter_by(id=petition_id, user_id=current_user.id).first_or_404()
+    process = Process.query.filter_by(
+        id=process_id, user_id=current_user.id
+    ).first_or_404()
+    petition = SavedPetition.query.filter_by(
+        id=petition_id, user_id=current_user.id
+    ).first_or_404()
 
     # Verificar se já está vinculado
     existing = db.session.execute(
@@ -309,14 +325,20 @@ def link_petition_to_process(process_id, petition_id):
     return jsonify({"message": "Petição vinculada com sucesso"})
 
 
-@bp.route("/api/processes/<int:process_id>/petitions/<int:petition_id>", methods=["DELETE"])
+@bp.route(
+    "/api/processes/<int:process_id>/petitions/<int:petition_id>", methods=["DELETE"]
+)
 @login_required
 @lawyer_required
 def unlink_petition_from_process(process_id, petition_id):
     """API para desvincular uma petição de um processo."""
 
-    process = Process.query.filter_by(id=process_id, user_id=current_user.id).first_or_404()
-    petition = SavedPetition.query.filter_by(id=petition_id, user_id=current_user.id).first_or_404()
+    process = Process.query.filter_by(
+        id=process_id, user_id=current_user.id
+    ).first_or_404()
+    petition = SavedPetition.query.filter_by(
+        id=petition_id, user_id=current_user.id
+    ).first_or_404()
 
     # Remover vínculo
     result = db.session.execute(
@@ -351,7 +373,10 @@ def get_process_stats():
     # Petições sem número
     petitions_without_number = (
         SavedPetition.query.filter_by(user_id=current_user.id)
-        .filter((SavedPetition.process_number.is_(None)) | (SavedPetition.process_number == ""))
+        .filter(
+            (SavedPetition.process_number.is_(None))
+            | (SavedPetition.process_number == "")
+        )
         .filter(SavedPetition.status == "completed")
         .count()
     )
@@ -502,41 +527,38 @@ def get_dashboard_analytics_api():
 # API DataJud - Consulta de Processos
 # =============================================================================
 
+
 @bp.route("/api/datajud/search", methods=["POST"])
 @login_required
 @lawyer_required
 def search_datajud():
     """
     Consulta informações de um processo na API pública do DataJud.
-    
+
     Body JSON:
         - process_number: Número do processo (obrigatório)
         - tribunal: Sigla do tribunal (opcional, detectado automaticamente)
-    
+
     Returns:
         Dados do processo mapeados para o formulário ou mensagem de erro.
     """
     from app.services.datajud_service import DataJudService
-    
+
     data = request.get_json()
-    
+
     if not data:
-        return jsonify({
-            "success": False,
-            "message": "Dados não fornecidos."
-        }), 400
-    
+        return jsonify({"success": False, "message": "Dados não fornecidos."}), 400
+
     process_number = data.get("process_number", "").strip()
     tribunal = data.get("tribunal", "").strip() or None
-    
+
     if not process_number:
-        return jsonify({
-            "success": False,
-            "message": "Número do processo é obrigatório."
-        }), 400
-    
+        return jsonify(
+            {"success": False, "message": "Número do processo é obrigatório."}
+        ), 400
+
     # Consulta DataJud
     result = DataJudService.search_process(process_number, tribunal)
-    
+
     # Sempre retorna 200 - success indica se encontrou ou não
     return jsonify(result)
