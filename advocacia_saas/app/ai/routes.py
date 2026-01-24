@@ -19,10 +19,16 @@ from flask import (
 )
 from flask_login import current_user, login_required
 
-from app import db, limiter
+from app import limiter
+from app.ai.repository import (
+    AIGenerationRepository,
+    AISessionManager,
+    CreditPackageRepository,
+    CreditTransactionRepository,
+    UserCreditsRepository,
+)
 from app.decorators import require_feature
 from app.models import (
-    AIGeneration,
     CreditPackage,
     CreditTransaction,
     UserCredits,
@@ -78,20 +84,15 @@ def record_transaction(
     payment_intent_id=None,
 ):
     """Registra uma transação de créditos"""
-    user_credits = UserCredits.get_or_create(user_id)
-
-    transaction = CreditTransaction(
-        user_id=user_id,
-        transaction_type=transaction_type,
-        amount=amount,
-        balance_after=user_credits.balance,
-        description=description,
-        package_id=package_id,
-        generation_id=generation_id,
-        payment_intent_id=payment_intent_id,
-    )
-    db.session.add(transaction)
-    return transaction
+    return CreditTransactionRepository.create({
+        "user_id": user_id,
+        "transaction_type": transaction_type,
+        "amount": amount,
+        "description": description,
+        "package_id": package_id,
+        "generation_id": generation_id,
+        "payment_intent_id": payment_intent_id,
+    })
 
 
 def record_ai_generation(
@@ -107,26 +108,22 @@ def record_ai_generation(
     error_message=None,
 ):
     """Registra uma geração de IA"""
-    generation = AIGeneration(
-        user_id=user_id,
-        generation_type=generation_type,
-        petition_type_slug=petition_type_slug,
-        section_name=section_name,
-        credits_used=credits_used,
-        model_used=metadata.get("model", "gpt-4o-mini"),
-        tokens_input=metadata.get("tokens_input"),
-        tokens_output=metadata.get("tokens_output"),
-        tokens_total=metadata.get("tokens_total"),
-        response_time_ms=metadata.get("response_time_ms"),
-        input_data=json.dumps(input_data) if input_data else None,
-        output_content=output_content,
-        status=status,
-        error_message=error_message,
-        completed_at=datetime.now(timezone.utc) if status == "completed" else None,
-    )
-    generation.calculate_cost()
-    db.session.add(generation)
-    return generation
+    return AIGenerationRepository.create({
+        "user_id": user_id,
+        "generation_type": generation_type,
+        "petition_type_slug": petition_type_slug,
+        "section_name": section_name,
+        "credits_used": credits_used,
+        "model_used": metadata.get("model", "gpt-4o-mini"),
+        "tokens_input": metadata.get("tokens_input"),
+        "tokens_output": metadata.get("tokens_output"),
+        "tokens_total": metadata.get("tokens_total"),
+        "response_time_ms": metadata.get("response_time_ms"),
+        "input_data": input_data,
+        "output_content": output_content,
+        "status": status,
+        "error_message": error_message,
+    })
 
 
 # =============================================================================
@@ -259,7 +256,7 @@ def api_add_credits():
 
     record_transaction(current_user.id, source, amount, description)
 
-    db.session.commit()
+    AISessionManager.commit()
 
     return jsonify(
         {
@@ -376,7 +373,7 @@ def api_generate_section():
                 generation_id=generation.id,
             )
 
-        db.session.commit()
+        AISessionManager.commit()
 
         return jsonify(
             {
@@ -395,7 +392,7 @@ def api_generate_section():
         )
 
     except Exception as e:
-        db.session.rollback()
+        AISessionManager.rollback()
 
         # Registra falha
         record_ai_generation(
@@ -408,7 +405,7 @@ def api_generate_section():
             status="failed",
             error_message=str(e),
         )
-        db.session.commit()
+        AISessionManager.commit()
 
         return jsonify(
             {"success": False, "error": f"Erro ao gerar conteúdo: {str(e)}"}
@@ -491,7 +488,7 @@ def api_generate_full_petition():
                 generation_id=generation.id,
             )
 
-        db.session.commit()
+        AISessionManager.commit()
 
         return jsonify(
             {
@@ -510,7 +507,7 @@ def api_generate_full_petition():
         )
 
     except Exception as e:
-        db.session.rollback()
+        AISessionManager.rollback()
 
         record_ai_generation(
             user_id=current_user.id,
@@ -521,7 +518,7 @@ def api_generate_full_petition():
             status="failed",
             error_message=str(e),
         )
-        db.session.commit()
+        AISessionManager.commit()
 
         return jsonify(
             {"success": False, "error": f"Erro ao gerar petição: {str(e)}"}
@@ -599,7 +596,7 @@ def api_improve_text():
                 generation_id=generation.id,
             )
 
-        db.session.commit()
+        AISessionManager.commit()
 
         return jsonify(
             {
@@ -613,7 +610,7 @@ def api_improve_text():
         )
 
     except Exception as e:
-        db.session.rollback()
+        AISessionManager.rollback()
         return jsonify(
             {"success": False, "error": f"Erro ao melhorar texto: {str(e)}"}
         ), 500
@@ -635,19 +632,17 @@ def api_credit_costs():
 @login_required
 def api_generation_feedback(generation_id):
     """Registra feedback sobre uma geração"""
-    generation = AIGeneration.query.filter_by(
-        id=generation_id, user_id=current_user.id
-    ).first_or_404()
+    generation = AIGenerationRepository.get_by_id(generation_id, current_user.id)
+    if not generation:
+        return jsonify({"success": False, "error": "Geração não encontrada"}), 404
 
     data = request.get_json()
 
-    if "rating" in data:
-        generation.user_rating = min(5, max(1, int(data["rating"])))
-
-    if "was_used" in data:
-        generation.was_used = bool(data["was_used"])
-
-    db.session.commit()
+    AIGenerationRepository.update_feedback(
+        generation,
+        rating=data.get("rating"),
+        was_used=data.get("was_used"),
+    )
 
     return jsonify({"success": True})
 
@@ -725,18 +720,17 @@ def api_analyze_document():
         session["last_document_analysis"] = analysis
         session["last_document_name"] = file.filename
 
-        # Registrar geração
-        generation = AIGeneration(
-            user_id=current_user.id,
-            generation_type="analyze_document",
-            prompt=f"Análise de: {file.filename}",
-            result=analysis[:5000],
-            tokens_used=ai_metadata.get("tokens_total", 0),
-            model_used=ai_metadata.get("model", "gpt-4o"),
-            credits_used=credit_cost,
-        )
-        db.session.add(generation)
-        db.session.commit()
+        # Registrar geração via repository
+        AIGenerationRepository.create({
+            "user_id": current_user.id,
+            "generation_type": "analyze_document",
+            "prompt": f"Análise de: {file.filename}",
+            "result": analysis[:5000],
+            "tokens_used": ai_metadata.get("tokens_total", 0),
+            "model_used": ai_metadata.get("model", "gpt-4o"),
+            "credits_used": credit_cost,
+        })
+        AISessionManager.commit()
 
         return jsonify(
             {
@@ -809,18 +803,17 @@ def api_generate_fundamentos():
         if not is_master_user():
             use_credits_if_needed(credit_cost)
 
-        # Registrar geração
-        generation = AIGeneration(
-            user_id=current_user.id,
-            generation_type="fundamentos",
-            prompt=f"Fundamentação baseada em documento",
-            result=fundamentos[:5000],
-            tokens_used=ai_metadata.get("tokens_total", 0),
-            model_used=ai_metadata.get("model", "gpt-4o"),
-            credits_used=credit_cost,
-        )
-        db.session.add(generation)
-        db.session.commit()
+        # Registrar geração via repository
+        AIGenerationRepository.create({
+            "user_id": current_user.id,
+            "generation_type": "fundamentos",
+            "prompt": "Fundamentação baseada em documento",
+            "result": fundamentos[:5000],
+            "tokens_used": ai_metadata.get("tokens_total", 0),
+            "model_used": ai_metadata.get("model", "gpt-4o"),
+            "credits_used": credit_cost,
+        })
+        AISessionManager.commit()
 
         return jsonify(
             {
@@ -1172,11 +1165,11 @@ def check_credits_pix(payment_id):
 def _process_credit_purchase(payment_id, user_id, package_id, metadata):
     """Processa compra de créditos após pagamento aprovado"""
     try:
-        package = db.session.get(CreditPackage, package_id)
+        package = CreditPackageRepository.get_by_id(package_id)
         if not package:
             return False
 
-        user_credits = UserCredits.get_or_create(user_id)
+        user_credits = UserCreditsRepository.get_or_create(user_id)
 
         # Adicionar créditos
         credits_to_add = metadata.get("credits", package.credits)
@@ -1186,32 +1179,28 @@ def _process_credit_purchase(payment_id, user_id, package_id, metadata):
         if bonus_to_add > 0:
             user_credits.add_credits(bonus_to_add, source="bonus")
 
-        # Registrar transação principal
-        transaction = CreditTransaction(
-            user_id=user_id,
-            transaction_type="purchase",
-            amount=credits_to_add,
-            balance_after=user_credits.balance - bonus_to_add,  # Antes do bônus
-            description=f"Compra PIX - {package.name}",
-            package_id=package_id,
-            payment_intent_id=str(payment_id),
-            metadata=json.dumps({"payment_method": "pix", "bonus": bonus_to_add}),
-        )
-        db.session.add(transaction)
+        # Registrar transação principal via repository
+        CreditTransactionRepository.create({
+            "user_id": user_id,
+            "transaction_type": "purchase",
+            "amount": credits_to_add,
+            "description": f"Compra PIX - {package.name}",
+            "package_id": package_id,
+            "payment_intent_id": str(payment_id),
+            "metadata": {"payment_method": "pix", "bonus": bonus_to_add},
+        })
 
         # Registrar bônus separadamente
         if bonus_to_add > 0:
-            bonus_transaction = CreditTransaction(
-                user_id=user_id,
-                transaction_type="bonus",
-                amount=bonus_to_add,
-                balance_after=user_credits.balance,
-                description=f"Bônus - {package.name}",
-                package_id=package_id,
-            )
-            db.session.add(bonus_transaction)
+            CreditTransactionRepository.create({
+                "user_id": user_id,
+                "transaction_type": "bonus",
+                "amount": bonus_to_add,
+                "description": f"Bônus - {package.name}",
+                "package_id": package_id,
+            })
 
-        db.session.commit()
+        AISessionManager.commit()
 
         current_app.logger.info(
             f"✅ Créditos PIX processados: user={user_id}, "
@@ -1221,7 +1210,7 @@ def _process_credit_purchase(payment_id, user_id, package_id, metadata):
 
     except Exception as e:
         current_app.logger.error(f"Erro ao processar compra de créditos: {str(e)}")
-        db.session.rollback()
+        AISessionManager.rollback()
         return False
 
 
@@ -1235,41 +1224,37 @@ def credits_success():
     if not package_id:
         return redirect(url_for("ai.credits_dashboard"))
 
-    package = db.session.get(CreditPackage, package_id)
+    package = CreditPackageRepository.get_by_id(package_id)
 
     if payment_id:
         # Adicionar créditos
-        user_credits = UserCredits.get_or_create(current_user.id)
+        user_credits = UserCreditsRepository.get_or_create(current_user.id)
         user_credits.add_credits(package.credits, source="purchase")
 
         if package.bonus_credits:
             user_credits.add_credits(package.bonus_credits, source="bonus")
 
-        # Registrar transação
-        transaction = CreditTransaction(
-            user_id=current_user.id,
-            transaction_type="purchase",
-            amount=package.credits,
-            balance_after=user_credits.balance,
-            description=f"Compra de {package.name}",
-            package_id=package.id,
-            payment_intent_id=payment_id,
-            metadata=json.dumps({"payment_id": payment_id, "gateway": "mercadopago"}),
-        )
-        db.session.add(transaction)
+        # Registrar transação via repository
+        CreditTransactionRepository.create({
+            "user_id": current_user.id,
+            "transaction_type": "purchase",
+            "amount": package.credits,
+            "description": f"Compra de {package.name}",
+            "package_id": package.id,
+            "payment_intent_id": payment_id,
+            "metadata": {"payment_id": payment_id, "gateway": "mercadopago"},
+        })
 
         if package.bonus_credits:
-            bonus_transaction = CreditTransaction(
-                user_id=current_user.id,
-                transaction_type="bonus",
-                amount=package.bonus_credits,
-                balance_after=user_credits.balance,
-                description=f"Bônus de {package.name}",
-                package_id=package.id,
-            )
-            db.session.add(bonus_transaction)
+            CreditTransactionRepository.create({
+                "user_id": current_user.id,
+                "transaction_type": "bonus",
+                "amount": package.bonus_credits,
+                "description": f"Bônus de {package.name}",
+                "package_id": package.id,
+            })
 
-        db.session.commit()
+        AISessionManager.commit()
 
     return render_template(
         "ai/credits_success.html", package=package, payment_id=payment_id

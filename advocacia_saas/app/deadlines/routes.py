@@ -2,16 +2,17 @@
 Rotas de gerenciamento de prazos
 """
 
-import os
 from datetime import datetime, timedelta
 
 from flask import flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from app import db
 from app.deadlines import bp
-from app.models import Client, Deadline
-from app.utils.email import send_email
+from app.deadlines.repository import (
+    AgendaBlockRepository,
+    ClientForDeadlineRepository,
+    DeadlineRepository,
+)
 from app.utils.pagination import PaginationHelper
 
 
@@ -23,16 +24,9 @@ def index():
     status = request.args.get("status", "pending")
     deadline_type = request.args.get("type")
 
-    query = Deadline.query.filter_by(user_id=current_user.id)
-
-    if status and status != "all":
-        query = query.filter_by(status=status)
-
-    if deadline_type:
-        query = query.filter_by(deadline_type=deadline_type)
-
-    # Ordenar por data
-    query = query.order_by(Deadline.deadline_date.asc())
+    query = DeadlineRepository.get_by_user_filtered(
+        current_user.id, status=status, deadline_type=deadline_type
+    )
 
     # Paginação
     pagination = PaginationHelper(
@@ -67,42 +61,30 @@ def new():
     """Criar novo prazo"""
     if request.method == "POST":
         try:
-            title = request.form.get("title")
-            description = request.form.get("description")
-            deadline_type = request.form.get("deadline_type")
             deadline_date = datetime.strptime(
                 request.form.get("deadline_date"), "%Y-%m-%dT%H:%M"
             )
-            alert_days_before = int(request.form.get("alert_days_before", 7))
-            count_business_days = request.form.get("count_business_days") == "on"
             client_id = request.form.get("client_id")
 
-            # Criar deadline
-            deadline = Deadline(
-                user_id=current_user.id,
-                title=title,
-                description=description,
-                deadline_type=deadline_type,
-                deadline_date=deadline_date,
-                alert_days_before=alert_days_before,
-                count_business_days=count_business_days,
-                client_id=int(client_id) if client_id else None,
-            )
-
-            db.session.add(deadline)
-            db.session.commit()
+            deadline = DeadlineRepository.create({
+                "user_id": current_user.id,
+                "title": request.form.get("title"),
+                "description": request.form.get("description"),
+                "deadline_type": request.form.get("deadline_type"),
+                "deadline_date": deadline_date,
+                "alert_days_before": int(request.form.get("alert_days_before", 7)),
+                "count_business_days": request.form.get("count_business_days") == "on",
+                "client_id": int(client_id) if client_id else None,
+            })
 
             flash("Prazo criado com sucesso!", "success")
             return redirect(url_for("deadlines.view", deadline_id=deadline.id))
 
         except Exception as e:
-            db.session.rollback()
             flash(f"Erro ao criar prazo: {str(e)}", "error")
 
     # GET
-    clients = (
-        Client.query.filter_by(user_id=current_user.id).order_by(Client.full_name).all()
-    )
+    clients = ClientForDeadlineRepository.get_by_user_ordered(current_user.id)
     return render_template("deadlines/new.html", clients=clients)
 
 
@@ -110,7 +92,11 @@ def new():
 @login_required
 def view(deadline_id):
     """Ver detalhes do prazo"""
-    deadline = Deadline.query.get_or_404(deadline_id)
+    deadline = DeadlineRepository.get_by_id(deadline_id)
+
+    if not deadline:
+        flash("Prazo não encontrado", "error")
+        return redirect(url_for("deadlines.index"))
 
     if deadline.user_id != current_user.id:
         flash("Acesso negado", "error")
@@ -123,7 +109,11 @@ def view(deadline_id):
 @login_required
 def edit(deadline_id):
     """Editar prazo"""
-    deadline = Deadline.query.get_or_404(deadline_id)
+    deadline = DeadlineRepository.get_by_id(deadline_id)
+
+    if not deadline:
+        flash("Prazo não encontrado", "error")
+        return redirect(url_for("deadlines.index"))
 
     if deadline.user_id != current_user.id:
         flash("Acesso negado", "error")
@@ -131,28 +121,26 @@ def edit(deadline_id):
 
     if request.method == "POST":
         try:
-            deadline.title = request.form.get("title")
-            deadline.description = request.form.get("description")
-            deadline.deadline_type = request.form.get("deadline_type")
-            deadline.deadline_date = datetime.strptime(
+            deadline_date = datetime.strptime(
                 request.form.get("deadline_date"), "%Y-%m-%dT%H:%M"
             )
-            deadline.alert_days_before = int(request.form.get("alert_days_before", 7))
-            deadline.count_business_days = (
-                request.form.get("count_business_days") == "on"
-            )
 
-            db.session.commit()
+            DeadlineRepository.update(deadline, {
+                "title": request.form.get("title"),
+                "description": request.form.get("description"),
+                "deadline_type": request.form.get("deadline_type"),
+                "deadline_date": deadline_date,
+                "alert_days_before": int(request.form.get("alert_days_before", 7)),
+                "count_business_days": request.form.get("count_business_days") == "on",
+            })
+
             flash("Prazo atualizado com sucesso!", "success")
             return redirect(url_for("deadlines.view", deadline_id=deadline.id))
 
         except Exception as e:
-            db.session.rollback()
             flash(f"Erro ao atualizar prazo: {str(e)}", "error")
 
-    clients = (
-        Client.query.filter_by(user_id=current_user.id).order_by(Client.full_name).all()
-    )
+    clients = ClientForDeadlineRepository.get_by_user_ordered(current_user.id)
     return render_template("deadlines/edit.html", deadline=deadline, clients=clients)
 
 
@@ -160,13 +148,13 @@ def edit(deadline_id):
 @login_required
 def complete(deadline_id):
     """Marcar prazo como cumprido"""
-    deadline = Deadline.query.get_or_404(deadline_id)
+    deadline = DeadlineRepository.get_by_id(deadline_id)
 
-    if deadline.user_id != current_user.id:
+    if not deadline or deadline.user_id != current_user.id:
         return jsonify({"error": "Acesso negado"}), 403
 
-    notes = request.json.get("notes")
-    deadline.mark_completed(notes=notes)
+    notes = request.json.get("notes") if request.json else None
+    DeadlineRepository.mark_completed(deadline, notes=notes)
 
     return jsonify({"success": True, "message": "Prazo marcado como cumprido"})
 
@@ -175,13 +163,12 @@ def complete(deadline_id):
 @login_required
 def delete(deadline_id):
     """Excluir prazo"""
-    deadline = Deadline.query.get_or_404(deadline_id)
+    deadline = DeadlineRepository.get_by_id(deadline_id)
 
-    if deadline.user_id != current_user.id:
+    if not deadline or deadline.user_id != current_user.id:
         return jsonify({"error": "Acesso negado"}), 403
 
-    db.session.delete(deadline)
-    db.session.commit()
+    DeadlineRepository.delete(deadline)
 
     return jsonify({"success": True, "message": "Prazo excluído com sucesso"})
 
@@ -192,18 +179,7 @@ def api_upcoming():
     """API: Próximos prazos (para dashboard)"""
     days = request.args.get("days", 7, type=int)
 
-    deadline_date = datetime.utcnow() + timedelta(days=days)
-
-    deadlines = (
-        Deadline.query.filter(
-            Deadline.user_id == current_user.id,
-            Deadline.status == "pending",
-            Deadline.deadline_date <= deadline_date,
-        )
-        .order_by(Deadline.deadline_date)
-        .limit(10)
-        .all()
-    )
+    deadlines = DeadlineRepository.get_upcoming(current_user.id, days=days, limit=10)
 
     return jsonify({"deadlines": [d.to_dict() for d in deadlines]})
 
@@ -214,7 +190,13 @@ def api_send_alerts():
 
     Requer header: X-API-Key com valor de CRON_API_KEY
     """
+    import os
+
     from flask import current_app
+
+    from app import db
+    from app.models import Notification
+    from app.utils.email import send_email
 
     # Autenticação por API key
     api_key = request.headers.get("X-API-Key")
@@ -233,9 +215,7 @@ def api_send_alerts():
         return jsonify({"error": "API key inválida"}), 401
 
     # Buscar prazos que precisam de alerta
-    deadlines = Deadline.query.filter(
-        Deadline.status == "pending", Deadline.alert_sent.is_(False)
-    ).all()
+    deadlines = DeadlineRepository.get_pending_alerts()
 
     alerts_sent = 0
 
@@ -255,8 +235,6 @@ def api_send_alerts():
                 )
 
                 # Criar notificação
-                from app.models import Notification
-
                 Notification.create_notification(
                     user_id=deadline.user_id,
                     notification_type="deadline",
@@ -266,8 +244,7 @@ def api_send_alerts():
                 )
 
                 # Marcar como enviado
-                deadline.alert_sent = True
-                deadline.alert_sent_at = datetime.utcnow()
+                DeadlineRepository.mark_alert_sent(deadline)
                 alerts_sent += 1
 
             except Exception as e:
@@ -285,13 +262,7 @@ def api_send_alerts():
 @login_required
 def blocks_list():
     """Lista todos os bloqueios de agenda do usuário"""
-    from app.models import AgendaBlock
-
-    blocks = (
-        AgendaBlock.query.filter_by(user_id=current_user.id)
-        .order_by(AgendaBlock.created_at.desc())
-        .all()
-    )
+    blocks = AgendaBlockRepository.get_by_user(current_user.id)
 
     return render_template("deadlines/blocks_list.html", blocks=blocks)
 
@@ -302,14 +273,8 @@ def block_new():
     """Criar novo bloqueio de agenda"""
     import json
 
-    from app.models import AgendaBlock
-
     if request.method == "POST":
         try:
-            title = request.form.get("title")
-            description = request.form.get("description")
-            block_type = request.form.get("block_type", "recurring")
-
             # Dias da semana (para recorrente)
             weekdays = request.form.getlist("weekdays")
             weekdays_json = json.dumps([int(d) for d in weekdays]) if weekdays else None
@@ -357,33 +322,25 @@ def block_new():
                 else None
             )
 
-            # Cor
-            color = request.form.get("color", "#6c757d")
-
-            block = AgendaBlock(
-                user_id=current_user.id,
-                title=title,
-                description=description,
-                block_type=block_type,
-                weekdays=weekdays_json,
-                start_time=start_time,
-                end_time=end_time,
-                all_day=all_day,
-                day_period=day_period,
-                start_date=start_date,
-                end_date=end_date,
-                color=color,
-                is_active=True,
-            )
-
-            db.session.add(block)
-            db.session.commit()
+            AgendaBlockRepository.create({
+                "user_id": current_user.id,
+                "title": request.form.get("title"),
+                "description": request.form.get("description"),
+                "block_type": request.form.get("block_type", "recurring"),
+                "weekdays": weekdays_json,
+                "start_time": start_time,
+                "end_time": end_time,
+                "all_day": all_day,
+                "day_period": day_period,
+                "start_date": start_date,
+                "end_date": end_date,
+                "color": request.form.get("color", "#6c757d"),
+            })
 
             flash("Bloqueio de agenda criado com sucesso!", "success")
             return redirect(url_for("deadlines.blocks_list"))
 
         except Exception as e:
-            db.session.rollback()
             flash(f"Erro ao criar bloqueio: {str(e)}", "danger")
 
     return render_template("deadlines/block_form.html", block=None)
@@ -395,9 +352,11 @@ def block_edit(block_id):
     """Editar bloqueio de agenda"""
     import json
 
-    from app.models import AgendaBlock
+    block = AgendaBlockRepository.get_by_id(block_id)
 
-    block = AgendaBlock.query.get_or_404(block_id)
+    if not block:
+        flash("Bloqueio não encontrado", "danger")
+        return redirect(url_for("deadlines.blocks_list"))
 
     if block.user_id != current_user.id:
         flash("Acesso negado", "danger")
@@ -405,13 +364,9 @@ def block_edit(block_id):
 
     if request.method == "POST":
         try:
-            block.title = request.form.get("title")
-            block.description = request.form.get("description")
-            block.block_type = request.form.get("block_type", "recurring")
-
             # Dias da semana
             weekdays = request.form.getlist("weekdays")
-            block.weekdays = (
+            weekdays_json = (
                 json.dumps([int(d) for d in weekdays]) if weekdays else None
             )
 
@@ -419,26 +374,26 @@ def block_edit(block_id):
             time_type = request.form.get("time_type", "period")
 
             if time_type == "all_day":
-                block.all_day = True
-                block.day_period = None
-                block.start_time = None
-                block.end_time = None
+                all_day = True
+                day_period = None
+                start_time = None
+                end_time = None
             elif time_type == "period":
-                block.all_day = False
-                block.day_period = request.form.get("day_period")
-                block.start_time = None
-                block.end_time = None
+                all_day = False
+                day_period = request.form.get("day_period")
+                start_time = None
+                end_time = None
             else:
-                block.all_day = False
-                block.day_period = None
+                all_day = False
+                day_period = None
                 start_time_str = request.form.get("start_time")
                 end_time_str = request.form.get("end_time")
-                block.start_time = (
+                start_time = (
                     datetime.strptime(start_time_str, "%H:%M").time()
                     if start_time_str
                     else None
                 )
-                block.end_time = (
+                end_time = (
                     datetime.strptime(end_time_str, "%H:%M").time()
                     if end_time_str
                     else None
@@ -447,26 +402,35 @@ def block_edit(block_id):
             # Datas
             start_date_str = request.form.get("start_date")
             end_date_str = request.form.get("end_date")
-            block.start_date = (
+            start_date = (
                 datetime.strptime(start_date_str, "%Y-%m-%d").date()
                 if start_date_str
                 else None
             )
-            block.end_date = (
+            end_date = (
                 datetime.strptime(end_date_str, "%Y-%m-%d").date()
                 if end_date_str
                 else None
             )
 
-            block.color = request.form.get("color", "#6c757d")
-
-            db.session.commit()
+            AgendaBlockRepository.update(block, {
+                "title": request.form.get("title"),
+                "description": request.form.get("description"),
+                "block_type": request.form.get("block_type", "recurring"),
+                "weekdays": weekdays_json,
+                "start_time": start_time,
+                "end_time": end_time,
+                "all_day": all_day,
+                "day_period": day_period,
+                "start_date": start_date,
+                "end_date": end_date,
+                "color": request.form.get("color", "#6c757d"),
+            })
 
             flash("Bloqueio atualizado com sucesso!", "success")
             return redirect(url_for("deadlines.blocks_list"))
 
         except Exception as e:
-            db.session.rollback()
             flash(f"Erro ao atualizar bloqueio: {str(e)}", "danger")
 
     return render_template("deadlines/block_form.html", block=block)
@@ -476,15 +440,15 @@ def block_edit(block_id):
 @login_required
 def block_delete(block_id):
     """Excluir bloqueio de agenda"""
-    from app.models import AgendaBlock
+    block = AgendaBlockRepository.get_by_id(block_id)
 
-    block = AgendaBlock.query.get_or_404(block_id)
+    if not block:
+        return jsonify({"success": False, "message": "Bloqueio não encontrado"}), 404
 
     if block.user_id != current_user.id:
         return jsonify({"success": False, "message": "Acesso negado"}), 403
 
-    db.session.delete(block)
-    db.session.commit()
+    AgendaBlockRepository.delete(block)
 
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify({"success": True, "message": "Bloqueio excluído com sucesso"})
@@ -497,15 +461,15 @@ def block_delete(block_id):
 @login_required
 def block_toggle(block_id):
     """Ativar/desativar bloqueio de agenda"""
-    from app.models import AgendaBlock
+    block = AgendaBlockRepository.get_by_id(block_id)
 
-    block = AgendaBlock.query.get_or_404(block_id)
+    if not block:
+        return jsonify({"success": False, "message": "Bloqueio não encontrado"}), 404
 
     if block.user_id != current_user.id:
         return jsonify({"success": False, "message": "Acesso negado"}), 403
 
-    block.is_active = not block.is_active
-    db.session.commit()
+    AgendaBlockRepository.toggle_active(block)
 
     status = "ativado" if block.is_active else "desativado"
     return jsonify(
@@ -517,8 +481,6 @@ def block_toggle(block_id):
 @login_required
 def api_blocks():
     """API: Retorna bloqueios para o calendário"""
-    from app.models import AgendaBlock
-
     # Período para gerar eventos
     start_str = request.args.get("start")
     end_str = request.args.get("end")
@@ -538,7 +500,7 @@ def api_blocks():
         start_date = datetime.utcnow().date()
         end_date = (datetime.utcnow() + timedelta(days=90)).date()
 
-    blocks = AgendaBlock.query.filter_by(user_id=current_user.id, is_active=True).all()
+    blocks = AgendaBlockRepository.get_active_by_user(current_user.id)
 
     events = []
     for block in blocks:

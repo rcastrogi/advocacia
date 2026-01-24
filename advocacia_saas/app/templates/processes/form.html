@@ -45,11 +45,23 @@
                         <div class="row">
                             <div class="col-md-5 mb-3">
                                 <label for="process_number" class="form-label">Número do Processo</label>
-                                {{ form.process_number(class="form-control" + (" is-invalid" if form.process_number.errors else "")) }}
+                                <div class="input-group">
+                                    {{ form.process_number(class="form-control" + (" is-invalid" if form.process_number.errors else ""), id="process_number") }}
+                                    <button type="button" class="btn btn-outline-primary" id="btnSearchDatajud" title="Buscar dados no DataJud">
+                                        <i class="fas fa-search" id="iconSearch"></i>
+                                        <span class="spinner-border spinner-border-sm d-none" id="spinnerSearch"></span>
+                                    </button>
+                                </div>
                                 <small class="text-muted">Formato: 0000000-00.0000.0.00.0000</small>
                                 {% for error in form.process_number.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                                 {% endfor %}
+                                <!-- Feedback DataJud -->
+                                <div id="datajudFeedback" class="mt-2 d-none">
+                                    <div class="alert alert-sm py-2 mb-0" id="datajudAlert">
+                                        <small id="datajudMessage"></small>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-7 mb-3">
                                 <label for="title" class="form-label">Título/Descrição <span class="text-danger">*</span></label>
@@ -196,10 +208,74 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;" id="toastContainer"></div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Máscara para número do processo
     const processNumber = document.getElementById('process_number');
+    const btnSearch = document.getElementById('btnSearchDatajud');
+    const iconSearch = document.getElementById('iconSearch');
+    const spinnerSearch = document.getElementById('spinnerSearch');
+    const datajudFeedback = document.getElementById('datajudFeedback');
+    const datajudAlert = document.getElementById('datajudAlert');
+    const datajudMessage = document.getElementById('datajudMessage');
+    
+    // Função utilitária para escapar HTML
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Função de Toast
+    function showToast(message, type = 'info', duration = 5000) {
+        const toastContainer = document.getElementById('toastContainer');
+        
+        const toastId = 'toast-' + Date.now();
+        const icons = {
+            success: 'fas fa-check-circle text-success',
+            danger: 'fas fa-exclamation-circle text-danger',
+            warning: 'fas fa-exclamation-triangle text-warning',
+            info: 'fas fa-info-circle text-info'
+        };
+        const bgColors = {
+            success: 'border-start border-success border-4',
+            danger: 'border-start border-danger border-4',
+            warning: 'border-start border-warning border-4',
+            info: 'border-start border-info border-4'
+        };
+        
+        const icon = icons[type] || icons.info;
+        const bgColor = bgColors[type] || bgColors.info;
+        
+        const toastHtml = `
+            <div id="${toastId}" class="toast ${bgColor}" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="${duration}">
+                <div class="toast-header">
+                    <i class="${icon} me-2"></i>
+                    <strong class="me-auto">${type === 'success' ? 'Sucesso' : type === 'danger' ? 'Erro' : type === 'warning' ? 'Aviso' : 'Informação'}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Fechar"></button>
+                </div>
+                <div class="toast-body">
+                    ${escapeHtml(message)}
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        
+        const toastEl = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        
+        // Remove do DOM após fechar
+        toastEl.addEventListener('hidden.bs.toast', () => {
+            toastEl.remove();
+        });
+    }
+    
+    // Máscara para número do processo
     if (processNumber) {
         processNumber.addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
@@ -229,6 +305,228 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.target.value = formatted;
             }
         });
+        
+        // Busca automática quando terminar de digitar (20 dígitos)
+        processNumber.addEventListener('input', function(e) {
+            const digitsOnly = e.target.value.replace(/\D/g, '');
+            if (digitsOnly.length === 20) {
+                // Pequeno delay para não buscar enquanto digita
+                clearTimeout(window.datajudTimeout);
+                window.datajudTimeout = setTimeout(() => {
+                    searchDatajud();
+                }, 500);
+            }
+        });
+    }
+    
+    // Botão de busca DataJud
+    if (btnSearch) {
+        btnSearch.addEventListener('click', searchDatajud);
+    }
+    
+    function searchDatajud() {
+        const numero = processNumber.value.trim();
+        
+        if (!numero || numero.replace(/\D/g, '').length < 15) {
+            showFeedback('warning', 'Digite o número completo do processo (mínimo 15 dígitos).');
+            return;
+        }
+        
+        // Loading state
+        setLoading(true);
+        showFeedback('info', 'Consultando DataJud...');
+        
+        fetch('{{ url_for("processes.search_datajud") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                process_number: numero
+            })
+        })
+        .then(response => {
+            return response.json().then(data => {
+                // Inclui o status na resposta para tratamento
+                return { ok: response.ok, data: data };
+            });
+        })
+        .then(result => {
+            setLoading(false);
+            
+            if (result.ok && result.data.success) {
+                showFeedback('success', 'Dados encontrados! Campos preenchidos automaticamente.');
+                fillFormWithData(result.data.data);
+                showProcessDetails(result.data.data);
+            } else {
+                showFeedback('warning', result.data.message || 'Processo não encontrado.');
+            }
+        })
+        .catch(error => {
+            setLoading(false);
+            console.error('Erro ao consultar DataJud:', error);
+            showFeedback('danger', 'Erro ao consultar DataJud. Tente novamente.');
+        });
+    }
+    
+    function setLoading(loading) {
+        if (loading) {
+            iconSearch.classList.add('d-none');
+            spinnerSearch.classList.remove('d-none');
+            btnSearch.disabled = true;
+        } else {
+            iconSearch.classList.remove('d-none');
+            spinnerSearch.classList.add('d-none');
+            btnSearch.disabled = false;
+        }
+    }
+    
+    function showFeedback(type, message) {
+        const allowedTypes = ['success', 'danger', 'warning', 'info'];
+        const safeType = allowedTypes.includes(type) ? type : 'info';
+        
+        // Mostra toast
+        showToast(message, safeType);
+        
+        // Também mostra feedback inline (opcional)
+        if (datajudFeedback && datajudAlert && datajudMessage) {
+            datajudFeedback.classList.remove('d-none');
+            datajudAlert.className = `alert alert-${safeType} py-2 mb-0`;
+            datajudMessage.textContent = message;
+            
+            // Auto-hide após 10 segundos
+            setTimeout(() => {
+                datajudFeedback.classList.add('d-none');
+            }, 10000);
+        }
+    }
+    
+    function fillFormWithData(data) {
+        // Preenche campos do formulário com dados do DataJud
+        const fieldMappings = {
+            'title': data.title,
+            'court': data.court,
+            'court_instance': data.court_instance,
+            'jurisdiction': data.jurisdiction,
+            'distribution_date': data.distribution_date
+        };
+        
+        for (const [fieldId, value] of Object.entries(fieldMappings)) {
+            const field = document.getElementById(fieldId);
+            if (field && value) {
+                // Para selects, verificar se o valor existe nas opções
+                if (field.tagName === 'SELECT') {
+                    const option = Array.from(field.options).find(opt => opt.value === value);
+                    if (option) {
+                        field.value = value;
+                    }
+                } else {
+                    // Só preenche se o campo estiver vazio
+                    if (!field.value.trim()) {
+                        field.value = value;
+                    }
+                }
+                // Dispara evento change para triggers de validação
+                field.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+    }
+    
+    function showProcessDetails(data) {
+        // Remove modal anterior se existir
+        const existingModal = document.getElementById('datajudDetailsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Cria modal com detalhes do processo
+        const movimentosHtml = data.movimentos && data.movimentos.length > 0
+            ? data.movimentos.map(m => 
+                `<li class="list-group-item py-2">
+                    <small class="text-muted">${m.data || 'Sem data'}</small><br>
+                    <span>${escapeHtml(m.nome)}</span>
+                </li>`
+            ).join('')
+            : '<li class="list-group-item">Nenhum movimento disponível</li>';
+        
+        const assuntosHtml = data.assuntos && data.assuntos.length > 0
+            ? data.assuntos.map(a => `<span class="badge bg-secondary me-1">${escapeHtml(a)}</span>`).join('')
+            : '<span class="text-muted">Não informado</span>';
+        
+        const modalHtml = `
+            <div class="modal fade" id="datajudDetailsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-gavel me-2"></i>
+                                Dados do DataJud
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Tribunal:</strong> ${escapeHtml(data.tribunal || '-')}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Grau:</strong> ${escapeHtml(data.grau || '-')}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Classe:</strong> ${escapeHtml(data.classe || '-')}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Formato:</strong> ${escapeHtml(data.formato || '-')}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Órgão Julgador:</strong> ${escapeHtml(data.jurisdiction || '-')}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Assuntos:</strong><br>
+                                ${assuntosHtml}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Última Atualização:</strong> ${data.ultima_atualizacao || '-'}
+                            </div>
+                            <hr>
+                            <h6><i class="fas fa-history me-2"></i>Últimos Movimentos</h6>
+                            <ul class="list-group list-group-flush" style="max-height: 250px; overflow-y: auto;">
+                                ${movimentosHtml}
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        const modal = new bootstrap.Modal(document.getElementById('datajudDetailsModal'));
+        modal.show();
+    }
+    
+    function getCsrfToken() {
+        // Tenta obter do meta tag
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) return meta.getAttribute('content');
+        
+        // Tenta obter do input hidden
+        const input = document.querySelector('input[name="csrf_token"]');
+        if (input) return input.value;
+        
+        // Tenta função global se existir
+        if (typeof window.getCsrfToken === 'function') {
+            return window.getCsrfToken();
+        }
+        
+        return '';
     }
 });
 </script>

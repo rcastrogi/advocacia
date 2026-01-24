@@ -66,20 +66,22 @@
                     </a>
                 </li>
 
-                <!-- Badge de Créditos IA (não exibir para master) -->
-                {% if current_user.user_type != 'master' %}
+                <!-- Badge de Créditos IA -->
                 <li class="nav-item me-2">
                     <a class="btn btn-sm btn-outline-light d-flex align-items-center"
                        href="{{ url_for('ai.credits_dashboard') }}"
                        title="Créditos para usar a IA">
                         <i class="fas fa-robot me-1"></i>
                         <span class="d-none d-md-inline">IA</span>
+                        {% if current_user.user_type == 'master' %}
+                        <span class="badge bg-success ms-1" id="navbar-credits-badge" title="Master: créditos ilimitados">∞</span>
+                        {% else %}
                         <span class="badge bg-warning text-dark ms-1" id="navbar-credits-badge">
                             {{ current_user.credits.balance if current_user.credits else 0 }}
                         </span>
+                        {% endif %}
                     </a>
                 </li>
-                {% endif %}
 
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
@@ -97,11 +99,12 @@
                         <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">
                             <i class="fas fa-user-edit"></i> Perfil
                         </a></li>
-                        {% if current_user.user_type != 'master' %}
                         <li><a class="dropdown-item" href="{{ url_for('ai.credits_dashboard') }}">
                             <i class="fas fa-coins"></i> Meus Créditos IA
+                            {% if current_user.user_type == 'master' %}
+                            <span class="badge bg-success ms-1">∞</span>
+                            {% endif %}
                         </a></li>
-                        {% endif %}
                         <li><a class="dropdown-item" href="{{ url_for('billing.portal') }}">
                             <i class="fas fa-credit-card"></i> Minha assinatura
                         </a></li>

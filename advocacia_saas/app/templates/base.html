@@ -775,20 +775,24 @@
                         </div>
                     </li>
                     
-                    <!-- Badge de Créditos IA (não exibir para master) -->
-                    {% if current_user.user_type != 'master' %}
+                    <!-- Badge de Créditos IA -->
                     <li class="nav-item me-lg-2">
                         <a class="btn btn-sm btn-outline-light d-flex align-items-center" 
                            href="{{ url_for('ai.credits_dashboard') }}"
                            title="Créditos para usar a IA">
                             <i class="fas fa-robot"></i>
                             <span class="ms-2">Créditos IA</span>
+                            {% if current_user.user_type == 'master' %}
+                            <span class="badge bg-success ms-auto ms-lg-1" id="navbar-credits-badge" title="Master: créditos ilimitados">
+                                ∞
+                            </span>
+                            {% else %}
                             <span class="badge bg-warning text-dark ms-auto ms-lg-1" id="navbar-credits-badge">
                                 {{ current_user.credits.balance if current_user.credits else 0 }}
                             </span>
+                            {% endif %}
                         </a>
                     </li>
-                    {% endif %}
                     
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" 
@@ -813,10 +817,13 @@
                             <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">
                                 <i class="fas fa-user-edit"></i> Perfil
                             </a></li>
-                            {% if current_user.user_type != 'master' %}
                             <li><a class="dropdown-item" href="{{ url_for('ai.credits_dashboard') }}">
                                 <i class="fas fa-coins"></i> Meus Créditos IA
+                                {% if current_user.user_type == 'master' %}
+                                <span class="badge bg-success ms-1">∞</span>
+                                {% endif %}
                             </a></li>
+                            {% if current_user.user_type != 'master' %}
                             <li><a class="dropdown-item" href="{{ url_for('payments.balance_dashboard') }}">
                                 <i class="fas fa-wallet text-success"></i> Saldo Petições
                             </a></li>
@@ -1259,6 +1266,20 @@
             });
             document.body.dispatchEvent(event);
         };
+        
+        // Show Flask flash messages as toasts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        setTimeout(function() {
+                            const type = '{{ category }}' === 'danger' ? 'error' : '{{ category }}';
+                            window.showToast('{{ message | e }}', type);
+                        }, 300);
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        });
     </script>
     
     <!-- Alpine.js - Com defer para garantir que todos os alpine:init listeners sejam registrados primeiro -->

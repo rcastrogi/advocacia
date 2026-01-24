@@ -25,7 +25,7 @@ from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from xhtml2pdf import pisa
 
-from app import db, limiter
+from app import limiter
 from app.billing.decorators import subscription_required
 from app.billing.utils import (
     BillingAccessError,
@@ -48,6 +48,14 @@ from app.petitions.forms import (
     FamilyPetitionForm,
     SimplePetitionForm,
 )
+from app.petitions.repository import (
+    PetitionAttachmentRepository,
+    PetitionModelRepository,
+    PetitionSectionRepository,
+    PetitionTypeRepository,
+    SavedPetitionRepository,
+)
+from app.petitions.services import AttachmentService, SavedPetitionService
 from app.rate_limits import ADMIN_API_LIMIT
 from app.schemas import (
     AttachmentUploadSchema,
@@ -817,7 +825,7 @@ def _generate_dynamic_fallback(petition_model, petition_type, form_data):
     template_content = f"<h1>{petition_type.name}</h1>\n\n"
 
     for config in sections_config:
-        section = db.session.get(PetitionSection, config.section_id)
+        section = PetitionSectionRepository.get_by_id(config.section_id)
         if section and section.is_active and section.fields_schema:
             # Adicionar cabeçalho da seção
             template_content += f"<h2>{section.name}</h2>\n"
@@ -1202,96 +1210,35 @@ def api_save_petition():
     try:
         data = request.validated_data
 
+        petition_id = data.get("petition_id")
         petition_type_id = data.get("petition_type_id")
         petition_model_id = data.get("petition_model_id")
-        form_data = data.get("data", {})
+        # Aceitar tanto 'data' quanto 'form_data' por compatibilidade
+        form_data = data.get("data") or data.get("form_data", {})
         title = data.get("title")
         notes = data.get("notes")
+        action = data.get("action", "save")
 
-        # Verificar se é edição ou novo
-        if petition_id:
-            petition = SavedPetition.query.filter_by(
-                id=petition_id, user_id=current_user.id
-            ).first()
-
-            if not petition:
-                return jsonify(
-                    {"success": False, "error": "Petição não encontrada"}
-                ), 404
-
-            if petition.status == "cancelled":
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "error": "Petição cancelada não pode ser editada",
-                        }
-                    ),
-                    400,
-                )
-        else:
-            # Criar nova petição
-            petition = SavedPetition(
-                user_id=current_user.id,
-                petition_type_id=petition_type_id,
-                petition_model_id=petition_model_id,
-            )
-            db.session.add(petition)
-
-        # Atualizar dados
-        petition.form_data = form_data
-        petition.process_number = form_data.get("processo_numero") or form_data.get(
-            "processo_number"
+        petition, error = SavedPetitionService.create_or_update(
+            petition_id=petition_id,
+            user_id=current_user.id,
+            petition_type_id=petition_type_id,
+            petition_model_id=petition_model_id,
+            form_data=form_data,
+            action=action,
+            title=title,
+            notes=notes,
         )
 
-        # Ações
-        if action == "complete":
-            petition.status = "completed"
-            petition.completed_at = datetime.now(timezone.utc)
-        elif action == "cancel":
-            petition.status = "cancelled"
-            petition.cancelled_at = datetime.now(timezone.utc)
-        else:
-            if petition.status != "completed":
-                petition.status = "draft"
+        if error:
+            return jsonify({"success": False, "error": error}), 400
 
-        try:
-            db.session.commit()
-
-            # Gerar título automático após commit (para ter o ID)
-            if not petition.title:  # Só gerar se não tiver título
-                autor = form_data.get("autor_nome", "").strip()
-                reu = form_data.get("reu_nome", "").strip()
-
-                if petition_model_id:
-                    petition_model = db.session.get(PetitionModel, petition_model_id)
-                    base_name = (
-                        petition_model.name if petition_model else "Modelo de Petição"
-                    )
-                else:
-                    petition_type = db.session.get(PetitionType, petition_type_id)
-                    base_name = petition_type.name if petition_type else "Petição"
-
-                if autor and reu:
-                    petition.title = f"{base_name} - {autor} x {reu}"
-                elif autor:
-                    petition.title = f"{base_name} - {autor}"
-                else:
-                    petition.title = f"{base_name} - #{petition.id}"
-
-            db.session.commit()
-
-            return jsonify(
-                {
-                    "success": True,
-                    "petition_id": petition.id,
-                    "message": "Petição salva com sucesso!",
-                    "status": petition.status,
-                }
-            )
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({
+            "success": True,
+            "petition_id": petition.id,
+            "message": "Petição salva com sucesso!",
+            "status": petition.status,
+        })
 
     except Exception as e:
         error_msg = format_error_for_user(e, "Erro ao salvar petição")
@@ -1303,23 +1250,12 @@ def api_save_petition():
 @limiter.limit("10 per minute")
 def api_cancel_petition(petition_id):
     """API para cancelar uma petição."""
+    success, message = SavedPetitionService.cancel(petition_id, current_user.id)
 
-    petition = SavedPetition.query.filter_by(
-        id=petition_id, user_id=current_user.id
-    ).first_or_404()
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
 
-    if petition.status == "cancelled":
-        return jsonify({"success": False, "error": "Petição já está cancelada"}), 400
-
-    petition.status = "cancelled"
-    petition.cancelled_at = datetime.now(timezone.utc)
-
-    try:
-        db.session.commit()
-        return jsonify({"success": True, "message": "Petição cancelada com sucesso!"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 500
+    return jsonify({"success": True, "message": message})
 
 
 @bp.route("/api/saved/<int:petition_id>/restore", methods=["POST"])
@@ -1327,66 +1263,24 @@ def api_cancel_petition(petition_id):
 @limiter.limit("10 per minute")
 def api_restore_petition(petition_id):
     """API para restaurar uma petição cancelada."""
+    success, message = SavedPetitionService.restore(petition_id, current_user.id)
 
-    petition = SavedPetition.query.filter_by(
-        id=petition_id, user_id=current_user.id
-    ).first_or_404()
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
 
-    if petition.status != "cancelled":
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": "Apenas petições canceladas podem ser restauradas",
-                }
-            ),
-            400,
-        )
-
-    petition.status = "draft"
-    petition.cancelled_at = None
-
-    try:
-        db.session.commit()
-        return jsonify({"success": True, "message": "Petição restaurada com sucesso!"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 500
+    return jsonify({"success": True, "message": message})
 
 
 @bp.route("/api/saved/<int:petition_id>/delete", methods=["DELETE"])
 @login_required
 def api_delete_petition(petition_id):
     """API para excluir permanentemente uma petição."""
+    success, message = SavedPetitionService.delete_permanently(petition_id, current_user.id)
 
-    petition = SavedPetition.query.filter_by(
-        id=petition_id, user_id=current_user.id
-    ).first_or_404()
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
 
-    try:
-        # Primeiro remove os anexos físicos
-        for attachment in petition.attachments:
-            try:
-                import os
-
-                file_path = os.path.join(
-                    current_app.config.get("UPLOAD_FOLDER", "uploads"),
-                    "attachments",
-                    attachment.stored_filename,
-                )
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-            except:
-                pass
-
-        db.session.delete(petition)
-        db.session.commit()
-        return jsonify(
-            {"success": True, "message": "Petição excluída permanentemente!"}
-        )
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 500
+    return jsonify({"success": True, "message": message})
 
 
 # ============================================================================
@@ -1415,26 +1309,23 @@ def allowed_file(filename):
 @login_required
 def api_list_attachments(petition_id):
     """Lista anexos de uma petição."""
-
-    petition = SavedPetition.query.filter_by(
-        id=petition_id, user_id=current_user.id
-    ).first_or_404()
+    petition = SavedPetitionRepository.get_by_user_and_id(petition_id, current_user.id)
+    if not petition:
+        abort(404)
 
     attachments = []
     for att in petition.attachments:
-        attachments.append(
-            {
-                "id": att.id,
-                "filename": att.filename,
-                "file_type": att.file_type,
-                "file_size": att.file_size,
-                "file_size_display": att.get_file_size_display(),
-                "category": att.category,
-                "description": att.description,
-                "icon": att.get_icon(),
-                "uploaded_at": att.uploaded_at.isoformat() if att.uploaded_at else None,
-            }
-        )
+        attachments.append({
+            "id": att.id,
+            "filename": att.filename,
+            "file_type": att.file_type,
+            "file_size": att.file_size,
+            "file_size_display": att.get_file_size_display(),
+            "category": att.category,
+            "description": att.description,
+            "icon": att.get_icon(),
+            "uploaded_at": att.uploaded_at.isoformat() if att.uploaded_at else None,
+        })
 
     return jsonify(attachments)
 
@@ -1443,157 +1334,63 @@ def api_list_attachments(petition_id):
 @login_required
 def api_upload_attachment(petition_id):
     """Upload de anexo para uma petição."""
-
-    petition = SavedPetition.query.filter_by(
-        id=petition_id, user_id=current_user.id
-    ).first_or_404()
+    petition = SavedPetitionRepository.get_by_user_and_id(petition_id, current_user.id)
+    if not petition:
+        abort(404)
 
     if petition.status == "cancelled":
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": "Não é possível anexar arquivos a petições canceladas",
-                }
-            ),
-            400,
-        )
+        return jsonify({
+            "success": False,
+            "error": "Não é possível anexar arquivos a petições canceladas",
+        }), 400
 
     if "file" not in request.files:
         return jsonify({"success": False, "error": "Nenhum arquivo enviado"}), 400
 
     file = request.files["file"]
-
     if file.filename == "":
         return jsonify({"success": False, "error": "Arquivo sem nome"}), 400
 
-    if not allowed_file(file.filename):
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": f"Tipo de arquivo não permitido. Permitidos: {', '.join(ALLOWED_EXTENSIONS)}",
-                }
-            ),
-            400,
-        )
+    category = request.form.get("category", "prova")
+    description = request.form.get("description", "")
 
-    # Verificar tamanho
-    file.seek(0, 2)
-    file_size = file.tell()
-    file.seek(0)
-
-    if file_size > MAX_ATTACHMENT_SIZE:  # 20MB
-        return jsonify(
-            {
-                "success": False,
-                "error": f"Arquivo muito grande. Máximo: {MAX_ATTACHMENT_SIZE // (1024 * 1024)}MB por arquivo",
-            }
-        ), 400
-
-    # Verificar tamanho total já enviado
-    current_total = sum(att.file_size for att in petition.attachments)
-    if current_total + file_size > MAX_TOTAL_SIZE_PER_PETITION:  # 50MB
-        remaining = (MAX_TOTAL_SIZE_PER_PETITION - current_total) // (1024 * 1024)
-        return jsonify(
-            {
-                "success": False,
-                "error": f"Limite total de 50MB por petição excedido. Espaço disponível: {remaining}MB",
-            }
-        ), 400
-
-    # Gerar nome único
-    original_filename = secure_filename(file.filename)
-    ext = (
-        original_filename.rsplit(".", 1)[1].lower() if "." in original_filename else ""
-    )
-    stored_filename = f"{uuid.uuid4().hex}.{ext}"
-
-    # Criar diretório se não existir
-    upload_dir = os.path.join(
-        current_app.config.get("UPLOAD_FOLDER", "uploads"), "attachments"
-    )
-    os.makedirs(upload_dir, exist_ok=True)
-
-    # Salvar arquivo
-    file_path = os.path.join(upload_dir, stored_filename)
-    file.save(file_path)
-
-    # Criar registro no banco
-    attachment = PetitionAttachment(
-        saved_petition_id=petition.id,
-        filename=original_filename,
-        stored_filename=stored_filename,
-        file_type=file.content_type,
-        file_size=file_size,
-        category=request.form.get("category", "prova"),
-        description=request.form.get("description", ""),
-        uploaded_by_id=current_user.id,
+    result, error = AttachmentService.upload(
+        file=file,
+        petition_id=petition_id,
+        user_id=current_user.id,
+        category=category,
+        description=description,
     )
 
-    db.session.add(attachment)
-    db.session.commit()
+    if error:
+        return jsonify({"success": False, "error": error}), 400
 
-    return jsonify(
-        {
-            "success": True,
-            "attachment": {
-                "id": attachment.id,
-                "filename": attachment.filename,
-                "file_size_display": attachment.get_file_size_display(),
-                "icon": attachment.get_icon(),
-            },
-        }
-    )
+    return jsonify({"success": True, "attachment": result})
 
 
 @bp.route("/api/attachments/<int:attachment_id>", methods=["DELETE"])
 @login_required
 def api_delete_attachment(attachment_id):
     """Exclui um anexo."""
+    success, message = AttachmentService.delete(attachment_id, current_user.id)
 
-    attachment = PetitionAttachment.query.get_or_404(attachment_id)
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
 
-    # Verificar permissão
-    if attachment.saved_petition.user_id != current_user.id:
-        return jsonify({"success": False, "error": "Sem permissão"}), 403
-
-    # Remover arquivo físico
-    try:
-        file_path = os.path.join(
-            current_app.config.get("UPLOAD_FOLDER", "uploads"),
-            "attachments",
-            attachment.stored_filename,
-        )
-        if os.path.exists(file_path):
-            os.remove(file_path)
-    except:
-        pass
-
-    db.session.delete(attachment)
-    db.session.commit()
-
-    return jsonify({"success": True, "message": "Anexo removido!"})
+    return jsonify({"success": True, "message": message})
 
 
 @bp.route("/attachments/<int:attachment_id>/download")
 @login_required
 def download_attachment(attachment_id):
     """Download de um anexo."""
-
-    attachment = PetitionAttachment.query.get_or_404(attachment_id)
-
-    # Verificar permissão
-    if attachment.saved_petition.user_id != current_user.id:
-        abort(403)
-
-    file_path = os.path.join(
-        current_app.config.get("UPLOAD_FOLDER", "uploads"),
-        "attachments",
-        attachment.stored_filename,
+    file_path, filename, error = AttachmentService.get_file_path(
+        attachment_id, current_user.id
     )
 
-    if not os.path.exists(file_path):
+    if error:
+        if "permissão" in error.lower():
+            abort(403)
         abort(404)
 
-    return send_file(file_path, download_name=attachment.filename, as_attachment=True)
+    return send_file(file_path, download_name=filename, as_attachment=True)

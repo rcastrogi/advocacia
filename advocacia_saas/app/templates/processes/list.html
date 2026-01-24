@@ -24,38 +24,54 @@
                 </h1>
                 <p class="text-muted mb-0">{{ page_description }}</p>
             </div>
-            <a href="{{ url_for('processes.create') }}" class="btn btn-success">
-                <i class="fas fa-plus me-2"></i>Novo Processo
-            </a>
+            <div>
+                <a href="{{ url_for('processes.dashboard') }}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+                <a href="{{ url_for('processes.create') }}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Novo Processo
+                </a>
+            </div>
         </div>
     </div>
 
     {# Filters #}
     <div class="card mb-4">
         <div class="card-body">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-6">
-                    <form method="GET" class="input-group">
+            <form method="GET" id="filterForm">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label small text-muted">Buscar</label>
                         <input type="text" name="search" class="form-control" 
-                               placeholder="Buscar por título, número, autor ou réu..."
+                               placeholder="Título, número, autor ou réu..."
                                value="{{ search or '' }}">
-                        <button type="submit" class="btn btn-outline-primary">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </form>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">Status</label>
+                        <select name="status" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                            <option value="">Todos os Status</option>
+                            <option value="pending_distribution" {{ 'selected' if status_filter == 'pending_distribution' }}>Aguardando Distribuição</option>
+                            <option value="distributed" {{ 'selected' if status_filter == 'distributed' }}>Distribuído</option>
+                            <option value="ongoing" {{ 'selected' if status_filter == 'ongoing' }}>Em Andamento</option>
+                            <option value="suspended" {{ 'selected' if status_filter == 'suspended' }}>Suspenso</option>
+                            <option value="archived" {{ 'selected' if status_filter == 'archived' }}>Arquivado</option>
+                            <option value="finished" {{ 'selected' if status_filter == 'finished' }}>Finalizado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-search me-1"></i>Filtrar
+                            </button>
+                            {% if search or status_filter %}
+                            <a href="{{ url_for('processes.list_processes') }}" class="btn btn-outline-secondary" title="Limpar filtros">
+                                <i class="fas fa-times"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <select name="status" class="form-select" onchange="this.form.submit()">
-                        <option value="">Todos os Status</option>
-                        <option value="pending_distribution" {{ 'selected' if status_filter == 'pending_distribution' }}>Aguardando Distribuição</option>
-                        <option value="distributed" {{ 'selected' if status_filter == 'distributed' }}>Distribuído</option>
-                        <option value="ongoing" {{ 'selected' if status_filter == 'ongoing' }}>Em Andamento</option>
-                        <option value="suspended" {{ 'selected' if status_filter == 'suspended' }}>Suspenso</option>
-                        <option value="archived" {{ 'selected' if status_filter == 'archived' }}>Arquivado</option>
-                        <option value="finished" {{ 'selected' if status_filter == 'finished' }}>Finalizado</option>
-                    </select>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 
@@ -117,7 +133,7 @@
                                        class="btn btn-outline-secondary" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="{{ url_for('process_management.movements', process_id=process.id) }}"
+                                    <a href="{{ url_for('processes.movements', process_id=process.id) }}"
                                        class="btn btn-outline-info" title="Andamentos">
                                         <i class="fas fa-history"></i>
                                     </a>

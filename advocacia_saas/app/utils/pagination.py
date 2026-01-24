@@ -6,7 +6,7 @@ Oferece um helper para padronizar paginação em todas as listagens.
 
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from flask import request, url_for
+from flask import request
 
 
 class PaginationHelper:

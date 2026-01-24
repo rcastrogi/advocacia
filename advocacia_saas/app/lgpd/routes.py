@@ -4,15 +4,19 @@ from datetime import datetime, timezone
 from flask import jsonify, render_template, request
 from flask_login import current_user, login_required
 
-from app import db
 from app.lgpd import lgpd_bp
+from app.lgpd.repository import (
+    AnonymizationRequestRepository,
+    ConsentRepository,
+    DeanonymizationRequestRepository,
+    DeletionRequestRepository,
+    ProcessingLogRepository,
+)
 from app.models import (
     AnonymizationRequest,
     DataConsent,
     DataProcessingLog,
-    DeanonymizationRequest,
     DeletionRequest,
-    User,
 )
 
 # =============================================================================
@@ -36,7 +40,7 @@ def privacy():
 @login_required
 def get_user_consents():
     """Obtém consentimentos do usuário atual"""
-    consents = DataConsent.query.filter_by(user_id=current_user.id).all()
+    consents = ConsentRepository.get_by_user(current_user.id)
     return jsonify([consent.to_dict() for consent in consents])
 
 
@@ -55,18 +59,15 @@ def give_consent():
             return jsonify({"error": f"Campo obrigatório: {field}"}), 400
 
     # Criar consentimento
-    consent = DataConsent(
-        user_id=current_user.id,
-        consent_type=data["consent_type"],
-        consent_purpose=data["consent_purpose"],
-        consent_version=data.get("consent_version", "1.0"),
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get("User-Agent"),
-        consent_method="web_form",
-    )
-
-    db.session.add(consent)
-    db.session.commit()
+    consent = ConsentRepository.create({
+        "user_id": current_user.id,
+        "consent_type": data["consent_type"],
+        "consent_purpose": data["consent_purpose"],
+        "consent_version": data.get("consent_version", "1.0"),
+        "ip_address": request.remote_addr,
+        "user_agent": request.headers.get("User-Agent"),
+        "consent_method": "web_form",
+    })
 
     # Log do processamento
     log_processing(
@@ -77,15 +78,10 @@ def give_consent():
         "User consented to data processing",
     )
 
-    return (
-        jsonify(
-            {
-                "message": "Consentimento registrado com sucesso",
-                "consent_id": consent.id,
-            }
-        ),
-        201,
-    )
+    return jsonify({
+        "message": "Consentimento registrado com sucesso",
+        "consent_id": consent.id,
+    }), 201
 
 
 @lgpd_bp.route("/consent/<int:consent_id>", methods=["DELETE"])
@@ -128,30 +124,20 @@ def request_data_deletion():
         return jsonify({"error": "Motivo da solicitação é obrigatório"}), 400
 
     # Verificar se já existe uma solicitação pendente
-    existing_request = DeletionRequest.query.filter_by(
-        user_id=current_user.id, status="pending"
-    ).first()
+    existing_request = DeletionRequestRepository.get_pending_by_user(current_user.id)
 
     if existing_request:
-        return (
-            jsonify(
-                {
-                    "error": "Já existe uma solicitação de exclusão pendente",
-                    "request_id": existing_request.id,
-                }
-            ),
-            409,
-        )
+        return jsonify({
+            "error": "Já existe uma solicitação de exclusão pendente",
+            "request_id": existing_request.id,
+        }), 409
 
     # Criar solicitação
-    deletion_request = DeletionRequest(
+    deletion_request = DeletionRequestRepository.create(
         user_id=current_user.id,
-        request_reason=data["reason"],
-        deletion_scope=json.dumps(data.get("scope", ["account", "data"])),
+        reason=data["reason"],
+        scope=data.get("scope", ["account", "data"]),
     )
-
-    db.session.add(deletion_request)
-    db.session.commit()
 
     # Log do processamento
     log_processing(
@@ -162,23 +148,18 @@ def request_data_deletion():
         "User requested data deletion",
     )
 
-    return (
-        jsonify(
-            {
-                "message": "Solicitação de exclusão registrada",
-                "request_id": deletion_request.id,
-                "status": "pending",
-            }
-        ),
-        201,
-    )
+    return jsonify({
+        "message": "Solicitação de exclusão registrada",
+        "request_id": deletion_request.id,
+        "status": "pending",
+    }), 201
 
 
 @lgpd_bp.route("/deletion-request", methods=["GET"])
 @login_required
 def get_deletion_requests():
     """Obtém solicitações de exclusão do usuário"""
-    requests = DeletionRequest.query.filter_by(user_id=current_user.id).all()
+    requests = DeletionRequestRepository.get_by_user(current_user.id)
     return jsonify([req.to_dict() for req in requests])
 
 
@@ -197,31 +178,21 @@ def request_anonymization():
         return jsonify({"error": "Motivo da solicitação é obrigatório"}), 400
 
     # Verificar se já existe uma solicitação pendente
-    existing_request = AnonymizationRequest.query.filter_by(
-        user_id=current_user.id, status="pending"
-    ).first()
+    existing_request = AnonymizationRequestRepository.get_pending_by_user(current_user.id)
 
     if existing_request:
-        return (
-            jsonify(
-                {
-                    "error": "Já existe uma solicitação de anonimização pendente",
-                    "request_id": existing_request.id,
-                }
-            ),
-            409,
-        )
+        return jsonify({
+            "error": "Já existe uma solicitação de anonimização pendente",
+            "request_id": existing_request.id,
+        }), 409
 
     # Criar solicitação
-    anonymization_request = AnonymizationRequest(
+    anonymization_request = AnonymizationRequestRepository.create(
         user_id=current_user.id,
-        request_reason=data["reason"],
-        data_categories=json.dumps(data.get("categories", ["personal"])),
-        anonymization_method=data.get("method", "pseudonymization"),
+        reason=data["reason"],
+        categories=data.get("categories", ["personal"]),
+        method=data.get("method", "pseudonymization"),
     )
-
-    db.session.add(anonymization_request)
-    db.session.commit()
 
     # Log do processamento
     log_processing(
@@ -232,23 +203,18 @@ def request_anonymization():
         "User requested data anonymization",
     )
 
-    return (
-        jsonify(
-            {
-                "message": "Solicitação de anonimização registrada",
-                "request_id": anonymization_request.id,
-                "status": "pending",
-            }
-        ),
-        201,
-    )
+    return jsonify({
+        "message": "Solicitação de anonimização registrada",
+        "request_id": anonymization_request.id,
+        "status": "pending",
+    }), 201
 
 
 @lgpd_bp.route("/anonymization-request", methods=["GET"])
 @login_required
 def get_user_anonymization_requests():
     """Obtém solicitações de anonimização do usuário"""
-    requests = AnonymizationRequest.query.filter_by(user_id=current_user.id).all()
+    requests = AnonymizationRequestRepository.get_by_user(current_user.id)
     return jsonify([req.to_dict() for req in requests])
 
 
@@ -261,13 +227,7 @@ def get_user_anonymization_requests():
 @login_required
 def get_processing_log():
     """Obtém log de processamento de dados do usuário"""
-    logs = (
-        DataProcessingLog.query.filter_by(user_id=current_user.id)
-        .order_by(DataProcessingLog.processed_at.desc())
-        .limit(100)
-        .all()
-    )
-
+    logs = ProcessingLogRepository.get_by_user(current_user.id)
     return jsonify([log.to_dict() for log in logs])
 
 
@@ -283,7 +243,7 @@ def get_pending_deletion_requests():
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    requests = DeletionRequest.query.filter_by(status="pending").all()
+    requests = DeletionRequestRepository.get_all_pending()
     return jsonify([req.to_dict() for req in requests])
 
 
@@ -294,7 +254,9 @@ def approve_deletion_request(request_id):
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    request_obj = DeletionRequest.query.get_or_404(request_id)
+    request_obj = DeletionRequestRepository.get_by_id(request_id)
+    if not request_obj:
+        return jsonify({"error": "Solicitação não encontrada"}), 404
     if request_obj.status != "pending":
         return jsonify({"error": "Solicitação já foi processada"}), 400
 
@@ -302,41 +264,32 @@ def approve_deletion_request(request_id):
     admin_notes = data.get("admin_notes")
 
     try:
-        # Executar exclusão dos dados do usuário
-        audit_data = request_obj.user.delete_user_data()
-
-        # Atualizar status da solicitação
-        request_obj.status = "completed"
-        request_obj.processed_at = datetime.now(timezone.utc)
-        request_obj.processed_by_id = current_user.id
-        request_obj.admin_notes = admin_notes
+        # Executar exclusão dos dados do usuário via repository
+        audit_data = DeletionRequestRepository.approve(
+            request_obj, current_user.id, admin_notes
+        )
 
         # Log de auditoria adicional
-        log = DataProcessingLog(
-            user_id=request_obj.user_id,
-            action="deletion_request_approved",
-            data_category="user_account",
-            purpose="right_to_erasure",
-            legal_basis="LGPD Art. 18",
-            endpoint=request.path,
-            additional_data=json.dumps(
-                {
-                    "request_id": request_id,
-                    "admin_notes": admin_notes,
-                    "audit_data": audit_data,
-                    "processed_by": current_user.email,
-                }
-            ),
-        )
-        db.session.add(log)
-        db.session.commit()
+        ProcessingLogRepository.create({
+            "user_id": request_obj.user_id,
+            "action": "deletion_request_approved",
+            "data_category": "user_account",
+            "purpose": "right_to_erasure",
+            "legal_basis": "LGPD Art. 18",
+            "endpoint": request.path,
+            "additional_data": {
+                "request_id": request_id,
+                "admin_notes": admin_notes,
+                "audit_data": audit_data,
+                "processed_by": current_user.email,
+            },
+        })
 
         return jsonify(
             {"message": "Solicitação de exclusão aprovada e dados removidos"}
         )
 
     except Exception as e:
-        db.session.rollback()
         return jsonify({"error": f"Erro ao processar exclusão: {str(e)}"}), 500
 
 
@@ -347,7 +300,9 @@ def reject_deletion_request(request_id):
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    request_obj = DeletionRequest.query.get_or_404(request_id)
+    request_obj = DeletionRequestRepository.get_by_id(request_id)
+    if not request_obj:
+        return jsonify({"error": "Solicitação não encontrada"}), 404
     if request_obj.status != "pending":
         return jsonify({"error": "Solicitação já foi processada"}), 400
 
@@ -358,36 +313,30 @@ def reject_deletion_request(request_id):
     )
 
     try:
-        request_obj.status = "rejected"
-        request_obj.processed_at = datetime.now(timezone.utc)
-        request_obj.processed_by_id = current_user.id
-        request_obj.admin_notes = admin_notes
-        request_obj.rejection_reason = rejection_reason
+        # Rejeitar via repository
+        DeletionRequestRepository.reject(
+            request_obj, current_user.id, rejection_reason, admin_notes
+        )
 
         # Log de auditoria
-        log = DataProcessingLog(
-            user_id=request_obj.user_id,
-            action="deletion_request_rejected",
-            data_category="request_metadata",
-            purpose="gdpr_compliance",
-            legal_basis="LGPD Art. 18",
-            endpoint=request.path,
-            additional_data=json.dumps(
-                {
-                    "request_id": request_id,
-                    "rejection_reason": rejection_reason,
-                    "admin_notes": admin_notes,
-                    "processed_by": current_user.email,
-                }
-            ),
-        )
-        db.session.add(log)
-        db.session.commit()
+        ProcessingLogRepository.create({
+            "user_id": request_obj.user_id,
+            "action": "deletion_request_rejected",
+            "data_category": "request_metadata",
+            "purpose": "gdpr_compliance",
+            "legal_basis": "LGPD Art. 18",
+            "endpoint": request.path,
+            "additional_data": {
+                "request_id": request_id,
+                "rejection_reason": rejection_reason,
+                "admin_notes": admin_notes,
+                "processed_by": current_user.email,
+            },
+        })
 
         return jsonify({"message": "Solicitação de exclusão rejeitada"})
 
     except Exception as e:
-        db.session.rollback()
         return jsonify({"error": f"Erro ao rejeitar solicitação: {str(e)}"}), 500
 
 
@@ -398,7 +347,7 @@ def get_admin_anonymization_requests():
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    requests = AnonymizationRequest.query.all()
+    requests = AnonymizationRequestRepository.get_all()
     result = []
     for req in requests:
         data = req.to_dict()
@@ -418,7 +367,7 @@ def get_all_consents():
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    consents = DataConsent.query.all()
+    consents = ConsentRepository.get_all()
     result = []
     for consent in consents:
         data = consent.to_dict()
@@ -436,18 +385,15 @@ def get_audit_log():
         return jsonify({"error": "Acesso negado"}), 403
 
     date_filter = request.args.get("date")
-    query = DataProcessingLog.query
+    filter_date = None
 
     if date_filter:
         try:
-            filter_date = datetime.fromisoformat(date_filter).date()
-            query = query.filter(
-                db.func.date(DataProcessingLog.processed_at) == filter_date
-            )
+            filter_date = datetime.fromisoformat(date_filter)
         except ValueError:
             return jsonify({"error": "Formato de data inválido"}), 400
 
-    logs = query.order_by(DataProcessingLog.processed_at.desc()).limit(1000).all()
+    logs = ProcessingLogRepository.get_all_filtered(date_filter=filter_date)
     result = []
     for log in logs:
         data = log.to_dict()
@@ -464,7 +410,9 @@ def get_anonymization_request_details(request_id):
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    request_obj = AnonymizationRequest.query.get_or_404(request_id)
+    request_obj = AnonymizationRequestRepository.get_by_id(request_id)
+    if not request_obj:
+        return jsonify({"error": "Solicitação não encontrada"}), 404
     data = request_obj.to_dict()
     data["user_email"] = request_obj.user.email if request_obj.user else None
     data["processed_by_email"] = (
@@ -483,7 +431,9 @@ def approve_anonymization_request(request_id):
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    request_obj = AnonymizationRequest.query.get_or_404(request_id)
+    request_obj = AnonymizationRequestRepository.get_by_id(request_id)
+    if not request_obj:
+        return jsonify({"error": "Solicitação não encontrada"}), 404
     if request_obj.status != "pending":
         return jsonify({"error": "Solicitação já foi processada"}), 400
 
@@ -491,41 +441,31 @@ def approve_anonymization_request(request_id):
     admin_notes = data.get("admin_notes")
 
     try:
-        # Executar anonimização dos dados do usuário
-        anonymization_result = request_obj.user.anonymize_personal_data()
-
-        # Atualizar status da solicitação
-        request_obj.status = "completed"
-        request_obj.processed_at = datetime.now(timezone.utc)
-        request_obj.processed_by_id = current_user.id
-        request_obj.admin_notes = admin_notes
-        request_obj.anonymized_data = json.dumps(anonymization_result)
+        # Executar anonimização via repository
+        AnonymizationRequestRepository.approve(
+            request_obj, current_user.id, admin_notes
+        )
 
         # Log de auditoria
-        log = DataProcessingLog(
-            user_id=request_obj.user_id,
-            action="data_anonymization",
-            data_category=request_obj.data_categories or "personal_data",
-            purpose="data_minimization",
-            legal_basis="LGPD Art. 12",
-            endpoint=request.path,
-            additional_data=json.dumps(
-                {
-                    "request_id": request_id,
-                    "admin_notes": admin_notes,
-                    "processed_by": current_user.email,
-                }
-            ),
-        )
-        db.session.add(log)
-        db.session.commit()
+        ProcessingLogRepository.create({
+            "user_id": request_obj.user_id,
+            "action": "data_anonymization",
+            "data_category": request_obj.data_categories or "personal_data",
+            "purpose": "data_minimization",
+            "legal_basis": "LGPD Art. 12",
+            "endpoint": request.path,
+            "additional_data": {
+                "request_id": request_id,
+                "admin_notes": admin_notes,
+                "processed_by": current_user.email,
+            },
+        })
 
         return jsonify(
             {"message": "Solicitação de anonimização aprovada e dados anonimizados"}
         )
 
     except Exception as e:
-        db.session.rollback()
         return jsonify({"error": f"Erro ao processar anonimização: {str(e)}"}), 500
 
 
@@ -536,7 +476,9 @@ def reject_anonymization_request(request_id):
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    request_obj = AnonymizationRequest.query.get_or_404(request_id)
+    request_obj = AnonymizationRequestRepository.get_by_id(request_id)
+    if not request_obj:
+        return jsonify({"error": "Solicitação não encontrada"}), 404
     if request_obj.status != "pending":
         return jsonify({"error": "Solicitação já foi processada"}), 400
 
@@ -547,36 +489,30 @@ def reject_anonymization_request(request_id):
     )
 
     try:
-        request_obj.status = "failed"
-        request_obj.processed_at = datetime.now(timezone.utc)
-        request_obj.processed_by_id = current_user.id
-        request_obj.admin_notes = admin_notes
-        request_obj.failure_reason = rejection_reason
+        # Rejeitar via repository
+        AnonymizationRequestRepository.reject(
+            request_obj, current_user.id, rejection_reason, admin_notes
+        )
 
         # Log de auditoria
-        log = DataProcessingLog(
-            user_id=request_obj.user_id,
-            action="anonymization_request_rejected",
-            data_category="request_metadata",
-            purpose="gdpr_compliance",
-            legal_basis="LGPD Art. 12",
-            endpoint=request.path,
-            additional_data=json.dumps(
-                {
-                    "request_id": request_id,
-                    "rejection_reason": rejection_reason,
-                    "admin_notes": admin_notes,
-                    "processed_by": current_user.email,
-                }
-            ),
-        )
-        db.session.add(log)
-        db.session.commit()
+        ProcessingLogRepository.create({
+            "user_id": request_obj.user_id,
+            "action": "anonymization_request_rejected",
+            "data_category": "request_metadata",
+            "purpose": "gdpr_compliance",
+            "legal_basis": "LGPD Art. 12",
+            "endpoint": request.path,
+            "additional_data": {
+                "request_id": request_id,
+                "rejection_reason": rejection_reason,
+                "admin_notes": admin_notes,
+                "processed_by": current_user.email,
+            },
+        })
 
         return jsonify({"message": "Solicitação de anonimização rejeitada"})
 
     except Exception as e:
-        db.session.rollback()
         return jsonify({"error": f"Erro ao rejeitar solicitação: {str(e)}"}), 500
 
 
@@ -603,9 +539,7 @@ def request_deanonymization():
         return jsonify({"error": "Motivo da solicitação é obrigatório"}), 400
 
     # Verificar se já existe uma solicitação pendente
-    existing_request = DeanonymizationRequest.query.filter_by(
-        user_id=current_user.id, status="pending"
-    ).first()
+    existing_request = DeanonymizationRequestRepository.get_pending_by_user(current_user.id)
 
     if existing_request:
         return (
@@ -619,9 +553,7 @@ def request_deanonymization():
         )
 
     # Buscar a solicitação de anonimização original
-    original_anonymization = AnonymizationRequest.query.filter_by(
-        user_id=current_user.id, status="completed"
-    ).first()
+    original_anonymization = AnonymizationRequestRepository.get_completed_by_user(current_user.id)
 
     if not original_anonymization:
         return (
@@ -632,15 +564,12 @@ def request_deanonymization():
         )
 
     try:
-        # Criar solicitação de deanonimização
-        deanon_request = DeanonymizationRequest(
+        # Criar solicitação de deanonimização via repository
+        deanon_request = DeanonymizationRequestRepository.create(
             user_id=current_user.id,
             anonymization_request_id=original_anonymization.id,
-            request_reason=data.get("reason"),
+            reason=data.get("reason"),
         )
-
-        db.session.add(deanon_request)
-        db.session.commit()
 
         # Log de processamento
         log_processing(
@@ -663,7 +592,6 @@ def request_deanonymization():
         )
 
     except Exception as e:
-        db.session.rollback()
         return jsonify({"error": f"Erro ao registrar solicitação: {str(e)}"}), 500
 
 
@@ -671,7 +599,7 @@ def request_deanonymization():
 @login_required
 def get_user_deanonymization_requests():
     """Obtém solicitações de deanonimização do usuário"""
-    requests = DeanonymizationRequest.query.filter_by(user_id=current_user.id).all()
+    requests = DeanonymizationRequestRepository.get_by_user(current_user.id)
     return jsonify([req.to_dict() for req in requests])
 
 
@@ -682,7 +610,7 @@ def get_admin_deanonymization_requests():
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    requests = DeanonymizationRequest.query.all()
+    requests = DeanonymizationRequestRepository.get_all()
     result = []
     for req in requests:
         data = req.to_dict()
@@ -700,7 +628,9 @@ def get_deanonymization_request_details(request_id):
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    request_obj = DeanonymizationRequest.query.get_or_404(request_id)
+    request_obj = DeanonymizationRequestRepository.get_by_id(request_id)
+    if not request_obj:
+        return jsonify({"error": "Solicitação não encontrada"}), 404
     data = request_obj.to_dict()
     data["user_email"] = request_obj.user.email if request_obj.user else None
     data["processed_by_email"] = (
@@ -721,7 +651,9 @@ def approve_deanonymization_request(request_id):
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    request_obj = DeanonymizationRequest.query.get_or_404(request_id)
+    request_obj = DeanonymizationRequestRepository.get_by_id(request_id)
+    if not request_obj:
+        return jsonify({"error": "Solicitação não encontrada"}), 404
     if request_obj.status != "pending":
         return jsonify({"error": "Solicitação já foi processada"}), 400
 
@@ -739,44 +671,32 @@ def approve_deanonymization_request(request_id):
                 400,
             )
 
-        # Restaurar dados do usuário
-        restored_data = request_obj.user.restore_from_anonymization(
-            anonymization_request
+        # Restaurar dados do usuário via repository
+        restored_data = DeanonymizationRequestRepository.approve(
+            request_obj, current_user.id, admin_notes
         )
-
-        # Atualizar status da solicitação
-        request_obj.status = "approved"
-        request_obj.processed_at = datetime.now(timezone.utc)
-        request_obj.processed_by_id = current_user.id
-        request_obj.admin_notes = admin_notes
-        request_obj.restored_data = json.dumps(restored_data)
 
         # Log de auditoria
-        log = DataProcessingLog(
-            user_id=request_obj.user_id,
-            action="deanonymization_approved",
-            data_category="personal_data",
-            purpose="data_restoration",
-            legal_basis="LGPD Art. 18",
-            endpoint=request.path,
-            additional_data=json.dumps(
-                {
-                    "request_id": request_id,
-                    "admin_notes": admin_notes,
-                    "processed_by": current_user.email,
-                    "restored_fields": restored_data.get("restored_fields"),
-                }
-            ),
-        )
-        db.session.add(log)
-        db.session.commit()
+        ProcessingLogRepository.create({
+            "user_id": request_obj.user_id,
+            "action": "deanonymization_approved",
+            "data_category": "personal_data",
+            "purpose": "data_restoration",
+            "legal_basis": "LGPD Art. 18",
+            "endpoint": request.path,
+            "additional_data": {
+                "request_id": request_id,
+                "admin_notes": admin_notes,
+                "processed_by": current_user.email,
+                "restored_fields": restored_data.get("restored_fields"),
+            },
+        })
 
         return jsonify(
             {"message": "Solicitação de deanonimização aprovada e dados restaurados"}
         )
 
     except Exception as e:
-        db.session.rollback()
         return jsonify({"error": f"Erro ao processar deanonimização: {str(e)}"}), 500
 
 
@@ -789,7 +709,9 @@ def reject_deanonymization_request(request_id):
     if not current_user.is_admin():
         return jsonify({"error": "Acesso negado"}), 403
 
-    request_obj = DeanonymizationRequest.query.get_or_404(request_id)
+    request_obj = DeanonymizationRequestRepository.get_by_id(request_id)
+    if not request_obj:
+        return jsonify({"error": "Solicitação não encontrada"}), 404
     if request_obj.status != "pending":
         return jsonify({"error": "Solicitação já foi processada"}), 400
 
@@ -800,36 +722,30 @@ def reject_deanonymization_request(request_id):
     )
 
     try:
-        request_obj.status = "rejected"
-        request_obj.processed_at = datetime.now(timezone.utc)
-        request_obj.processed_by_id = current_user.id
-        request_obj.admin_notes = admin_notes
-        request_obj.rejection_reason = rejection_reason
+        # Rejeitar via repository
+        DeanonymizationRequestRepository.reject(
+            request_obj, current_user.id, rejection_reason, admin_notes
+        )
 
         # Log de auditoria
-        log = DataProcessingLog(
-            user_id=request_obj.user_id,
-            action="deanonymization_rejected",
-            data_category="request_metadata",
-            purpose="gdpr_compliance",
-            legal_basis="LGPD Art. 18",
-            endpoint=request.path,
-            additional_data=json.dumps(
-                {
-                    "request_id": request_id,
-                    "rejection_reason": rejection_reason,
-                    "admin_notes": admin_notes,
-                    "processed_by": current_user.email,
-                }
-            ),
-        )
-        db.session.add(log)
-        db.session.commit()
+        ProcessingLogRepository.create({
+            "user_id": request_obj.user_id,
+            "action": "deanonymization_rejected",
+            "data_category": "request_metadata",
+            "purpose": "gdpr_compliance",
+            "legal_basis": "LGPD Art. 18",
+            "endpoint": request.path,
+            "additional_data": {
+                "request_id": request_id,
+                "rejection_reason": rejection_reason,
+                "admin_notes": admin_notes,
+                "processed_by": current_user.email,
+            },
+        })
 
         return jsonify({"message": "Solicitação de deanonimização rejeitada"})
 
     except Exception as e:
-        db.session.rollback()
         return jsonify({"error": f"Erro ao rejeitar solicitação: {str(e)}"}), 500
 
 
@@ -842,20 +758,14 @@ def log_processing(
     user_id, action, data_category, data_fields, purpose, legal_basis="consent"
 ):
     """Registra processamento de dados no log"""
-    log_entry = DataProcessingLog(
+    ProcessingLogRepository.log_action(
         user_id=user_id,
         action=action,
         data_category=data_category,
-        data_fields=json.dumps(data_fields),
+        data_fields=data_fields,
         purpose=purpose,
         legal_basis=legal_basis,
-        ip_address=request.remote_addr if request else None,
-        user_agent=request.headers.get("User-Agent") if request else None,
-        endpoint=request.path if request else None,
     )
-
-    db.session.add(log_entry)
-    db.session.commit()
 
 
 # =============================================================================

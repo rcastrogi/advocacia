@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Início</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('auth.profile') }}">Perfil</a></li>
+            <li class="breadcrumb-item active">Configurações de Notificação</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-bell me-2 text-primary"></i>
+                    Configurações de Notificação
+                </h1>
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar ao Perfil
+                </a>
+            </div>
+
+            <form method="POST" action="{{ url_for('auth.notification_settings') }}">
+                {{ csrf_token() }}
+                
+                <!-- Alertas de Prazos -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock me-2"></i>
+                            Alertas de Prazos Processuais
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-4">
+                            Configure quando e como você deseja receber alertas sobre prazos processuais 
+                            que estão se aproximando.
+                        </p>
+                        
+                        <!-- Habilitar alertas -->
+                        <div class="form-check form-switch mb-4">
+                            <input class="form-check-input" type="checkbox" role="switch" 
+                                   id="deadline_alert_enabled" name="deadline_alert_enabled"
+                                   {{ 'checked' if current_user.deadline_alert_enabled else '' }}>
+                            <label class="form-check-label" for="deadline_alert_enabled">
+                                <strong>Habilitar alertas de prazos</strong>
+                                <br>
+                                <small class="text-muted">Receba notificações quando um prazo estiver próximo</small>
+                            </label>
+                        </div>
+                        
+                        <!-- Antecedência dos alertas -->
+                        <div class="mb-4">
+                            <label for="deadline_alert_days" class="form-label">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                Antecedência para alertas
+                            </label>
+                            <div class="input-group" style="max-width: 200px;">
+                                <input type="number" class="form-control" id="deadline_alert_days" 
+                                       name="deadline_alert_days" min="1" max="30"
+                                       value="{{ current_user.deadline_alert_days or 10 }}">
+                                <span class="input-group-text">dias antes</span>
+                            </div>
+                            <div class="form-text">
+                                Você será alertado quando um prazo estiver a este número de dias de vencer.
+                                <br>
+                                <span class="text-info">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Valor entre 1 e 30 dias.
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h6 class="mb-3">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            Canais de Notificação
+                        </h6>
+                        
+                        <!-- Email -->
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="deadline_alert_email" name="deadline_alert_email"
+                                   {{ 'checked' if current_user.deadline_alert_email else '' }}>
+                            <label class="form-check-label" for="deadline_alert_email">
+                                <i class="fas fa-envelope text-primary me-2"></i>
+                                <strong>Notificações por E-mail</strong>
+                                <br>
+                                <small class="text-muted">Receba alertas no seu e-mail cadastrado ({{ current_user.email }})</small>
+                            </label>
+                        </div>
+                        
+                        <!-- Push (Web) -->
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="deadline_alert_push" name="deadline_alert_push"
+                                   {{ 'checked' if current_user.deadline_alert_push else '' }}>
+                            <label class="form-check-label" for="deadline_alert_push">
+                                <i class="fas fa-mobile-alt text-success me-2"></i>
+                                <strong>Notificações Push (Navegador)</strong>
+                                <br>
+                                <small class="text-muted">Receba alertas no navegador mesmo quando não estiver na página</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Preview -->
+                <div class="card shadow-sm mb-4 border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-eye me-2"></i>
+                            Exemplo de Alerta
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning mb-0">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                                <div>
+                                    <strong>Prazo se aproximando!</strong>
+                                    <p class="mb-0 small">
+                                        O prazo "Contestação - Ação de Cobrança nº 0001234-00.2025.8.26.0100" 
+                                        vence em <strong><span id="previewDays">{{ current_user.deadline_alert_days or 10 }}</span> dias</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botões -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Salvar Configurações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Atualizar preview quando mudar os dias
+    const daysInput = document.getElementById('deadline_alert_days');
+    const previewDays = document.getElementById('previewDays');
+    
+    if (daysInput && previewDays) {
+        daysInput.addEventListener('input', function() {
+            let value = parseInt(this.value) || 10;
+            value = Math.max(1, Math.min(30, value));
+            previewDays.textContent = value;
+        });
+    }
+    
+    // Desabilitar canais quando alertas estão desabilitados
+    const enabledSwitch = document.getElementById('deadline_alert_enabled');
+    const emailCheck = document.getElementById('deadline_alert_email');
+    const pushCheck = document.getElementById('deadline_alert_push');
+    
+    function toggleChannels() {
+        const enabled = enabledSwitch.checked;
+        emailCheck.disabled = !enabled;
+        pushCheck.disabled = !enabled;
+        daysInput.disabled = !enabled;
+        
+        if (!enabled) {
+            emailCheck.parentElement.classList.add('text-muted');
+            pushCheck.parentElement.classList.add('text-muted');
+        } else {
+            emailCheck.parentElement.classList.remove('text-muted');
+            pushCheck.parentElement.classList.remove('text-muted');
+        }
+    }
+    
+    if (enabledSwitch) {
+        enabledSwitch.addEventListener('change', toggleChannels);
+        toggleChannels(); // Estado inicial
+    }
+});
+</script>
+{% endblock %}

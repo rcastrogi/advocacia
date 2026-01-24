@@ -490,9 +490,53 @@ def get_report(report_type):
 @bp.route("/api/analytics/dashboard", methods=["GET"])
 @login_required
 @lawyer_required
-def get_dashboard_analytics():
+def get_dashboard_analytics_api():
     """API para obter analytics do dashboard."""
 
     analytics = get_dashboard_analytics(current_user.id)
 
     return jsonify(analytics)
+
+
+# =============================================================================
+# API DataJud - Consulta de Processos
+# =============================================================================
+
+@bp.route("/api/datajud/search", methods=["POST"])
+@login_required
+@lawyer_required
+def search_datajud():
+    """
+    Consulta informações de um processo na API pública do DataJud.
+    
+    Body JSON:
+        - process_number: Número do processo (obrigatório)
+        - tribunal: Sigla do tribunal (opcional, detectado automaticamente)
+    
+    Returns:
+        Dados do processo mapeados para o formulário ou mensagem de erro.
+    """
+    from app.services.datajud_service import DataJudService
+    
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({
+            "success": False,
+            "message": "Dados não fornecidos."
+        }), 400
+    
+    process_number = data.get("process_number", "").strip()
+    tribunal = data.get("tribunal", "").strip() or None
+    
+    if not process_number:
+        return jsonify({
+            "success": False,
+            "message": "Número do processo é obrigatório."
+        }), 400
+    
+    # Consulta DataJud
+    result = DataJudService.search_process(process_number, tribunal)
+    
+    # Sempre retorna 200 - success indica se encontrou ou não
+    return jsonify(result)

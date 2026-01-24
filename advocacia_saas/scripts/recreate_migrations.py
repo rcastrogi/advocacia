@@ -18,8 +18,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.stdout.reconfigure(encoding="utf-8")
 
-from app import create_app
-from app.models import db
+from app import create_app  # noqa: E402
+from app.models import db  # noqa: E402
 
 
 def get_all_tables():

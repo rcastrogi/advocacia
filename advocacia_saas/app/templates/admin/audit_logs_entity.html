@@ -90,13 +90,13 @@
                                                 {% if log.old_values %}
                                                 <div class="mb-2">
                                                     <strong class="text-danger">Antes:</strong>
-                                                    <pre class="bg-light p-2 rounded small"><code>{{ log.old_values|tojson(indent=2) }}</code></pre>
+                                                    <pre class="bg-light p-2 rounded small"><code>{{ log.old_values }}</code></pre>
                                                 </div>
                                                 {% endif %}
                                                 {% if log.new_values %}
                                                 <div class="mb-2">
                                                     <strong class="text-success">Depois:</strong>
-                                                    <pre class="bg-light p-2 rounded small"><code>{{ log.new_values|tojson(indent=2) }}</code></pre>
+                                                    <pre class="bg-light p-2 rounded small"><code>{{ log.new_values }}</code></pre>
                                                 </div>
                                                 {% endif %}
                                             </div>

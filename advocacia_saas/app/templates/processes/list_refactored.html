@@ -109,15 +109,15 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <a href="{{ url_for('process_management.movements', process_id=process.id) }}"
+                                    <a href="{{ url_for('processes.movements', process_id=process.id) }}"
                                        class="btn btn-outline-secondary" title="Andamentos">
                                         <i class="fas fa-history"></i>
                                     </a>
-                                    <a href="{{ url_for('process_management.costs', process_id=process.id) }}"
+                                    <a href="{{ url_for('processes.costs', process_id=process.id) }}"
                                        class="btn btn-outline-success" title="Custos">
                                         <i class="fas fa-dollar-sign"></i>
                                     </a>
-                                    <a href="{{ url_for('process_management.attachments', process_id=process.id) }}"
+                                    <a href="{{ url_for('processes.attachments', process_id=process.id) }}"
                                        class="btn btn-outline-info" title="Anexos">
                                         <i class="fas fa-paperclip"></i>
                                     </a>

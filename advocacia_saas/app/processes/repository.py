@@ -7,10 +7,17 @@ Operações de banco de dados para processos judiciais.
 from datetime import date, timedelta
 from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from app import db
-from app.models import Client, Process, SavedPetition
+from app.models import Client, Process, SavedPetition, User
+
+
+def get_office_user_ids(user: User) -> List[int]:
+    """Retorna IDs de todos os usuários do mesmo escritório."""
+    if not user.office_id:
+        return [user.id]
+    return [u.id for u in User.query.filter_by(office_id=user.office_id).all()]
 
 
 class ProcessRepository:
@@ -23,8 +30,16 @@ class ProcessRepository:
 
     @staticmethod
     def find_by_id_and_user(process_id: int, user_id: int) -> Optional[Process]:
-        """Busca processo pelo ID e usuário."""
-        return Process.query.filter_by(id=process_id, user_id=user_id).first()
+        """Busca processo pelo ID e usuário (considera escritório)."""
+        user = User.query.get(user_id)
+        if not user:
+            return None
+        
+        office_user_ids = get_office_user_ids(user)
+        return Process.query.filter(
+            Process.id == process_id,
+            Process.user_id.in_(office_user_ids)
+        ).first()
 
     @staticmethod
     def find_by_number(process_number: str) -> Optional[Process]:
@@ -43,9 +58,14 @@ class ProcessRepository:
 
     @staticmethod
     def get_recent(user_id: int, limit: int = 10) -> List[Process]:
-        """Lista processos recentes."""
+        """Lista processos recentes (considera escritório)."""
+        user = User.query.get(user_id)
+        if not user:
+            return []
+        
+        office_user_ids = get_office_user_ids(user)
         return (
-            Process.query.filter_by(user_id=user_id)
+            Process.query.filter(Process.user_id.in_(office_user_ids))
             .order_by(Process.updated_at.desc())
             .limit(limit)
             .all()
@@ -53,22 +73,32 @@ class ProcessRepository:
 
     @staticmethod
     def get_with_urgent_deadlines(user_id: int, days: int = 7) -> int:
-        """Conta processos com prazos urgentes."""
+        """Conta processos com prazos urgentes (considera escritório)."""
+        user = User.query.get(user_id)
+        if not user:
+            return 0
+        
+        office_user_ids = get_office_user_ids(user)
         today = date.today()
         deadline_limit = today + timedelta(days=days)
 
         return Process.query.filter(
-            Process.user_id == user_id,
+            Process.user_id.in_(office_user_ids),
             Process.next_deadline.isnot(None),
             Process.next_deadline <= deadline_limit,
         ).count()
 
     @staticmethod
     def get_grouped_by_status(user_id: int) -> Dict[str, int]:
-        """Agrupa processos por status."""
+        """Agrupa processos por status (considera escritório)."""
+        user = User.query.get(user_id)
+        if not user:
+            return {}
+        
+        office_user_ids = get_office_user_ids(user)
         results = (
             db.session.query(Process.status, func.count(Process.id).label("count"))
-            .filter_by(user_id=user_id)
+            .filter(Process.user_id.in_(office_user_ids))
             .group_by(Process.status)
             .all()
         )
@@ -80,8 +110,13 @@ class ProcessRepository:
         status: Optional[str] = None,
         search_term: Optional[str] = None,
     ):
-        """Busca processos com filtros."""
-        query = Process.query.filter_by(user_id=user_id)
+        """Busca processos com filtros (considera escritório)."""
+        user = User.query.get(user_id)
+        if not user:
+            return Process.query.filter(False)  # Query vazia
+        
+        office_user_ids = get_office_user_ids(user)
+        query = Process.query.filter(Process.user_id.in_(office_user_ids))
 
         if status:
             query = query.filter_by(status=status)

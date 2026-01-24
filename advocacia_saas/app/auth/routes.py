@@ -605,3 +605,38 @@ def verify_2fa():
             flash("Código 2FA inválido.", "error")
 
     return render_template("auth/verify_2fa.html", form=form, user_email=user_email)
+
+
+# =============================================================================
+# NOTIFICATION SETTINGS
+# =============================================================================
+
+
+@bp.route("/settings/notifications", methods=["GET", "POST"])
+@login_required
+def notification_settings():
+    """Configurações de notificações do usuário."""
+    from app import db
+    
+    if request.method == "POST":
+        # Validar e sanitizar inputs
+        try:
+            alert_days = int(request.form.get("deadline_alert_days", 10))
+            alert_days = max(1, min(30, alert_days))  # Entre 1 e 30 dias
+        except (ValueError, TypeError):
+            alert_days = 10
+        
+        # Atualizar configurações
+        current_user.deadline_alert_days = alert_days
+        current_user.deadline_alert_enabled = "deadline_alert_enabled" in request.form
+        current_user.deadline_alert_email = "deadline_alert_email" in request.form
+        current_user.deadline_alert_push = "deadline_alert_push" in request.form
+        
+        db.session.commit()
+        flash("Configurações de notificação atualizadas com sucesso!", "success")
+        return redirect(url_for("auth.notification_settings"))
+    
+    return render_template(
+        "auth/notification_settings.html",
+        title="Configurações de Notificação",
+    )

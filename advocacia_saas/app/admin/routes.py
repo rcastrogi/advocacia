@@ -29,6 +29,21 @@ from sqlalchemy import and_, func
 
 from app import db, limiter
 from app.admin import bp
+from app.admin.repository import (
+    AdminSessionManager,
+    AICreditConfigRepository,
+    AIGenerationFeedbackRepository,
+    CouponRepository,
+    PetitionModelAdminRepository,
+    PetitionSectionAdminRepository,
+    PetitionTypeAdminRepository,
+    RoadmapCategoryRepository,
+    RoadmapFeedbackRepository,
+    RoadmapItemRepository,
+    TemplateExampleRepository,
+    UserAdminRepository,
+    UserCreditsAdminRepository,
+)
 from app.decorators import master_required, validate_with_schema
 from app.models import (
     AICreditConfig,
@@ -428,16 +443,18 @@ def toggle_user_status(user_id):
     """Ativa/desativa um usuário"""
     _require_admin()
 
-    user = User.query.get_or_404(user_id)
+    user = UserAdminRepository.get_by_id(user_id)
+    if not user:
+        flash("Usuário não encontrado.", "danger")
+        return redirect(url_for("admin.users_list"))
 
     if user.user_type in ["master", "admin"]:
         flash("Não é possível desativar um usuário administrador.", "danger")
         return redirect(url_for("admin.users_list"))
 
-    user.is_active = not user.is_active
-    db.session.commit()
+    is_active = UserAdminRepository.toggle_status(user)
 
-    status = "ativado" if user.is_active else "desativado"
+    status = "ativado" if is_active else "desativado"
     flash(f"Usuário {user.username} foi {status} com sucesso.", "success")
 
     return redirect(url_for("admin.user_detail", user_id=user_id))
@@ -449,7 +466,11 @@ def add_user_credits(user_id):
     """Adiciona créditos de IA para um usuário (bônus admin)"""
     _require_admin()
 
-    user = User.query.get_or_404(user_id)
+    user = UserAdminRepository.get_by_id(user_id)
+    if not user:
+        flash("Usuário não encontrado.", "danger")
+        return redirect(url_for("admin.users_list"))
+
     amount = request.form.get("amount", 0, type=int)
     reason = request.form.get("reason", "Bônus administrativo")
 
@@ -457,22 +478,8 @@ def add_user_credits(user_id):
         flash("A quantidade de créditos deve ser maior que zero.", "danger")
         return redirect(url_for("admin.user_detail", user_id=user_id))
 
-    # Obtém ou cria registro de créditos
-    user_credits = UserCredits.get_or_create(user.id)
-
-    # Adiciona os créditos
-    new_balance = user_credits.add_credits(amount, source="bonus")
-
-    # Registra a transação
-    transaction = CreditTransaction(
-        user_id=user.id,
-        transaction_type="bonus",
-        amount=amount,
-        balance_after=new_balance,
-        description=f"Bônus admin: {reason}",
-    )
-    db.session.add(transaction)
-    db.session.commit()
+    # Adiciona os créditos via repository
+    new_balance = UserCreditsAdminRepository.add_credits(user.id, amount, reason)
 
     flash(
         f"{amount} créditos adicionados para {user.username}. Novo saldo: {new_balance}",
@@ -488,7 +495,11 @@ def manage_user_trial(user_id):
     """Gerencia o período de trial de um usuário"""
     _require_admin()
 
-    user = User.query.get_or_404(user_id)
+    user = UserAdminRepository.get_by_id(user_id)
+    if not user:
+        flash("Usuário não encontrado.", "danger")
+        return redirect(url_for("admin.users_list"))
+
     action = request.form.get("action")
 
     if action == "start":
@@ -499,7 +510,7 @@ def manage_user_trial(user_id):
             flash("A quantidade de dias deve ser maior que zero.", "danger")
         else:
             user.start_trial(days)
-            db.session.commit()
+            AdminSessionManager.commit()
             flash(
                 f"Período de teste de {days} dias iniciado para {user.username}.",
                 "success",
@@ -507,7 +518,7 @@ def manage_user_trial(user_id):
 
     elif action == "end":
         user.end_trial()
-        db.session.commit()
+        AdminSessionManager.commit()
         flash(f"Período de teste encerrado para {user.username}.", "success")
 
     elif action == "extend":
@@ -517,7 +528,7 @@ def manage_user_trial(user_id):
         else:
             if user.trial_active and user.trial_days:
                 user.trial_days += additional_days
-                db.session.commit()
+                AdminSessionManager.commit()
                 flash(
                     f"Trial estendido em {additional_days} dias para {user.username}.",
                     "success",
@@ -2246,20 +2257,17 @@ def petition_section_new():
         )
 
         try:
-            # Criar seção
-            section = PetitionSection(
-                name=name,
-                slug=slug,
-                description=description,
-                icon=icon,
-                color=color,
-                order=order,
-                is_active=is_active,
-                fields_schema=fields_schema,
-            )
-
-            db.session.add(section)
-            db.session.commit()
+            # Criar seção via repository
+            section = PetitionSectionAdminRepository.create({
+                "name": name,
+                "slug": slug,
+                "description": description,
+                "icon": icon,
+                "color": color,
+                "order": order,
+                "is_active": is_active,
+                "fields_schema": fields_schema,
+            })
             current_app.logger.info(
                 f"✅ [SECTIONS] Seção criada com sucesso - ID: {section.id}"
             )
@@ -2271,7 +2279,7 @@ def petition_section_new():
             current_app.logger.error(
                 f"❌ [SECTIONS] Traceback: {traceback.format_exc()}"
             )
-            db.session.rollback()
+            AdminSessionManager.rollback()
             flash("Erro ao criar seção.", "danger")
             return redirect(url_for("admin.petition_section_new"))
 
@@ -2351,7 +2359,7 @@ def petition_section_edit(section_id):
                 )
                 # Não alterar o fields_schema se houver erro de parse
 
-            db.session.commit()
+            AdminSessionManager.commit()
             current_app.logger.info(
                 f"✅ [SECTIONS] Seção atualizada com sucesso - ID: {section_id}"
             )
@@ -2365,7 +2373,7 @@ def petition_section_edit(section_id):
             current_app.logger.error(
                 f"❌ [SECTIONS] Traceback: {traceback.format_exc()}"
             )
-            db.session.rollback()
+            AdminSessionManager.rollback()
             flash("Erro ao atualizar seção.", "danger")
             return redirect(
                 url_for("admin.petition_section_edit", section_id=section_id)
@@ -2393,16 +2401,17 @@ def petition_section_delete(section_id):
     _require_admin()
     current_app.logger.info("✅ [SECTIONS] Usuário admin autenticado")
 
-    try:
-        section = PetitionSection.query.get_or_404(section_id)
-        current_app.logger.info(
-            f"📋 [SECTIONS] Seção encontrada para exclusão: {section.name} (ID: {section.id})"
-        )
-    except Exception as e:
+    section = PetitionSectionAdminRepository.get_by_id(section_id)
+    if not section:
         current_app.logger.error(
-            f"❌ [SECTIONS] Seção não encontrada para exclusão - ID: {section_id}, Erro: {str(e)}"
+            f"❌ [SECTIONS] Seção não encontrada para exclusão - ID: {section_id}"
         )
-        raise
+        flash("Seção não encontrada.", "danger")
+        return redirect(url_for("admin.petition_sections_list"))
+
+    current_app.logger.info(
+        f"📋 [SECTIONS] Seção encontrada para exclusão: {section.name} (ID: {section.id})"
+    )
 
     try:
         # Verificar se a seção está sendo usada em modelos
@@ -2421,8 +2430,7 @@ def petition_section_delete(section_id):
             )
             return redirect(url_for("admin.petition_sections_list"))
 
-        db.session.delete(section)
-        db.session.commit()
+        PetitionSectionAdminRepository.delete(section)
         current_app.logger.info(
             f"✅ [SECTIONS] Seção excluída com sucesso - ID: {section_id}"
         )
@@ -2434,7 +2442,7 @@ def petition_section_delete(section_id):
             f"❌ [SECTIONS] Erro ao excluir seção {section_id}: {str(e)}"
         )
         current_app.logger.error(f"❌ [SECTIONS] Traceback: {traceback.format_exc()}")
-        db.session.rollback()
+        AdminSessionManager.rollback()
         flash("Erro ao excluir seção.", "danger")
         return redirect(url_for("admin.petition_sections_list"))
 
@@ -2660,16 +2668,19 @@ def petition_section_editor_save():
 
         if section_id:
             # Editar seção existente
-            section = PetitionSection.query.get_or_404(section_id)
-            section.name = name
-            section.description = description
-            section.icon = icon
-            section.color = color
-            section.order = order
-            section.is_active = is_active
-            section.fields_schema = validated_fields
-
-            db.session.commit()
+            section = PetitionSectionAdminRepository.get_by_id(section_id)
+            if not section:
+                return jsonify({"success": False, "error": "Seção não encontrada"}), 404
+            
+            PetitionSectionAdminRepository.update(section, {
+                "name": name,
+                "description": description,
+                "icon": icon,
+                "color": color,
+                "order": order,
+                "is_active": is_active,
+                "fields_schema": validated_fields,
+            })
 
             current_app.logger.info(
                 f"[EDITOR] Seção atualizada via editor visual - ID: {section.id}"
@@ -2686,19 +2697,16 @@ def petition_section_editor_save():
             # Criar nova seção
             slug = generate_unique_slug(name, PetitionSection)
 
-            section = PetitionSection(
-                name=name,
-                slug=slug,
-                description=description,
-                icon=icon,
-                color=color,
-                order=order,
-                is_active=is_active,
-                fields_schema=validated_fields,
-            )
-
-            db.session.add(section)
-            db.session.commit()
+            section = PetitionSectionAdminRepository.create({
+                "name": name,
+                "slug": slug,
+                "description": description,
+                "icon": icon,
+                "color": color,
+                "order": order,
+                "is_active": is_active,
+                "fields_schema": validated_fields,
+            })
 
             current_app.logger.info(
                 f"[EDITOR] Seção criada via editor visual - ID: {section.id}"
@@ -2714,7 +2722,7 @@ def petition_section_editor_save():
 
     except Exception as e:
         current_app.logger.error(f"[EDITOR] Erro ao salvar seção: {str(e)}")
-        db.session.rollback()
+        AdminSessionManager.rollback()
         return jsonify({"success": False, "error": "Erro ao salvar seção"}), 500
 
 
@@ -2840,20 +2848,18 @@ def petition_type_new():
         # Gerar slug único baseado no nome
         slug = generate_unique_slug(data["name"], PetitionType)
 
-        petition_type = PetitionType(
-            name=data["name"],
-            slug=slug,
-            description=data.get("description"),
-            category=data.get("category", "civel"),
-            icon=data.get("icon", "fa-file-alt"),
-            color=data.get("color", "primary"),
-            is_billable=data.get("is_billable", False),
-            base_price=Decimal(data.get("base_price", "0.00")),
-            use_dynamic_form=data.get("use_dynamic_form", False),
-        )
-
-        db.session.add(petition_type)
-        db.session.commit()
+        # Criar via repository
+        PetitionTypeAdminRepository.create({
+            "name": data["name"],
+            "slug": slug,
+            "description": data.get("description"),
+            "category": data.get("category", "civel"),
+            "icon": data.get("icon", "fa-file-alt"),
+            "color": data.get("color", "primary"),
+            "is_billable": data.get("is_billable", False),
+            "base_price": Decimal(data.get("base_price", "0.00")),
+            "use_dynamic_form": data.get("use_dynamic_form", False),
+        })
 
         flash(f"Tipo de petição '{data['name']}' criado com sucesso!", "success")
         return redirect(url_for("admin.petition_types_list"))
@@ -2872,7 +2878,10 @@ def petition_type_edit(type_id):
     """Editar tipo de petição"""
     _require_admin()
 
-    petition_type = PetitionType.query.get_or_404(type_id)
+    petition_type = PetitionTypeAdminRepository.get_by_id(type_id)
+    if not petition_type:
+        flash("Tipo de petição não encontrado.", "danger")
+        return redirect(url_for("admin.petition_types_list"))
 
     if request.method == "POST":
         # Dados já foram validados!
@@ -2891,24 +2900,20 @@ def petition_type_edit(type_id):
         # Gerar slug único baseado no nome, considerando o slug atual
         new_slug = generate_unique_slug(name, PetitionType, petition_type.slug)
 
-        petition_type.name = name
-        petition_type.slug = new_slug
-        petition_type.description = description
-        petition_type.category = category
-        petition_type.icon = icon
-        petition_type.color = color
-        petition_type.is_billable = is_billable
-        petition_type.base_price = base_price
-        petition_type.use_dynamic_form = use_dynamic_form
-        petition_type.is_active = is_active
+        # Atualizar via repository
+        PetitionTypeAdminRepository.update(petition_type, {
+            "name": name,
+            "slug": new_slug,
+            "description": description,
+            "category": category,
+            "icon": icon,
+            "color": color,
+            "is_billable": is_billable,
+            "base_price": base_price,
+            "use_dynamic_form": use_dynamic_form,
+            "is_active": is_active,
+        })
 
-        # Validar slug único (exceto para o próprio)
-        existing = PetitionType.query.filter_by(slug=petition_type.slug).first()
-        if existing and existing.id != petition_type.id:
-            flash("Slug já existe. Escolha outro.", "danger")
-            return redirect(request.url)
-
-        db.session.commit()
         flash(f"Tipo de petição '{petition_type.name}' atualizado!", "success")
         return redirect(url_for("admin.petition_types_list"))
 
@@ -2927,7 +2932,10 @@ def petition_type_delete(type_id):
     """Excluir tipo de petição"""
     _require_admin()
 
-    petition_type = PetitionType.query.get_or_404(type_id)
+    petition_type = PetitionTypeAdminRepository.get_by_id(type_id)
+    if not petition_type:
+        flash("Tipo de petição não encontrado.", "danger")
+        return redirect(url_for("admin.petition_types_list"))
 
     # Verificar se há petições salvas usando este tipo
     saved_count = SavedPetition.query.filter_by(petition_type_id=type_id).count()
@@ -2938,8 +2946,7 @@ def petition_type_delete(type_id):
         )
         return redirect(url_for("admin.petition_types_list"))
 
-    db.session.delete(petition_type)
-    db.session.commit()
+    PetitionTypeAdminRepository.delete(petition_type)
 
     flash(f"Tipo de petição '{petition_type.name}' excluído!", "success")
     return redirect(url_for("admin.petition_types_list"))
@@ -3225,17 +3232,14 @@ def new_roadmap_category():
             if not isinstance(color, str):
                 color = str(color)
 
-            category = RoadmapCategory(
-                name=name,
-                slug=slug,
-                description=description,
-                icon=icon,
-                color=color,
-                order=order,
-            )
-
-            db.session.add(category)
-            db.session.commit()
+            category = RoadmapCategoryRepository.create({
+                "name": name,
+                "slug": slug,
+                "description": description,
+                "icon": icon,
+                "color": color,
+                "order": order,
+            })
 
             flash("Categoria criada com sucesso!", "success")
             return redirect(url_for("admin.roadmap_categories"))
@@ -3305,7 +3309,7 @@ def edit_roadmap_category(category_id):
                 flash("Slug já existe. Escolha outro.", "error")
                 return redirect(request.url)
 
-            db.session.commit()
+            AdminSessionManager.commit()
             flash("Categoria atualizada com sucesso!", "success")
             return redirect(url_for("admin.roadmap_categories"))
         except Exception as e:
@@ -3339,8 +3343,7 @@ def delete_roadmap_category(category_id):
         flash("Não é possível excluir categoria com itens associados.", "error")
         return redirect(url_for("admin.roadmap_categories"))
 
-    db.session.delete(category)
-    db.session.commit()
+    RoadmapCategoryRepository.delete(category)
 
     flash("Categoria excluída com sucesso!", "success")
     return redirect(url_for("admin.roadmap_categories"))
@@ -3473,33 +3476,30 @@ def new_roadmap_item():
                 flash("Slug já existe. Escolha outro.", "error")
                 return redirect(request.url)
 
-            item = RoadmapItem(
-                category_id=category_id,
-                title=title,
-                slug=slug,
-                description=description,
-                detailed_description=detailed_description,
-                status=status,
-                priority=priority,
-                estimated_effort=estimated_effort,
-                visible_to_users=visible_to_users,
-                internal_only=internal_only,
-                show_new_badge=show_new_badge,
-                planned_start_date=planned_start_date,
-                planned_completion_date=planned_completion_date,
-                business_value=business_value,
-                technical_complexity=technical_complexity,
-                user_impact=user_impact,
-                dependencies=dependencies,
-                blockers=blockers,
-                tags=tags,
-                notes=notes,
-                assigned_to=assigned_to,
-                created_by=current_user.id,
-            )
-
-            db.session.add(item)
-            db.session.commit()
+            item = RoadmapItemRepository.create({
+                "category_id": category_id,
+                "title": title,
+                "slug": slug,
+                "description": description,
+                "detailed_description": detailed_description,
+                "status": status,
+                "priority": priority,
+                "estimated_effort": estimated_effort,
+                "visible_to_users": visible_to_users,
+                "internal_only": internal_only,
+                "show_new_badge": show_new_badge,
+                "planned_start_date": planned_start_date,
+                "planned_completion_date": planned_completion_date,
+                "business_value": business_value,
+                "technical_complexity": technical_complexity,
+                "user_impact": user_impact,
+                "dependencies": dependencies,
+                "blockers": blockers,
+                "tags": tags,
+                "notes": notes,
+                "assigned_to": assigned_to,
+                "created_by": current_user.id,
+            })
 
             flash("Item do roadmap criado com sucesso!", "success")
             return redirect(url_for("admin.roadmap_items"))
@@ -3593,7 +3593,7 @@ def edit_roadmap_item(item_id):
                 flash("Slug já existe. Escolha outro.", "error")
                 return redirect(request.url)
 
-            db.session.commit()
+            AdminSessionManager.commit()
             logger.info(f"✅ Roadmap item {item_id} atualizado com sucesso")
             flash("Item do roadmap atualizado com sucesso!", "success")
             return redirect(url_for("admin.roadmap_items"))
@@ -3630,10 +3630,11 @@ def delete_roadmap_item(item_id):
     """Excluir item do roadmap"""
     _require_admin()
 
-    item = RoadmapItem.query.get_or_404(item_id)
+    item = RoadmapItemRepository.get_by_id(item_id)
+    if not item:
+        abort(404)
 
-    db.session.delete(item)
-    db.session.commit()
+    RoadmapItemRepository.delete(item)
 
     flash("Item do roadmap excluído com sucesso!", "success")
     return redirect(url_for("admin.roadmap_items"))
@@ -3647,10 +3648,11 @@ def toggle_roadmap_item_visibility(item_id):
     """Alternar visibilidade do item para usuários"""
     _require_admin()
 
-    item = RoadmapItem.query.get_or_404(item_id)
-    item.visible_to_users = not item.visible_to_users
-
-    db.session.commit()
+    item = RoadmapItemRepository.get_by_id(item_id)
+    if not item:
+        abort(404)
+    
+    RoadmapItemRepository.toggle_visibility(item)
 
     status = "visível" if item.visible_to_users else "oculto"
     flash(f"Item agora {status} para usuários.", "success")
@@ -3834,14 +3836,16 @@ def roadmap_feedback_status(feedback_id):
     """Atualiza status do feedback"""
     _require_admin()
 
-    feedback = RoadmapFeedback.query.get_or_404(feedback_id)
+    feedback = RoadmapFeedbackRepository.get_by_id(feedback_id)
+    if not feedback:
+        abort(404)
     new_status = request.form.get("status")
 
     if new_status in ["pending", "reviewed", "addressed", "dismissed"]:
         feedback.status = new_status
         if new_status == "reviewed":
             feedback.mark_as_reviewed(current_user)
-        db.session.commit()
+        AdminSessionManager.commit()
         flash(
             f"Status do feedback atualizado para '{feedback.get_status_display()[0]}'.",
             "success",
@@ -3858,9 +3862,10 @@ def roadmap_feedback_toggle_featured(feedback_id):
     """Alterna status de destaque do feedback"""
     _require_admin()
 
-    feedback = RoadmapFeedback.query.get_or_404(feedback_id)
-    feedback.is_featured = not feedback.is_featured
-    db.session.commit()
+    feedback = RoadmapFeedbackRepository.get_by_id(feedback_id)
+    if not feedback:
+        abort(404)
+    RoadmapFeedbackRepository.toggle_featured(feedback)
 
     status = "destacado" if feedback.is_featured else "removido dos destaques"
     flash(f"Feedback {status} com sucesso!", "success")
@@ -4009,18 +4014,15 @@ def petition_model_new():
         # Gerar slug único baseado no nome
         slug = generate_unique_slug(f"Modelo - {name}", PetitionModel)
 
-        petition_model = PetitionModel(
-            name=f"Modelo - {name}",
-            slug=slug,
-            description=description,
-            petition_type_id=petition_type_id,
-            is_active=is_active,
-            use_dynamic_form=use_dynamic_form,
-            template_content=template_content,
-        )
-
-        db.session.add(petition_model)
-        db.session.commit()
+        petition_model = PetitionModelAdminRepository.create({
+            "name": f"Modelo - {name}",
+            "slug": slug,
+            "description": description,
+            "petition_type_id": petition_type_id,
+            "is_active": is_active,
+            "use_dynamic_form": use_dynamic_form,
+            "template_content": template_content,
+        })
         current_app.logger.info(
             f"Modelo criado com sucesso: {petition_model.name} (ID: {petition_model.id})"
         )
@@ -4043,15 +4045,7 @@ def petition_model_new():
             )
 
             # Adicionar seções na ordem especificada
-            for order, section_id in enumerate(section_ids, 1):
-                section = PetitionSection.query.get(section_id)
-                if section:
-                    model_section = PetitionModelSection(
-                        petition_model=petition_model, section=section, order=order
-                    )
-                    db.session.add(model_section)
-
-            db.session.commit()
+            PetitionModelAdminRepository.add_sections(petition_model, section_ids)
 
         flash("Modelo de petição criado com sucesso!", "success")
         return redirect(url_for("admin.petition_models_list"))
@@ -4155,33 +4149,17 @@ def petition_model_edit(model_id):
                     f"Atualizando seções do modelo {model_id}: {section_ids}"
                 )
 
-                # Remover todas as seções atuais (uso seguro da API)
-                try:
-                    # Prefer explicit query delete para evitar problemas quando a relação não for dinâmica
-                    PetitionModelSection.query.filter_by(
-                        petition_model_id=model_id
-                    ).delete(synchronize_session=False)
-                except Exception as ex_del:
-                    current_app.logger.error(
-                        f"Erro ao limpar seções antigas do modelo {model_id}: {ex_del}"
-                    )
+                # Remover todas as seções atuais
+                PetitionModelAdminRepository.clear_sections(petition_model)
 
                 # Adicionar seções na nova ordem
-                for order, section_id in enumerate(section_ids, 1):
-                    section = PetitionSection.query.get(section_id)
-                    if section:
-                        model_section = PetitionModelSection(
-                            petition_model=petition_model, section=section, order=order
-                        )
-                        db.session.add(model_section)
+                PetitionModelAdminRepository.add_sections(petition_model, section_ids)
 
-            db.session.add(petition_model)  # Garantir que o modelo esteja na sessão
-            current_app.logger.info(f"Committing changes for model {model_id}")
-            db.session.commit()
+            AdminSessionManager.commit()
             current_app.logger.info(f"Commit successful for model {model_id}")
             flash("Modelo de petição atualizado com sucesso!", "success")
         except Exception as e:
-            db.session.rollback()
+            AdminSessionManager.rollback()
             current_app.logger.error(f"Erro ao salvar modelo {model_id}: {str(e)}")
             flash(f"Erro ao salvar: {str(e)}", "error")
             return redirect(request.url)
@@ -4203,7 +4181,9 @@ def petition_model_add_section(model_id):
     """Adicionar seção ao modelo de petição"""
     _require_admin()
 
-    petition_model = PetitionModel.query.get_or_404(model_id)
+    petition_model = PetitionModelAdminRepository.get_by_id(model_id)
+    if not petition_model:
+        abort(404)
     section_id = request.form.get("section_id", type=int)
 
     current_app.logger.info(f"Adicionando seção {section_id} ao modelo {model_id}")
@@ -4212,7 +4192,9 @@ def petition_model_add_section(model_id):
         flash("Seção não especificada.", "danger")
         return redirect(url_for("admin.petition_model_edit", model_id=model_id))
 
-    section = PetitionSection.query.get_or_404(section_id)
+    section = PetitionSectionAdminRepository.get_by_id(section_id)
+    if not section:
+        abort(404)
 
     # Verificar se já existe
     existing = PetitionModelSection.query.filter_by(
@@ -4231,16 +4213,7 @@ def petition_model_add_section(model_id):
         or 0
     )
 
-    model_section = PetitionModelSection(
-        petition_model_id=model_id,
-        section_id=section_id,
-        order=max_order + 1,
-        is_required=False,
-        is_expanded=True,
-    )
-
-    db.session.add(model_section)
-    db.session.commit()
+    PetitionModelAdminRepository.add_section(petition_model, section, max_order + 1)
 
     flash(f"Seção '{section.name}' adicionada ao modelo.", "success")
     return redirect(url_for("admin.petition_model_edit", model_id=model_id))
@@ -4262,8 +4235,7 @@ def petition_model_remove_section(model_id, section_id):
     current_app.logger.info(f"Removendo seção {section_id} do modelo {model_id}")
 
     section_name = model_section.section.name
-    db.session.delete(model_section)
-    db.session.commit()
+    PetitionModelAdminRepository.remove_section(model_section)
 
     flash(f"Seção '{section_name}' removida do modelo.", "success")
     return redirect(url_for("admin.petition_model_edit", model_id=model_id))
@@ -4275,24 +4247,22 @@ def petition_model_update_section_order(model_id):
     """Atualizar ordem das seções do modelo de petição"""
     _require_admin()
 
-    petition_model = PetitionModel.query.get_or_404(model_id)
+    petition_model = PetitionModelAdminRepository.get_by_id(model_id)
+    if not petition_model:
+        abort(404)
     section_orders = request.form.getlist("section_order[]")
 
     current_app.logger.info(
         f"Atualizando ordem das seções do modelo {model_id}: {section_orders}"
     )
 
-    # Atualizar ordem para cada seção
-    for i, order in enumerate(section_orders):
+    # Extrair IDs de seção da string de ordem
+    section_ids = []
+    for order in section_orders:
         section_id = int(order.split("-")[1])  # formato: order-section_id
-        model_section = PetitionModelSection.query.filter_by(
-            petition_model_id=model_id, section_id=section_id
-        ).first()
+        section_ids.append(section_id)
 
-        if model_section:
-            model_section.order = i + 1
-
-    db.session.commit()
+    PetitionModelAdminRepository.reorder_sections(petition_model, section_ids)
     return jsonify({"success": True})
 
 
@@ -4304,7 +4274,9 @@ def petition_model_delete(model_id):
     """Excluir modelo de petição"""
     _require_admin()
 
-    petition_model = PetitionModel.query.get_or_404(model_id)
+    petition_model = PetitionModelAdminRepository.get_by_id(model_id)
+    if not petition_model:
+        abort(404)
 
     # Verificar se há petições usando este modelo
     if petition_model.petitions:
@@ -4313,8 +4285,7 @@ def petition_model_delete(model_id):
         )
         return redirect(url_for("admin.petition_models_list"))
 
-    db.session.delete(petition_model)
-    db.session.commit()
+    PetitionModelAdminRepository.delete(petition_model)
 
     flash("Modelo de petição excluído com sucesso!", "success")
     return redirect(url_for("admin.petition_models_list"))
@@ -5175,21 +5146,18 @@ def petition_template_feedback():
     data = request.get_json() or {}
 
     try:
-        feedback = AIGenerationFeedback(
-            petition_model_id=data.get("model_id"),
-            generated_template=data.get("template", ""),
-            rating=data.get("rating", 3),
-            feedback_type=data.get("feedback_type", "neutral"),
-            feedback_text=data.get("feedback_text"),
-            action_taken=data.get("action_taken"),
-            edited_template=data.get("edited_template"),
-            prompt_used=data.get("prompt_used"),
-            sections_used=data.get("sections_used"),
-            user_id=current_user.id,
-        )
-
-        db.session.add(feedback)
-        db.session.commit()
+        feedback = AIGenerationFeedbackRepository.create({
+            "petition_model_id": data.get("model_id"),
+            "generated_template": data.get("template", ""),
+            "rating": data.get("rating", 3),
+            "feedback_type": data.get("feedback_type", "neutral"),
+            "feedback_text": data.get("feedback_text"),
+            "action_taken": data.get("action_taken"),
+            "edited_template": data.get("edited_template"),
+            "prompt_used": data.get("prompt_used"),
+            "sections_used": data.get("sections_used"),
+            "user_id": current_user.id,
+        })
 
         return jsonify({"success": True, "feedback_id": feedback.id})
 
@@ -5204,11 +5172,7 @@ def petition_template_examples_list():
     """Listar templates exemplares"""
     _require_admin()
 
-    from app.models import TemplateExample
-
-    examples = TemplateExample.query.order_by(
-        TemplateExample.quality_score.desc(), TemplateExample.usage_count.desc()
-    ).all()
+    examples = TemplateExampleRepository.get_all()
 
     return render_template(
         "admin/template_examples_list.html",
@@ -5223,23 +5187,18 @@ def petition_template_example_new():
     """Criar novo template exemplar"""
     _require_admin()
 
-    from app.models import TemplateExample
-
     if request.method == "POST":
         try:
-            example = TemplateExample(
-                name=request.form.get("name"),
-                description=request.form.get("description"),
-                template_content=request.form.get("template_content"),
-                petition_type_id=request.form.get("petition_type_id") or None,
-                tags=request.form.get("tags"),
-                quality_score=int(request.form.get("quality_score", 5)),
-                source="manual",
-                created_by=current_user.id,
-            )
-
-            db.session.add(example)
-            db.session.commit()
+            example = TemplateExampleRepository.create({
+                "name": request.form.get("name"),
+                "description": request.form.get("description"),
+                "template_content": request.form.get("template_content"),
+                "petition_type_id": request.form.get("petition_type_id") or None,
+                "tags": request.form.get("tags"),
+                "quality_score": int(request.form.get("quality_score", 5)),
+                "source": "manual",
+                "created_by": current_user.id,
+            })
 
             flash("Template exemplar criado com sucesso!", "success")
             return redirect(url_for("admin.petition_template_examples_list"))
@@ -5262,20 +5221,20 @@ def petition_template_example_edit(example_id):
     """Editar template exemplar"""
     _require_admin()
 
-    from app.models import TemplateExample
-
-    example = TemplateExample.query.get_or_404(example_id)
+    example = TemplateExampleRepository.get_by_id(example_id)
+    if not example:
+        abort(404)
 
     if request.method == "POST":
         try:
-            example.name = request.form.get("name")
-            example.description = request.form.get("description")
-            example.template_content = request.form.get("template_content")
-            example.petition_type_id = request.form.get("petition_type_id") or None
-            example.tags = request.form.get("tags")
-            example.quality_score = int(request.form.get("quality_score", 5))
-
-            db.session.commit()
+            TemplateExampleRepository.update(example, {
+                "name": request.form.get("name"),
+                "description": request.form.get("description"),
+                "template_content": request.form.get("template_content"),
+                "petition_type_id": request.form.get("petition_type_id") or None,
+                "tags": request.form.get("tags"),
+                "quality_score": int(request.form.get("quality_score", 5)),
+            })
 
             flash("Template exemplar atualizado com sucesso!", "success")
             return redirect(url_for("admin.petition_template_examples_list"))
@@ -5296,13 +5255,12 @@ def petition_template_example_delete(example_id):
     """Excluir template exemplar"""
     _require_admin()
 
-    from app.models import TemplateExample
-
-    example = TemplateExample.query.get_or_404(example_id)
+    example = TemplateExampleRepository.get_by_id(example_id)
+    if not example:
+        abort(404)
 
     try:
-        db.session.delete(example)
-        db.session.commit()
+        TemplateExampleRepository.delete(example)
 
         # Se for AJAX, retornar JSON
         if request.is_json or request.headers.get("Content-Type") == "application/json":
@@ -5324,9 +5282,9 @@ def petition_model_save_as_example(model_id):
     """Salvar template de um modelo como exemplo de alta qualidade"""
     _require_admin()
 
-    from app.models import TemplateExample
-
-    petition_model = PetitionModel.query.get_or_404(model_id)
+    petition_model = PetitionModelAdminRepository.get_by_id(model_id)
+    if not petition_model:
+        abort(404)
 
     if not petition_model.template_content:
         return jsonify({"success": False, "error": "Modelo não possui template"}), 400
@@ -5337,27 +5295,24 @@ def petition_model_save_as_example(model_id):
 
         if existing:
             # Atualizar existente
-            existing.template_content = petition_model.template_content
-            existing.quality_score = min(
-                existing.quality_score + 1, 10
-            )  # Aumentar score
+            TemplateExampleRepository.update(existing, {
+                "template_content": petition_model.template_content,
+                "quality_score": min(existing.quality_score + 1, 10),  # Aumentar score
+            })
             flash("Template exemplar atualizado!", "success")
         else:
             # Criar novo
-            example = TemplateExample(
-                name=petition_model.name,
-                description=petition_model.description,
-                template_content=petition_model.template_content,
-                petition_type_id=petition_model.petition_type_id,
-                source="ai_approved",
-                original_model_id=model_id,
-                created_by=current_user.id,
-                quality_score=7,  # Score inicial bom para templates aprovados
-            )
-            db.session.add(example)
+            TemplateExampleRepository.create({
+                "name": petition_model.name,
+                "description": petition_model.description,
+                "template_content": petition_model.template_content,
+                "petition_type_id": petition_model.petition_type_id,
+                "source": "ai_approved",
+                "original_model_id": model_id,
+                "created_by": current_user.id,
+                "quality_score": 7,  # Score inicial bom para templates aprovados
+            })
             flash("Template salvo como exemplo de alta qualidade!", "success")
-
-        db.session.commit()
 
         return jsonify({"success": True})
 
@@ -5557,22 +5512,19 @@ def save_template_as_example(model_id):
         tags = data.get("tags", "")
 
         # Criar o exemplo
-        example = TemplateExample(
-            name=petition_model.name,
-            description=petition_model.description
+        example = TemplateExampleRepository.create({
+            "name": petition_model.name,
+            "description": petition_model.description
             or f"Template exemplar: {petition_model.name}",
-            template_content=petition_model.template_content,
-            petition_type_id=petition_model.petition_type_id,
-            tags=str(tags)[:500] if tags else "",  # Limitar tamanho das tags
-            quality_score=min(max(float(quality_score), 1.0), 5.0),  # Entre 1 e 5
-            source="approved_model",
-            original_model_id=model_id,
-            created_by=current_user.id,
-            is_active=True,
-        )
-
-        db.session.add(example)
-        db.session.commit()
+            "template_content": petition_model.template_content,
+            "petition_type_id": petition_model.petition_type_id,
+            "tags": str(tags)[:500] if tags else "",  # Limitar tamanho das tags
+            "quality_score": min(max(float(quality_score), 1.0), 5.0),  # Entre 1 e 5
+            "source": "approved_model",
+            "original_model_id": model_id,
+            "created_by": current_user.id,
+            "is_active": True,
+        })
 
         flash(
             f"Template '{petition_model.name}' salvo como exemplo de referência!",
@@ -5587,7 +5539,7 @@ def save_template_as_example(model_id):
             }
         )
     except Exception as e:
-        db.session.rollback()
+        AdminSessionManager.rollback()
         current_app.logger.error(f"Erro ao salvar exemplo: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -5599,9 +5551,9 @@ def save_ai_generation_feedback(model_id):
     _require_admin()
 
     try:
-        from app.models import AIGenerationFeedback
-
-        petition_model = PetitionModel.query.get_or_404(model_id)
+        petition_model = PetitionModelAdminRepository.get_by_id(model_id)
+        if not petition_model:
+            abort(404)
         data = request.get_json() or {}
 
         # Validar dados
@@ -5618,27 +5570,24 @@ def save_ai_generation_feedback(model_id):
                 {"success": False, "error": "Rating deve ser um número entre 1 e 5."}
             ), 400
 
-        feedback = AIGenerationFeedback(
-            petition_model_id=model_id,
-            generated_template=data.get("generated_template", "")[
+        feedback = AIGenerationFeedbackRepository.create({
+            "petition_model_id": model_id,
+            "generated_template": data.get("generated_template", "")[
                 :50000
             ],  # Limitar tamanho
-            rating=rating_int,
-            feedback_type=data.get(
+            "rating": rating_int,
+            "feedback_type": data.get(
                 "feedback_type", "general"
             ),  # positive, negative, suggestion, general
-            feedback_text=data.get("feedback_text", "")[:1000],  # Limitar tamanho
-            action_taken=data.get(
+            "feedback_text": data.get("feedback_text", "")[:1000],  # Limitar tamanho
+            "action_taken": data.get(
                 "action_taken", "none"
             ),  # used, edited, discarded, none
-            edited_template=data.get("edited_template"),
-            prompt_used=data.get("prompt_used"),
-            sections_used=data.get("sections_used"),
-            user_id=current_user.id,
-        )
-
-        db.session.add(feedback)
-        db.session.commit()
+            "edited_template": data.get("edited_template"),
+            "prompt_used": data.get("prompt_used"),
+            "sections_used": data.get("sections_used"),
+            "user_id": current_user.id,
+        })
 
         # Se feedback muito positivo (4-5 estrelas) e foi usado/editado, sugerir salvar como exemplo
         suggest_save = rating_int >= 4 and data.get("action_taken") in [
@@ -5655,7 +5604,7 @@ def save_ai_generation_feedback(model_id):
             }
         )
     except Exception as e:
-        db.session.rollback()
+        AdminSessionManager.rollback()
         current_app.logger.error(f"Erro ao salvar feedback: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -5666,11 +5615,7 @@ def template_examples_list():
     """Lista todos os templates exemplares"""
     _require_admin()
 
-    from app.models import TemplateExample
-
-    examples = TemplateExample.query.order_by(
-        TemplateExample.quality_score.desc(), TemplateExample.usage_count.desc()
-    ).all()
+    examples = TemplateExampleRepository.get_all()
 
     return render_template(
         "admin/template_examples.html", title="Templates Exemplares", examples=examples
@@ -5684,18 +5629,18 @@ def toggle_template_example(example_id):
     _require_admin()
 
     try:
-        from app.models import TemplateExample
-
-        example = TemplateExample.query.get_or_404(example_id)
+        example = TemplateExampleRepository.get_by_id(example_id)
+        if not example:
+            abort(404)
         example.is_active = not example.is_active
-        db.session.commit()
+        AdminSessionManager.commit()
 
         status = "ativado" if example.is_active else "desativado"
         flash(f"Template exemplar '{example.name}' {status}!", "success")
 
         return jsonify({"success": True, "is_active": example.is_active})
     except Exception as e:
-        db.session.rollback()
+        AdminSessionManager.rollback()
         current_app.logger.error(f"Erro ao toggle exemplo: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -5707,19 +5652,18 @@ def delete_template_example(example_id):
     _require_admin()
 
     try:
-        from app.models import TemplateExample
-
-        example = TemplateExample.query.get_or_404(example_id)
+        example = TemplateExampleRepository.get_by_id(example_id)
+        if not example:
+            abort(404)
         name = example.name
 
-        db.session.delete(example)
-        db.session.commit()
+        TemplateExampleRepository.delete(example)
 
         flash(f"Template exemplar '{name}' excluído!", "success")
 
         return jsonify({"success": True})
     except Exception as e:
-        db.session.rollback()
+        AdminSessionManager.rollback()
         current_app.logger.error(f"Erro ao excluir exemplo: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -5731,28 +5675,30 @@ def update_template_example(example_id):
     _require_admin()
 
     try:
-        from app.models import TemplateExample
-
-        example = TemplateExample.query.get_or_404(example_id)
+        example = TemplateExampleRepository.get_by_id(example_id)
+        if not example:
+            abort(404)
         data = request.get_json() or {}
 
+        update_data = {}
         if "quality_score" in data:
             score = float(data["quality_score"])
-            example.quality_score = min(max(score, 1.0), 5.0)
+            update_data["quality_score"] = min(max(score, 1.0), 5.0)
         if "tags" in data:
-            example.tags = str(data["tags"])[:500]  # Limitar tamanho
+            update_data["tags"] = str(data["tags"])[:500]  # Limitar tamanho
         if "description" in data:
-            example.description = data["description"]
+            update_data["description"] = data["description"]
         if "is_active" in data:
-            example.is_active = bool(data["is_active"])
+            update_data["is_active"] = bool(data["is_active"])
 
-        db.session.commit()
+        if update_data:
+            TemplateExampleRepository.update(example, update_data)
 
         return jsonify({"success": True, "message": "Template exemplar atualizado!"})
     except ValueError as e:
         return jsonify({"success": False, "error": "Valor inválido fornecido"}), 400
     except Exception as e:
-        db.session.rollback()
+        AdminSessionManager.rollback()
         current_app.logger.error(f"Erro ao atualizar exemplo: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -6015,15 +5961,16 @@ def coupons_detail(coupon_id):
 @master_required
 def coupons_delete(coupon_id):
     """Deleta um cupom (apenas se não foi usado)"""
-    coupon = PromoCoupon.query.get_or_404(coupon_id)
+    coupon = CouponRepository.get_by_id(coupon_id)
+    if not coupon:
+        abort(404)
 
     if coupon.is_used:
         flash("Não é possível deletar um cupom já utilizado.", "warning")
         return redirect(url_for("admin.coupons_list"))
 
     code = coupon.code
-    db.session.delete(coupon)
-    db.session.commit()
+    CouponRepository.delete(coupon)
 
     flash(f"Cupom {code} deletado com sucesso!", "success")
     return redirect(url_for("admin.coupons_list"))
@@ -6177,34 +6124,39 @@ def ai_config():
 @master_required
 def ai_config_update(config_id):
     """Atualiza uma configuração de custo de IA"""
-    config = AICreditConfig.query.get_or_404(config_id)
+    config = AICreditConfigRepository.get_by_id(config_id)
+    if not config:
+        abort(404)
 
     data = request.get_json()
     if not data:
         return jsonify({"success": False, "message": "Dados inválidos"}), 400
 
-    # Atualizar campos
+    # Preparar dados para atualização
+    update_data = {}
+    
     if "credit_cost" in data:
         credit_cost = int(data["credit_cost"])
         if credit_cost < 0 or credit_cost > 100:
             return jsonify(
                 {"success": False, "message": "Custo deve ser entre 0 e 100"}
             ), 400
-        config.credit_cost = credit_cost
+        update_data["credit_cost"] = credit_cost
 
     if "is_premium" in data:
-        config.is_premium = bool(data["is_premium"])
+        update_data["is_premium"] = bool(data["is_premium"])
 
     if "is_active" in data:
-        config.is_active = bool(data["is_active"])
+        update_data["is_active"] = bool(data["is_active"])
 
     if "name" in data:
-        config.name = str(data["name"])[:100]
+        update_data["name"] = str(data["name"])[:100]
 
     if "description" in data:
-        config.description = str(data["description"])[:500]
+        update_data["description"] = str(data["description"])[:500]
 
-    db.session.commit()
+    if update_data:
+        AICreditConfigRepository.update(config, update_data)
 
     return jsonify(
         {
@@ -6227,17 +6179,6 @@ def ai_config_update(config_id):
 @master_required
 def ai_config_reset():
     """Reseta todas as configurações para os valores padrão"""
-    for default in AICreditConfig.DEFAULT_CONFIGS:
-        config = AICreditConfig.query.filter_by(
-            operation_key=default["operation_key"]
-        ).first()
-        if config:
-            config.credit_cost = default["credit_cost"]
-            config.is_premium = default["is_premium"]
-            config.is_active = True
-            config.name = default["name"]
-            config.description = default["description"]
-
-    db.session.commit()
+    AICreditConfigRepository.reset_to_defaults()
     flash("Configurações resetadas para os valores padrão!", "success")
     return redirect(url_for("admin.ai_config"))

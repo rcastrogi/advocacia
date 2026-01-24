@@ -109,6 +109,13 @@ class Config:
     # OpenAI API
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
+    # DataJud API (CNJ - Consulta de Processos Judiciais)
+    # Documentação: https://datajud-wiki.cnj.jus.br/
+    DATAJUD_API_KEY = os.environ.get(
+        "DATAJUD_API_KEY",
+        "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw=="
+    )
+
     # Environment settings
     DEBUG = os.environ.get("FLASK_DEBUG", "False").lower() in ["true", "on", "1"]
     ENV = os.environ.get("FLASK_ENV", "production")

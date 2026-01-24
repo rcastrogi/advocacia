@@ -7,8 +7,6 @@ Sistema de indicação com proteção anti-fraude:
 - Validação de CPF e email únicos
 """
 
-from datetime import datetime, timezone
-
 from flask import (
     current_app,
     flash,
@@ -21,9 +19,9 @@ from flask import (
 )
 from flask_login import current_user, login_required
 
-from app import db
-from app.models import Referral, ReferralCode
+from app.models import Referral
 from app.referral import bp
+from app.referral.repository import ReferralCodeRepository, ReferralRecordRepository
 
 
 @bp.route("/")
@@ -31,18 +29,13 @@ from app.referral import bp
 def dashboard():
     """Painel do programa de indicação."""
     # Obtém ou cria código do usuário
-    referral_code = ReferralCode.get_or_create(current_user)
+    referral_code = ReferralCodeRepository.get_or_create(current_user)
 
     # Estatísticas
-    stats = Referral.get_user_stats(current_user.id)
+    stats = ReferralRecordRepository.get_user_stats(current_user.id)
 
     # Lista de indicações
-    referrals = (
-        Referral.query.filter_by(referrer_id=current_user.id)
-        .order_by(Referral.created_at.desc())
-        .limit(20)
-        .all()
-    )
+    referrals = ReferralRecordRepository.get_by_referrer(current_user.id)
 
     # URL de compartilhamento
     share_url = url_for("referral.landing", code=referral_code.code, _external=True)
@@ -68,9 +61,7 @@ def landing(code):
     Armazena o código na sessão e redireciona para registro.
     """
     # Valida o código
-    referral_code = ReferralCode.query.filter_by(
-        code=code.upper(), is_active=True
-    ).first()
+    referral_code = ReferralCodeRepository.get_by_code(code)
 
     if not referral_code:
         flash("Código de indicação inválido ou expirado.", "warning")
@@ -85,7 +76,7 @@ def landing(code):
         return redirect(url_for("main.dashboard"))
 
     # Incrementa cliques
-    referral_code.increment_clicks()
+    ReferralCodeRepository.increment_clicks(referral_code)
 
     # Armazena na sessão
     session["referral_code"] = code.upper()
@@ -104,8 +95,8 @@ def landing(code):
 @login_required
 def api_stats():
     """API para obter estatísticas de indicação."""
-    stats = Referral.get_user_stats(current_user.id)
-    referral_code = ReferralCode.get_or_create(current_user)
+    stats = ReferralRecordRepository.get_user_stats(current_user.id)
+    referral_code = ReferralCodeRepository.get_or_create(current_user)
 
     return jsonify(
         {
@@ -121,7 +112,7 @@ def api_stats():
 @login_required
 def api_share():
     """Registra compartilhamento do link."""
-    referral_code = ReferralCode.get_or_create(current_user)
+    referral_code = ReferralCodeRepository.get_or_create(current_user)
 
     # Log do compartilhamento
     data = request.get_json() or {}
@@ -137,9 +128,7 @@ def api_share():
 @bp.route("/api/validate/<code>")
 def api_validate_code(code):
     """Valida se um código de indicação existe e está ativo."""
-    referral_code = ReferralCode.query.filter_by(
-        code=code.upper(), is_active=True
-    ).first()
+    referral_code = ReferralCodeRepository.get_by_code(code)
 
     if referral_code:
         return jsonify(
@@ -165,41 +154,32 @@ def process_referral_registration(email, user_id):
         return None
 
     # Verifica se já existe referência para este email
-    existing = Referral.query.filter_by(referred_email=email.lower()).first()
+    existing = ReferralRecordRepository.get_by_email(email)
     if existing:
         # Atualiza com o user_id
-        existing.referred_id = user_id
-        existing.status = "registered"
-        existing.registered_at = datetime.now(timezone.utc)
-        db.session.commit()
+        ReferralRecordRepository.update_referred_user(existing, user_id)
 
         # Atualiza contadores
-        code_obj = ReferralCode.query.filter_by(code=referral_code).first()
+        code_obj = ReferralCodeRepository.get_by_code(referral_code, active_only=False)
         if code_obj:
-            code_obj.increment_registrations()
+            ReferralCodeRepository.increment_registrations(code_obj)
 
         return existing
 
     # Cria nova referência
-    referral = Referral(
+    referral = ReferralRecordRepository.create(
         referrer_id=referrer_id,
         referred_id=user_id,
-        referred_email=email.lower(),
+        referred_email=email,
         referral_code=referral_code,
-        status="registered",
-        registered_at=datetime.now(timezone.utc),
-        referred_ip=request.remote_addr,
-        referred_user_agent=request.user_agent.string[:500]
-        if request.user_agent
-        else None,
+        ip_address=request.remote_addr,
+        user_agent=request.user_agent.string if request.user_agent else None,
     )
-    db.session.add(referral)
-    db.session.commit()
 
     # Atualiza contadores
-    code_obj = ReferralCode.query.filter_by(code=referral_code).first()
+    code_obj = ReferralCodeRepository.get_by_code(referral_code, active_only=False)
     if code_obj:
-        code_obj.increment_registrations()
+        ReferralCodeRepository.increment_registrations(code_obj)
 
     return referral
 
@@ -209,13 +189,13 @@ def process_referral_conversion(user_id, payment_id, payment_amount):
     Chamado quando um usuário faz o primeiro pagamento.
     Concede as recompensas ao indicador e indicado.
     """
-    referral = Referral.process_conversion(user_id, payment_id, payment_amount)
+    referral = ReferralRecordRepository.process_conversion(user_id, payment_id, payment_amount)
 
     if referral and referral.reward_granted:
         # Atualiza contadores
-        code_obj = ReferralCode.query.filter_by(code=referral.referral_code).first()
+        code_obj = ReferralCodeRepository.get_by_code(referral.referral_code, active_only=False)
         if code_obj:
-            code_obj.increment_conversions()
+            ReferralCodeRepository.increment_conversions(code_obj)
 
         # Log
         current_app.logger.info(

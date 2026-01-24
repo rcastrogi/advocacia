@@ -6,7 +6,6 @@ import os
 from datetime import datetime
 
 from flask import (
-    Blueprint,
     flash,
     jsonify,
     redirect,
@@ -20,8 +19,7 @@ from werkzeug.utils import secure_filename
 
 from app import db
 from app.models import Process, ProcessAttachment, ProcessCost, ProcessMovement
-
-bp = Blueprint("process_management", __name__, url_prefix="/processes")
+from app.processes import bp  # Usar o mesmo blueprint de processes
 
 # Configurações para upload
 UPLOAD_FOLDER = os.path.join(
@@ -97,7 +95,7 @@ def add_movement(process_id):
         db.session.commit()
 
         flash("Andamento adicionado com sucesso!", "success")
-        return redirect(url_for("process_management.movements", process_id=process_id))
+        return redirect(url_for("processes.movements", process_id=process_id))
 
     return render_template("processes/add_movement.html", process=process)
 
@@ -161,7 +159,7 @@ def add_cost(process_id):
         db.session.commit()
 
         flash("Custo adicionado com sucesso!", "success")
-        return redirect(url_for("process_management.costs", process_id=process_id))
+        return redirect(url_for("processes.costs", process_id=process_id))
 
     return render_template("processes/add_cost.html", process=process)
 
@@ -177,7 +175,7 @@ def mark_cost_paid(cost_id):
     db.session.commit()
 
     flash("Custo marcado como pago!", "success")
-    return redirect(url_for("process_management.costs", process_id=cost.process_id))
+    return redirect(url_for("processes.costs", process_id=cost.process_id))
 
 
 # ========================================
@@ -244,7 +242,7 @@ def upload_attachment(process_id):
             db.session.commit()
 
             flash("Anexo enviado com sucesso!", "success")
-            return redirect(url_for("process_management.attachments", process_id=process_id))
+            return redirect(url_for("processes.attachments", process_id=process_id))
 
     return render_template("processes/upload_attachment.html", process=process)
 

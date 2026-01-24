@@ -1,23 +1,23 @@
-from datetime import datetime, timedelta
-from decimal import Decimal
+"""
+Billing Routes - Refatorado para usar Services
+"""
 
-from flask import abort, flash, jsonify, redirect, render_template, request, url_for
+from flask import abort, flash, redirect, render_template, request, url_for, jsonify
 from flask_login import current_user, login_required
-from sqlalchemy import text
 
-from app import db, limiter
+from app import limiter
 from app.billing import bp
-from app.billing.forms import AssignPlanForm, BillingPlanForm, PetitionTypeForm
-from app.billing.utils import (
-    current_billing_cycle,
-    ensure_default_petition_types,
-    ensure_default_plan,
-    slugify,
+from app.billing.forms import BillingPlanForm, PetitionTypeForm
+from app.billing.services import (
+    BillingPlanService,
+    BillingPortalService,
+    FeatureService,
+    PetitionTypeService,
+    UserPlanService,
 )
-from app.decorators import master_required, validate_with_schema
-from app.models import BillingPlan, Feature, PetitionType, PetitionUsage, User, UserPlan
+from app.decorators import master_required
+from app.models import User
 from app.rate_limits import ADMIN_API_LIMIT
-from app.schemas import BillingPlanSchema
 
 
 def _require_admin():
@@ -25,28 +25,24 @@ def _require_admin():
         abort(403)
 
 
+# ===========================================================================
+# PORTAL DO USUÁRIO
+# ===========================================================================
+
+
 @bp.route("/portal")
 @login_required
 def portal():
-    plan = current_user.get_active_plan()
-    cycle = current_billing_cycle()
-    usages = (
-        PetitionUsage.query.filter_by(user_id=current_user.id, billing_cycle=cycle)
-        .order_by(PetitionUsage.generated_at.desc())
-        .all()
-    )
-    totals = {
-        "count": len(usages),
-        "billable": sum(1 for u in usages if u.billable),
-        "billable_amount": sum((u.amount or 0) for u in usages if u.billable),
-    }
+    """Portal de billing do usuário"""
+    billing_info = BillingPortalService.get_user_billing_info(current_user)
+
     return render_template(
         "billing/portal.html",
         title="Minha assinatura",
-        plan=plan,
-        cycle=cycle,
-        usages=usages,
-        totals=totals,
+        plan=billing_info["plan"],
+        cycle=billing_info["cycle"],
+        usages=billing_info["usages"],
+        totals=billing_info["totals"],
     )
 
 
@@ -54,88 +50,78 @@ def portal():
 @login_required
 def upgrade():
     """Página para upgrade de plano"""
-    current_plan = current_user.get_active_plan()
-
-    # Buscar planos disponíveis para upgrade (excluindo o atual e planos por uso)
-    available_plans = (
-        BillingPlan.query.filter(
-            BillingPlan.active.is_(True), BillingPlan.plan_type != "per_usage"
-        )
-        .order_by(BillingPlan.monthly_fee)
-        .all()
-    )
-
-    # Remover o plano atual da lista se existir
-    if current_plan:
-        available_plans = [p for p in available_plans if p.id != current_plan.plan.id]
+    upgrade_info = BillingPortalService.get_upgrade_options(current_user)
 
     return render_template(
         "billing/upgrade.html",
         title="Fazer Upgrade de Plano",
-        current_plan=current_plan,
-        available_plans=available_plans,
+        current_plan=upgrade_info["current_plan"],
+        available_plans=upgrade_info["available_plans"],
     )
+
+
+# ===========================================================================
+# GESTÃO DE TIPOS DE PETIÇÃO (ADMIN)
+# ===========================================================================
 
 
 @bp.route("/petition-types", methods=["GET", "POST"])
 @login_required
 def petition_types():
+    """Lista e cria tipos de petição"""
     _require_admin()
 
     form = PetitionTypeForm()
     if form.validate_on_submit():
-        slug = slugify(form.name.data)
-        existing = PetitionType.query.filter_by(slug=slug).first()
-        if existing:
-            flash("Já existe um tipo com este nome/slug.", "warning")
+        petition_type, error = PetitionTypeService.create({
+            "name": form.name.data,
+            "description": form.description.data,
+            "category": form.category.data,
+            "is_billable": form.is_billable.data,
+            "base_price": form.base_price.data,
+            "active": form.active.data,
+        })
+
+        if error:
+            flash(error, "warning")
         else:
-            petition_type = PetitionType(
-                slug=slug,
-                name=form.name.data,
-                description=form.description.data,
-                category=form.category.data,
-                is_billable=form.is_billable.data,
-                base_price=form.base_price.data,
-                active=form.active.data,
-            )
-            db.session.add(petition_type)
-            db.session.commit()
             flash("Tipo de petição criado com sucesso!", "success")
             return redirect(url_for("billing.petition_types"))
 
-    query = PetitionType.query.order_by(PetitionType.category, PetitionType.name).all()
     return render_template(
         "billing/petition_types.html",
         title="Tipos de Petições",
         form=form,
-        petition_types=query,
+        petition_types=PetitionTypeService.list_all(),
     )
 
 
 @bp.route("/petition-types/<int:type_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_petition_type(type_id):
+    """Edita um tipo de petição"""
     _require_admin()
 
-    petition_type = PetitionType.query.get_or_404(type_id)
+    from app.billing.repository import PetitionTypeRepository
+    petition_type = PetitionTypeRepository.get_by_id(type_id)
+    if not petition_type:
+        abort(404)
+
     form = PetitionTypeForm(obj=petition_type)
 
     if form.validate_on_submit():
-        slug = slugify(form.name.data)
-        duplicate = PetitionType.query.filter(
-            PetitionType.slug == slug, PetitionType.id != petition_type.id
-        ).first()
-        if duplicate:
-            flash("Outro tipo já usa este nome/slug.", "warning")
+        _, error = PetitionTypeService.update(type_id, {
+            "name": form.name.data,
+            "description": form.description.data,
+            "category": form.category.data,
+            "is_billable": form.is_billable.data,
+            "base_price": form.base_price.data,
+            "active": form.active.data,
+        })
+
+        if error:
+            flash(error, "warning")
         else:
-            petition_type.slug = slug
-            petition_type.name = form.name.data
-            petition_type.description = form.description.data
-            petition_type.category = form.category.data
-            petition_type.is_billable = form.is_billable.data
-            petition_type.base_price = form.base_price.data
-            petition_type.active = form.active.data
-            db.session.commit()
             flash("Tipo atualizado com sucesso!", "success")
             return redirect(url_for("billing.petition_types"))
 
@@ -150,17 +136,18 @@ def edit_petition_type(type_id):
 @bp.route("/petition-types/<int:type_id>/toggle", methods=["POST"])
 @login_required
 def toggle_petition_type(type_id):
+    """Alterna campo de um tipo de petição"""
     _require_admin()
 
-    petition_type = PetitionType.query.get_or_404(type_id)
     action = request.form.get("action")
-    if action == "toggle_billable":
-        petition_type.is_billable = not petition_type.is_billable
-    elif action == "toggle_active":
-        petition_type.active = not petition_type.active
-    db.session.commit()
+    PetitionTypeService.toggle(type_id, action)
     flash("Tipo atualizado!", "success")
     return redirect(url_for("billing.petition_types"))
+
+
+# ===========================================================================
+# GESTÃO DE PLANOS (ADMIN)
+# ===========================================================================
 
 
 @bp.route("/plans", methods=["GET", "POST"])
@@ -168,36 +155,32 @@ def toggle_petition_type(type_id):
 @master_required
 @limiter.limit(ADMIN_API_LIMIT)
 def plans():
+    """Lista e cria planos de cobrança"""
     form = BillingPlanForm()
+
     if form.validate_on_submit():
-        slug = slugify(form.name.data)
-        if BillingPlan.query.filter_by(slug=slug).first():
-            flash("Já existe um plano com este nome.", "warning")
+        _, error = BillingPlanService.create({
+            "name": form.name.data,
+            "description": form.description.data,
+            "plan_type": form.plan_type.data,
+            "monthly_fee": form.monthly_fee.data,
+            "monthly_petition_limit": form.monthly_petition_limit.data,
+            "supported_periods": form.supported_periods.data,
+            "discount_percentage": form.discount_percentage.data,
+            "active": form.active.data,
+        })
+
+        if error:
+            flash(error, "warning")
         else:
-            plan = BillingPlan(
-                slug=slug,
-                name=form.name.data,
-                description=form.description.data,
-                plan_type=form.plan_type.data,
-                monthly_fee=form.monthly_fee.data or Decimal("0.00"),
-                monthly_petition_limit=(
-                    int(form.monthly_petition_limit.data)
-                    if form.monthly_petition_limit.data
-                    and form.monthly_petition_limit.data.isdigit()
-                    else None
-                ),
-                supported_periods=form.supported_periods.data,
-                discount_percentage=form.discount_percentage.data or Decimal("0.00"),
-                active=form.active.data,
-            )
-            db.session.add(plan)
-            db.session.commit()
             flash("Plano criado com sucesso!", "success")
             return redirect(url_for("billing.plans"))
 
-    plans = BillingPlan.query.order_by(BillingPlan.created_at.desc()).all()
     return render_template(
-        "billing/plans.html", title="Planos de cobrança", form=form, plans=plans
+        "billing/plans.html",
+        title="Planos de cobrança",
+        form=form,
+        plans=BillingPlanService.list_all(),
     )
 
 
@@ -206,10 +189,9 @@ def plans():
 @master_required
 @limiter.limit(ADMIN_API_LIMIT)
 def toggle_plan(plan_id):
+    """Alterna status ativo de um plano"""
     _require_admin()
-    plan = BillingPlan.query.get_or_404(plan_id)
-    plan.active = not plan.active
-    db.session.commit()
+    BillingPlanService.toggle_active(plan_id)
     flash("Plano atualizado!", "success")
     return redirect(url_for("billing.plans"))
 
@@ -217,38 +199,30 @@ def toggle_plan(plan_id):
 @bp.route("/plans/<int:plan_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_plan(plan_id):
+    """Edita um plano de cobrança"""
     _require_admin()
 
-    plan = BillingPlan.query.get_or_404(plan_id)
+    plan = BillingPlanService.get_by_id(plan_id)
     form = BillingPlanForm()
 
     if form.validate_on_submit():
-        # Verificar se o novo nome não conflita com outros planos
-        new_slug = slugify(form.name.data)
-        existing_plan = BillingPlan.query.filter_by(slug=new_slug).first()
-        if existing_plan and existing_plan.id != plan.id:
-            flash("Já existe um plano com este nome.", "warning")
-        else:
-            plan.slug = new_slug
-            plan.name = form.name.data
-            plan.description = form.description.data
-            plan.plan_type = form.plan_type.data
-            plan.monthly_fee = form.monthly_fee.data or Decimal("0.00")
-            plan.monthly_petition_limit = (
-                int(form.monthly_petition_limit.data)
-                if form.monthly_petition_limit.data
-                and form.monthly_petition_limit.data.isdigit()
-                else None
-            )
-            plan.supported_periods = form.supported_periods.data
-            plan.discount_percentage = form.discount_percentage.data or Decimal("0.00")
-            plan.active = form.active.data
+        _, error = BillingPlanService.update(plan_id, {
+            "name": form.name.data,
+            "description": form.description.data,
+            "plan_type": form.plan_type.data,
+            "monthly_fee": form.monthly_fee.data,
+            "monthly_petition_limit": form.monthly_petition_limit.data,
+            "supported_periods": form.supported_periods.data,
+            "discount_percentage": form.discount_percentage.data,
+            "active": form.active.data,
+        })
 
-            db.session.commit()
+        if error:
+            flash(error, "warning")
+        else:
             flash("Plano atualizado com sucesso!", "success")
             return redirect(url_for("billing.plans"))
 
-    # Preencher o formulário com os dados atuais do plano
     elif request.method == "GET":
         form.name.data = plan.name
         form.description.data = plan.description
@@ -269,6 +243,11 @@ def edit_plan(plan_id):
     )
 
 
+# ===========================================================================
+# GESTÃO DE USUÁRIOS (REDIRECIONAMENTO)
+# ===========================================================================
+
+
 @bp.route("/users", methods=["GET", "POST"])
 @login_required
 def users():
@@ -284,71 +263,42 @@ def users():
 @bp.route("/users/<int:user_id>/billing-status", methods=["POST"])
 @login_required
 def change_billing_status(user_id):
+    """Altera status de billing de um usuário"""
     _require_admin()
+
     user = User.query.get_or_404(user_id)
     status = request.form.get("status")
-    if status not in {"active", "trial", "delinquent"}:
-        flash("Status inválido.", "warning")
-        return redirect(url_for("billing.users"))
 
-    user.billing_status = status
-    plan = user.get_active_plan()
-    if plan:
-        plan.status = status
-    db.session.commit()
-    flash("Status de cobrança atualizado!", "success")
+    if not UserPlanService.change_billing_status(user, status):
+        flash("Status inválido.", "warning")
+    else:
+        flash("Status de cobrança atualizado!", "success")
+
     return redirect(url_for("billing.users"))
 
 
 @bp.route("/users/<int:user_id>/plan-status", methods=["POST"])
 @login_required
 def change_plan_status(user_id):
+    """Altera status do plano de um usuário"""
     _require_admin()
+
     user = User.query.get_or_404(user_id)
     status = request.form.get("status")
-    if status not in {"active", "trial", "delinquent"}:
-        flash("Status inválido.", "warning")
-        return redirect(url_for("billing.users"))
 
-    plan = user.get_active_plan()
-    if not plan:
-        flash("Usuário não possui plano atual.", "warning")
-        return redirect(url_for("billing.users"))
+    success, error = UserPlanService.change_plan_status(user, status)
+    if not success:
+        flash(error or "Erro ao atualizar status.", "warning")
+    else:
+        flash("Status do plano atualizado!", "success")
 
-    plan.status = status
-    if status == "delinquent":
-        user.billing_status = "delinquent"
-    elif user.billing_status != "delinquent":
-        user.billing_status = status
-    db.session.commit()
-    flash("Status do plano atualizado!", "success")
     return redirect(url_for("billing.users"))
-
-
-@bp.route("/api/plans", methods=["GET"])
-@login_required
-def api_plans():
-    """API para obter lista de planos ativos"""
-    _require_admin()
-    plans = BillingPlan.query.filter_by(active=True).order_by(BillingPlan.name).all()
-    return jsonify(
-        [
-            {
-                "id": plan.id,
-                "name": plan.name,
-                "plan_type": plan.plan_type,
-                "monthly_fee": float(plan.monthly_fee) if plan.monthly_fee else 0,
-                "yearly_fee": float(plan.yearly_fee) if plan.yearly_fee else 0,
-            }
-            for plan in plans
-        ]
-    )
 
 
 @bp.route("/users/<int:user_id>/assign-plan", methods=["POST"])
 @login_required
 def assign_plan(user_id):
-    """Atribuir plano a um usuário via API"""
+    """Atribui plano a um usuário"""
     _require_admin()
 
     user = User.query.get_or_404(user_id)
@@ -359,32 +309,44 @@ def assign_plan(user_id):
         flash("Plano não especificado.", "warning")
         return redirect(url_for("admin.users_list"))
 
-    plan = BillingPlan.query.get_or_404(plan_id)
+    success, error = UserPlanService.assign_plan(user, int(plan_id), status)
+    if not success:
+        flash(error or "Erro ao atribuir plano.", "warning")
+    else:
+        from app.billing.repository import BillingPlanRepository
+        plan = BillingPlanRepository.get_by_id(int(plan_id))
+        flash(f"Plano '{plan.name}' atribuído a {user.full_name or user.email}.", "success")
 
-    # Mark existing plans as old
-    for user_plan in user.plans.filter_by(is_current=True).all():
-        user_plan.is_current = False
-
-    new_plan = UserPlan(
-        user_id=user.id,
-        plan_id=plan.id,
-        status=status,
-        started_at=datetime.utcnow(),
-        renewal_date=datetime.utcnow() + timedelta(days=30),
-        is_current=True,
-    )
-    db.session.add(new_plan)
-
-    user.billing_status = "delinquent" if status == "delinquent" else "active"
-    db.session.commit()
-
-    flash(f"Plano '{plan.name}' atribuído a {user.full_name or user.email}.", "success")
     return redirect(url_for("admin.users_list"))
 
 
-# =====================================
+# ===========================================================================
+# API DE PLANOS
+# ===========================================================================
+
+
+@bp.route("/api/plans", methods=["GET"])
+@login_required
+def api_plans():
+    """API para obter lista de planos ativos"""
+    _require_admin()
+
+    plans = BillingPlanService.list_active()
+    return jsonify([
+        {
+            "id": plan.id,
+            "name": plan.name,
+            "plan_type": plan.plan_type,
+            "monthly_fee": float(plan.monthly_fee) if plan.monthly_fee else 0,
+            "yearly_fee": float(plan.yearly_fee) if plan.yearly_fee else 0,
+        }
+        for plan in plans
+    ])
+
+
+# ===========================================================================
 # GESTÃO DE FEATURES MODULARES
-# =====================================
+# ===========================================================================
 
 
 @bp.route("/features")
@@ -392,14 +354,8 @@ def assign_plan(user_id):
 @master_required
 def features_list():
     """Lista todas as features disponíveis"""
-    features = Feature.query.order_by(Feature.module, Feature.display_order).all()
-
-    # Agrupar por módulo
-    modules = {}
-    for feature in features:
-        if feature.module not in modules:
-            modules[feature.module] = []
-        modules[feature.module].append(feature)
+    modules = FeatureService.list_all_grouped()
+    features = FeatureService.list_active()
 
     return render_template(
         "billing/features_list.html",
@@ -414,70 +370,19 @@ def features_list():
 @master_required
 def plan_features(plan_id):
     """Gerenciar features de um plano específico"""
-    plan = BillingPlan.query.get_or_404(plan_id)
+    plan = BillingPlanService.get_by_id(plan_id)
 
     if request.method == "POST":
-        # Obter features selecionadas
         selected_features = request.form.getlist("features")
+        limits = {k: v for k, v in request.form.items() if k.startswith("limit_")}
 
-        # Limpar features existentes do plano
-        from app.models import plan_features as pf_table
-
-        db.session.execute(pf_table.delete().where(pf_table.c.plan_id == plan_id))
-
-        # Adicionar novas features
-        for feature_id in selected_features:
-            feature = Feature.query.get(int(feature_id))
-            if feature:
-                limit_value = request.form.get(f"limit_{feature_id}")
-                limit_value = (
-                    int(limit_value) if limit_value and limit_value.isdigit() else None
-                )
-
-                db.session.execute(
-                    pf_table.insert().values(
-                        plan_id=plan_id,
-                        feature_id=int(feature_id),
-                        limit_value=limit_value,
-                    )
-                )
-
-        db.session.commit()
+        FeatureService.update_plan_features(plan_id, selected_features, limits)
         flash(f"Features do plano '{plan.name}' atualizadas com sucesso!", "success")
         return redirect(url_for("billing.plan_features", plan_id=plan_id))
 
-    # GET: Mostrar formulário
-    all_features = (
-        Feature.query.filter_by(is_active=True)
-        .order_by(Feature.module, Feature.display_order)
-        .all()
-    )
-
-    # Features atuais do plano com limites
-    current_features = {}
-    from app.models import plan_features as pf_table
-
-    result = db.session.execute(
-        text(
-            "SELECT feature_id, limit_value FROM plan_features WHERE plan_id = :plan_id"
-        ),
-        {"plan_id": plan_id},
-    )
-    for row in result:
-        current_features[row[0]] = row[1]
-
-    # Agrupar por módulo
-    modules = {}
-    for feature in all_features:
-        if feature.module not in modules:
-            modules[feature.module] = []
-        modules[feature.module].append(
-            {
-                "feature": feature,
-                "selected": feature.id in current_features,
-                "limit": current_features.get(feature.id),
-            }
-        )
+    modules = FeatureService.get_plan_features_grouped(plan_id)
+    from app.billing.repository import FeatureRepository
+    current_features = FeatureRepository.get_plan_features(plan_id)
 
     return render_template(
         "billing/plan_features.html",
@@ -493,11 +398,7 @@ def plan_features(plan_id):
 @master_required
 def api_features_list():
     """API: Lista todas as features"""
-    features = (
-        Feature.query.filter_by(is_active=True)
-        .order_by(Feature.module, Feature.display_order)
-        .all()
-    )
+    features = FeatureService.list_active()
     return jsonify([f.to_dict() for f in features])
 
 
@@ -506,15 +407,14 @@ def api_features_list():
 @master_required
 def api_plan_features(plan_id):
     """API: Lista features de um plano"""
-    plan = BillingPlan.query.get_or_404(plan_id)
+    plan = BillingPlanService.get_by_id(plan_id)
     features_data = plan.get_all_features_with_limits()
-    return jsonify(
-        [
-            {
-                "feature": fd["feature"].to_dict(),
-                "limit": fd["limit"],
-                "config": fd["config"],
-            }
-            for fd in features_data
-        ]
-    )
+
+    return jsonify([
+        {
+            "feature": fd["feature"].to_dict(),
+            "limit": fd["limit"],
+            "config": fd["config"],
+        }
+        for fd in features_data
+    ])

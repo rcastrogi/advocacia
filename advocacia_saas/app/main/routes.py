@@ -14,7 +14,7 @@ from flask import (
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
-from app import db, limiter
+from app import limiter
 from app.billing.analytics import (
     get_monthly_usage_history,
     get_usage_insights,
@@ -29,6 +29,14 @@ from app.billing.utils import (
 from app.decorators import lawyer_required, validate_with_schema
 from app.main import bp
 from app.main.forms import NotificationPreferencesForm, TestimonialForm
+from app.main.repository import (
+    NotificationPreferencesRepository,
+    NotificationRepository,
+    PetitionUsageRepository,
+    RoadmapFeedbackRepository,
+    RoadmapRepository,
+    TestimonialRepository,
+)
 from app.models import (
     BillingPlan,
     Client,
@@ -406,18 +414,8 @@ def _build_plan_summary(user):
 
     cycle = current_billing_cycle()
     cycle_label = _current_cycle_label(cycle)
-    usage_total = PetitionUsage.query.filter_by(
-        user_id=user.id, billing_cycle=cycle
-    ).count()
-    billable_amount = (
-        db.session.query(func.coalesce(func.sum(PetitionUsage.amount), 0))
-        .filter(
-            PetitionUsage.user_id == user.id,
-            PetitionUsage.billing_cycle == cycle,
-            PetitionUsage.billable.is_(True),
-        )
-        .scalar()
-    )
+    usage_total = PetitionUsageRepository.count_by_cycle(user.id, cycle)
+    billable_amount = PetitionUsageRepository.get_billable_amount(user.id, cycle)
 
     summary.update(
         {
@@ -553,23 +551,14 @@ def new_testimonial():
         form.display_name.data = current_user.full_name
 
     if form.validate_on_submit():
-        testimonial = Testimonial(
-            user_id=current_user.id,
-            content=form.content.data.strip(),
-            rating=int(form.rating.data),
-            display_name=form.display_name.data.strip(),
-            display_role=form.display_role.data.strip()
-            if form.display_role.data
-            else None,
-            display_location=(
-                form.display_location.data.strip()
-                if form.display_location.data
-                else None
-            ),
-            status="pending",
-        )
-        db.session.add(testimonial)
-        db.session.commit()
+        TestimonialRepository.create({
+            "user_id": current_user.id,
+            "content": form.content.data.strip(),
+            "rating": int(form.rating.data),
+            "display_name": form.display_name.data.strip(),
+            "display_role": form.display_role.data.strip() if form.display_role.data else None,
+            "display_location": form.display_location.data.strip() if form.display_location.data else None,
+        })
         flash(
             "Seu depoimento foi enviado e está aguardando aprovação. Obrigado!",
             "success",
@@ -588,7 +577,11 @@ def new_testimonial():
 @limiter.limit("5 per hour")
 def edit_testimonial(testimonial_id):
     """Edita um depoimento existente (apenas se pendente)."""
-    testimonial = Testimonial.query.get_or_404(testimonial_id)
+    testimonial = TestimonialRepository.get_by_id(testimonial_id)
+
+    if not testimonial:
+        flash("Depoimento não encontrado.", "danger")
+        return redirect(url_for("main.testimonials"))
 
     if testimonial.user_id != current_user.id:
         flash("Você não tem permissão para editar este depoimento.", "danger")
@@ -601,17 +594,13 @@ def edit_testimonial(testimonial_id):
     form = TestimonialForm(obj=testimonial)
 
     if form.validate_on_submit():
-        testimonial.content = form.content.data.strip()
-        testimonial.rating = int(form.rating.data)
-        testimonial.display_name = form.display_name.data.strip()
-        testimonial.display_role = (
-            form.display_role.data.strip() if form.display_role.data else None
-        )
-        testimonial.display_location = (
-            form.display_location.data.strip() if form.display_location.data else None
-        )
-        testimonial.updated_at = datetime.now(timezone.utc)
-        db.session.commit()
+        TestimonialRepository.update(testimonial, {
+            "content": form.content.data.strip(),
+            "rating": int(form.rating.data),
+            "display_name": form.display_name.data.strip(),
+            "display_role": form.display_role.data.strip() if form.display_role.data else None,
+            "display_location": form.display_location.data.strip() if form.display_location.data else None,
+        })
         flash("Depoimento atualizado com sucesso!", "success")
         return redirect(url_for("main.testimonials"))
 
@@ -628,14 +617,17 @@ def edit_testimonial(testimonial_id):
 @limiter.limit("5 per hour")
 def delete_testimonial(testimonial_id):
     """Exclui um depoimento do usuário."""
-    testimonial = Testimonial.query.get_or_404(testimonial_id)
+    testimonial = TestimonialRepository.get_by_id(testimonial_id)
+
+    if not testimonial:
+        flash("Depoimento não encontrado.", "danger")
+        return redirect(url_for("main.testimonials"))
 
     if testimonial.user_id != current_user.id:
         flash("Você não tem permissão para excluir este depoimento.", "danger")
         return redirect(url_for("main.testimonials"))
 
-    db.session.delete(testimonial)
-    db.session.commit()
+    TestimonialRepository.delete(testimonial)
     flash("Depoimento excluído com sucesso.", "success")
     return redirect(url_for("main.testimonials"))
 
@@ -652,19 +644,8 @@ def admin_testimonials():
         return redirect(url_for("main.dashboard"))
 
     status_filter = request.args.get("status", "pending")
-    query = Testimonial.query
-
-    if status_filter and status_filter != "all":
-        query = query.filter_by(status=status_filter)
-
-    testimonials = query.order_by(Testimonial.created_at.desc()).all()
-
-    # Contadores
-    counts = {
-        "pending": Testimonial.query.filter_by(status="pending").count(),
-        "approved": Testimonial.query.filter_by(status="approved").count(),
-        "rejected": Testimonial.query.filter_by(status="rejected").count(),
-    }
+    testimonials = TestimonialRepository.get_all_with_filter(status_filter)
+    counts = TestimonialRepository.get_counts()
 
     return render_template(
         "testimonials/admin.html",
@@ -684,36 +665,35 @@ def moderate_testimonial(testimonial_id):
         flash("Acesso negado.", "danger")
         return redirect(url_for("main.dashboard"))
 
-    testimonial = Testimonial.query.get_or_404(testimonial_id)
+    testimonial = TestimonialRepository.get_by_id(testimonial_id)
+    if not testimonial:
+        flash("Depoimento não encontrado.", "danger")
+        return redirect(url_for("main.admin_testimonials"))
+
     action = request.form.get("action")
+    rejection_reason = request.form.get("rejection_reason", "")
+
+    TestimonialRepository.moderate(
+        testimonial=testimonial,
+        action=action,
+        moderator_id=current_user.id,
+        rejection_reason=rejection_reason,
+    )
 
     if action == "approve":
-        testimonial.status = "approved"
-        testimonial.moderated_by = current_user.id
-        testimonial.moderated_at = datetime.now(timezone.utc)
-        testimonial.rejection_reason = None
         flash(f"Depoimento de {testimonial.display_name} aprovado!", "success")
     elif action == "reject":
-        testimonial.status = "rejected"
-        testimonial.moderated_by = current_user.id
-        testimonial.moderated_at = datetime.now(timezone.utc)
-        testimonial.rejection_reason = request.form.get("rejection_reason", "")
         flash(f"Depoimento de {testimonial.display_name} rejeitado.", "warning")
     elif action == "feature":
-        testimonial.is_featured = not testimonial.is_featured
         status = "destacado" if testimonial.is_featured else "removido do destaque"
         flash(f"Depoimento {status}.", "success")
 
-    db.session.commit()
     return redirect(url_for("main.admin_testimonials"))
 
 
 def get_approved_testimonials(limit=6, featured_only=False):
     """Retorna depoimentos aprovados para exibição na página inicial."""
-    query = Testimonial.query.filter_by(status="approved")
-    if featured_only:
-        query = query.filter_by(is_featured=True)
-    return query.order_by(Testimonial.created_at.desc()).limit(limit).all()
+    return TestimonialRepository.get_approved(limit=limit, featured_only=featured_only)
 
 
 @bp.route("/notifications")
@@ -765,29 +745,12 @@ def mark_notification_read(notification_id):
 @limiter.limit("10 per minute")
 def mark_all_notifications_read():
     """Marca todas as notificações como lidas."""
-    from flask import jsonify
+    count = NotificationRepository.mark_all_as_read(current_user.id)
 
-    from app.models import Notification
-
-    notifications = Notification.query.filter_by(
-        user_id=current_user.id, read=False
-    ).all()
-
-    for notification in notifications:
-        notification.read = True
-        notification.read_at = datetime.now(timezone.utc)
-
-    db.session.commit()
-
-    return (
-        jsonify(
-            {
-                "status": "success",
-                "message": f"{len(notifications)} notificações marcadas como lidas",
-            }
-        ),
-        200,
-    )
+    return jsonify({
+        "status": "success",
+        "message": f"{count} notificações marcadas como lidas",
+    }), 200
 
 
 @bp.route("/notifications/settings", methods=["GET", "POST"])
@@ -795,56 +758,48 @@ def mark_all_notifications_read():
 @lawyer_required
 def notification_settings():
     """Página de configurações de notificações."""
-    prefs = NotificationPreferences.get_or_create(current_user.id)
+    prefs = NotificationPreferencesRepository.get_or_create(current_user.id)
     form = NotificationPreferencesForm(obj=prefs)
 
     if form.validate_on_submit():
-        # Canais
-        prefs.email_enabled = form.email_enabled.data
-        prefs.push_enabled = form.push_enabled.data
-        prefs.in_app_enabled = form.in_app_enabled.data
-
-        # Tipos - Prazos
-        prefs.deadline_email = form.deadline_email.data
-        prefs.deadline_push = form.deadline_push.data
-        prefs.deadline_in_app = form.deadline_in_app.data
-
-        # Tipos - Movimentações
-        prefs.movement_email = form.movement_email.data
-        prefs.movement_push = form.movement_push.data
-        prefs.movement_in_app = form.movement_in_app.data
-
-        # Tipos - Pagamentos
-        prefs.payment_email = form.payment_email.data
-        prefs.payment_push = form.payment_push.data
-        prefs.payment_in_app = form.payment_in_app.data
-
-        # Tipos - Petições/IA
-        prefs.petition_email = form.petition_email.data
-        prefs.petition_push = form.petition_push.data
-        prefs.petition_in_app = form.petition_in_app.data
-
-        # Tipos - Sistema
-        prefs.system_email = form.system_email.data
-        prefs.system_push = form.system_push.data
-        prefs.system_in_app = form.system_in_app.data
-
-        # Horário de Silêncio
-        prefs.quiet_hours_enabled = form.quiet_hours_enabled.data
-        prefs.quiet_hours_start = form.quiet_hours_start.data
-        prefs.quiet_hours_end = form.quiet_hours_end.data
-        prefs.quiet_hours_weekends = form.quiet_hours_weekends.data
-
-        # Digest
-        prefs.digest_enabled = form.digest_enabled.data
-        prefs.digest_frequency = form.digest_frequency.data
-        prefs.digest_time = form.digest_time.data
-
-        # Prioridade
-        prefs.min_priority_email = int(form.min_priority_email.data)
-        prefs.min_priority_push = int(form.min_priority_push.data)
-
-        db.session.commit()
+        NotificationPreferencesRepository.update(prefs, {
+            # Canais
+            "email_enabled": form.email_enabled.data,
+            "push_enabled": form.push_enabled.data,
+            "in_app_enabled": form.in_app_enabled.data,
+            # Tipos - Prazos
+            "deadline_email": form.deadline_email.data,
+            "deadline_push": form.deadline_push.data,
+            "deadline_in_app": form.deadline_in_app.data,
+            # Tipos - Movimentações
+            "movement_email": form.movement_email.data,
+            "movement_push": form.movement_push.data,
+            "movement_in_app": form.movement_in_app.data,
+            # Tipos - Pagamentos
+            "payment_email": form.payment_email.data,
+            "payment_push": form.payment_push.data,
+            "payment_in_app": form.payment_in_app.data,
+            # Tipos - Petições/IA
+            "petition_email": form.petition_email.data,
+            "petition_push": form.petition_push.data,
+            "petition_in_app": form.petition_in_app.data,
+            # Tipos - Sistema
+            "system_email": form.system_email.data,
+            "system_push": form.system_push.data,
+            "system_in_app": form.system_in_app.data,
+            # Horário de Silêncio
+            "quiet_hours_enabled": form.quiet_hours_enabled.data,
+            "quiet_hours_start": form.quiet_hours_start.data,
+            "quiet_hours_end": form.quiet_hours_end.data,
+            "quiet_hours_weekends": form.quiet_hours_weekends.data,
+            # Digest
+            "digest_enabled": form.digest_enabled.data,
+            "digest_frequency": form.digest_frequency.data,
+            "digest_time": form.digest_time.data,
+            # Prioridade
+            "min_priority_email": int(form.min_priority_email.data),
+            "min_priority_push": int(form.min_priority_push.data),
+        })
         flash("Preferências de notificação atualizadas com sucesso!", "success")
         return redirect(url_for("main.notification_settings"))
 
@@ -1099,42 +1054,29 @@ def roadmap_item_feedback(slug):
             flash("Avaliação deve ser entre 1 e 5 estrelas.", "danger")
             return redirect(request.url)
 
+        feedback_data = {
+            "roadmap_item_id": item.id,
+            "user_id": current_user.id,
+            "rating": rating,
+            "rating_category": rating_category,
+            "title": title,
+            "comment": comment,
+            "pros": pros,
+            "cons": cons,
+            "suggestions": suggestions,
+            "usage_frequency": usage_frequency,
+            "ease_of_use": ease_of_use,
+            "is_anonymous": is_anonymous,
+            "user_agent": request.headers.get("User-Agent"),
+            "ip_address": request.remote_addr,
+            "session_id": request.cookies.get("session", ""),
+        }
+
         if existing_feedback:
-            # Atualizar feedback existente
-            existing_feedback.rating = rating
-            existing_feedback.rating_category = rating_category
-            existing_feedback.title = title
-            existing_feedback.comment = comment
-            existing_feedback.pros = pros
-            existing_feedback.cons = cons
-            existing_feedback.suggestions = suggestions
-            existing_feedback.usage_frequency = usage_frequency
-            existing_feedback.ease_of_use = ease_of_use
-            existing_feedback.is_anonymous = is_anonymous
-            existing_feedback.updated_at = datetime.now(timezone.utc)
-            db.session.commit()
+            RoadmapFeedbackRepository.update(existing_feedback, feedback_data)
             flash("Seu feedback foi atualizado com sucesso!", "success")
         else:
-            # Criar novo feedback
-            feedback = RoadmapFeedback(
-                roadmap_item_id=item.id,
-                user_id=current_user.id,
-                rating=rating,
-                rating_category=rating_category,
-                title=title,
-                comment=comment,
-                pros=pros,
-                cons=cons,
-                suggestions=suggestions,
-                usage_frequency=usage_frequency,
-                ease_of_use=ease_of_use,
-                is_anonymous=is_anonymous,
-                user_agent=request.headers.get("User-Agent"),
-                ip_address=request.remote_addr,
-                session_id=request.cookies.get("session", ""),
-            )
-            db.session.add(feedback)
-            db.session.commit()
+            RoadmapFeedbackRepository.create(feedback_data)
             flash(
                 "Obrigado pelo seu feedback! Ele nos ajuda a melhorar continuamente.",
                 "success",

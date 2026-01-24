@@ -138,7 +138,8 @@ def view(process_id):
     # Buscar movimentações (se existir)
     movements = []
     if hasattr(process, "movements"):
-        movements = process.movements.order_by("created_at desc").limit(10).all()
+        from app.models import ProcessMovement
+        movements = process.movements.order_by(ProcessMovement.created_at.desc()).limit(10).all()
 
     return render_template(
         "processes/view.html",

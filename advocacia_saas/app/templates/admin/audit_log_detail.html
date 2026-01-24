@@ -43,7 +43,7 @@
                                 <tr>
                                     <th>Entidade:</th>
                                     <td>
-                                        <span class="badge badge-primary">{{ log.entity_type.title() }}</span>
+                                        <span class="badge bg-primary">{{ log.entity_type.title() }}</span>
                                         (ID: {{ log.entity_id }})
                                     </td>
                                 </tr>
@@ -51,27 +51,27 @@
                                     <th>Ação:</th>
                                     <td>
                                         {% if log.action == 'create' %}
-                                            <span class="badge badge-success">
+                                            <span class="badge bg-success">
                                                 <i class="fas fa-plus"></i> Criado
                                             </span>
                                         {% elif log.action == 'update' %}
-                                            <span class="badge badge-warning">
+                                            <span class="badge bg-warning text-dark">
                                                 <i class="fas fa-edit"></i> Atualizado
                                             </span>
                                         {% elif log.action == 'delete' %}
-                                            <span class="badge badge-danger">
+                                            <span class="badge bg-danger">
                                                 <i class="fas fa-trash"></i> Removido
                                             </span>
                                         {% elif 'login' in log.action %}
-                                            <span class="badge badge-info">
+                                            <span class="badge bg-info text-dark">
                                                 <i class="fas fa-sign-in-alt"></i> {{ log.action.replace('_', ' ').title() }}
                                             </span>
                                         {% elif log.action == 'logout' %}
-                                            <span class="badge badge-secondary">
+                                            <span class="badge bg-secondary">
                                                 <i class="fas fa-sign-out-alt"></i> Desconectou
                                             </span>
                                         {% else %}
-                                            <span class="badge badge-light">{{ log.action.title() }}</span>
+                                            <span class="badge bg-light text-dark">{{ log.action.title() }}</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -102,19 +102,23 @@
                                         <code>{{ log.session_id or 'N/D' }}</code>
                                     </td>
                                 </tr>
-                                <tr>
-                                    <th>URL da Requisição:</th>
-                                    <td>
-                                        <small>{{ log.request_url or 'N/D' }}</small>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Método HTTP:</th>
-                                    <td><code>{{ log.http_method or 'N/D' }}</code></td>
-                                </tr>
                             </table>
                         </div>
                     </div>
+
+                    <!-- Campos Alterados -->
+                    {% if log.changed_fields %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5>Campos Alterados</h5>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for field in log.changed_fields|from_json %}
+                                <span class="badge bg-secondary">{{ field }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
 
                     <!-- Valores Antigos e Novos -->
                     {% if log.old_values or log.new_values %}
@@ -131,7 +135,7 @@
                                             </h6>
                                         </div>
                                         <div class="card-body">
-                                            <pre class="bg-light p-2 rounded"><code>{{ log.old_values|tojson(indent=2) }}</code></pre>
+                                            <pre class="bg-light p-2 rounded"><code>{{ log.old_values }}</code></pre>
                                         </div>
                                     </div>
                                 </div>
@@ -146,7 +150,7 @@
                                             </h6>
                                         </div>
                                         <div class="card-body">
-                                            <pre class="bg-light p-2 rounded"><code>{{ log.new_values|tojson(indent=2) }}</code></pre>
+                                            <pre class="bg-light p-2 rounded"><code>{{ log.new_values }}</code></pre>
                                         </div>
                                     </div>
                                 </div>
@@ -163,7 +167,7 @@
                             <h5>Metadados Adicionais</h5>
                             <div class="card">
                                 <div class="card-body">
-                                    <pre class="bg-light p-2 rounded"><code>{{ log.additional_metadata|tojson(indent=2) }}</code></pre>
+                                    <pre class="bg-light p-2 rounded"><code>{{ log.additional_metadata }}</code></pre>
                                 </div>
                             </div>
                         </div>

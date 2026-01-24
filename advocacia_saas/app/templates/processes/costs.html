@@ -37,7 +37,7 @@
                             </p>
                         </div>
                         <div class="col-md-6 text-end">
-                            <a href="{{ url_for('process_management.add_cost', process_id=process.id) }}"
+                            <a href="{{ url_for('processes.add_cost', process_id=process.id) }}"
                                class="btn btn-success">
                                 <i class="fas fa-plus me-1"></i>Adicionar Custo
                             </a>
@@ -142,7 +142,7 @@
                                         </td>
                                         <td>
                                             {% if cost.payment_status == 'pending' %}
-                                                <form method="POST" action="{{ url_for('process_management.mark_cost_paid', cost_id=cost.id) }}"
+                                                <form method="POST" action="{{ url_for('processes.mark_cost_paid', cost_id=cost.id) }}"
                                                       style="display: inline;" class="confirm-form" data-message="Marcar este custo como pago?" data-type="success" data-confirm-text="Marcar como Pago">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <button type="submit" class="btn btn-sm btn-success">
@@ -168,7 +168,7 @@
                         <i class="fas fa-dollar-sign fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">Nenhum custo registrado</h5>
                         <p class="text-muted">Adicione custos judiciais e honorários para este processo.</p>
-                        <a href="{{ url_for('process_management.add_cost', process_id=process.id) }}"
+                        <a href="{{ url_for('processes.add_cost', process_id=process.id) }}"
                            class="btn btn-success">
                             <i class="fas fa-plus me-1"></i>Adicionar Primeiro Custo
                         </a>

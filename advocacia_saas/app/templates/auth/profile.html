@@ -267,6 +267,25 @@
                         </a>
                         {% endif %}
                     </div>
+
+                    <hr class="my-3">
+
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="mb-1"><strong>Configurações de Notificação</strong></p>
+                            <p class="text-muted small mb-0">
+                                {% if current_user.deadline_alert_enabled %}
+                                    <span class="badge bg-success">Alertas Ativos</span>
+                                    <small class="d-block mt-1">Antecedência: <strong>{{ current_user.deadline_alert_days or 10 }} dias</strong></small>
+                                {% else %}
+                                    <span class="badge bg-secondary">Alertas Desativados</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <a href="{{ url_for('auth.notification_settings') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-bell me-1"></i> Configurar Alertas
+                        </a>
+                    </div>
                 </div>
             </div>
             

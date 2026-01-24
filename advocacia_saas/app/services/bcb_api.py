@@ -172,7 +172,7 @@ def calcular_fator_correcao(
                     "fator": float(fator_mensal),
                 }
             )
-        except (ValueError, TypeError) as e:
+        except (ValueError, TypeError):
             logger.warning(f"Valor inválido ignorado: {item}")
             continue
 

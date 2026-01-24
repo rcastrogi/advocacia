@@ -139,6 +139,20 @@ class User(UserMixin, db.Model):
         db.String(20), nullable=True
     )  # owner, admin, lawyer, secretary, intern
 
+    # Notification preferences (configurações de notificação de prazos)
+    deadline_alert_days = db.Column(
+        db.Integer, default=10
+    )  # Dias de antecedência para alertas de prazo
+    deadline_alert_enabled = db.Column(
+        db.Boolean, default=True
+    )  # Habilitar alertas de prazo
+    deadline_alert_email = db.Column(
+        db.Boolean, default=True
+    )  # Enviar alertas por email
+    deadline_alert_push = db.Column(
+        db.Boolean, default=True
+    )  # Enviar alertas push (quando implementado)
+
     # Relationships
     clients = db.relationship(
         "Client",
@@ -3239,6 +3253,9 @@ class Deadline(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     case_id = db.Column(db.Integer)  # Removida FK: tabela cases não existe
     client_id = db.Column(db.Integer, db.ForeignKey("client.id"))
+    process_id = db.Column(
+        db.Integer, db.ForeignKey("processes.id"), nullable=True
+    )  # Vínculo com processo judicial
 
     # Detalhes do prazo
     title = db.Column(db.String(200), nullable=False)
@@ -3277,6 +3294,9 @@ class Deadline(db.Model):
     # Relationships
     user = db.relationship("User", backref=db.backref("deadlines", lazy="dynamic"))
     client = db.relationship("Client", backref=db.backref("deadlines", lazy="dynamic"))
+    process = db.relationship(
+        "Process", backref=db.backref("deadlines", lazy="dynamic")
+    )
 
     def __repr__(self):
         return f"<Deadline {self.id} - {self.title} - {self.deadline_date}>"

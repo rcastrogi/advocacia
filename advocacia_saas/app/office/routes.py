@@ -1,20 +1,10 @@
 """Rotas para gerenciamento de Escritório"""
 
-from datetime import datetime, timezone
-
-from flask import (
-    flash,
-    redirect,
-    render_template,
-    request,
-    url_for,
-)
+from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from app import db
 from app.billing.decorators import feature_required
 from app.decorators import lawyer_required
-from app.models import OFFICE_ROLES, Office, OfficeInvite, User
 from app.office import bp
 from app.office.forms import (
     ChangeMemberRoleForm,
@@ -23,7 +13,11 @@ from app.office.forms import (
     OfficeSettingsForm,
     TransferOwnershipForm,
 )
-from app.utils.email import send_office_invite_email
+from app.office.services import (
+    OfficeInviteService,
+    OfficeMemberService,
+    OfficeService,
+)
 
 # =============================================================================
 # Decorators específicos do módulo Office
@@ -112,7 +106,6 @@ def index():
 @feature_required("multi_users")
 def create():
     """Criar um novo escritório"""
-    # Se já tem escritório, redireciona
     if current_user.office_id:
         flash("Você já pertence a um escritório.", "info")
         return redirect(url_for("office.dashboard"))
@@ -120,28 +113,20 @@ def create():
     form = CreateOfficeForm()
 
     if form.validate_on_submit():
-        # Criar o escritório
-        office = Office(
-            name=form.name.data,
-            slug=Office.generate_slug(form.name.data),
-            owner_id=current_user.id,
-            cnpj=form.cnpj.data or None,
-            oab_number=form.oab_number.data or None,
-            phone=form.phone.data or None,
-            email=form.email.data or None,
-            website=form.website.data or None,
+        success, message = OfficeService.create_office(
+            current_user,
+            {
+                "name": form.name.data,
+                "cnpj": form.cnpj.data,
+                "oab_number": form.oab_number.data,
+                "phone": form.phone.data,
+                "email": form.email.data,
+                "website": form.website.data,
+            },
         )
-        db.session.add(office)
-        db.session.flush()  # Obter o ID do escritório
-
-        # Vincular o usuário atual ao escritório como owner
-        current_user.office_id = office.id
-        current_user.office_role = "owner"
-
-        db.session.commit()
-
-        flash(f"Escritório '{office.name}' criado com sucesso!", "success")
-        return redirect(url_for("office.dashboard"))
+        flash(message, "success" if success else "danger")
+        if success:
+            return redirect(url_for("office.dashboard"))
 
     return render_template(
         "office/create.html",
@@ -156,30 +141,16 @@ def create():
 @office_required
 def dashboard():
     """Dashboard do escritório"""
-    office = current_user.get_office()
+    data = OfficeService.get_dashboard_data(current_user)
 
-    if not office:
+    if not data:
         flash("Escritório não encontrado.", "danger")
         return redirect(url_for("office.create"))
 
-    # Estatísticas do escritório
-    members = office.members.filter_by(is_active=True).all()
-    pending_invites = office.invites.filter_by(status="pending").count()
-    max_members = office.get_max_members()
-
-    # Obter roles info para exibição
-    roles_info = OFFICE_ROLES
-
     return render_template(
         "office/dashboard.html",
-        title=f"Escritório - {office.name}",
-        office=office,
-        members=members,
-        pending_invites=pending_invites,
-        max_members=max_members,
-        roles_info=roles_info,
-        can_manage=current_user.can_manage_office(),
-        is_owner=current_user.is_office_owner(),
+        title=f"Escritório - {data['office'].name}",
+        **data,
     )
 
 
@@ -198,12 +169,21 @@ def settings():
     form = OfficeSettingsForm(obj=office)
 
     if form.validate_on_submit():
-        form.populate_obj(office)
-        office.updated_at = datetime.now(timezone.utc)
-        db.session.commit()
-
-        flash("Configurações salvas com sucesso!", "success")
-        return redirect(url_for("office.settings"))
+        success, message = OfficeService.update_settings(
+            current_user,
+            {
+                "name": form.name.data,
+                "cnpj": form.cnpj.data,
+                "oab_number": form.oab_number.data,
+                "phone": form.phone.data,
+                "email": form.email.data,
+                "website": form.website.data,
+                "address": form.address.data if hasattr(form, "address") else None,
+            },
+        )
+        flash(message, "success" if success else "danger")
+        if success:
+            return redirect(url_for("office.settings"))
 
     return render_template(
         "office/settings.html",
@@ -224,26 +204,11 @@ def settings():
 @office_required
 def members():
     """Lista de membros do escritório"""
-    office = current_user.get_office()
+    data = OfficeMemberService.get_members_page_data(current_user)
 
-    if not office:
+    if not data:
         flash("Escritório não encontrado.", "danger")
         return redirect(url_for("office.create"))
-
-    members_list = office.members.order_by(User.full_name).all()
-    pending_invites = (
-        office.invites.filter_by(status="pending")
-        .order_by(OfficeInvite.created_at.desc())
-        .all()
-    )
-
-    # Buscar inviters para os convites pendentes
-    inviter_ids = set(invite.invited_by_id for invite in pending_invites)
-    inviter_users = (
-        {u.id: u for u in User.query.filter(User.id.in_(inviter_ids)).all()}
-        if inviter_ids
-        else {}
-    )
 
     # Forms
     invite_form = InviteMemberForm()
@@ -252,17 +217,9 @@ def members():
     return render_template(
         "office/members.html",
         title="Membros do Escritório",
-        office=office,
-        members=members_list,
-        pending_invites=pending_invites,
-        inviter_users=inviter_users,
         invite_form=invite_form,
         role_form=role_form,
-        roles_info=OFFICE_ROLES,
-        can_manage=current_user.can_manage_office(),
-        is_owner=current_user.is_office_owner(),
-        can_add_member=office.can_add_member(),
-        max_members=office.get_max_members(),
+        **data,
     )
 
 
@@ -272,64 +229,22 @@ def members():
 @office_admin_required
 def invite_member():
     """Enviar convite para novo membro"""
-    office = current_user.get_office()
-
-    if not office:
-        flash("Escritório não encontrado.", "danger")
-        return redirect(url_for("office.create"))
-
-    # Verificar se pode adicionar mais membros
-    if not office.can_add_member():
-        flash(
-            f"Limite de {office.get_max_members()} membros atingido. Faça upgrade do plano para adicionar mais.",
-            "warning",
-        )
-        return redirect(url_for("office.members"))
-
     form = InviteMemberForm()
 
     if form.validate_on_submit():
-        email = form.email.data.lower()
-        role = form.role.data
-
-        # Verificar se já existe convite pendente
-        existing_invite = OfficeInvite.query.filter_by(
-            office_id=office.id, email=email, status="pending"
-        ).first()
-
-        if existing_invite:
-            flash("Já existe um convite pendente para este e-mail.", "warning")
-            return redirect(url_for("office.members"))
-
-        # Verificar se já é membro
-        existing_member = User.query.filter_by(email=email, office_id=office.id).first()
-        if existing_member:
-            flash("Este usuário já é membro do escritório.", "warning")
-            return redirect(url_for("office.members"))
-
-        # Criar convite
-        invite = OfficeInvite.create_invite(
-            office_id=office.id,
-            email=email,
-            role=role,
-            invited_by_id=current_user.id,
+        success, message, invite_url = OfficeInviteService.send_invite(
+            current_user,
+            form.email.data,
+            form.role.data,
         )
 
-        if invite:
-            db.session.commit()
-
-            # Enviar e-mail com link do convite
-            email_sent = send_office_invite_email(invite)
-
-            if email_sent:
-                flash(f"Convite enviado para {email}!", "success")
+        if success:
+            if invite_url:
+                flash(f"{message} Link: {invite_url}", "warning")
             else:
-                flash(
-                    f"Convite criado, mas não foi possível enviar o email. Link: {url_for('office.accept_invite_page', token=invite.token, _external=True)}",
-                    "warning",
-                )
+                flash(message, "success")
         else:
-            flash("Erro ao criar convite.", "danger")
+            flash(message, "warning" if "já existe" in message.lower() else "danger")
     else:
         for field, errors in form.errors.items():
             for error in errors:
@@ -344,39 +259,11 @@ def invite_member():
 @office_admin_required
 def change_member_role(member_id):
     """Alterar função de um membro"""
-    office = current_user.get_office()
-
-    if not office:
-        flash("Escritório não encontrado.", "danger")
-        return redirect(url_for("office.create"))
-
-    member = User.query.filter_by(id=member_id, office_id=office.id).first()
-
-    if not member:
-        flash("Membro não encontrado.", "danger")
-        return redirect(url_for("office.members"))
-
-    # Não pode alterar o role do owner
-    if member.office_role == "owner":
-        flash("Não é possível alterar a função do proprietário.", "danger")
-        return redirect(url_for("office.members"))
-
-    # Apenas owner pode promover alguém a admin
     new_role = request.form.get("role")
-    if new_role == "admin" and not current_user.is_office_owner():
-        flash("Apenas o proprietário pode promover membros a administrador.", "danger")
-        return redirect(url_for("office.members"))
-
-    if new_role in OFFICE_ROLES:
-        member.office_role = new_role
-        db.session.commit()
-        flash(
-            f"Função de {member.full_name or member.username} alterada para {OFFICE_ROLES[new_role]['name']}.",
-            "success",
-        )
-    else:
-        flash("Função inválida.", "danger")
-
+    success, message = OfficeMemberService.change_member_role(
+        current_user, member_id, new_role
+    )
+    flash(message, "success" if success else "danger")
     return redirect(url_for("office.members"))
 
 
@@ -386,42 +273,8 @@ def change_member_role(member_id):
 @office_admin_required
 def remove_member(member_id):
     """Remover membro do escritório"""
-    office = current_user.get_office()
-
-    if not office:
-        flash("Escritório não encontrado.", "danger")
-        return redirect(url_for("office.create"))
-
-    member = User.query.filter_by(id=member_id, office_id=office.id).first()
-
-    if not member:
-        flash("Membro não encontrado.", "danger")
-        return redirect(url_for("office.members"))
-
-    # Não pode remover o owner
-    if member.office_role == "owner":
-        flash("Não é possível remover o proprietário do escritório.", "danger")
-        return redirect(url_for("office.members"))
-
-    # Admin só pode ser removido pelo owner
-    if member.office_role == "admin" and not current_user.is_office_owner():
-        flash("Apenas o proprietário pode remover administradores.", "danger")
-        return redirect(url_for("office.members"))
-
-    # Não pode remover a si mesmo
-    if member.id == current_user.id:
-        flash(
-            "Você não pode se remover do escritório. Use 'Sair do Escritório' ao invés.",
-            "warning",
-        )
-        return redirect(url_for("office.members"))
-
-    # Remover membro
-    member_name = member.full_name or member.username
-    office.remove_member(member)
-    db.session.commit()
-
-    flash(f"{member_name} foi removido do escritório.", "success")
+    success, message = OfficeMemberService.remove_member(current_user, member_id)
+    flash(message, "success" if success else "danger" if "não" in message.lower() else "warning")
     return redirect(url_for("office.members"))
 
 
@@ -431,24 +284,8 @@ def remove_member(member_id):
 @office_admin_required
 def cancel_invite(invite_id):
     """Cancelar um convite pendente"""
-    office = current_user.get_office()
-
-    if not office:
-        flash("Escritório não encontrado.", "danger")
-        return redirect(url_for("office.create"))
-
-    invite = OfficeInvite.query.filter_by(
-        id=invite_id, office_id=office.id, status="pending"
-    ).first()
-
-    if not invite:
-        flash("Convite não encontrado.", "danger")
-        return redirect(url_for("office.members"))
-
-    invite.cancel()
-    db.session.commit()
-
-    flash("Convite cancelado.", "success")
+    success, message = OfficeInviteService.cancel_invite(current_user, invite_id)
+    flash(message, "success" if success else "danger")
     return redirect(url_for("office.members"))
 
 
@@ -458,33 +295,18 @@ def cancel_invite(invite_id):
 @office_admin_required
 def resend_invite(invite_id):
     """Reenviar um convite"""
-    office = current_user.get_office()
+    success, message, invite_url = OfficeInviteService.resend_invite(
+        current_user, invite_id
+    )
 
-    if not office:
-        flash("Escritório não encontrado.", "danger")
-        return redirect(url_for("office.create"))
-
-    invite = OfficeInvite.query.filter_by(
-        id=invite_id, office_id=office.id, status="pending"
-    ).first()
-
-    if not invite:
-        flash("Convite não encontrado.", "danger")
-        return redirect(url_for("office.members"))
-
-    invite.resend()
-    db.session.commit()
-
-    # Reenviar e-mail
-    email_sent = send_office_invite_email(invite)
-
-    if email_sent:
-        flash(f"Convite reenviado para {invite.email}.", "success")
+    if success:
+        if invite_url:
+            flash(f"{message} Link: {invite_url}", "warning")
+        else:
+            flash(message, "success")
     else:
-        flash(
-            f"Convite renovado, mas não foi possível enviar o email. Link: {url_for('office.accept_invite_page', token=invite.token, _external=True)}",
-            "warning",
-        )
+        flash(message, "danger")
+
     return redirect(url_for("office.members"))
 
 
@@ -498,40 +320,21 @@ def resend_invite(invite_id):
 @lawyer_required
 def accept_invite_page(token):
     """Página para aceitar convite"""
-    invite = OfficeInvite.query.filter_by(token=token).first()
+    success, message, data = OfficeInviteService.validate_invite(token, current_user)
 
-    if not invite:
-        flash("Convite não encontrado ou inválido.", "danger")
+    if not success:
+        flash(message, "danger" if "não encontrado" in message.lower() else "warning")
+        if "já pertence" in message.lower():
+            return redirect(url_for("office.dashboard"))
         return redirect(url_for("main.index"))
-
-    if not invite.is_valid():
-        flash("Este convite expirou ou já foi utilizado.", "warning")
-        return redirect(url_for("main.index"))
-
-    # Verificar se o usuário atual é o destinatário
-    if current_user.email.lower() != invite.email.lower():
-        flash("Este convite foi enviado para outro e-mail.", "danger")
-        return redirect(url_for("main.index"))
-
-    # Se já está em outro escritório
-    if current_user.office_id:
-        flash(
-            "Você já pertence a um escritório. Saia primeiro para aceitar este convite.",
-            "warning",
-        )
-        return redirect(url_for("office.dashboard"))
-
-    office = invite.office
-    inviter = User.query.get(invite.invited_by_id)
-    role_info = OFFICE_ROLES.get(invite.role, {})
 
     return render_template(
         "office/accept_invite.html",
         title="Aceitar Convite",
-        invite=invite,
-        office=office,
-        inviter=inviter,
-        role_info=role_info,
+        invite=data["invite"],
+        office=data["office"],
+        inviter=data["inviter"],
+        role_info=data["role_info"],
     )
 
 
@@ -540,33 +343,13 @@ def accept_invite_page(token):
 @lawyer_required
 def accept_invite(token):
     """Aceitar convite para escritório"""
-    invite = OfficeInvite.query.filter_by(token=token).first()
+    success, message = OfficeInviteService.accept_invite(token, current_user)
 
-    if not invite or not invite.is_valid():
-        flash("Convite inválido ou expirado.", "danger")
-        return redirect(url_for("main.index"))
-
-    if current_user.email.lower() != invite.email.lower():
-        flash("Este convite foi enviado para outro e-mail.", "danger")
-        return redirect(url_for("main.index"))
-
-    if current_user.office_id:
-        flash("Você já pertence a um escritório.", "warning")
-        return redirect(url_for("office.dashboard"))
-
-    # Verificar se o escritório ainda pode adicionar membros
-    office = invite.office
-    if not office.can_add_member():
-        flash("O escritório atingiu o limite de membros.", "warning")
-        return redirect(url_for("main.index"))
-
-    # Aceitar convite
-    if invite.accept(current_user):
-        db.session.commit()
-        flash(f"Bem-vindo ao escritório {office.name}!", "success")
+    if success:
+        flash(message, "success")
         return redirect(url_for("office.dashboard"))
     else:
-        flash("Erro ao aceitar convite.", "danger")
+        flash(message, "danger" if "inválido" in message.lower() else "warning")
         return redirect(url_for("main.index"))
 
 
@@ -574,20 +357,8 @@ def accept_invite(token):
 @login_required
 def decline_invite(token):
     """Recusar convite"""
-    invite = OfficeInvite.query.filter_by(token=token).first()
-
-    if not invite:
-        flash("Convite não encontrado.", "danger")
-        return redirect(url_for("main.index"))
-
-    if current_user.email.lower() != invite.email.lower():
-        flash("Este convite foi enviado para outro e-mail.", "danger")
-        return redirect(url_for("main.index"))
-
-    invite.status = "declined"
-    db.session.commit()
-
-    flash("Convite recusado.", "info")
+    success, message = OfficeInviteService.decline_invite(token, current_user)
+    flash(message, "info" if success else "danger")
     return redirect(url_for("main.index"))
 
 
@@ -610,35 +381,23 @@ def transfer_ownership():
 
     form = TransferOwnershipForm()
 
-    # Obter membros elegíveis (exceto o owner atual)
-    eligible_members = office.members.filter(
-        User.id != current_user.id, User.is_active.is_(True)
-    ).all()
+    # Obter membros elegíveis
+    candidates = OfficeMemberService.get_transfer_candidates(current_user)
+    form.new_owner_id.choices = candidates
 
-    form.new_owner_id.choices = [
-        (m.id, f"{m.full_name or m.username} ({m.email})") for m in eligible_members
-    ]
-
-    if not eligible_members:
+    if not candidates:
         flash(
             "Não há outros membros elegíveis para transferir a propriedade.", "warning"
         )
         return redirect(url_for("office.dashboard"))
 
     if form.validate_on_submit():
-        new_owner = User.query.get(form.new_owner_id.data)
-
-        if new_owner and new_owner.office_id == office.id:
-            office.transfer_ownership(new_owner)
-            db.session.commit()
-
-            flash(
-                f"Propriedade transferida para {new_owner.full_name or new_owner.username}.",
-                "success",
-            )
+        success, message = OfficeMemberService.transfer_ownership(
+            current_user, form.new_owner_id.data
+        )
+        flash(message, "success" if success else "danger")
+        if success:
             return redirect(url_for("office.dashboard"))
-        else:
-            flash("Usuário inválido para transferência.", "danger")
 
     return render_template(
         "office/transfer_ownership.html",
@@ -654,26 +413,14 @@ def transfer_ownership():
 @office_required
 def leave_office():
     """Sair do escritório"""
-    office = current_user.get_office()
+    success, message = OfficeMemberService.leave_office(current_user)
 
-    if not office:
-        flash("Escritório não encontrado.", "danger")
+    if success:
+        flash(message, "info")
         return redirect(url_for("main.index"))
-
-    # Owner não pode sair sem transferir propriedade
-    if current_user.is_office_owner():
-        flash(
-            "Você é o proprietário. Transfira a propriedade antes de sair ou exclua o escritório.",
-            "danger",
-        )
+    else:
+        flash(message, "danger")
         return redirect(url_for("office.dashboard"))
-
-    office_name = office.name
-    office.remove_member(current_user)
-    db.session.commit()
-
-    flash(f"Você saiu do escritório {office_name}.", "info")
-    return redirect(url_for("main.index"))
 
 
 @bp.route("/delete", methods=["POST"])
@@ -682,27 +429,10 @@ def leave_office():
 @office_owner_required
 def delete_office():
     """Excluir escritório"""
-    office = current_user.get_office()
+    success, message = OfficeService.delete_office(current_user)
+    flash(message, "info" if success else "danger")
 
-    if not office:
-        flash("Escritório não encontrado.", "danger")
+    if success:
         return redirect(url_for("main.index"))
-
-    # Verificar se há outros membros
-    member_count = office.get_member_count()
-    if member_count > 1:
-        flash("Remova todos os membros antes de excluir o escritório.", "danger")
+    else:
         return redirect(url_for("office.members"))
-
-    office_name = office.name
-
-    # Desvincular o owner
-    current_user.office_id = None
-    current_user.office_role = None
-
-    # Excluir o escritório (cascata vai excluir convites)
-    db.session.delete(office)
-    db.session.commit()
-
-    flash(f"Escritório '{office_name}' excluído com sucesso.", "info")
-    return redirect(url_for("main.index"))

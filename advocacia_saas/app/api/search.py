@@ -9,7 +9,7 @@ from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 from sqlalchemy import or_
 
-from app import db, limiter
+from app import limiter
 from app.models import Client, Document, Process, SavedPetition
 from app.rate_limits import AUTH_API_LIMIT
 

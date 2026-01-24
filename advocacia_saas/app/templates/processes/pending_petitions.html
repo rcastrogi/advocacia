@@ -62,7 +62,7 @@
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <button class="btn btn-outline-primary btn-sm" title="Ver petição"
-                                                onclick="window.open('{{ url_for('petitions.view_petition', petition_id=petition.id) }}', '_blank')">
+                                                onclick="window.open('{{ url_for('petitions.saved_view', petition_id=petition.id) }}', '_blank')">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                         <button class="btn btn-outline-warning btn-sm" title="Adicionar número do processo"

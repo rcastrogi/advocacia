@@ -433,6 +433,18 @@ def create_app(config_class=Config):
             # Simple fallback - just return text with basic formatting
             return text.replace("\n", "<br>")
 
+    @app.template_filter("from_json")
+    def from_json_filter(value):
+        """Parse JSON string to Python object"""
+        if not value:
+            return []
+        if isinstance(value, (list, dict)):
+            return value
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            return []
+
     # Register audit helpers as template globals
     from app.utils.audit_helpers import (
         format_action_badge,

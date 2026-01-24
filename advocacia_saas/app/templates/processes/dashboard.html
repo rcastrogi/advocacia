@@ -143,7 +143,7 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         {% if recent_processes %}
-                        <a href="{{ url_for('process_management.movements', process_id=recent_processes[0].id) }}" class="btn btn-outline-secondary w-100" title="Ver andamentos do processo mais recente">
+                        <a href="{{ url_for('processes.movements', process_id=recent_processes[0].id) }}" class="btn btn-outline-secondary w-100" title="Ver andamentos do processo mais recente">
                             <i class="fas fa-history me-2"></i>Andamentos
                         </a>
                         {% else %}
@@ -154,7 +154,7 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         {% if recent_processes %}
-                        <a href="{{ url_for('process_management.costs', process_id=recent_processes[0].id) }}" class="btn btn-outline-success w-100" title="Ver custos do processo mais recente">
+                        <a href="{{ url_for('processes.costs', process_id=recent_processes[0].id) }}" class="btn btn-outline-success w-100" title="Ver custos do processo mais recente">
                             <i class="fas fa-dollar-sign me-2"></i>Custos
                         </a>
                         {% else %}
@@ -165,7 +165,7 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         {% if recent_processes %}
-                        <a href="{{ url_for('process_management.attachments', process_id=recent_processes[0].id) }}" class="btn btn-outline-info w-100" title="Ver anexos do processo mais recente">
+                        <a href="{{ url_for('processes.attachments', process_id=recent_processes[0].id) }}" class="btn btn-outline-info w-100" title="Ver anexos do processo mais recente">
                             <i class="fas fa-paperclip me-2"></i>Anexos
                         </a>
                         {% else %}

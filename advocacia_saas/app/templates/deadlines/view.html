@@ -67,7 +67,7 @@
                             <p class="mb-2">
                                 <strong><i class="fas fa-user me-2"></i>Cliente:</strong><br>
                                 {% if deadline.client %}
-                                <a href="{{ url_for('clients.view', client_id=deadline.client_id) }}">
+                                <a href="{{ url_for('clients.view', id=deadline.client_id) }}">
                                     {{ deadline.client.name }}
                                 </a>
                                 {% else %}

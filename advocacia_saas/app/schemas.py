@@ -533,13 +533,20 @@ class WebhookSchema(Schema):
 class PetitionSaveSchema(Schema):
     """Validação para salvar petição"""
 
+    petition_id = fields.Int(allow_none=True)
     petition_type_id = fields.Int(
         required=True, error_messages={"required": "Tipo de petição é obrigatório"}
     )
     petition_model_id = fields.Int(allow_none=True)
     data = fields.Dict(required=True)
+    form_data = fields.Dict(load_default=None)  # Alias para 'data'
     title = fields.Str(allow_none=True, validate=validate.Length(min=3, max=255))
     notes = fields.Str(allow_none=True)
+    action = fields.Str(
+        allow_none=True,
+        validate=validate.OneOf(["save", "complete", "cancel"]),
+        load_default="save"
+    )
 
 
 class GenerateDynamicSchema(Schema):

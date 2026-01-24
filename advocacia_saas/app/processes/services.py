@@ -8,13 +8,14 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
+from app import db
 from app.processes.notifications import get_unread_notifications
 from app.processes.repository import (
     ClientRepository,
     PetitionRepository,
     ProcessRepository,
 )
-from app.models import Process
+from app.models import Deadline, Process, User
 from app.utils.pagination import PaginationHelper
 
 
@@ -171,6 +172,15 @@ class ProcessService:
             priority=priority,
         )
 
+        # Sincronizar deadline se data informada
+        if next_deadline:
+            cls._sync_process_deadline(
+                process=process,
+                deadline_date=next_deadline,
+                description=deadline_description,
+                user_id=user_id,
+            )
+
         return ProcessResult(success=True, process=process)
 
     @classmethod
@@ -208,6 +218,17 @@ class ProcessService:
 
         ProcessRepository.update(process, **kwargs)
 
+        # Sincronizar deadline se data informada ou alterada
+        next_deadline = kwargs.get("next_deadline")
+        deadline_description = kwargs.get("deadline_description")
+        if next_deadline is not None:
+            cls._sync_process_deadline(
+                process=process,
+                deadline_date=next_deadline if next_deadline else None,
+                description=deadline_description,
+                user_id=process.user_id,
+            )
+
         return ProcessResult(success=True, process=process)
 
     @classmethod
@@ -219,5 +240,92 @@ class ProcessService:
             Título do processo removido.
         """
         title = process.title
+        
+        # Remover deadlines vinculados ao processo
+        Deadline.query.filter_by(process_id=process.id).delete()
+        
         ProcessRepository.delete(process)
         return title
+
+    @classmethod
+    def _sync_process_deadline(
+        cls,
+        process: Process,
+        deadline_date,
+        description: Optional[str],
+        user_id: int,
+    ) -> Optional[Deadline]:
+        """
+        Sincroniza o próximo prazo do processo com o calendário de deadlines.
+        
+        - Se já existe um deadline pendente para este processo, atualiza
+        - Se não existe, cria um novo
+        - Se deadline_date é None, marca o deadline existente como cancelado
+        
+        Args:
+            process: Processo a sincronizar
+            deadline_date: Data do prazo (date ou datetime)
+            description: Descrição do prazo
+            user_id: ID do usuário
+            
+        Returns:
+            Deadline criado/atualizado ou None
+        """
+        # Buscar deadline existente para este processo (pendente)
+        existing_deadline = Deadline.query.filter_by(
+            process_id=process.id,
+            status="pending"
+        ).first()
+        
+        # Se não tem data, cancelar deadline existente
+        if not deadline_date:
+            if existing_deadline:
+                existing_deadline.status = "canceled"
+                existing_deadline.updated_at = datetime.now(timezone.utc)
+                db.session.commit()
+            return None
+        
+        # Converter date para datetime se necessário
+        if hasattr(deadline_date, 'hour'):
+            deadline_datetime = deadline_date
+        else:
+            deadline_datetime = datetime.combine(
+                deadline_date, 
+                datetime.min.time()
+            ).replace(tzinfo=timezone.utc)
+        
+        # Obter configuração de alerta do usuário
+        user = User.query.get(user_id)
+        alert_days = user.deadline_alert_days if user else 10
+        
+        # Título do deadline
+        deadline_title = f"Prazo: {process.title}"
+        if description:
+            deadline_title = f"{description} - {process.title}"
+        
+        if existing_deadline:
+            # Atualizar deadline existente
+            existing_deadline.deadline_date = deadline_datetime
+            existing_deadline.title = deadline_title
+            existing_deadline.description = description or f"Prazo processual - Processo: {process.process_number or process.title}"
+            existing_deadline.alert_days_before = alert_days
+            existing_deadline.alert_sent = False  # Resetar alerta ao mudar data
+            existing_deadline.updated_at = datetime.now(timezone.utc)
+            db.session.commit()
+            return existing_deadline
+        else:
+            # Criar novo deadline
+            new_deadline = Deadline(
+                user_id=user_id,
+                process_id=process.id,
+                client_id=process.client_id,
+                title=deadline_title,
+                description=description or f"Prazo processual - Processo: {process.process_number or process.title}",
+                deadline_type="prazo_processual",
+                deadline_date=deadline_datetime,
+                alert_days_before=alert_days,
+                status="pending",
+            )
+            db.session.add(new_deadline)
+            db.session.commit()
+            return new_deadline

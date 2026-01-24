@@ -4,7 +4,7 @@ API endpoints para notificações em tempo real
 
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 from flask_login import current_user, login_required
 
 from app import db, limiter
