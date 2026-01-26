@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Notificação Automática</title>
+</head>
+<body style="font-family: Arial, sans-serif; background: #f5f7fb; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 24px auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+        <div style="background: #0d6efd; color: #ffffff; padding: 16px 20px;">
+            <h2 style="margin: 0; font-size: 18px;">{{ automation.name if automation else 'Automação' }}</h2>
+        </div>
+        <div style="padding: 20px; color: #1f2937;">
+            <p style="margin: 0 0 12px 0;">{{ message }}</p>
+            {% if event_data %}
+                <div style="margin-top: 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px;">
+                    <strong>Detalhes do evento:</strong>
+                    <ul style="margin: 8px 0 0 18px; padding: 0; color: #374151;">
+                        {% if event_data.process_title %}
+                            <li><strong>Processo:</strong> {{ event_data.process_title }}</li>
+                        {% endif %}
+                        {% if event_data.movement_type %}
+                            <li><strong>Tipo de andamento:</strong> {{ event_data.movement_type }}</li>
+                        {% endif %}
+                        {% if event_data.deadline_title %}
+                            <li><strong>Prazo:</strong> {{ event_data.deadline_title }}</li>
+                        {% endif %}
+                        {% if event_data.days_before is not none %}
+                            <li><strong>Dias para o prazo:</strong> {{ event_data.days_before }}</li>
+                        {% endif %}
+                        {% if event_data.old_status and event_data.new_status %}
+                            <li><strong>Status:</strong> {{ event_data.old_status }} → {{ event_data.new_status }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            {% endif %}
+            <p style="margin: 16px 0 0 0; color: #6b7280; font-size: 12px;">Esta é uma mensagem automática. Não responda este email.</p>
+        </div>
+    </div>
+</body>
+</html>

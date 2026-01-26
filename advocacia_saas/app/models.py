@@ -5224,18 +5224,65 @@ class ProcessAutomation(db.Model):
 
     def _execute_email(self, event_data):
         """Executa ação de envio de email."""
-        # Implementar envio de email
-        pass
+        config = self.action_config or {}
+        subject = config.get("subject", "Notificação Automática")
+        body = config.get("body", "Uma automação foi acionada.")
+
+        recipients_raw = config.get("recipients")
+        recipients = []
+        if recipients_raw:
+            recipients = [
+                email.strip()
+                for email in recipients_raw.replace(";", ",").split(",")
+                if email.strip()
+            ]
+
+        if not recipients and self.user and self.user.email:
+            recipients = [self.user.email]
+
+        if not recipients:
+            return
+
+        from app.utils.email import send_email
+
+        send_email(
+            to=recipients,
+            subject=subject,
+            template="emails/automation_notification.html",
+            message=body,
+            event_data=event_data,
+            automation=self,
+        )
 
     def _execute_task(self, event_data):
         """Executa ação de criação de tarefa."""
-        # Implementar criação de tarefa
-        pass
+        config = self.action_config or {}
+        title = config.get("title", "Tarefa Automática")
+        message = config.get("message", "Uma tarefa foi criada pela automação.")
+
+        from app.models import Notification
+
+        Notification.create_notification(
+            user_id=self.user_id,
+            notification_type="automation_task",
+            title=title,
+            message=message,
+        )
 
     def _execute_reminder(self, event_data):
         """Executa ação de lembrete."""
-        # Implementar lembrete
-        pass
+        config = self.action_config or {}
+        title = config.get("title", "Lembrete Automático")
+        message = config.get("message", "Um lembrete foi criado pela automação.")
+
+        from app.models import Notification
+
+        Notification.create_notification(
+            user_id=self.user_id,
+            notification_type="automation_reminder",
+            title=title,
+            message=message,
+        )
 
     def __repr__(self):
         return f"<ProcessAutomation {self.name} - {self.trigger_type} -> {self.action_type}>"

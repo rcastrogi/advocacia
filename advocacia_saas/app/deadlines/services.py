@@ -16,6 +16,7 @@ from app.deadlines.repository import (
     DeadlineRepository,
 )
 from app.models import Notification
+from app.processes.automation import run_process_automations
 from app.utils.email import send_email
 from app.utils.pagination import PaginationHelper
 
@@ -204,6 +205,18 @@ class DeadlineAlertService:
 
             if 0 <= days_until <= deadline.alert_days_before:
                 try:
+                    run_process_automations(
+                        user_id=deadline.user_id,
+                        event_data={
+                            "trigger_type": "deadline",
+                            "process_id": deadline.process_id,
+                            "process_title": deadline.process.title if deadline.process else None,
+                            "days_before": int(days_until),
+                            "deadline_id": deadline.id,
+                            "deadline_title": deadline.title,
+                        },
+                    )
+
                     send_email(
                         to=deadline.user.email,
                         subject=f"⚠️ Prazo próximo: {deadline.title}",

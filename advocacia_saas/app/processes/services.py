@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app import db
 from app.models import Deadline, Process, User
+from app.processes.automation import run_process_automations
 from app.processes.notifications import get_unread_notifications
 from app.processes.repository import (
     ClientRepository,
@@ -212,11 +213,26 @@ class ProcessService:
                 )
 
         # Atualizar
+        old_status = process.status
         kwargs["process_number"] = process_number or None
         kwargs["title"] = title
         kwargs["updated_at"] = datetime.now(timezone.utc)
 
         ProcessRepository.update(process, **kwargs)
+
+        # Automação: mudança de status
+        new_status = kwargs.get("status")
+        if new_status and new_status != old_status:
+            run_process_automations(
+                user_id=process.user_id,
+                event_data={
+                    "trigger_type": "status_change",
+                    "process_id": process.id,
+                    "process_title": process.title,
+                    "old_status": old_status,
+                    "new_status": new_status,
+                },
+            )
 
         # Sincronizar deadline se data informada ou alterada
         next_deadline = kwargs.get("next_deadline")

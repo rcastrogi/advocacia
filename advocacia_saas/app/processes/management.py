@@ -18,6 +18,7 @@ from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 
 from app import db
+from app.processes.automation import run_process_automations
 from app.models import Process, ProcessAttachment, ProcessCost, ProcessMovement
 from app.processes import bp  # Usar o mesmo blueprint de processes
 
@@ -99,6 +100,19 @@ def add_movement(process_id):
 
         db.session.add(movement)
         db.session.commit()
+
+        run_process_automations(
+            user_id=current_user.id,
+            event_data={
+                "trigger_type": "movement",
+                "process_id": process_id,
+                "process_title": process.title,
+                "movement_type": movement_type,
+                "movement_description": description,
+                "requires_action": requires_action,
+                "is_important": is_important,
+            },
+        )
 
         flash("Andamento adicionado com sucesso!", "success")
         return redirect(url_for("processes.movements", process_id=process_id))
