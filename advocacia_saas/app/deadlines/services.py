@@ -210,7 +210,9 @@ class DeadlineAlertService:
                         event_data={
                             "trigger_type": "deadline",
                             "process_id": deadline.process_id,
-                            "process_title": deadline.process.title if deadline.process else None,
+                            "process_title": deadline.process.title
+                            if deadline.process
+                            else None,
                             "days_before": int(days_until),
                             "deadline_id": deadline.id,
                             "deadline_title": deadline.title,

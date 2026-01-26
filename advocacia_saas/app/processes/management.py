@@ -18,9 +18,9 @@ from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 
 from app import db
-from app.processes.automation import run_process_automations
 from app.models import Process, ProcessAttachment, ProcessCost, ProcessMovement
 from app.processes import bp  # Usar o mesmo blueprint de processes
+from app.processes.automation import run_process_automations
 
 # Configurações para upload
 UPLOAD_FOLDER = os.path.join(
