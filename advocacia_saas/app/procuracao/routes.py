@@ -6,8 +6,9 @@ from flask import render_template, request, send_file
 from flask_login import current_user, login_required
 
 from app.decorators import lawyer_required
-from app.models import Client
+from app.models import User
 from app.procuracao import bp
+from app.procuracao.repository import ClientForProcuracaoRepository
 from app.procuracao.services import ProcuracaoService
 
 
@@ -30,7 +31,14 @@ def nova():
         tipo = request.form.get("tipo", "ad_judicia")
         poderes_especiais = request.form.get("poderes_especiais", "")
 
-        client = Client.query.get_or_404(client_id)
+        client = ClientForProcuracaoRepository.get_by_id(client_id)
+        if not client:
+            return render_template("errors/404.html"), 404
+
+        if client.user_id:
+            user = User.query.get(client.user_id)
+            if user and user.user_type == "master":
+                return render_template("errors/403.html"), 403
 
         # Mapear tipo para poderes
         if tipo == "ad_judicia":
@@ -71,9 +79,5 @@ def nova():
         )
 
     # GET - mostrar formulário
-    clients = (
-        Client.query.filter_by(lawyer_id=current_user.id)
-        .order_by(Client.full_name)
-        .all()
-    )
+    clients = ClientForProcuracaoRepository.get_by_lawyer_ordered(current_user.id)
     return render_template("procuracao/nova.html", clients=clients)

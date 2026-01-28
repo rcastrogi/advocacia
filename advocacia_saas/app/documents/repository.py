@@ -6,10 +6,10 @@ Operações de banco de dados para documentos.
 
 from typing import Dict, List, Optional
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from app import db
-from app.models import Client, Document
+from app.models import Client, Document, User
 
 
 class DocumentRepository:
@@ -145,7 +145,13 @@ class ClientRepository:
     @staticmethod
     def get_by_user(user_id: int) -> List[Client]:
         """Lista clientes do usuário."""
-        return Client.query.filter_by(user_id=user_id).order_by(Client.full_name).all()
+        return (
+            Client.query.outerjoin(User, Client.user_id == User.id)
+            .filter(Client.user_id == user_id)
+            .filter(or_(Client.user_id.is_(None), User.user_type != "master"))
+            .order_by(Client.full_name)
+            .all()
+        )
 
     @staticmethod
     def find_by_id_and_user(client_id: int, user_id: int) -> Optional[Client]:

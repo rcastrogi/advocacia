@@ -10,10 +10,11 @@ from datetime import datetime, timezone
 from flask import flash, redirect, render_template, request, send_file, url_for
 from flask_login import current_user, login_required
 from jinja2 import Template
+from sqlalchemy import or_
 
 from app import db
 from app.decorators import lawyer_required
-from app.models import Client, FeeContractTemplate
+from app.models import Client, FeeContractTemplate, User
 from app.petitions.services import PDFGenerationService
 from app.processes import bp
 from app.processes.forms import ProcessForm
@@ -415,10 +416,39 @@ def fee_contract_generate():
         templates = [_get_default_fee_contract_template(current_user.id)]
 
     clients = (
-        Client.query.filter_by(lawyer_id=current_user.id)
+        Client.query.outerjoin(User, Client.user_id == User.id)
+        .filter(Client.lawyer_id == current_user.id)
+        .filter(or_(Client.user_id.is_(None), User.user_type != "master"))
         .order_by(Client.full_name.asc())
         .all()
     )
+
+    lawyer_name = _sanitize_text(
+        current_user.full_name or current_user.username or "", 200
+    )
+    lawyer_oab = _sanitize_text(current_user.oab_number or "", 50)
+
+    address_parts = []
+    street_block = " ".join(
+        part
+        for part in [current_user.street, current_user.number]
+        if part
+    ).strip()
+    if street_block:
+        address_parts.append(street_block)
+    if current_user.neighborhood:
+        address_parts.append(current_user.neighborhood)
+    city_state_parts = []
+    if current_user.city:
+        city_state_parts.append(current_user.city)
+    if current_user.uf:
+        city_state_parts.append(current_user.uf)
+    if city_state_parts:
+        address_parts.append("/".join(city_state_parts))
+    if current_user.complement:
+        address_parts.append(current_user.complement)
+
+    lawyer_address = _sanitize_text(", ".join(address_parts), 255)
 
     if request.method == "POST":
         template_id = request.form.get("template_id", type=int)
@@ -517,4 +547,7 @@ def fee_contract_generate():
         title="Gerador de Contrato de Honorários",
         templates=templates,
         clients=clients,
+        lawyer_name=lawyer_name,
+        lawyer_oab=lawyer_oab,
+        lawyer_address=lawyer_address,
     )

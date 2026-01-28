@@ -13,7 +13,7 @@
     </div>
 
     <form method="POST">
-        {{ csrf_token() }}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row">
             <div class="col-lg-8">
                 <div class="card shadow-sm mb-4">
@@ -22,9 +22,15 @@
                             <label class="form-label">Modelo</label>
                             <select class="form-select" name="template_id" required>
                                 {% for template in templates %}
-                                    <option value="{{ template.id }}">{{ template.name }}</option>
+                                    <option value="{{ template.id }}" {% if template.is_default %}selected{% endif %}>
+                                        {{ template.name }}
+                                    </option>
                                 {% endfor %}
                             </select>
+                            <div class="form-text">
+                                Gerencie ou crie novos modelos em
+                                <a href="{{ url_for('processes.fee_contracts') }}">Modelos</a>.
+                            </div>
                         </div>
 
                         <h6 class="mt-4">Dados do Cliente</h6>
@@ -61,15 +67,15 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Nome *</label>
-                                <input type="text" class="form-control" name="lawyer_name" required>
+                                <input type="text" class="form-control" name="lawyer_name" value="{{ lawyer_name }}" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">OAB *</label>
-                                <input type="text" class="form-control" name="lawyer_oab" required>
+                                <input type="text" class="form-control" name="lawyer_oab" value="{{ lawyer_oab }}" required>
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label">Endereço profissional *</label>
-                                <input type="text" class="form-control" name="lawyer_address" required>
+                                <input type="text" class="form-control" name="lawyer_address" value="{{ lawyer_address }}" required>
                             </div>
                         </div>
 

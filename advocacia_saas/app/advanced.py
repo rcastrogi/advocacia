@@ -23,6 +23,7 @@ from app import db
 from app.decorators import master_required, require_feature
 from app.models import (
     CalendarEvent,
+    Client,
     Notification,
     Process,
     ProcessAttachment,
@@ -30,6 +31,7 @@ from app.models import (
     ProcessCost,
     ProcessMovement,
     ProcessReport,
+    User,
 )
 
 # Blueprint para funcionalidades avançadas
@@ -255,7 +257,12 @@ def new_calendar_event():
 
     # GET: mostrar formulário
     processes = Process.query.filter_by(user_id=current_user.id).all()
-    clients = current_user.clients.all()
+    clients = (
+        current_user.clients.outerjoin(User, Client.user_id == User.id)
+        .filter(or_(Client.user_id.is_(None), User.user_type != "master"))
+        .order_by(Client.full_name)
+        .all()
+    )
 
     return render_template(
         "advanced/new_event.html", processes=processes, clients=clients
@@ -307,7 +314,12 @@ def edit_calendar_event(event_id):
             flash(f"Erro ao atualizar evento: {str(e)}", "error")
 
     processes = Process.query.filter_by(user_id=current_user.id).all()
-    clients = current_user.clients.all()
+    clients = (
+        current_user.clients.outerjoin(User, Client.user_id == User.id)
+        .filter(or_(Client.user_id.is_(None), User.user_type != "master"))
+        .order_by(Client.full_name)
+        .all()
+    )
 
     return render_template(
         "advanced/edit_event.html", event=event, processes=processes, clients=clients
@@ -816,7 +828,12 @@ def schedule_client_meeting():
             return redirect(request.url)
 
     # GET: mostrar formulário
-    clients = current_user.clients.all()
+    clients = (
+        current_user.clients.outerjoin(User, Client.user_id == User.id)
+        .filter(or_(Client.user_id.is_(None), User.user_type != "master"))
+        .order_by(Client.full_name)
+        .all()
+    )
     processes = Process.query.filter_by(user_id=current_user.id).all()
 
     return render_template(

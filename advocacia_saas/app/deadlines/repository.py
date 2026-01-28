@@ -6,8 +6,10 @@ Deadlines Repository - Camada de acesso a dados
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from sqlalchemy import or_
+
 from app import db
-from app.models import AgendaBlock, Client, Deadline
+from app.models import AgendaBlock, Client, Deadline, User
 
 
 class DeadlineRepository:
@@ -162,4 +164,10 @@ class ClientForDeadlineRepository:
 
     @staticmethod
     def get_by_user_ordered(user_id: int) -> list[Client]:
-        return Client.query.filter_by(user_id=user_id).order_by(Client.full_name).all()
+        return (
+            Client.query.outerjoin(User, Client.user_id == User.id)
+            .filter(Client.user_id == user_id)
+            .filter(or_(Client.user_id.is_(None), User.user_type != "master"))
+            .order_by(Client.full_name)
+            .all()
+        )

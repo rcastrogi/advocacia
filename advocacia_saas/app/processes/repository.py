@@ -196,7 +196,11 @@ class ClientRepository:
     def get_choices(lawyer_id: int) -> List[Tuple[str, str]]:
         """Retorna lista de clientes para select."""
         clients = (
-            Client.query.filter_by(lawyer_id=lawyer_id).order_by(Client.full_name).all()
+            Client.query.outerjoin(User, Client.user_id == User.id)
+            .filter(Client.lawyer_id == lawyer_id)
+            .filter(or_(Client.user_id.is_(None), User.user_type != "master"))
+            .order_by(Client.full_name)
+            .all()
         )
         choices = [("", "Nenhum cliente vinculado")]
         choices.extend([(str(c.id), c.full_name) for c in clients])
