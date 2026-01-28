@@ -430,9 +430,7 @@ def fee_contract_generate():
 
     address_parts = []
     street_block = " ".join(
-        part
-        for part in [current_user.street, current_user.number]
-        if part
+        part for part in [current_user.street, current_user.number] if part
     ).strip()
     if street_block:
         address_parts.append(street_block)

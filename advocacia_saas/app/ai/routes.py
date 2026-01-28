@@ -29,6 +29,7 @@ from app.ai.repository import (
 )
 from app.decorators import require_feature
 from app.models import (
+    AIGeneration,
     CreditPackage,
     CreditTransaction,
     UserCredits,
