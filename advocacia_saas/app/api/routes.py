@@ -153,4 +153,3 @@ def get_flash_messages_api():
         return jsonify(formatted_messages)
     except Exception as e:
         return jsonify({"error": f"Erro ao buscar mensagens: {str(e)}"}), 500
-

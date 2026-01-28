@@ -5,21 +5,55 @@
     <title>Notificação Automática</title>
 </head>
 <body style="font-family: Arial, sans-serif; background: #f5f7fb; margin: 0; padding: 0;">
-    <div style="max-width: 600px; margin: 24px auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-        <div style="background: #0d6efd; color: #ffffff; padding: 16px 20px;">
+    <div style="max-width: 640px; margin: 24px auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden;">
+        <div style="background: #0d6efd; color: #ffffff; padding: 18px 22px;">
             <h2 style="margin: 0; font-size: 18px;">{{ automation.name if automation else 'Automação' }}</h2>
+            <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">Notificação automática do Petitio</p>
         </div>
-        <div style="padding: 20px; color: #1f2937;">
-            <p style="margin: 0 0 12px 0;">{{ message }}</p>
-            {% if event_data %}
-                <div style="margin-top: 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px;">
-                    <strong>Detalhes do evento:</strong>
-                    <ul style="margin: 8px 0 0 18px; padding: 0; color: #374151;">
-                        {% if event_data.process_title %}
+        <div style="padding: 22px; color: #1f2937;">
+            <p style="margin: 0 0 12px 0;">Prezada(o),</p>
+            <p style="margin: 0 0 16px 0;">{{ message }}</p>
+
+            {% if process or client_name or event_data %}
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                    <strong style="display:block; margin-bottom: 8px;">Resumo do processo</strong>
+                    <ul style="margin: 0 0 0 18px; padding: 0; color: #374151;">
+                        {% if process and process.title %}
+                            <li><strong>Processo:</strong> {{ process.title }}</li>
+                        {% elif event_data.process_title %}
                             <li><strong>Processo:</strong> {{ event_data.process_title }}</li>
                         {% endif %}
+                        {% if process and process.process_number %}
+                            <li><strong>Número:</strong> {{ process.process_number }}</li>
+                        {% endif %}
+                        {% if client_name %}
+                            <li><strong>Cliente:</strong> {{ client_name }}</li>
+                        {% endif %}
+                        {% if process and process.court %}
+                            <li><strong>Tribunal:</strong> {{ process.court }}</li>
+                        {% endif %}
+                        {% if process and process.jurisdiction %}
+                            <li><strong>Vara/Órgão:</strong> {{ process.jurisdiction }}</li>
+                        {% endif %}
+                        {% if process and process.district %}
+                            <li><strong>Comarca:</strong> {{ process.district }}</li>
+                        {% endif %}
+                        {% if process and process.judge %}
+                            <li><strong>Magistrado:</strong> {{ process.judge }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if event_data %}
+                <div style="margin-bottom: 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px;">
+                    <strong style="display:block; margin-bottom: 8px;">Detalhes do evento</strong>
+                    <ul style="margin: 0 0 0 18px; padding: 0; color: #374151;">
                         {% if event_data.movement_type %}
                             <li><strong>Tipo de andamento:</strong> {{ event_data.movement_type }}</li>
+                        {% endif %}
+                        {% if event_data.movement_description %}
+                            <li><strong>Descrição:</strong> {{ event_data.movement_description }}</li>
                         {% endif %}
                         {% if event_data.deadline_title %}
                             <li><strong>Prazo:</strong> {{ event_data.deadline_title }}</li>
@@ -33,7 +67,19 @@
                     </ul>
                 </div>
             {% endif %}
-            <p style="margin: 16px 0 0 0; color: #6b7280; font-size: 12px;">Esta é uma mensagem automática. Não responda este email.</p>
+
+            {% if process_url or deadline_url %}
+                <div style="margin: 18px 0 6px 0;">
+                    {% if process_url %}
+                        <a href="{{ process_url }}" style="display:inline-block; background:#0d6efd; color:#ffffff; text-decoration:none; padding:10px 16px; border-radius:6px; margin-right:8px;">Ver processo</a>
+                    {% endif %}
+                    {% if deadline_url %}
+                        <a href="{{ deadline_url }}" style="display:inline-block; background:#6c757d; color:#ffffff; text-decoration:none; padding:10px 16px; border-radius:6px;">Ver prazo</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <p style="margin: 18px 0 0 0; color: #6b7280; font-size: 12px;">Esta é uma mensagem automática. Não responda este email.</p>
         </div>
     </div>
 </body>

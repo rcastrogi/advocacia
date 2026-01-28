@@ -207,4 +207,3 @@ def calcular_completo():
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Erro no cálculo: {str(e)}"}), 500
-

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="fas fa-file-pdf me-2 text-primary"></i>Gerador de Contrato de Honorários</h1>
+            <p class="text-muted mb-0">Preencha os dados e gere o contrato em PDF.</p>
+        </div>
+        <a href="{{ url_for('processes.fee_contracts') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Voltar
+        </a>
+    </div>
+
+    <form method="POST">
+        {{ csrf_token() }}
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Modelo</label>
+                            <select class="form-select" name="template_id" required>
+                                {% for template in templates %}
+                                    <option value="{{ template.id }}">{{ template.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <h6 class="mt-4">Dados do Cliente</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Selecionar cliente</label>
+                                <select class="form-select" id="clientSelect">
+                                    <option value="">Selecionar...</option>
+                                    {% for client in clients %}
+                                    <option value="{{ client.id }}"
+                                            data-name="{{ client.full_name }}"
+                                            data-document="{{ client.cpf_cnpj }}"
+                                            data-address="{{ (client.street or '') ~ ' ' ~ (client.number or '') ~ ', ' ~ (client.neighborhood or '') ~ ' - ' ~ (client.city or '') ~ '/' ~ (client.uf or '') }}">
+                                        {{ client.full_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nome do cliente *</label>
+                                <input type="text" class="form-control" name="client_name" id="clientName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">CPF/CNPJ *</label>
+                                <input type="text" class="form-control" name="client_document" id="clientDocument" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Endereço *</label>
+                                <input type="text" class="form-control" name="client_address" id="clientAddress" required>
+                            </div>
+                        </div>
+
+                        <h6 class="mt-4">Dados do Advogado</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nome *</label>
+                                <input type="text" class="form-control" name="lawyer_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">OAB *</label>
+                                <input type="text" class="form-control" name="lawyer_oab" required>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Endereço profissional *</label>
+                                <input type="text" class="form-control" name="lawyer_address" required>
+                            </div>
+                        </div>
+
+                        <h6 class="mt-4">Objeto e Honorários</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Objeto do contrato *</label>
+                            <textarea class="form-control" name="contract_object" rows="3" required></textarea>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Tipo de honorário *</label>
+                                <select class="form-select" name="fee_type" required>
+                                    <option value="Contratual">Contratual</option>
+                                    <option value="Fixo">Fixo</option>
+                                    <option value="Ad Exitum">Ad Exitum</option>
+                                    <option value="Sucumbência">Sucumbência</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Valor *</label>
+                                <input type="text" class="form-control" name="fee_value" required placeholder="R$ 0,00">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Êxito (%)</label>
+                                <input type="text" class="form-control" name="success_fee_percent" placeholder="Ex: 20">
+                            </div>
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label class="form-label">Forma de pagamento *</label>
+                            <textarea class="form-control" name="payment_terms" rows="3" required></textarea>
+                        </div>
+
+                        <h6 class="mt-4">Foro e Assinatura</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Cidade do foro *</label>
+                                <input type="text" class="form-control" name="forum_city" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">UF *</label>
+                                <input type="text" class="form-control" name="forum_state" maxlength="2" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Cidade da assinatura *</label>
+                                <input type="text" class="form-control" name="signature_city" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Data</label>
+                                <input type="text" class="form-control" name="signature_date" placeholder="dd/mm/aaaa">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-3">Dica</h6>
+                        <p class="text-muted small">Você pode personalizar o conteúdo do contrato em <strong>Modelos</strong> e gerar quantos PDFs precisar.</p>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-file-pdf me-1"></i>Gerar PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const clientSelect = document.getElementById('clientSelect');
+    const clientName = document.getElementById('clientName');
+    const clientDocument = document.getElementById('clientDocument');
+    const clientAddress = document.getElementById('clientAddress');
+
+    if (clientSelect) {
+        clientSelect.addEventListener('change', function() {
+            const selected = clientSelect.options[clientSelect.selectedIndex];
+            if (!selected || !selected.dataset) return;
+
+            clientName.value = selected.dataset.name || '';
+            clientDocument.value = selected.dataset.document || '';
+            clientAddress.value = selected.dataset.address || '';
+        });
+    }
+</script>
+{% endblock %}

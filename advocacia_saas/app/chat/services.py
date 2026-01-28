@@ -82,9 +82,7 @@ class ChatService:
         ), None
 
     @classmethod
-    def start_chat(
-        cls, lawyer_id: int, client_id: int
-    ) -> Tuple[ChatRoom, bool]:
+    def start_chat(cls, lawyer_id: int, client_id: int) -> Tuple[ChatRoom, bool]:
         """
         Inicia chat com cliente (cria sala se não existir).
 
@@ -121,7 +119,9 @@ class ChatService:
         return chat_room, True
 
     @classmethod
-    def mark_room_as_read(cls, chat_room: ChatRoom, user_id: int, messages: List[Message]):
+    def mark_room_as_read(
+        cls, chat_room: ChatRoom, user_id: int, messages: List[Message]
+    ):
         """Marca sala e mensagens como lidas."""
         chat_room.mark_as_read_by(user_id)
         for msg in messages:
@@ -250,9 +250,7 @@ class FileUploadService:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         unique_filename = f"{timestamp}_{filename}"
 
-        upload_folder = os.path.join(
-            current_app.root_path, "static", cls.UPLOAD_FOLDER
-        )
+        upload_folder = os.path.join(current_app.root_path, "static", cls.UPLOAD_FOLDER)
         os.makedirs(upload_folder, exist_ok=True)
 
         filepath = os.path.join(upload_folder, unique_filename)

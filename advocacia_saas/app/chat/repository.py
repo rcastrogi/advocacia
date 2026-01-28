@@ -114,9 +114,7 @@ class MessageRepository:
     @staticmethod
     def count_unread(user_id: int) -> int:
         """Conta mensagens não lidas de um usuário."""
-        return Message.query.filter_by(
-            recipient_id=user_id, is_read=False
-        ).count()
+        return Message.query.filter_by(recipient_id=user_id, is_read=False).count()
 
     @staticmethod
     def mark_as_read(message: Message):

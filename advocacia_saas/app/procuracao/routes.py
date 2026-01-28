@@ -77,4 +77,3 @@ def nova():
         .all()
     )
     return render_template("procuracao/nova.html", clients=clients)
-

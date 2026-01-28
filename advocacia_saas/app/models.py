@@ -4569,6 +4569,34 @@ class Process(db.Model):
         }
         return status_map.get(self.status, ("Desconhecido", "secondary"))
 
+
+class FeeContractTemplate(db.Model):
+    """Modelos editáveis para contrato de honorários."""
+
+    __tablename__ = "fee_contract_templates"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    name = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    is_default = db.Column(db.Boolean, default=False)
+
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    user = db.relationship(
+        "User",
+        backref=db.backref("fee_contract_templates", lazy="dynamic"),
+    )
+
+    def __repr__(self):
+        return f"<FeeContractTemplate {self.id} - {self.name}>"
+
     def get_status_color(self):
         """Retorna apenas a cor do status."""
         return self.get_status_display()[1]
@@ -5243,15 +5271,49 @@ class ProcessAutomation(db.Model):
         if not recipients:
             return
 
-        from app.utils.email import send_email
+        from flask import url_for
 
-        send_email(
+        from app.models import Deadline, Process
+        from app.services.email_service import EmailService
+
+        process = None
+        deadline = None
+
+        process_id = event_data.get("process_id") if event_data else None
+        deadline_id = event_data.get("deadline_id") if event_data else None
+
+        if process_id:
+            process = Process.query.get(process_id)
+
+        if deadline_id:
+            deadline = Deadline.query.get(deadline_id)
+
+        process_url = (
+            url_for("processes.view", process_id=process.id, _external=True)
+            if process
+            else None
+        )
+        deadline_url = (
+            url_for("deadlines.view", deadline_id=deadline.id, _external=True)
+            if deadline
+            else None
+        )
+
+        client_name = None
+        if process and process.client:
+            client_name = process.client.name
+
+        EmailService.send_automation_notification(
             to=recipients,
             subject=subject,
-            template="emails/automation_notification.html",
             message=body,
-            event_data=event_data,
             automation=self,
+            event_data=event_data,
+            process=process,
+            deadline=deadline,
+            client_name=client_name,
+            process_url=process_url,
+            deadline_url=deadline_url,
         )
 
     def _execute_task(self, event_data):

@@ -136,7 +136,9 @@ class AuthService:
         )
         demo_user.created_at = datetime.now(timezone.utc)
         demo_user.password_changed_at = datetime.now(timezone.utc)
-        demo_user.password_expires_at = datetime.now(timezone.utc) + timedelta(days=9999)
+        demo_user.password_expires_at = datetime.now(timezone.utc) + timedelta(
+            days=9999
+        )
         demo_user.password_history = "[]"
         demo_user.force_password_change = False
 
@@ -156,9 +158,7 @@ class AuthService:
         )
 
     @classmethod
-    def _handle_2fa_verification(
-        cls, user: User, code: Optional[str]
-    ) -> LoginResult:
+    def _handle_2fa_verification(cls, user: User, code: Optional[str]) -> LoginResult:
         """Verifica autenticação de dois fatores."""
         # Verificar bloqueio por tentativas
         if user.is_2fa_locked():
@@ -309,7 +309,9 @@ class RegistrationService:
         )
 
         # Processar consentimentos LGPD
-        cls._process_consents(user, consent_personal_data, consent_marketing, consent_terms)
+        cls._process_consents(
+            user, consent_personal_data, consent_marketing, consent_terms
+        )
 
         # Processar indicação
         was_referred = cls._process_referral(user)
@@ -489,7 +491,9 @@ class ProfileService:
         changed_fields = [k for k in old_values if old_values[k] != new_values[k]]
 
         if changed_fields:
-            AuditManager.log_user_change(user, "update", old_values, new_values, changed_fields)
+            AuditManager.log_user_change(
+                user, "update", old_values, new_values, changed_fields
+            )
 
         return True, None
 
@@ -522,7 +526,9 @@ class ProfileService:
 
         # Remover logo antigo
         if user.logo_filename:
-            old_path = os.path.join(current_app.config["UPLOAD_FOLDER"], user.logo_filename)
+            old_path = os.path.join(
+                current_app.config["UPLOAD_FOLDER"], user.logo_filename
+            )
             if os.path.exists(old_path):
                 os.remove(old_path)
 
@@ -650,7 +656,9 @@ class TwoFactorService:
             old_values={"method": user.two_factor_method, "enabled": True},
             new_values={"enabled": False},
             description="2FA desabilitado",
-            additional_metadata={"ip_address": request.remote_addr if request else None},
+            additional_metadata={
+                "ip_address": request.remote_addr if request else None
+            },
         )
 
         # Criar notificação

@@ -7,7 +7,7 @@ import os
 import secrets
 from typing import Optional
 
-from flask import current_app, render_template_string
+from flask import current_app, render_template, render_template_string
 
 
 class EmailService:
@@ -17,18 +17,28 @@ class EmailService:
     def _get_resend_client():
         """Obtém cliente Resend ou retorna None se não configurado"""
         try:
-            from resend import Resend
+            import resend
 
             api_key = os.getenv("RESEND_API_KEY")
             if not api_key:
                 current_app.logger.warning("RESEND_API_KEY não configurada")
                 return None
-            return Resend(api_key=api_key)
+            resend.api_key = api_key
+            return resend
         except ImportError:
             current_app.logger.warning(
                 "Resend não instalado. Instale: pip install resend"
             )
             return None
+
+    @staticmethod
+    def _get_resend_sender() -> str:
+        """Obtém remetente padrão para Resend (domínio verificado)."""
+        return (
+            os.getenv("RESEND_SENDER")
+            or current_app.config.get("MAIL_DEFAULT_SENDER")
+            or "noreply@petitio.onrender.com"
+        )
 
     @staticmethod
     def send_2fa_code_email(user_email: str, code: str, method: str = "email") -> bool:
@@ -81,9 +91,9 @@ class EmailService:
             </html>
             """
 
-            response = client.emails.send(
+            response = client.Emails.send(
                 {
-                    "from": "noreply@petitio.com.br",
+                    "from": EmailService._get_resend_sender(),
                     "to": user_email,
                     "subject": "Código de Autenticação em Dois Fatores",
                     "html": html_content,
@@ -172,9 +182,9 @@ class EmailService:
             </html>
             """
 
-            response = client.emails.send(
+            response = client.Emails.send(
                 {
-                    "from": "noreply@petitio.com.br",
+                    "from": EmailService._get_resend_sender(),
                     "to": user_email,
                     "subject": "Autenticação em Dois Fatores Ativada",
                     "html": html_content,
@@ -216,6 +226,82 @@ class EmailService:
             )
             return False
 
+    @staticmethod
+    def send_automation_notification(
+        to,
+        subject: str,
+        message: str,
+        automation=None,
+        event_data=None,
+        process=None,
+        deadline=None,
+        client_name: str | None = None,
+        process_url: str | None = None,
+        deadline_url: str | None = None,
+    ) -> bool:
+        """Envia email de automação usando Resend (fallback SMTP)."""
+        client = EmailService._get_resend_client()
+
+        html_content = render_template(
+            "emails/automation_notification.html",
+            message=message,
+            automation=automation,
+            event_data=event_data,
+            process=process,
+            deadline=deadline,
+            client_name=client_name,
+            process_url=process_url,
+            deadline_url=deadline_url,
+        )
+
+        if not client:
+            # Fallback para SMTP
+            from app.utils.email import send_email
+
+            return send_email(
+                to=to,
+                subject=subject,
+                template="emails/automation_notification.html",
+                message=message,
+                event_data=event_data,
+                automation=automation,
+                process=process,
+                deadline=deadline,
+                client_name=client_name,
+                process_url=process_url,
+                deadline_url=deadline_url,
+            )
+
+        try:
+            sender = EmailService._get_resend_sender()
+
+            response = client.Emails.send(
+                {
+                    "from": sender,
+                    "to": to,
+                    "subject": subject,
+                    "html": html_content,
+                }
+            )
+
+            if response.get("id"):
+                current_app.logger.info(
+                    f"Email de automação enviado com sucesso para {to}"
+                )
+                return True
+
+            current_app.logger.error(
+                f"Erro ao enviar email de automação para {to}: {response}"
+            )
+            return False
+
+        except Exception as e:
+            current_app.logger.error(
+                f"Erro ao enviar email de automação para {to}: {str(e)}",
+                exc_info=True,
+            )
+            return False
+
         try:
             html_content = f"""
             <html>
@@ -249,9 +335,9 @@ class EmailService:
             </html>
             """
 
-            response = client.emails.send(
+            response = client.Emails.send(
                 {
-                    "from": "noreply@petitio.com.br",
+                    "from": EmailService._get_resend_sender(),
                     "to": user_email,
                     "subject": "Autenticação em Dois Fatores Desativada",
                     "html": html_content,
@@ -417,9 +503,9 @@ class EmailService:
             </html>
             """
 
-            response = client.emails.send(
+            response = client.Emails.send(
                 {
-                    "from": "noreply@petitio.com.br",
+                    "from": EmailService._get_resend_sender(),
                     "to": invite_email,
                     "subject": f"📧 Convite para o escritório {office_name} - Petitio",
                     "html": html_content,

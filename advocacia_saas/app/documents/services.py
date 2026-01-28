@@ -17,7 +17,16 @@ from app.models import Client, Document
 from app.utils.pagination import PaginationHelper
 
 ALLOWED_EXTENSIONS = {
-    "pdf", "doc", "docx", "txt", "jpg", "jpeg", "png", "gif", "zip", "rar"
+    "pdf",
+    "doc",
+    "docx",
+    "txt",
+    "jpg",
+    "jpeg",
+    "png",
+    "gif",
+    "zip",
+    "rar",
 }
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
@@ -38,8 +47,7 @@ class DocumentService:
     def allowed_file(filename: str) -> bool:
         """Verifica se extensão é permitida."""
         return (
-            "." in filename
-            and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+            "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
         )
 
     @classmethod
@@ -100,10 +108,14 @@ class DocumentService:
         """
         # Validações
         if not file or file.filename == "":
-            return UploadResult(success=False, error_message="Nenhum arquivo selecionado")
+            return UploadResult(
+                success=False, error_message="Nenhum arquivo selecionado"
+            )
 
         if not cls.allowed_file(file.filename):
-            return UploadResult(success=False, error_message="Tipo de arquivo não permitido")
+            return UploadResult(
+                success=False, error_message="Tipo de arquivo não permitido"
+            )
 
         if not client_id or not title:
             return UploadResult(
