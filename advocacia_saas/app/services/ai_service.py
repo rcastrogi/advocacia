@@ -15,6 +15,8 @@ CREDIT_COSTS = {
     "section": 1,  # Gerar uma seção individual
     "improve": 1,  # Melhorar texto existente
     "summarize": 1,  # Resumir texto
+    "fee_contract_create": 2,  # Gerar modelo de contrato de honorários
+    "fee_contract_improve": 1,  # Melhorar modelo de contrato de honorários
     "full_petition": 5,  # Petição completa (usa GPT-4o)
     "analyze": 3,  # Análise jurídica (usa GPT-4o)
     "fundamentos": 3,  # Fundamentação jurídica (usa GPT-4o)
@@ -112,6 +114,16 @@ INSTRUÇÕES:
 3. Aprimore a linguagem jurídica
 4. Mantenha o sentido e intenção originais
 5. Responda APENAS com o texto melhorado""",
+    "fee_contract": """Você é um advogado brasileiro especialista em contratos de honorários.
+Sua tarefa é redigir um MODELO de contrato de honorários advocatícios em HTML simples.
+
+INSTRUÇÕES:
+1. Use linguagem jurídica formal e clara
+2. Estruture em seções com títulos (h1/h2) e parágrafos
+3. NÃO inclua saudações ou despedidas fora do contrato
+4. Inclua cláusulas padrão: objeto, honorários, forma de pagamento, vigência/rescisão, foro
+5. Use APENAS as variáveis Jinja2 fornecidas
+6. Retorne apenas o HTML do contrato""",
     "full_petition": """Você é um advogado brasileiro altamente qualificado.
 Sua tarefa é redigir uma petição jurídica completa e profissional.
 
@@ -485,6 +497,49 @@ DADOS DO RÉU:
         model = MODELS["premium"] if premium else MODELS["fast"]
 
         return self._call_openai(messages, model=model)
+
+    def generate_fee_contract_template(
+        self, instructions: str = "", premium: bool = False
+    ) -> Tuple[str, Dict[str, Any]]:
+        """
+        Gera um modelo de contrato de honorários em HTML com variáveis Jinja2.
+
+        Args:
+            instructions: Instruções adicionais do usuário
+            premium: Se True, usa GPT-4o
+
+        Returns:
+            Tuple[str, Dict]: (modelo gerado, metadados)
+        """
+        system_prompt = SYSTEM_PROMPTS["fee_contract"]
+
+        variables = (
+            "{{ client_name }}, {{ client_document }}, {{ client_address }}, "
+            "{{ lawyer_name }}, {{ lawyer_oab }}, {{ lawyer_address }}, "
+            "{{ contract_object }}, {{ fee_type }}, {{ fee_value }}, "
+            "{{ payment_terms }}, {{ success_fee_percent }}, "
+            "{{ forum_city }}, {{ forum_state }}, "
+            "{{ signature_city }}, {{ signature_date }}"
+        )
+
+        user_prompt_parts = [
+            "Crie um modelo de contrato de honorários advocatícios em HTML simples.",
+            "Use apenas as variáveis Jinja2 abaixo:",
+            variables,
+        ]
+        if instructions:
+            user_prompt_parts.append(f"INSTRUÇÕES DO USUÁRIO: {instructions}")
+
+        user_prompt = "\n".join(user_prompt_parts)
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        model = MODELS["premium"] if premium else MODELS["fast"]
+
+        return self._call_openai(messages, model=model, max_tokens=2500)
 
     def analyze_case(
         self, facts: str, question: str = None, premium: bool = True

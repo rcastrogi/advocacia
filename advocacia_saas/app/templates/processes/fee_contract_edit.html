@@ -13,7 +13,7 @@
     </div>
 
     <form method="POST">
-        {{ csrf_token() }}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <div class="mb-3">
@@ -22,8 +22,23 @@
                 </div>
                 <div class="mb-3">
                     <label for="content" class="form-label">Conteúdo do Modelo *</label>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="aiCreateBtn">
+                            <i class="fas fa-magic me-1"></i>Criar com IA
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="aiImproveBtn">
+                            <i class="fas fa-edit me-1"></i>Melhorar com IA
+                        </button>
+                        <span class="text-muted small align-self-center">
+                            Criação: {{ ai_costs.create }} crédito(s) • Melhoria: {{ ai_costs.improve }} crédito(s)
+                        </span>
+                    </div>
                     <textarea class="form-control" id="content" name="content" rows="18" required>{{ template.content if template else '' }}</textarea>
                     <div class="form-text">Você pode usar HTML e variáveis Jinja2.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="aiInstructions" class="form-label">Instruções para IA (opcional)</label>
+                    <textarea class="form-control" id="aiInstructions" rows="3" placeholder="Ex: contrato para honorários fixos com cláusula de êxito e parcelamento."></textarea>
                 </div>
             </div>
         </div>
@@ -31,33 +46,33 @@
         <div class="card shadow-sm">
             <div class="card-body">
                 <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Variáveis disponíveis</h6>
-                <div class="row small text-muted">
+                <div class="row">
                     <div class="col-md-4">
-                        <ul>
-                            <li>{{ '{{ client_name }}' }}</li>
-                            <li>{{ '{{ client_document }}' }}</li>
-                            <li>{{ '{{ client_address }}' }}</li>
-                            <li>{{ '{{ lawyer_name }}' }}</li>
-                            <li>{{ '{{ lawyer_oab }}' }}</li>
-                            <li>{{ '{{ lawyer_address }}' }}</li>
-                        </ul>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ client_name }}' }}">{{ '{{ client_name }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ client_document }}' }}">{{ '{{ client_document }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ client_address }}' }}">{{ '{{ client_address }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ lawyer_name }}' }}">{{ '{{ lawyer_name }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ lawyer_oab }}' }}">{{ '{{ lawyer_oab }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ lawyer_address }}' }}">{{ '{{ lawyer_address }}' }}</button>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <ul>
-                            <li>{{ '{{ contract_object }}' }}</li>
-                            <li>{{ '{{ fee_type }}' }}</li>
-                            <li>{{ '{{ fee_value }}' }}</li>
-                            <li>{{ '{{ payment_terms }}' }}</li>
-                            <li>{{ '{{ success_fee_percent }}' }}</li>
-                        </ul>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ contract_object }}' }}">{{ '{{ contract_object }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ fee_type }}' }}">{{ '{{ fee_type }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ fee_value }}' }}">{{ '{{ fee_value }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ payment_terms }}' }}">{{ '{{ payment_terms }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ success_fee_percent }}' }}">{{ '{{ success_fee_percent }}' }}</button>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <ul>
-                            <li>{{ '{{ forum_city }}' }}</li>
-                            <li>{{ '{{ forum_state }}' }}</li>
-                            <li>{{ '{{ signature_city }}' }}</li>
-                            <li>{{ '{{ signature_date }}' }}</li>
-                        </ul>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ forum_city }}' }}">{{ '{{ forum_city }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ forum_state }}' }}">{{ '{{ forum_state }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ signature_city }}' }}">{{ '{{ signature_city }}' }}</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm variable-chip" data-var="{{ '{{ signature_date }}' }}">{{ '{{ signature_date }}' }}</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -70,4 +85,104 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const contentField = document.getElementById('content');
+    const nameField = document.getElementById('name');
+    const instructionsField = document.getElementById('aiInstructions');
+    const createBtn = document.getElementById('aiCreateBtn');
+    const improveBtn = document.getElementById('aiImproveBtn');
+
+    function showToast(message, type) {
+        document.body.dispatchEvent(new CustomEvent('showToast', {
+            detail: { message: message, type: type || 'info' }
+        }));
+    }
+
+    function insertAtCursor(field, value) {
+        if (!field) return;
+        const start = field.selectionStart || 0;
+        const end = field.selectionEnd || 0;
+        const text = field.value || '';
+        field.value = text.substring(0, start) + value + text.substring(end);
+        field.selectionStart = field.selectionEnd = start + value.length;
+        field.focus();
+    }
+
+    document.querySelectorAll('.variable-chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+            const variable = chip.getAttribute('data-var') || '';
+            if (!variable) return;
+            insertAtCursor(contentField, variable);
+        });
+    });
+
+    async function callAiEndpoint(endpoint, payload) {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(payload || {})
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            const message = data.error || 'Erro ao processar solicitação de IA';
+            throw new Error(message);
+        }
+        return data;
+    }
+
+    if (createBtn) {
+        createBtn.addEventListener('click', async () => {
+            try {
+                createBtn.disabled = true;
+                improveBtn.disabled = true;
+                const instructions = instructionsField ? instructionsField.value.trim() : '';
+                const templateName = nameField ? nameField.value.trim() : '';
+                const data = await callAiEndpoint('/ai/api/fee-contract/create', {
+                    instructions: instructions,
+                    template_name: templateName
+                });
+                contentField.value = data.content || '';
+                showToast('Modelo criado com IA.', 'success');
+            } catch (error) {
+                showToast(error.message, 'danger');
+            } finally {
+                createBtn.disabled = false;
+                improveBtn.disabled = false;
+            }
+        });
+    }
+
+    if (improveBtn) {
+        improveBtn.addEventListener('click', async () => {
+            const currentContent = (contentField?.value || '').trim();
+            if (currentContent.length < 10) {
+                showToast('Escreva um conteúdo antes de melhorar com IA.', 'warning');
+                return;
+            }
+            try {
+                createBtn.disabled = true;
+                improveBtn.disabled = true;
+                const instructions = instructionsField ? instructionsField.value.trim() : '';
+                const data = await callAiEndpoint('/ai/api/fee-contract/improve', {
+                    text: currentContent,
+                    instructions: instructions
+                });
+                contentField.value = data.content || currentContent;
+                showToast('Texto melhorado com IA.', 'success');
+            } catch (error) {
+                showToast(error.message, 'danger');
+            } finally {
+                createBtn.disabled = false;
+                improveBtn.disabled = false;
+            }
+        });
+    }
+</script>
 {% endblock %}

@@ -25,7 +25,7 @@
             </div>
 
             <form method="POST" action="{{ url_for('auth.notification_settings') }}">
-                {{ csrf_token() }}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 
                 <!-- Alertas de Prazos -->
                 <div class="card shadow-sm mb-4">

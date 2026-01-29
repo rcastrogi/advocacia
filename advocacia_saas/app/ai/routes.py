@@ -34,7 +34,14 @@ from app.models import (
     CreditTransaction,
     UserCredits,
 )
-from app.services.ai_service import CREDIT_COSTS, PREMIUM_OPERATIONS, ai_service
+from app.rate_limits import AUTH_API_LIMIT
+from app.services.ai_service import (
+    CREDIT_COSTS,
+    PREMIUM_OPERATIONS,
+    ai_service,
+    get_credit_cost,
+    is_premium_operation,
+)
 from app.services.document_service import (
     extract_document_text,
     get_supported_formats,
@@ -531,9 +538,9 @@ def api_generate_full_petition():
 
 
 @ai_bp.route("/api/generate/improve", methods=["POST"])
+@limiter.limit("15 per hour")  # Limite para melhoria de texto
 @login_required
 @require_feature("ai_petitions")
-@limiter.limit("15 per hour")  # Limite para melhoria de texto
 def api_improve_text():
     """Melhora um texto existente usando IA"""
     if not ai_service.is_configured():
@@ -618,6 +625,176 @@ def api_improve_text():
         AISessionManager.rollback()
         return jsonify(
             {"success": False, "error": f"Erro ao melhorar texto: {str(e)}"}
+        ), 500
+
+
+@ai_bp.route("/api/fee-contract/create", methods=["POST"])
+@limiter.limit(AUTH_API_LIMIT)
+@login_required
+@require_feature("ai_petitions")
+def api_fee_contract_create():
+    """Gera um modelo de contrato de honorários com IA"""
+    if not ai_service.is_configured():
+        return jsonify(
+            {"success": False, "error": "Serviço de IA não configurado."}
+        ), 503
+
+    data = request.get_json() or {}
+    instructions = (data.get("instructions") or "").strip()
+    premium = bool(data.get("premium") or is_premium_operation("fee_contract_create"))
+
+    credit_cost = get_credit_cost("fee_contract_create")
+
+    if not has_sufficient_credits(credit_cost):
+        user_credits = get_user_credits()
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Créditos insuficientes",
+                    "credits_required": int(credit_cost),
+                    "credits_available": int(user_credits.balance),
+                }
+            ),
+            402,
+        )
+
+    try:
+        content, metadata = ai_service.generate_fee_contract_template(
+            instructions=instructions, premium=premium
+        )
+
+        actual_cost = 0 if is_master_user() else credit_cost
+        if not is_master_user():
+            use_credits_if_needed(credit_cost)
+
+        user_credits = get_user_credits()
+
+        generation = record_ai_generation(
+            user_id=current_user.id,
+            generation_type="fee_contract_create",
+            credits_used=actual_cost,
+            metadata=metadata,
+            input_data={"instructions": instructions[:500]},
+            output_content=content,
+        )
+
+        if actual_cost > 0:
+            record_transaction(
+                current_user.id,
+                "usage",
+                -actual_cost,
+                "Criação de modelo de contrato de honorários",
+                generation_id=generation.id,
+            )
+
+        AISessionManager.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "content": content,
+                "credits_used": int(actual_cost),
+                "credits_remaining": user_credits.balance
+                if not is_master_user()
+                else "∞",
+            }
+        )
+
+    except Exception as e:
+        AISessionManager.rollback()
+        return jsonify(
+            {"success": False, "error": f"Erro ao criar modelo: {str(e)}"}
+        ), 500
+
+
+@ai_bp.route("/api/fee-contract/improve", methods=["POST"])
+@limiter.limit(AUTH_API_LIMIT)
+@login_required
+@require_feature("ai_petitions")
+def api_fee_contract_improve():
+    """Melhora um modelo de contrato de honorários com IA"""
+    if not ai_service.is_configured():
+        return jsonify(
+            {"success": False, "error": "Serviço de IA não configurado."}
+        ), 503
+
+    data = request.get_json() or {}
+    text = (data.get("text") or "").strip()
+    instructions = (data.get("instructions") or "").strip()
+    premium = bool(data.get("premium") or is_premium_operation("fee_contract_improve"))
+
+    if not text or len(text) < 10:
+        return jsonify(
+            {"success": False, "error": "Texto muito curto para melhorar"}
+        ), 400
+
+    credit_cost = get_credit_cost("fee_contract_improve")
+
+    if not has_sufficient_credits(credit_cost):
+        user_credits = get_user_credits()
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Créditos insuficientes",
+                    "credits_required": int(credit_cost),
+                    "credits_available": int(user_credits.balance),
+                }
+            ),
+            402,
+        )
+
+    try:
+        context = "Contrato de Honorários"
+        if instructions:
+            context = f"{context}. Instruções: {instructions}"
+
+        content, metadata = ai_service.improve_text(
+            text=text, context=context, premium=premium
+        )
+
+        actual_cost = 0 if is_master_user() else credit_cost
+        if not is_master_user():
+            use_credits_if_needed(credit_cost)
+
+        user_credits = get_user_credits()
+
+        generation = record_ai_generation(
+            user_id=current_user.id,
+            generation_type="fee_contract_improve",
+            credits_used=actual_cost,
+            metadata=metadata,
+            input_data={"text": text[:500], "instructions": instructions[:500]},
+            output_content=content,
+        )
+
+        if actual_cost > 0:
+            record_transaction(
+                current_user.id,
+                "usage",
+                -actual_cost,
+                "Melhoria de modelo de contrato de honorários",
+                generation_id=generation.id,
+            )
+
+        AISessionManager.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "content": content,
+                "credits_used": int(actual_cost),
+                "credits_remaining": user_credits.balance
+                if not is_master_user()
+                else "∞",
+            }
+        )
+
+    except Exception as e:
+        AISessionManager.rollback()
+        return jsonify(
+            {"success": False, "error": f"Erro ao melhorar modelo: {str(e)}"}
         ), 500
 
 

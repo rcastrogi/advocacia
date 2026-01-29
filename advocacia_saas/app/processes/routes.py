@@ -19,6 +19,7 @@ from app.petitions.services import PDFGenerationService
 from app.processes import bp
 from app.processes.forms import ProcessForm
 from app.processes.services import ProcessService
+from app.services.ai_service import get_credit_cost
 
 
 def _sanitize_text(text: str, max_length: int = 255) -> str:
@@ -365,6 +366,10 @@ def fee_contract_new():
         "processes/fee_contract_edit.html",
         title="Novo Modelo de Contrato",
         template=None,
+        ai_costs={
+            "create": int(get_credit_cost("fee_contract_create")),
+            "improve": int(get_credit_cost("fee_contract_improve")),
+        },
     )
 
 
@@ -399,6 +404,10 @@ def fee_contract_edit(template_id):
         "processes/fee_contract_edit.html",
         title="Editar Modelo de Contrato",
         template=template,
+        ai_costs={
+            "create": int(get_credit_cost("fee_contract_create")),
+            "improve": int(get_credit_cost("fee_contract_improve")),
+        },
     )
 
 

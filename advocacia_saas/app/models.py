@@ -6790,6 +6790,20 @@ class AICreditConfig(db.Model):
             "is_premium": False,
         },
         {
+            "operation_key": "fee_contract_create",
+            "name": "Criar Contrato de Honorários",
+            "description": "Gera um modelo de contrato de honorários com IA",
+            "credit_cost": 2,
+            "is_premium": False,
+        },
+        {
+            "operation_key": "fee_contract_improve",
+            "name": "Melhorar Contrato de Honorários",
+            "description": "Melhora um modelo de contrato de honorários existente",
+            "credit_cost": 1,
+            "is_premium": False,
+        },
+        {
             "operation_key": "full_petition",
             "name": "Petição Completa",
             "description": "Gera uma petição completa com todas as seções",
