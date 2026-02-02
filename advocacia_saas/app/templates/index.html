@@ -9,8 +9,11 @@
 {% block twitter_description %}Gerador inteligente de petições: crie documentos jurídicos automaticamente, gerencie modelos personalizados e automatize sua advocacia.{% endblock %}
 
 {% block content %}
+<!-- CSS da Nova Identidade Visual -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/landing-new.css') }}">
+
 <!-- Navigation Menu for Landing Page -->
-<nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="landingNav" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); transition: all 0.3s ease;">
+<nav class="navbar navbar-expand-xl navbar-light fixed-top" id="landingNav">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
             <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}" 
@@ -18,7 +21,7 @@
             <span>Petitio</span>
         </a>
         
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#landingNavbar">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#landingNavbar" aria-controls="landingNavbar" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         
@@ -31,9 +34,6 @@
                     <a class="nav-link" href="{{ url_for('main.recursos') }}">Recursos</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#roadmap">Roadmap</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="#acessibilidade">Acessibilidade</a>
                 </li>
                 <li class="nav-item">
@@ -42,42 +42,35 @@
                 <li class="nav-item">
                     <a class="nav-link" href="#depoimentos">Depoimentos</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#roadmap">Roadmap</a>
+                </li>
             </ul>
             
             <div class="d-flex gap-2">
-                <a href="{{ url_for('portal.login') }}" class="btn btn-sm btn-light d-flex align-items-center">
-                    <i class="fas fa-user-circle me-1"></i> Portal do Cliente
-                </a>
-                <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-light d-flex align-items-center">
-                    <i class="fas fa-sign-in-alt me-1"></i> Entrar
+                <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+                    <i class="fas fa-sign-in-alt me-1"></i> Login
                 </a>
                 <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-warning d-flex align-items-center">
-                    <i class="fas fa-rocket me-1"></i> Começar
+                    <i class="fas fa-rocket me-1"></i> Começar Agora
                 </a>
             </div>
         </div>
     </div>
 </nav>
 
-<!-- Hero Section - Counsel Law Professional Style -->
-<section class="hero-section text-white" style="padding-top: 0;">
+<!-- Hero Section -->
+<section class="hero-section">
     <div class="container hero-content">
         <div class="row align-items-center">
             <div class="col-lg-7" style="margin-top: 50px;">
-                <h1 class="hero-title animate-fadeInUp">Gere Petições em Segundos com IA</h1>
+                <h1 class="hero-title animate-fadeInUp">Gere Petições em<br>Segundos com IA</h1>
                 <p class="hero-subtitle animate-fadeInUp delay-200">
-                    O gerador inteligente de petições jurídicas mais avançado do Brasil.
-                    Crie documentos jurídicos automaticamente, personalize modelos e acelere seu trabalho advocatício.
-                    <span class="d-block mt-2" style="color: var(--gold-color); font-weight: 600;">
-                        <i class="fas fa-robot me-1"></i> Inteligência Artificial especializada em petições!
-                    </span>
+                    O gerador inteligente de petições jurídicas mais avançado do Brasil. Crie documentos jurídicos automaticamente, personalize modelos e acelere seu trabalho advocatício.
                 </p>
                 <div class="d-flex gap-3 flex-wrap animate-fadeInUp delay-300">
                     <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-rocket me-2"></i>Começar Agora
-                    </a>
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-sign-in-alt me-2"></i>Acessar Sistema
+                        Começar Agora
                     </a>
                 </div>
 
@@ -132,19 +125,10 @@
             </div>
             <div class="col-lg-5 d-none d-lg-block text-center animate-fadeInRight">
                 <div class="hero-image-container" style="position: relative;">
-                    <!-- Logo Petitio com T's como balança -->
-                    <img src="{{ url_for('static', filename='img/petitio-logo.svg') }}"
-                         class="img-fluid hero-logo" alt="Petitio - Software Jurídico"
-                         style="max-width: 320px; filter: drop-shadow(0 25px 50px rgba(0,0,0,0.4));">
-                    <!-- Badge flutuante -->
-                    <div style="position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); 
-                                background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); 
-                                padding: 12px 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                                border: 2px solid var(--gold-color);">
-                        <span style="color: var(--gold-color); font-weight: 600; font-size: 0.9rem;">
-                            <i class="fas fa-star me-2"></i>+500 Advogados Satisfeitos
-                        </span>
-                    </div>
+                    <!-- Imagem do Advogado -->
+                    <img src="{{ url_for('static', filename='img/hero-lawyer.jpg') }}"
+                         class="img-fluid" alt="Advogado usando Petitio"
+                         style="max-width: 100%; border-radius: 1rem; box-shadow: 0 20px 60px rgba(0,0,0,0.15);">
                 </div>
             </div>
         </div>

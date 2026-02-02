@@ -1,0 +1,944 @@
+/**
+ * Landing Page - Nova Identidade Visual
+ * Baseado no mockup: cores azul escuro/azul claro, layout moderno
+ */
+
+/* ===== Scroll Suave ===== */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ===== Variáveis de Cor ===== */
+:root {
+    --lp-primary: #2C3E50;
+    --lp-primary-dark: #1A252F;
+    --lp-primary-light: #34495E;
+    --lp-accent: #C9A86C;
+    --lp-accent-dark: #B8956A;
+    --lp-bg-blue-light: #EBF0F5;
+    --lp-bg-blue-lighter: #F5F8FA;
+    --lp-bg-white: #FFFFFF;
+    --lp-text-dark: #2C3E50;
+    --lp-text-muted: #6C757D;
+    --lp-text-light: #8C9AA8;
+    --lp-card-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    --lp-card-shadow-hover: 0 10px 40px rgba(0,0,0,0.1);
+    --lp-card-radius: 16px;
+    --lp-border-light: #E5E5E5;
+}
+
+/* ===== Navbar - Fundo AZUL ESCURO ===== */
+#landingNav {
+    background: var(--lp-primary) !important;
+    padding: 0.75rem 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1030;
+}
+
+#landingNav.navbar-dark .navbar-brand,
+#landingNav.navbar-light .navbar-brand,
+#landingNav .navbar-brand {
+    color: #fff !important;
+    font-weight: 700;
+}
+
+#landingNav.navbar-dark .navbar-brand span,
+#landingNav.navbar-light .navbar-brand span,
+#landingNav .navbar-brand span {
+    color: #fff !important;
+}
+
+#landingNav.navbar-dark .nav-link,
+#landingNav.navbar-light .nav-link,
+#landingNav .nav-link {
+    color: rgba(255,255,255,0.85) !important;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+#landingNav.navbar-dark .nav-link:hover,
+#landingNav.navbar-light .nav-link:hover,
+#landingNav .nav-link:hover {
+    color: #fff !important;
+}
+
+#landingNav .navbar-toggler {
+    border-color: rgba(255,255,255,0.5);
+}
+
+#landingNav .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+#landingNav .btn-outline-secondary {
+    border-color: rgba(255,255,255,0.5) !important;
+    color: #fff !important;
+}
+
+#landingNav .btn-outline-secondary i {
+    color: #fff !important;
+}
+
+#landingNav .btn-outline-secondary:hover {
+    background: rgba(255,255,255,0.1) !important;
+    border-color: #fff !important;
+    color: #fff !important;
+}
+
+#landingNav .btn-warning {
+    background: var(--lp-accent) !important;
+    border-color: var(--lp-accent) !important;
+    color: #fff !important;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+}
+
+#landingNav .btn-warning:hover {
+    background: var(--lp-accent-dark) !important;
+    border-color: var(--lp-accent-dark) !important;
+}
+
+/* ===== Hero Section - Fundo AZUL ESCURO ===== */
+.hero-section {
+    background: var(--lp-primary) !important;
+    padding: 140px 0 80px !important;
+    min-height: auto;
+    position: relative;
+}
+
+.hero-section::before {
+    display: none;
+}
+
+.hero-section .hero-title {
+    color: #FFFFFF !important;
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+}
+
+.hero-section .hero-subtitle {
+    color: rgba(255,255,255,0.85) !important;
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+
+.hero-section .hero-subtitle span {
+    color: var(--lp-accent) !important;
+}
+
+.hero-section .btn-primary {
+    background: var(--lp-accent) !important;
+    border-color: var(--lp-accent) !important;
+    color: #fff !important;
+    font-weight: 600;
+    padding: 0.875rem 2rem;
+    border-radius: 10px;
+    font-size: 1rem;
+}
+
+.hero-section .btn-primary:hover {
+    background: var(--lp-accent-dark) !important;
+    border-color: var(--lp-accent-dark) !important;
+    transform: translateY(-2px);
+}
+
+.hero-section .btn-outline-light {
+    border-color: rgba(255,255,255,0.5) !important;
+    color: #fff !important;
+    border-radius: 10px;
+    padding: 0.875rem 2rem;
+}
+
+.hero-section .btn-outline-light:hover {
+    background: rgba(255,255,255,0.1) !important;
+    border-color: #fff !important;
+}
+
+/* Hero Feature Badges */
+.hero-section .feature-icon {
+    background: var(--lp-accent) !important;
+    color: #fff !important;
+    border-radius: 12px;
+}
+
+.hero-section .feature-icon i {
+    color: #fff !important;
+}
+
+.hero-section small[style*="color"],
+.hero-section small {
+    color: var(--lp-accent) !important;
+}
+
+.hero-section strong {
+    color: #fff !important;
+}
+
+/* Hero Image Container */
+.hero-section .hero-image-container img {
+    border-radius: 20px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+    max-height: 500px;
+    object-fit: cover;
+}
+
+/* ===== Section Titles ===== */
+.section-title {
+    color: var(--lp-primary) !important;
+    font-weight: 700;
+    font-size: 2.25rem;
+    margin-bottom: 1rem;
+}
+
+.section-title::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: var(--lp-accent) !important;
+    margin: 1rem auto 0;
+    border-radius: 2px;
+}
+
+.section-subtitle {
+    color: var(--lp-text-muted) !important;
+    font-size: 1.1rem;
+}
+
+/* ===== Petition Types Section - AZUL CLARO ===== */
+.petition-types-section {
+    background: var(--lp-bg-blue-light) !important;
+    padding: 5rem 0;
+}
+
+.petition-type-card {
+    background: var(--lp-bg-white);
+    border: 1px solid var(--lp-border-light);
+    border-radius: var(--lp-card-radius);
+    padding: 1.75rem;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.petition-type-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--lp-card-shadow-hover);
+    border-color: var(--lp-accent);
+}
+
+.petition-type-icon {
+    width: 70px;
+    height: 70px;
+    background: var(--lp-accent) !important;
+    color: #fff !important;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin: 0 auto 1.25rem;
+}
+
+.petition-type-category {
+    color: var(--lp-accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.petition-type-name {
+    color: var(--lp-primary) !important;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+.petition-type-description {
+    color: var(--lp-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.petition-type-badge {
+    background: rgba(201, 168, 108, 0.15) !important;
+    color: var(--lp-accent) !important;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+}
+
+/* Carousel Navigation */
+.carousel-nav-btn {
+    background: var(--lp-primary) !important;
+    border: none;
+    box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
+}
+
+.carousel-nav-btn:hover {
+    background: var(--lp-primary-dark) !important;
+    transform: scale(1.1);
+}
+
+/* ===== Resources/Features Section - AZUL ESCURO ===== */
+.section.bg-light,
+#recursos {
+    background: var(--lp-primary) !important;
+    padding: 5rem 0;
+}
+
+.section.bg-light .section-title,
+#recursos .section-title {
+    color: #fff !important;
+}
+
+.section.bg-light .section-title::after,
+#recursos .section-title::after {
+    background: var(--lp-accent) !important;
+}
+
+.section.bg-light .section-subtitle,
+#recursos .section-subtitle {
+    color: rgba(255,255,255,0.8) !important;
+}
+
+.dashboard-card {
+    background: rgba(255,255,255,0.1);
+    border-radius: var(--lp-card-radius);
+    box-shadow: none;
+    padding: 2rem;
+    height: 100%;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.15);
+    text-align: center;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-8px);
+    background: rgba(255,255,255,0.15);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.dashboard-card .card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 1.25rem;
+    background: var(--lp-accent) !important;
+    color: #fff !important;
+}
+
+.dashboard-card .card-icon.bg-primary,
+.dashboard-card .card-icon.bg-success,
+.dashboard-card .card-icon.bg-warning,
+.dashboard-card .card-icon.bg-info {
+    background: var(--lp-accent) !important;
+    color: #fff !important;
+}
+
+.dashboard-card h4 {
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+.dashboard-card p,
+.dashboard-card .text-muted {
+    color: rgba(255,255,255,0.75) !important;
+}
+
+/* Botão Ver Todos os Recursos */
+.section.bg-light .btn-hover-effect,
+#recursos .btn-hover-effect {
+    background: var(--lp-accent) !important;
+    border-color: var(--lp-accent) !important;
+    color: #fff !important;
+}
+
+.section.bg-light .text-muted,
+#recursos .text-muted {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+/* Textos gerais em seções com fundo escuro */
+.section.bg-light h5,
+.section.bg-light h6 {
+    color: #fff !important;
+}
+
+.section.bg-light .lead {
+    color: rgba(255,255,255,0.85) !important;
+}
+
+.section.bg-light p {
+    color: rgba(255,255,255,0.75) !important;
+}
+
+.section.bg-light .feature-icon {
+    background: var(--lp-accent) !important;
+    color: #fff !important;
+}
+
+.section.bg-light .feature-icon i {
+    color: #fff !important;
+}
+
+/* Lawyer image badge */
+.section.bg-light .lawyer-image-badge {
+    background: var(--lp-accent) !important;
+    color: #fff !important;
+}
+
+/* ===== Accessibility Section - BRANCO ===== */
+#acessibilidade {
+    background: var(--lp-bg-white) !important;
+    padding: 5rem 0;
+}
+
+#acessibilidade h2,
+#acessibilidade .display-5 {
+    color: var(--lp-primary) !important;
+}
+
+#acessibilidade .lead,
+#acessibilidade p {
+    color: var(--lp-text-muted) !important;
+}
+
+#acessibilidade .accessibility-badge {
+    background: var(--lp-bg-blue-light) !important;
+    color: var(--lp-primary) !important;
+}
+
+#acessibilidade .fa-check-circle {
+    color: var(--lp-accent) !important;
+}
+
+#acessibilidade h6 {
+    color: var(--lp-primary) !important;
+}
+
+#acessibilidade small {
+    color: var(--lp-text-muted) !important;
+}
+
+/* WCAG Badge - AZUL ESCURO */
+#acessibilidade .p-5 {
+    background: var(--lp-primary) !important;
+    border-radius: 20px;
+}
+
+#acessibilidade .p-5 i.fa-universal-access {
+    color: #fff !important;
+}
+
+#acessibilidade .p-5 h3,
+#acessibilidade .p-5 p {
+    color: #fff !important;
+}
+
+#acessibilidade .badge {
+    background: rgba(255,255,255,0.2) !important;
+    color: #fff !important;
+}
+
+/* ===== Referral Section - AZUL ESCURO ===== */
+#indicacao {
+    background: var(--lp-primary) !important;
+}
+
+#indicacao h2 span {
+    background: linear-gradient(90deg, var(--lp-accent) 0%, #E8C88B 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+}
+
+#indicacao .btn-light {
+    background: var(--lp-accent) !important;
+    border-color: var(--lp-accent) !important;
+    color: #fff !important;
+}
+
+#indicacao .btn-outline-light:hover {
+    background: rgba(255,255,255,0.1) !important;
+}
+
+/* ===== Pricing Section - AZUL CLARO ===== */
+#planos {
+    background: var(--lp-bg-blue-light) !important;
+    padding: 5rem 0;
+}
+
+.pricing-card,
+.plan-card {
+    background: var(--lp-bg-white);
+    border-radius: var(--lp-card-radius);
+    box-shadow: var(--lp-card-shadow);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 1px solid var(--lp-border-light);
+}
+
+.pricing-card:hover,
+.plan-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--lp-card-shadow-hover);
+}
+
+.pricing-card.featured,
+.plan-card.featured {
+    border: 2px solid var(--lp-accent);
+    position: relative;
+}
+
+.pricing-badge {
+    background: var(--lp-accent) !important;
+    color: #fff;
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.pricing-title {
+    color: var(--lp-primary);
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.pricing-price .price-currency {
+    font-size: 1.25rem;
+    color: var(--lp-text-muted);
+    vertical-align: top;
+}
+
+.pricing-price .price-value {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--lp-primary);
+    line-height: 1;
+}
+
+.pricing-price .price-period {
+    color: var(--lp-text-muted);
+    font-size: 1rem;
+}
+
+.pricing-card .btn-primary,
+.plan-card .btn-primary {
+    background: var(--lp-accent) !important;
+    border-color: var(--lp-accent) !important;
+    color: #fff !important;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 10px;
+    width: 100%;
+}
+
+.pricing-card .btn-primary:hover,
+.plan-card .btn-primary:hover {
+    background: var(--lp-accent-dark) !important;
+    border-color: var(--lp-accent-dark) !important;
+}
+
+.pricing-features {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+    text-align: left;
+}
+
+.pricing-features li {
+    padding: 0.5rem 0;
+    color: var(--lp-text-dark);
+    font-size: 0.95rem;
+}
+
+.pricing-features li i {
+    color: var(--lp-accent) !important;
+}
+
+/* Nav Pills for Pricing */
+.nav-pricing {
+    background: var(--lp-bg-white);
+    border-radius: 12px;
+    padding: 0.25rem;
+    box-shadow: var(--lp-card-shadow);
+}
+
+.nav-pricing .nav-link {
+    color: var(--lp-text-dark);
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.nav-pricing .nav-link.active {
+    background: var(--lp-primary) !important;
+    color: #fff !important;
+}
+
+/* ===== Testimonials Section - BRANCO ===== */
+.testimonials-section,
+#depoimentos {
+    background: var(--lp-bg-white) !important;
+    padding: 5rem 0;
+}
+
+.testimonial-card {
+    background: var(--lp-bg-blue-lighter);
+    border-radius: var(--lp-card-radius);
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid var(--lp-border-light);
+}
+
+.testimonial-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid var(--lp-accent);
+    object-fit: cover;
+    margin-bottom: 1rem;
+}
+
+.testimonial-card h5 {
+    color: var(--lp-primary);
+    font-weight: 600;
+}
+
+.testimonial-card .text-muted {
+    color: var(--lp-text-light) !important;
+}
+
+.testimonial-stars i {
+    color: var(--lp-accent) !important;
+}
+
+/* ===== Roadmap Section - AZUL CLARO ===== */
+.roadmap-preview-section,
+#roadmap {
+    background: var(--lp-bg-blue-light) !important;
+    padding: 5rem 0;
+}
+
+.roadmap-item-card {
+    background: var(--lp-bg-white);
+    border-radius: var(--lp-card-radius);
+    padding: 1.75rem;
+    text-align: center;
+    box-shadow: var(--lp-card-shadow);
+    border: 1px solid var(--lp-border-light);
+}
+
+.roadmap-item-card.completed {
+    border-left: 4px solid var(--lp-accent);
+}
+
+.roadmap-item-card .roadmap-item-status.completed {
+    color: var(--lp-accent);
+}
+
+/* ===== CTA Section - AZUL ESCURO ===== */
+.cta-section {
+    background: var(--lp-primary) !important;
+    padding: 5rem 0;
+}
+
+.cta-section h2,
+.cta-section .display-5 {
+    color: #fff !important;
+}
+
+.cta-section p {
+    color: rgba(255,255,255,0.85) !important;
+}
+
+.cta-section .btn-primary,
+.cta-section .btn-warning {
+    background: var(--lp-accent) !important;
+    border-color: var(--lp-accent) !important;
+    color: #fff !important;
+    font-weight: 600;
+}
+
+.cta-section .btn-outline-light {
+    border-color: rgba(255,255,255,0.5) !important;
+    color: #fff !important;
+}
+
+/* ===== Why Choose Section (bg-light) - Textos claros para fundo escuro ===== */
+.section.bg-light h2,
+.section.bg-light .section-title {
+    color: var(--lp-accent) !important;
+}
+
+.section.bg-light h5 {
+    color: #fff !important;
+    font-weight: 600;
+}
+
+.section.bg-light p,
+.section.bg-light .lead {
+    color: rgba(255,255,255,0.85) !important;
+}
+
+.section.bg-light .text-muted {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+.section.bg-light .feature-icon {
+    background: var(--lp-accent) !important;
+    color: #fff !important;
+}
+
+.section.bg-light .feature-icon i {
+    color: #fff !important;
+}
+
+/* Lawyer image badge */
+.section.bg-light .lawyer-image-badge {
+    background: var(--lp-accent) !important;
+    color: #fff !important;
+}
+
+/* ===== Benefits/Why Choose Section - BRANCO ===== */
+.benefits-section {
+    background: var(--lp-bg-white);
+    padding: 5rem 0;
+}
+
+.benefit-card {
+    text-align: center;
+    padding: 2rem;
+}
+
+.benefit-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(201, 168, 108, 0.12);
+    color: var(--lp-accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1.25rem;
+}
+
+.benefit-card h5 {
+    color: var(--lp-primary);
+    font-weight: 600;
+}
+
+/* ===== General Buttons ===== */
+.btn-primary {
+    background: var(--lp-accent) !important;
+    border-color: var(--lp-accent) !important;
+    color: #fff !important;
+}
+
+.btn-primary:hover {
+    background: var(--lp-accent-dark) !important;
+    border-color: var(--lp-accent-dark) !important;
+}
+
+.btn-hover-effect {
+    background: var(--lp-accent) !important;
+    border-color: var(--lp-accent) !important;
+    color: #fff !important;
+}
+
+/* ===== Cards General ===== */
+.card {
+    border-radius: var(--lp-card-radius);
+    border: 1px solid var(--lp-border-light);
+    box-shadow: var(--lp-card-shadow);
+}
+
+/* ===== Badge ===== */
+.badge.bg-primary {
+    background: var(--lp-accent) !important;
+    color: #fff !important;
+}
+
+/* ===== Progress Bar ===== */
+.progress-bar.bg-success {
+    background: var(--lp-accent) !important;
+}
+
+/* ===== Footer ===== */
+footer {
+    background: var(--lp-primary) !important;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 991px) {
+    .hero-section {
+        padding: 120px 0 60px !important;
+    }
+    
+    .hero-section .hero-title {
+        font-size: 2.25rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 100px 0 50px !important;
+        text-align: center;
+    }
+    
+    .hero-section .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-section .d-flex.gap-3 {
+        justify-content: center;
+    }
+    
+    .section-title {
+        font-size: 1.75rem;
+    }
+}
+
+/* ===== Animations ===== */
+.animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fadeInRight {
+    animation: fadeInRight 0.6s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ===== ESCONDE NAVBARS DUPLICADAS DA BASE.HTML ===== */
+/* A landing page tem sua própria navbar, esconder as outras */
+
+/* Esconde a navbar nav-custom (usuários não autenticados) */
+nav.nav-custom,
+nav.nav-custom.fixed-top {
+    display: none !important;
+}
+
+/* Esconde a navbar autenticada do base.html (tem aria-label específico) */
+nav.navbar[aria-label="Navegação principal"] {
+    display: none !important;
+}
+
+/* Garantir que apenas a navbar Bootstrap da landing apareça */
+nav.navbar#landingNav {
+    display: flex !important;
+}
+
+/* ===== Responsivo para Navbar ===== */
+/* Breakpoint XL do Bootstrap = 1200px, então usamos 1199.98px */
+@media (max-width: 1199.98px) {
+    /* IMPORTANTE: Garantir que o collapse funcione corretamente */
+    #landingNav .navbar-collapse:not(.show) {
+        display: none !important;
+    }
+    
+    #landingNav .navbar-collapse.show,
+    #landingNav .navbar-collapse.collapsing {
+        display: block !important;
+    }
+    
+    /* Container do menu colapsado */
+    #landingNav .navbar-collapse {
+        background: var(--lp-primary);
+        padding: 1rem;
+        margin-top: 0.5rem;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    /* Menu items em coluna */
+    #landingNav .navbar-collapse .navbar-nav {
+        flex-direction: column !important;
+        width: 100%;
+        margin: 0 !important;
+    }
+    
+    /* Links do menu */
+    #landingNav .navbar-collapse .nav-link {
+        padding: 0.75rem 1rem !important;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        text-align: left;
+    }
+    
+    #landingNav .navbar-collapse .nav-link:last-child {
+        border-bottom: none;
+    }
+    
+    /* Botões de ação */
+    #landingNav .navbar-collapse .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    #landingNav .navbar-collapse .d-flex.gap-2 .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Ícone do toggler branco */
+    #landingNav .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    }
+    
+    #landingNav .navbar-toggler {
+        border-color: rgba(255,255,255,0.5);
+    }
+}
+
+@media (min-width: 1200px) {
+    #landingNav .navbar-toggler {
+        display: none;
+    }
+    
+    #landingNav .navbar-collapse {
+        background: transparent;
+        padding: 0;
+        box-shadow: none;
+    }
+}

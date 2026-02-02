@@ -51,59 +51,43 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informações</h5>
-                </div>
-                <div class="card-body" data-help="ia-generator">
-                    <p class="text-muted mb-3">O sistema agora utiliza apenas formulários dinâmicos inteligentes com IA integrada.</p>
-                    
-                    <div class="alert alert-info">
-                        <h6><i class="fas fa-lightbulb"></i> Como funciona:</h6>
-                        <ol class="mb-0">
-                            <li>Selecione o tipo de petição desejado acima</li>
-                            <li>Preencha os campos dinâmicos que aparecem</li>
-                            <li>A IA ajuda a gerar o conteúdo automaticamente</li>
-                            <li>Gere o PDF final com um clique</li>
-                        </ol>
-                    </div>
-                    
-                    <div class="mt-4 d-flex flex-wrap gap-2">
-                        <a href="{{ url_for('petitions.saved_list') }}" class="btn btn-sm btn-primary d-flex align-items-center">
-                            <i class="fas fa-folder-open me-1"></i> Minhas Petições
-                        </a>
-                        <a href="{{ url_for('clients.index') }}" class="btn btn-sm btn-secondary d-flex align-items-center">
-                            <i class="fas fa-users me-1"></i> Ver Clientes
-                        </a>
-                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
-                            <i class="fas fa-arrow-left me-1"></i> Voltar
-                        </a>
-                    </div>
-                </div>
-            </div>
         </div>
         
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Como funciona</h5>
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informações</h5>
                 </div>
-                <div class="card-body">
-                    <ol>
-                        <li>Selecione o cliente</li>
-                        <li>Escolha o tipo de petição</li>
-                        <li>Selecione o template adequado</li>
-                        <li>Preencha os dados específicos</li>
-                        <li>Gere o documento em PDF</li>
-                        <li>Imprima ou protocole digitalmente</li>
-                    </ol>
+                <div class="card-body" data-help="ia-generator">
+                    <p class="text-muted mb-3">O sistema utiliza formulários dinâmicos inteligentes com IA integrada.</p>
                     
-                    <div class="alert alert-success mt-3" role="alert">
+                    <div class="alert alert-info mb-3">
+                        <h6 class="mb-2"><i class="fas fa-lightbulb"></i> Como funciona:</h6>
+                        <ol class="mb-0 small">
+                            <li>Selecione o tipo de petição desejado</li>
+                            <li>Preencha os campos dinâmicos</li>
+                            <li>A IA gera o conteúdo automaticamente</li>
+                            <li>Gere o PDF final com um clique</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="alert alert-success mb-3" role="alert">
                         <small>
                             <i class="fas fa-check-circle"></i> 
                             Os dados do cliente são preenchidos automaticamente nas petições!
                         </small>
+                    </div>
+                    
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{{ url_for('petitions.saved_list') }}" class="btn btn-sm btn-primary d-flex align-items-center justify-content-center">
+                            <i class="fas fa-folder-open me-1"></i> Minhas Petições
+                        </a>
+                        <a href="{{ url_for('clients.index') }}" class="btn btn-sm btn-secondary d-flex align-items-center justify-content-center">
+                            <i class="fas fa-users me-1"></i> Ver Clientes
+                        </a>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center">
+                            <i class="fas fa-arrow-left me-1"></i> Voltar
+                        </a>
                     </div>
                 </div>
             </div>

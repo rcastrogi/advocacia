@@ -1633,12 +1633,11 @@ textarea.form-control {
 /* Regras específicas para nav-links DENTRO do navbar apenas */
 .navbar .nav-link {
     font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     font-size: 0.85rem;
     transition: all 0.3s ease;
-    padding: 0.5rem 1rem !important;
+    padding: 0.5rem 0.6rem !important;
     color: rgba(255, 255, 255, 0.85) !important;
+    white-space: nowrap;
 }
 
 .navbar .nav-link:hover {
@@ -1647,6 +1646,27 @@ textarea.form-control {
 
 .navbar .nav-link.active {
     color: var(--gold-color) !important;
+}
+
+/* Em telas menores que 1500px, mostrar apenas ícones no menu principal */
+@media (max-width: 1499.98px) and (min-width: 992px) {
+    .navbar .navbar-nav.me-auto .nav-link span {
+        display: none;
+    }
+    .navbar .navbar-nav.me-auto .nav-link i {
+        margin-right: 0 !important;
+        font-size: 1.1rem;
+    }
+    .navbar .navbar-nav.me-auto .nav-link {
+        padding: 0.5rem 0.75rem !important;
+    }
+    .navbar .navbar-nav.me-auto .dropdown-toggle::after {
+        display: none;
+    }
+    /* Dropdown items mantém texto */
+    .navbar .navbar-nav.me-auto .dropdown-menu .dropdown-item {
+        font-size: 0.85rem;
+    }
 }
 
 .navbar-toggler {
