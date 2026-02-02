@@ -1,138 +1,64 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
-    <defs>
-        <!-- Gradiente dourado elegante -->
-        <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#d4af37" />
-            <stop offset="50%" style="stop-color:#c9a85c" />
-            <stop offset="100%" style="stop-color:#b8972f" />
-        </linearGradient>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
 
-        <!-- Gradiente navy profundo -->
-        <linearGradient id="navyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#1b263b" />
-            <stop offset="100%" style="stop-color:#0d1b2a" />
-        </linearGradient>
-
-        <!-- Sombra suave -->
-        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.3" />
-        </filter>
-
-        <!-- Brilho dourado -->
-        <filter id="glow">
-            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-            <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-            </feMerge>
-        </filter>
-    </defs>
-
-    <!-- Fundo circular com borda dourada -->
-    <circle cx="200" cy="200" r="180" fill="url(#navyGradient)" filter="url(#shadow)" />
-    <circle cx="200" cy="200" r="175" fill="none" stroke="url(#goldGradient)" stroke-width="3" />
-    <circle cx="200" cy="200" r="165" fill="none" stroke="url(#goldGradient)" stroke-width="1" opacity="0.5" />
-
-    <!-- Texto PETITIO com T como balança -->
-    <g transform="translate(200, 185)" filter="url(#glow)">
-        <!-- P -->
-        <text x="-120" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58"
-            font-weight="700" fill="url(#goldGradient)">P</text>
-
-        <!-- E -->
-        <text x="-75" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58"
-            font-weight="700" fill="url(#goldGradient)">E</text>
-
-        <!-- Primeiro T como balança (mini) -->
-        <g transform="translate(-30, -20)">
-            <!-- Haste central do T/balança -->
-            <rect x="-3" y="-15" width="6" height="55" fill="url(#goldGradient)" rx="1" />
-            <!-- Barra horizontal (topo do T/barra da balança) -->
-            <rect x="-22" y="-18" width="44" height="5" fill="url(#goldGradient)" rx="2" />
-            <!-- Prato esquerdo pequeno -->
-            <g transform="translate(-18, -15)">
-                <line x1="0" y1="0" x2="0" y2="12" stroke="url(#goldGradient)" stroke-width="1.5" />
-                <ellipse cx="0" cy="14" rx="8" ry="3" fill="url(#goldGradient)" />
-            </g>
-            <!-- Prato direito pequeno -->
-            <g transform="translate(18, -15)">
-                <line x1="0" y1="0" x2="0" y2="12" stroke="url(#goldGradient)" stroke-width="1.5" />
-                <ellipse cx="0" cy="14" rx="8" ry="3" fill="url(#goldGradient)" />
-            </g>
-        </g>
-
-        <!-- I -->
-        <text x="15" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58"
-            font-weight="700" fill="url(#goldGradient)">I</text>
-
-        <!-- Segundo T como balança (mini) -->
-        <g transform="translate(55, -20)">
-            <!-- Haste central do T/balança -->
-            <rect x="-3" y="-15" width="6" height="55" fill="url(#goldGradient)" rx="1" />
-            <!-- Barra horizontal (topo do T/barra da balança) -->
-            <rect x="-22" y="-18" width="44" height="5" fill="url(#goldGradient)" rx="2" />
-            <!-- Prato esquerdo pequeno -->
-            <g transform="translate(-18, -15)">
-                <line x1="0" y1="0" x2="0" y2="12" stroke="url(#goldGradient)" stroke-width="1.5" />
-                <ellipse cx="0" cy="14" rx="8" ry="3" fill="url(#goldGradient)" />
-            </g>
-            <!-- Prato direito pequeno -->
-            <g transform="translate(18, -15)">
-                <line x1="0" y1="0" x2="0" y2="12" stroke="url(#goldGradient)" stroke-width="1.5" />
-                <ellipse cx="0" cy="14" rx="8" ry="3" fill="url(#goldGradient)" />
-            </g>
-        </g>
-
-        <!-- I -->
-        <text x="100" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58"
-            font-weight="700" fill="url(#goldGradient)">I</text>
-
-        <!-- O -->
-        <text x="140" y="0" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="58"
-            font-weight="700" fill="url(#goldGradient)">O</text>
-    </g>
-
-    <!-- Linha decorativa abaixo do texto -->
-    <line x1="80" y1="215" x2="320" y2="215" stroke="url(#goldGradient)" stroke-width="1.5" />
-
-    <!-- Tagline -->
-    <text x="200" y="245" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" letter-spacing="4"
-        fill="#c9a85c" opacity="0.9">
-        ADVOCACIA DIGITAL
-    </text>
-
-    <!-- Balança da Justiça maior embaixo -->
-    <g transform="translate(200, 310)" filter="url(#glow)">
-        <!-- Haste central -->
-        <rect x="-3" y="-35" width="6" height="55" fill="url(#goldGradient)" rx="2" />
-
-        <!-- Base triangular -->
-        <polygon points="-20,20 20,20 0,12" fill="url(#goldGradient)" />
-        <rect x="-25" y="18" width="50" height="5" fill="url(#goldGradient)" rx="2" />
-
-        <!-- Barra horizontal da balança -->
-        <rect x="-50" y="-33" width="100" height="4" fill="url(#goldGradient)" rx="2" />
-
-        <!-- Prato esquerdo -->
-        <g transform="translate(-42, -31)">
-            <line x1="0" y1="0" x2="0" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
-            <line x1="-8" y1="0" x2="8" y2="0" stroke="url(#goldGradient)" stroke-width="1.5" />
-            <line x1="-8" y1="0" x2="-10" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
-            <line x1="8" y1="0" x2="10" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
-            <ellipse cx="0" cy="20" rx="12" ry="4" fill="url(#goldGradient)" />
-        </g>
-
-        <!-- Prato direito -->
-        <g transform="translate(42, -31)">
-            <line x1="0" y1="0" x2="0" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
-            <line x1="-8" y1="0" x2="8" y2="0" stroke="url(#goldGradient)" stroke-width="1.5" />
-            <line x1="-8" y1="0" x2="-10" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
-            <line x1="8" y1="0" x2="10" y2="18" stroke="url(#goldGradient)" stroke-width="1.5" />
-            <ellipse cx="0" cy="20" rx="12" ry="4" fill="url(#goldGradient)" />
-        </g>
-
-        <!-- Ornamento no topo -->
-        <circle cx="0" cy="-38" r="6" fill="url(#goldGradient)" />
-        <circle cx="0" cy="-38" r="3" fill="url(#navyGradient)" />
-    </g>
-</svg>
+<svg
+   width="10.698305mm"
+   height="11.452595mm"
+   viewBox="0 0 10.698305 11.452595"
+   version="1.1"
+   id="svg1"
+   xml:space="preserve"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+     id="defs1" /><g
+     id="layer1"
+     transform="translate(-98.223171,-122.69963)"><rect
+       style="display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.0592033"
+       id="rect16"
+       width="10.698311"
+       height="11.452601"
+       x="98.223167"
+       y="122.69964" /><path
+       d="m 106.0962,122.93978 a 3.0830495,3.6330831 5.7837009 0 0 -0.79209,0.02 l -0.0955,0.79739 a 2.3220812,2.867476 6.0548719 0 1 0.59725,-0.0192 2.3220812,2.867476 6.0548719 0 1 1.9629,3.1395 2.3220812,2.867476 6.0548719 0 1 -2.6447,2.55472 2.3220812,2.867476 6.0548719 0 1 -0.57478,-0.16844 l -0.0805,0.67267 a 3.0830495,3.6330831 5.7837009 0 0 0.76364,0.21751 3.0830495,3.6330831 5.7837009 0 0 3.491,-3.21911 3.0830495,3.6330831 5.7837009 0 0 -2.62719,-3.99518 z"
+       style="fill:#ffcc00;stroke-width:0.0756728"
+       id="path16" /><g
+       id="g17"
+       style="fill:#ffffff"
+       transform="translate(0.44537275,13.392995)"><rect
+         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.0694096"
+         id="rect1"
+         width="1.5077701"
+         height="7.2021785"
+         x="98.91304"
+         y="111.55959" /><circle
+         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.0993114"
+         id="path2"
+         cx="104.34447"
+         cy="112.83836"
+         r="1.1365885" /><rect
+         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.0568245"
+         id="rect2"
+         width="0.91592085"
+         height="7.9464474"
+         x="109.58092"
+         y="-105.89882"
+         transform="rotate(90)" /><rect
+         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.0694096"
+         id="rect5"
+         width="1.5077701"
+         height="7.2021785"
+         x="101.41828"
+         y="111.55959" /><rect
+         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.0511281"
+         id="rect6"
+         width="0.92161733"
+         height="6.3933392"
+         x="119.50352"
+         y="-104.37468"
+         transform="rotate(90)" /></g><rect
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.0630948"
+       id="rect17"
+       width="2.0359898"
+       height="0.24485001"
+       x="104.59101"
+       y="122.7337" /></g></svg>
