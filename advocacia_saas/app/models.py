@@ -4569,34 +4569,6 @@ class Process(db.Model):
         }
         return status_map.get(self.status, ("Desconhecido", "secondary"))
 
-
-class FeeContractTemplate(db.Model):
-    """Modelos editáveis para contrato de honorários."""
-
-    __tablename__ = "fee_contract_templates"
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-
-    name = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    is_default = db.Column(db.Boolean, default=False)
-
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(
-        db.DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
-    )
-
-    user = db.relationship(
-        "User",
-        backref=db.backref("fee_contract_templates", lazy="dynamic"),
-    )
-
-    def __repr__(self):
-        return f"<FeeContractTemplate {self.id} - {self.name}>"
-
     def get_status_color(self):
         """Retorna apenas a cor do status."""
         return self.get_status_display()[1]
@@ -4633,6 +4605,34 @@ class FeeContractTemplate(db.Model):
 
     def __repr__(self):
         return f"<Process {self.process_number or 'Sem número'} - {self.title}>"
+
+
+class FeeContractTemplate(db.Model):
+    """Modelos editáveis para contrato de honorários."""
+
+    __tablename__ = "fee_contract_templates"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    name = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    is_default = db.Column(db.Boolean, default=False)
+
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    user = db.relationship(
+        "User",
+        backref=db.backref("fee_contract_templates", lazy="dynamic"),
+    )
+
+    def __repr__(self):
+        return f"<FeeContractTemplate {self.id} - {self.name}>"
 
 
 # Modelo para notificações de processos

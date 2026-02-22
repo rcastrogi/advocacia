@@ -8,30 +8,17 @@ html {
     scroll-behavior: smooth;
 }
 
-/* ===== Variáveis de Cor ===== */
-:root {
-    --lp-primary: #2C3E50;
-    --lp-primary-dark: #1A252F;
-    --lp-primary-light: #34495E;
-    --lp-accent: #C9A86C;
-    --lp-accent-dark: #B8956A;
-    --lp-bg-blue-light: #EBF0F5;
-    --lp-bg-blue-lighter: #F5F8FA;
-    --lp-bg-white: #FFFFFF;
-    --lp-text-dark: #2C3E50;
-    --lp-text-muted: #6C757D;
-    --lp-text-light: #8C9AA8;
-    --lp-card-shadow: 0 4px 20px rgba(0,0,0,0.06);
-    --lp-card-shadow-hover: 0 10px 40px rgba(0,0,0,0.1);
-    --lp-card-radius: 16px;
-    --lp-border-light: #E5E5E5;
-}
+/* ===== Variáveis de Cor =====
+ * TODAS as cores estão centralizadas em design-tokens.css
+ * As variáveis --lp-* são criadas automaticamente lá via retrocompatibilidade.
+ * Para alterar qualquer cor, edite APENAS design-tokens.css
+ */
 
-/* ===== Navbar - Fundo AZUL ESCURO ===== */
+/* ===== Navbar - Fundo MAIS ESCURO que o hero para contraste ===== */
 #landingNav {
-    background: var(--lp-primary) !important;
+    background: var(--sem-bg-navbar) !important;
     padding: 0.75rem 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     z-index: 1030;
 }
 
@@ -40,6 +27,12 @@ html {
 #landingNav .navbar-brand {
     color: #fff !important;
     font-weight: 700;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1.35rem;
+    letter-spacing: 0.04em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 #landingNav.navbar-dark .navbar-brand span,
@@ -112,7 +105,7 @@ html {
 }
 
 .hero-section .hero-title {
-    color: #FFFFFF !important;
+    color: var(--sem-title-on-dark) !important;
     font-size: 3rem;
     font-weight: 700;
     line-height: 1.2;
@@ -120,7 +113,7 @@ html {
 }
 
 .hero-section .hero-subtitle {
-    color: rgba(255,255,255,0.85) !important;
+    color: var(--sem-text-on-dark-muted) !important;
     font-size: 1.1rem;
     line-height: 1.7;
 }
@@ -187,7 +180,7 @@ html {
 
 /* ===== Section Titles ===== */
 .section-title {
-    color: var(--lp-primary) !important;
+    color: var(--sem-title-on-light) !important;
     font-weight: 700;
     font-size: 2.25rem;
     margin-bottom: 1rem;
@@ -294,7 +287,7 @@ html {
 
 .section.bg-light .section-title,
 #recursos .section-title {
-    color: #fff !important;
+    color: var(--sem-title-on-dark) !important;
 }
 
 .section.bg-light .section-title::after,
@@ -304,7 +297,7 @@ html {
 
 .section.bg-light .section-subtitle,
 #recursos .section-subtitle {
-    color: rgba(255,255,255,0.8) !important;
+    color: var(--sem-text-on-dark-muted) !important;
 }
 
 .dashboard-card {
@@ -346,7 +339,7 @@ html {
 }
 
 .dashboard-card h4 {
-    color: #fff !important;
+    color: var(--sem-title-on-dark) !important;
     font-weight: 600;
     font-size: 1.1rem;
     margin-bottom: 0.75rem;
@@ -354,7 +347,7 @@ html {
 
 .dashboard-card p,
 .dashboard-card .text-muted {
-    color: rgba(255,255,255,0.75) !important;
+    color: var(--sem-text-on-dark-muted) !important;
 }
 
 /* Botão Ver Todos os Recursos */
@@ -662,11 +655,11 @@ html {
 
 .cta-section h2,
 .cta-section .display-5 {
-    color: #fff !important;
+    color: var(--sem-title-on-dark) !important;
 }
 
 .cta-section p {
-    color: rgba(255,255,255,0.85) !important;
+    color: var(--sem-text-on-dark-muted) !important;
 }
 
 .cta-section .btn-primary,
@@ -689,17 +682,17 @@ html {
 }
 
 .section.bg-light h5 {
-    color: #fff !important;
+    color: var(--sem-title-on-dark) !important;
     font-weight: 600;
 }
 
 .section.bg-light p,
 .section.bg-light .lead {
-    color: rgba(255,255,255,0.85) !important;
+    color: var(--sem-text-on-dark-muted) !important;
 }
 
 .section.bg-light .text-muted {
-    color: rgba(255,255,255,0.7) !important;
+    color: var(--sem-text-on-dark-subtle) !important;
 }
 
 .section.bg-light .feature-icon {

@@ -5,8 +5,8 @@
     position: absolute;
     top: -40px;
     left: 0;
-    background: var(--primary-color);
-    color: white;
+    background: var(--sem-primary);
+    color: var(--sem-text-on-dark);
     padding: 8px 16px;
     text-decoration: none;
     z-index: 10000;
@@ -17,7 +17,7 @@
 
 .skip-link:focus {
     top: 0;
-    outline: 3px solid var(--secondary-color);
+    outline: 3px solid var(--sem-focus-ring);
     outline-offset: 2px;
 }
 
@@ -46,9 +46,9 @@
 
 /* 3. FOCUS INDICATORS - Indicadores visíveis ao navegar por teclado */
 .keyboard-navigation *:focus {
-    outline: 3px solid var(--secondary-color) !important;
+    outline: 3px solid var(--sem-focus-ring) !important;
     outline-offset: 2px !important;
-    box-shadow: 0 0 0 4px rgba(232, 178, 153, 0.3) !important;
+    box-shadow: var(--sem-focus-shadow) !important;
 }
 
 .keyboard-navigation a:focus,
@@ -56,7 +56,7 @@
 .keyboard-navigation input:focus,
 .keyboard-navigation select:focus,
 .keyboard-navigation textarea:focus {
-    outline: 3px solid var(--secondary-color) !important;
+    outline: 3px solid var(--sem-focus-ring) !important;
     outline-offset: 2px !important;
 }
 
@@ -66,22 +66,14 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-    outline: 2px solid var(--secondary-color);
+    outline: 2px solid var(--sem-focus-ring);
     outline-offset: 2px;
 }
 
 /* 4. MODO DE ALTO CONTRASTE */
-.high-contrast {
-    --primary-color: #000000;
-    --secondary-color: #ffff00;
-    --dark-color: #000000;
-    --light-color: #ffffff;
-    --accent-color: #000000;
-    --text-color: #000000;
-    --title-color: #000000;
-    --subtitle-color: #000000;
-    --gold-color: #ffff00;
-}
+/* As variáveis de alto contraste estão centralizadas em design-tokens.css
+   Sobrescrever --sem-* tokens automaticamente atualiza tudo.
+   As regras abaixo apenas forçam estilos mais específicos quando necessário. */
 
 .high-contrast body {
     background: #ffffff !important;
@@ -245,6 +237,18 @@ body.high-contrast main i,
 .high-contrast .section i,
 .high-contrast main i {
     color: #000000 !important;
+}
+
+/* Ícones dentro de BOTÕES - herdam cor do botão (branco no fundo preto) */
+body.high-contrast .section .btn i,
+body.high-contrast .section button:not(.accessibility-bar button) i,
+body.high-contrast main .btn i,
+body.high-contrast section .btn i,
+.high-contrast .section .btn i,
+.high-contrast .section button:not(.accessibility-bar button) i,
+.high-contrast main .btn i,
+.high-contrast section .btn i {
+    color: inherit !important;
 }
 
 /* Ícones coloridos (type-client, type-process, etc) */
@@ -702,6 +706,79 @@ body.high-contrast .text-info,
 }
 
 /* ============================================
+   CAROUSEL NAV BUTTONS - ALTO CONTRASTE
+   Botões de navegação do carrossel (Petições, etc)
+   ============================================ */
+body.high-contrast .carousel-nav-btn,
+.high-contrast .carousel-nav-btn {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 3px solid #000000 !important;
+    box-shadow: none !important;
+}
+
+body.high-contrast .carousel-nav-btn:hover,
+.high-contrast .carousel-nav-btn:hover {
+    background: #ffff00 !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
+}
+
+body.high-contrast .carousel-nav-btn i,
+.high-contrast .carousel-nav-btn i {
+    color: inherit !important;
+}
+
+/* ============================================
+   PRICING CARDS FEATURED - ALTO CONTRASTE
+   Card "Mais Popular" com destaque visível
+   ============================================ */
+body.high-contrast .pricing-card.featured,
+.high-contrast .pricing-card.featured {
+    border: 4px solid #000000 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+}
+
+body.high-contrast .pricing-badge,
+.high-contrast .pricing-badge {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #000000 !important;
+}
+
+body.high-contrast .pricing-card .btn,
+.high-contrast .pricing-card .btn {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 3px solid #000000 !important;
+}
+
+body.high-contrast .pricing-card .btn:hover,
+.high-contrast .pricing-card .btn:hover {
+    background: #ffff00 !important;
+    color: #000000 !important;
+}
+
+body.high-contrast .pricing-card .btn-outline-primary,
+.high-contrast .pricing-card .btn-outline-primary {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 3px solid #000000 !important;
+}
+
+body.high-contrast .pricing-card .btn-outline-primary:hover,
+.high-contrast .pricing-card .btn-outline-primary:hover {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+body.high-contrast .pricing-card .btn i,
+.high-contrast .pricing-card .btn i {
+    color: inherit !important;
+}
+
+/* ============================================
    BOTÕES btn-primary e btn-secondary - ALTO CONTRASTE
    Garantir que texto seja visível
    ============================================ */
@@ -819,32 +896,226 @@ body.high-contrast .border,
 
 /* Seções gerais */
 .high-contrast .hero-section,
-.high-contrast .section {
+.high-contrast .section,
+.high-contrast .cta-section,
+.high-contrast [style*="background: linear-gradient"] {
     background: #ffffff !important;
     color: #000000 !important;
 }
 
-/* Hero section - forçar TODOS os elementos para preto */
-.high-contrast .hero-section *,
+/* ============================================
+   LANDING PAGE - ALTO CONTRASTE
+   Seções com fundo escuro precisam de texto preto
+   MAS botões/badges/navbar devem manter seus estilos
+   ============================================ */
+
+/* Textos em seções de fundo escuro → preto (EXCETO botões, badges, navbar) */
 .high-contrast .hero-section h1,
 .high-contrast .hero-section h2,
+.high-contrast .hero-section h3,
 .high-contrast .hero-section p,
-.high-contrast .hero-section span,
-.high-contrast .hero-section div,
-.high-contrast .hero-section .subtitle,
+.high-contrast .hero-section .hero-title,
+.high-contrast .hero-section .hero-subtitle,
+.high-contrast .hero-section small,
 .high-contrast .hero-section .text-muted,
-.high-contrast .hero-section .badge,
-.high-contrast .hero-section small {
+.high-contrast .hero-section div:not(.btn):not(.badge),
+.high-contrast .hero-section span:not(.btn span):not(.badge),
+.high-contrast .hero-section strong,
+.high-contrast .hero-section label {
     color: #000000 !important;
-    background: transparent !important;
 }
 
-/* Badges e elementos com estilos inline */
+/* Hero background elements → branco (EXCETO botões) */
+.high-contrast .hero-section .feature-icon,
 .high-contrast .hero-section [style*="background"] {
+    background: #ffffff !important;
+    border: 2px solid #000000 !important;
+}
+
+.high-contrast .hero-section .feature-icon i {
+    color: #000000 !important;
+}
+
+/* Seção de recursos (bg-light/escuro) */
+.high-contrast .section.bg-light,
+.high-contrast #recursos {
     background: #ffffff !important;
 }
 
-.high-contrast .hero-section [style*="color"] {
+.high-contrast .section.bg-light h2,
+.high-contrast .section.bg-light h3,
+.high-contrast .section.bg-light h4,
+.high-contrast .section.bg-light h5,
+.high-contrast .section.bg-light p,
+.high-contrast .section.bg-light .lead,
+.high-contrast .section.bg-light .text-muted,
+.high-contrast .section.bg-light .section-title,
+.high-contrast .section.bg-light .section-subtitle,
+.high-contrast #recursos h2,
+.high-contrast #recursos h3,
+.high-contrast #recursos h4,
+.high-contrast #recursos h5,
+.high-contrast #recursos p,
+.high-contrast #recursos .lead,
+.high-contrast #recursos .text-muted,
+.high-contrast #recursos .section-title,
+.high-contrast #recursos .section-subtitle {
+    color: #000000 !important;
+}
+
+/* Dashboard cards dentro de seção escura */
+.high-contrast .dashboard-card {
+    background: #ffffff !important;
+    border: 2px solid #000000 !important;
+}
+
+.high-contrast .dashboard-card h4,
+.high-contrast .dashboard-card p,
+.high-contrast .dashboard-card .text-muted,
+.high-contrast .dashboard-card .card-icon {
+    color: #000000 !important;
+}
+
+.high-contrast .dashboard-card .card-icon {
+    background: #ffffff !important;
+    border: 2px solid #000000 !important;
+}
+
+.high-contrast .dashboard-card .card-icon i {
+    color: #000000 !important;
+}
+
+/* Seção CTA (final da landing) */
+.high-contrast .cta-section h2,
+.high-contrast .cta-section p,
+.high-contrast .cta-section .lead,
+.high-contrast .cta-section .display-5,
+.high-contrast section[style*="background: linear-gradient"] h2,
+.high-contrast section[style*="background: linear-gradient"] p,
+.high-contrast section[style*="background: linear-gradient"] .lead,
+.high-contrast section[style*="background: linear-gradient"] .opacity-90,
+.high-contrast section[style*="background: linear-gradient"] .opacity-75,
+.high-contrast section[style*="background: linear-gradient"] i {
+    color: #000000 !important;
+}
+
+/* Ícones dentro de botões em seções gradient (Roadmap, CTA) - herdam do botão */
+.high-contrast section[style*="background: linear-gradient"] .btn i {
+    color: inherit !important;
+}
+
+/* Botões dentro de seções com gradient (Roadmap, CTA) */
+.high-contrast section[style*="background: linear-gradient"] .btn,
+.high-contrast #roadmap .btn,
+.high-contrast #planos .btn {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 3px solid #000000 !important;
+    text-decoration: none !important;
+}
+
+.high-contrast section[style*="background: linear-gradient"] .btn:hover,
+.high-contrast #roadmap .btn:hover,
+.high-contrast #planos .btn:hover {
+    background: #ffff00 !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
+}
+
+/* Seção de indicação */
+.high-contrast #indicacao {
+    background: #ffffff !important;
+}
+
+.high-contrast #indicacao h2,
+.high-contrast #indicacao h3,
+.high-contrast #indicacao p,
+.high-contrast #indicacao span,
+.high-contrast #indicacao small,
+.high-contrast #indicacao div:not(.btn):not(.badge),
+.high-contrast #indicacao .fw-bold {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    background: transparent !important;
+    background-clip: unset !important;
+    -webkit-background-clip: unset !important;
+}
+
+.high-contrast #indicacao .bg-white {
+    border: 2px solid #000000 !important;
+}
+
+/* ============================================
+   BOTÕES EM SEÇÕES ESCURAS - ALTO CONTRASTE
+   Garantir que botões DENTRO de hero/CTA/seções
+   escuras tenham contraste correto: fundo preto,
+   texto BRANCO (não preto!)
+   ============================================ */
+.high-contrast .hero-section .btn,
+.high-contrast .cta-section .btn,
+.high-contrast .section.bg-light .btn,
+.high-contrast #recursos .btn,
+.high-contrast #indicacao .btn,
+.high-contrast section[style*="background: linear-gradient"] .btn {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 3px solid #000000 !important;
+    text-decoration: none !important;
+}
+
+.high-contrast .hero-section .btn:hover,
+.high-contrast .cta-section .btn:hover,
+.high-contrast .section.bg-light .btn:hover,
+.high-contrast #recursos .btn:hover,
+.high-contrast #indicacao .btn:hover,
+.high-contrast section[style*="background: linear-gradient"] .btn:hover {
+    background: #ffff00 !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
+}
+
+.high-contrast .hero-section .btn i,
+.high-contrast .cta-section .btn i,
+.high-contrast .section.bg-light .btn i,
+.high-contrast #recursos .btn i,
+.high-contrast #indicacao .btn i,
+.high-contrast section[style*="background: linear-gradient"] .btn i {
+    color: inherit !important;
+}
+
+/* Botão outline-light em seções escuras → fundo branco, texto preto */
+.high-contrast .hero-section .btn-outline-light,
+.high-contrast .cta-section .btn-outline-light,
+.high-contrast #indicacao .btn-outline-light,
+.high-contrast section[style*="background: linear-gradient"] .btn-outline-light {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 3px solid #000000 !important;
+}
+
+.high-contrast .hero-section .btn-outline-light:hover,
+.high-contrast .cta-section .btn-outline-light:hover,
+.high-contrast #indicacao .btn-outline-light:hover,
+.high-contrast section[style*="background: linear-gradient"] .btn-outline-light:hover {
+    background: #ffff00 !important;
+    color: #000000 !important;
+}
+
+/* btn-light em seções escuras */
+.high-contrast .hero-section .btn-light,
+.high-contrast .cta-section .btn-light,
+.high-contrast #indicacao .btn-light,
+.high-contrast section[style*="background: linear-gradient"] .btn-light {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 3px solid #000000 !important;
+}
+
+.high-contrast .hero-section .btn-light:hover,
+.high-contrast .cta-section .btn-light:hover,
+.high-contrast #indicacao .btn-light:hover,
+.high-contrast section[style*="background: linear-gradient"] .btn-light:hover {
+    background: #ffff00 !important;
     color: #000000 !important;
 }
 
@@ -858,24 +1129,26 @@ body.high-contrast .border,
 }
 
 .high-contrast p,
-.high-contrast span:not(.navbar span),
-.high-contrast div:not(.navbar div),
+.high-contrast span:not(.navbar span):not(.btn span),
+.high-contrast div:not(.navbar div):not(.btn),
 .high-contrast li,
 .high-contrast small,
 .high-contrast .text-muted {
     color: #000000 !important;
 }
 
-/* Links em área de conteúdo (não navbar/footer) */
-.high-contrast main a,
-.high-contrast .content a,
-.high-contrast section:not(.navbar):not(.footer) a {
+/* Links em área de conteúdo (não navbar/footer)
+   EXCETO botões (.btn) que têm seus próprios estilos */
+.high-contrast main a:not(.btn):not([class*="btn-"]),
+.high-contrast .content a:not(.btn):not([class*="btn-"]),
+.high-contrast section:not(.navbar):not(.footer) a:not(.btn):not([class*="btn-"]) {
     color: #0000ee !important;
     text-decoration: underline !important;
 }
 
-.high-contrast main a:hover,
-.high-contrast .content a:hover {
+.high-contrast main a:not(.btn):hover,
+.high-contrast .content a:not(.btn):hover,
+.high-contrast section:not(.navbar):not(.footer) a:not(.btn):hover {
     background: #ffff00 !important;
 }
 

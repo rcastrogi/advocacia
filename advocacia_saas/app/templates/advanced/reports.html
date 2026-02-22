@@ -2,10 +2,7 @@
 
 {% block title %}Relatórios Avançados{% endblock %}
 
-{% block head %}
-<!-- Chart.js para gráficos -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+{% block styles %}
 <style>
     .report-card {
         transition: all 0.3s ease;
@@ -330,6 +327,8 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Chart.js para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 let statusChart = null;
 let courtChart = null;

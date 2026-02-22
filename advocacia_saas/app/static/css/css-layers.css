@@ -50,8 +50,8 @@
     
     /* Fundo branco puro */
     .bg-white-pure {
-        background-color: #ffffff;
-        background: #ffffff;
+        background-color: var(--sem-bg-surface);
+        background: var(--sem-bg-surface);
     }
     
     /* Fundo transparente */
@@ -62,56 +62,56 @@
     
     /* Texto escuro (para fundos claros) */
     .text-dark-pure {
-        color: #212529;
+        color: var(--sem-text-heading);
     }
     
     /* Texto claro (para fundos escuros) */
     .text-light-pure {
-        color: #ffffff;
+        color: var(--sem-text-on-dark);
     }
     
     /* Card limpo - sem estilos do tema */
     .card-pure {
-        background: #ffffff;
-        border: 1px solid #dee2e6;
+        background: var(--sem-bg-surface);
+        border: 1px solid var(--sem-border-light);
         border-radius: 0.5rem;
         box-shadow: none;
     }
     
     .card-pure .card-header {
-        background: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-        color: #212529;
+        background: var(--sem-bg-surface-alt);
+        border-bottom: 1px solid var(--sem-border-light);
+        color: var(--sem-text-heading);
     }
     
     .card-pure .card-body {
-        background: #ffffff;
-        color: #212529;
+        background: var(--sem-bg-surface);
+        color: var(--sem-text-heading);
     }
     
     /* Form controls limpos */
     .form-control-pure {
-        background: #ffffff;
-        color: #212529;
-        border: 1px solid #ced4da;
+        background: var(--sem-bg-input);
+        color: var(--sem-text-body);
+        border: 1px solid var(--sem-border-input);
     }
     
     .form-control-pure:focus {
-        background: #ffffff;
-        color: #212529;
-        border-color: #86b7fe;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        background: var(--sem-bg-input);
+        color: var(--sem-text-body);
+        border-color: var(--sem-focus-input-border);
+        box-shadow: var(--sem-focus-input-shadow);
     }
     
     /* Reset de especificidade - Wrapper que reseta tudo dentro */
     .theme-reset {
-        --card-bg: #ffffff;
-        --card-header-bg: #f8f9fa;
-        --card-border: #dee2e6;
-        --text-primary: #212529;
-        --text-secondary: #6c757d;
-        --input-bg: #ffffff;
-        --input-border: #ced4da;
+        --card-bg: var(--sem-bg-surface);
+        --card-header-bg: var(--sem-bg-surface-alt);
+        --card-border: var(--sem-border-light);
+        --text-primary: var(--sem-text-heading);
+        --text-secondary: var(--sem-text-muted);
+        --input-bg: var(--sem-bg-input);
+        --input-border: var(--sem-border-input);
     }
     
     .theme-reset .card {
@@ -152,8 +152,8 @@
     
     /* Full page reset - para páginas inteiras com design custom */
     .full-page-reset {
-        background: #ffffff;
-        color: #212529;
+        background: var(--sem-bg-surface);
+        color: var(--sem-text-body);
         min-height: 100vh;
     }
     

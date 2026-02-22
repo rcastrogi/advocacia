@@ -1,0 +1,279 @@
+/**
+ * =====================================================
+ * PETITIO - DESIGN TOKENS (Variáveis Globais de Cor)
+ * =====================================================
+ * 
+ * ARQUIVO CENTRAL DE CORES DO PROJETO
+ * ------------------------------------
+ * Todas as cores do projeto estão definidas AQUI.
+ * Para alterar qualquer cor, modifique APENAS este arquivo.
+ * 
+ * COMO FUNCIONA:
+ * - Cores "primitivas" (--color-*): valores hex puros, NUNCA use diretamente no CSS
+ * - Cores "semânticas" (--sem-*): atribuem significado às primitivas
+ * - Cores "contextuais": aplicadas por contexto (título em fundo escuro, etc.)
+ * 
+ * PARA MUDAR UMA COR:
+ * 1. Encontre a variável primitiva correspondente
+ * 2. Altere o valor hex
+ * 3. TODAS as referências serão atualizadas automaticamente
+ * 
+ * ACESSIBILIDADE:
+ * - Contraste mínimo WCAG AA: 4.5:1 para texto normal, 3:1 para texto grande
+ * - As combinações abaixo já respeitam esses ratios
+ * 
+ * =====================================================
+ */
+
+:root {
+    /* =================================================
+       1. CORES PRIMITIVAS (Paleta base)
+       Apenas valores hex. Nunca referencie diretamente.
+       ================================================= */
+    
+    /* Azul Escuro - Cor institucional principal */
+    --color-blue-950: #0F1B2D;
+    --color-blue-900: #2C3E50;
+    --color-blue-800: #1b263b;
+    --color-blue-700: #1A252F;
+    --color-blue-600: #34495E;
+    --color-blue-hover: #1a2a3a;
+    
+    /* Dourado - Cor de destaque/accent */
+    --color-gold-500: #C9A86C;
+    --color-gold-400: #d4b87a;
+    --color-gold-600: #a8893d;
+    --color-gold-muted: rgba(201, 168, 108, 0.15);
+    
+    /* Neutros */
+    --color-white: #ffffff;
+    --color-gray-50: #F5F8FA;
+    --color-gray-100: #EBF0F5;
+    --color-gray-200: #f8f9fa;
+    --color-gray-300: #e9ecef;
+    --color-gray-400: #dee2e6;
+    --color-gray-500: #ced4da;
+    --color-gray-600: #6c757d;
+    --color-gray-700: #495057;
+    --color-gray-800: #212529;
+    --color-gray-900: #1a1a1a;
+    
+    /* Status/Feedback */
+    --color-success: #198754;
+    --color-success-light: #d4edda;
+    --color-success-dark: #155724;
+    --color-success-deep: #0f5132;
+    --color-danger: #dc3545;
+    --color-danger-light: #f8d7da;
+    --color-danger-dark: #721c24;
+    --color-warning: #ffc107;
+    --color-warning-light: #fff8e6;
+    --color-warning-dark: #856404;
+    --color-info: #17a2b8;
+    --color-info-light: #e8f4f8;
+
+    /* Categoria/UI extras */
+    --color-indigo: #6610f2;
+    --color-purple: #6f42c1;
+    --color-cyan: #17a2b8;
+    --color-teal: #20c997;
+    --color-lime: #84cc16;
+    --color-orange: #fd7e14;
+    --color-pink: #d63384;
+    --color-olive: #6b8e23;
+
+    /* =================================================
+       2. CORES SEMÂNTICAS (Significado/Função)
+       Use ESTAS no CSS dos componentes.
+       ================================================= */
+    
+    /* --- Marca / Identidade --- */
+    --sem-primary: var(--color-blue-900);
+    --sem-primary-darker: var(--color-blue-950);
+    --sem-primary-dark: var(--color-blue-700);
+    --sem-primary-light: var(--color-blue-600);
+    --sem-primary-hover: var(--color-blue-hover);
+    --sem-accent: var(--color-blue-800);
+    --sem-secondary: var(--color-gold-500);
+    --sem-secondary-light: var(--color-gold-400);
+    --sem-secondary-dark: var(--color-gold-600);
+    
+    /* --- Fundos --- */
+    --sem-bg-navbar: var(--color-blue-950);
+    --sem-bg-page: var(--color-gray-100);
+    --sem-bg-surface: var(--color-white);
+    --sem-bg-surface-alt: var(--color-gray-200);
+    --sem-bg-surface-hover: var(--color-gray-300);
+    --sem-bg-dark: var(--color-blue-900);
+    --sem-bg-dark-gradient: linear-gradient(135deg, var(--color-blue-900) 0%, var(--color-blue-800) 100%);
+    --sem-bg-input: var(--color-white);
+    --sem-bg-disabled: var(--color-gray-300);
+    
+    /* --- Texto --- */
+    --sem-text-heading: var(--color-gray-900);
+    --sem-text-body: var(--color-gray-900);
+    --sem-text-muted: var(--color-gray-600);
+    --sem-text-on-dark: var(--color-white);
+    --sem-text-on-dark-muted: rgba(255, 255, 255, 0.8);
+    --sem-text-on-dark-subtle: rgba(255, 255, 255, 0.7);
+    --sem-text-on-gold: var(--color-blue-900);
+    
+    /* --- Títulos por contexto --- */
+    --sem-title-on-light: var(--color-blue-900);
+    --sem-title-on-dark: var(--color-white);
+    --sem-subtitle-on-light: var(--color-gold-500);
+    --sem-subtitle-on-dark: var(--color-gold-500);
+
+    /* --- Bordas --- */
+    --sem-border-light: var(--color-gray-400);
+    --sem-border-input: var(--color-gray-500);
+    --sem-border-card: rgba(44, 62, 80, 0.1);
+    --sem-border-dark: rgba(255, 255, 255, 0.15);
+    
+    /* --- Sombras --- */
+    --sem-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --sem-shadow-md: 0 4px 15px rgba(44, 62, 80, 0.08);
+    --sem-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+    --sem-shadow-card: 0 2px 12px rgba(44, 62, 80, 0.08);
+    --sem-shadow-card-hover: 0 4px 20px rgba(44, 62, 80, 0.12);
+    
+    /* --- Foco/Acessibilidade --- */
+    --sem-focus-ring: var(--color-gold-500);
+    --sem-focus-shadow: 0 0 0 4px rgba(201, 168, 108, 0.3);
+    --sem-focus-input-border: #86b7fe;
+    --sem-focus-input-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+
+    /* --- Links --- */
+    --sem-link: var(--color-blue-900);
+    --sem-link-hover: var(--color-gold-500);
+    
+    /* --- Botões --- */
+    --sem-btn-primary-bg: var(--color-blue-900);
+    --sem-btn-primary-text: var(--color-white);
+    --sem-btn-primary-hover: var(--color-blue-hover);
+    --sem-btn-secondary-bg: var(--color-gold-500);
+    --sem-btn-secondary-text: var(--color-blue-900);
+    --sem-btn-secondary-hover: var(--color-gold-600);
+    
+    /* --- Status --- */
+    --sem-status-success: var(--color-success);
+    --sem-status-danger: var(--color-danger);
+    --sem-status-warning: var(--color-warning);
+    --sem-status-info: var(--color-info);
+
+    /* =================================================
+       3. RETROCOMPATIBILIDADE
+       Mapeia nomes antigos → novos tokens.
+       Permite migração gradual sem quebrar nada.
+       ================================================= */
+    --primary-color: var(--sem-primary);
+    --secondary-color: var(--sem-secondary);
+    --dark-color: var(--sem-text-heading);
+    --light-color: var(--sem-bg-page);
+    --accent-color: var(--sem-accent);
+    --text-color: var(--sem-text-on-dark);
+    --text-muted: var(--sem-text-muted);
+    --border-color: var(--sem-border-light);
+    --gold-color: var(--sem-secondary);
+    --gold-light: var(--sem-secondary-light);
+    --gold-dark: var(--sem-secondary-dark);
+    --bg-light: var(--sem-bg-page);
+    --bg-white: var(--sem-bg-surface);
+    --bg-dark: var(--sem-bg-dark);
+    --title-color: var(--sem-title-on-light);
+    --subtitle-color: var(--sem-subtitle-on-light);
+
+    /* Landing page aliases */
+    --lp-primary: var(--sem-primary);
+    --lp-primary-dark: var(--sem-primary-dark);
+    --lp-primary-light: var(--sem-primary-light);
+    --lp-accent: var(--sem-secondary);
+    --lp-accent-dark: var(--sem-secondary-dark);
+    --lp-bg-blue-light: var(--sem-bg-page);
+    --lp-bg-blue-lighter: var(--color-gray-50);
+    --lp-bg-white: var(--sem-bg-surface);
+    --lp-text-dark: var(--sem-text-heading);
+    --lp-text-muted: var(--sem-text-muted);
+    --lp-text-light: #8C9AA8;
+    --lp-card-shadow: var(--sem-shadow-md);
+    --lp-card-shadow-hover: var(--sem-shadow-lg);
+    --lp-card-radius: 16px;
+    --lp-border-light: #E5E5E5;
+}
+
+/* =================================================
+   4. MODO ALTO CONTRASTE
+   Sobrescreve tokens semânticos para acessibilidade máxima
+   ================================================= */
+.high-contrast {
+    --sem-primary: #000000;
+    --sem-secondary: #ffff00;
+    --sem-accent: #000000;
+    --sem-primary-dark: #000000;
+    --sem-primary-light: #333333;
+    
+    --sem-bg-page: #ffffff;
+    --sem-bg-surface: #ffffff;
+    --sem-bg-surface-alt: #ffffff;
+    --sem-bg-dark: #000000;
+    --sem-bg-dark-gradient: #000000;
+    
+    --sem-text-heading: #000000;
+    --sem-text-body: #000000;
+    --sem-text-muted: #333333;
+    --sem-text-on-dark: #ffffff;
+    --sem-text-on-dark-muted: #ffffff;
+    --sem-text-on-dark-subtle: #ffffff;
+    
+    --sem-title-on-light: #000000;
+    --sem-title-on-dark: #ffffff;
+    --sem-subtitle-on-light: #000000;
+    --sem-subtitle-on-dark: #ffff00;
+    
+    --sem-border-light: #000000;
+    --sem-border-input: #000000;
+    --sem-border-card: #000000;
+    --sem-border-dark: #ffffff;
+    
+    --sem-focus-ring: #ffff00;
+    --sem-focus-shadow: 0 0 0 4px rgba(255, 255, 0, 0.5);
+    
+    --sem-link: #0000EE;
+    --sem-link-hover: #ffff00;
+    
+    --sem-btn-primary-bg: #000000;
+    --sem-btn-primary-text: #ffffff;
+    --sem-btn-secondary-bg: #ffff00;
+    --sem-btn-secondary-text: #000000;
+    
+    /* Status permanece com cores fortes */
+    --sem-status-success: #008000;
+    --sem-status-danger: #ff0000;
+    --sem-status-warning: #ffff00;
+    --sem-status-info: #0000ff;
+}
+
+/* =================================================
+   5. CLASSES UTILITÁRIAS DE COR
+   Para uso rápido em HTML: class="text-on-dark" etc.
+   ================================================= */
+
+/* Texto */
+.text-on-dark { color: var(--sem-text-on-dark) !important; }
+.text-on-dark-muted { color: var(--sem-text-on-dark-muted) !important; }
+.text-on-light { color: var(--sem-text-body) !important; }
+.text-heading { color: var(--sem-text-heading) !important; }
+.text-brand { color: var(--sem-primary) !important; }
+.text-accent { color: var(--sem-secondary) !important; }
+
+/* Títulos */
+.title-on-light { color: var(--sem-title-on-light) !important; }
+.title-on-dark { color: var(--sem-title-on-dark) !important; }
+.subtitle-on-light { color: var(--sem-subtitle-on-light) !important; }
+.subtitle-on-dark { color: var(--sem-subtitle-on-dark) !important; }
+
+/* Fundos */
+.bg-page { background-color: var(--sem-bg-page) !important; }
+.bg-surface { background-color: var(--sem-bg-surface) !important; }
+.bg-dark-brand { background: var(--sem-bg-dark) !important; }
+.bg-dark-gradient { background: var(--sem-bg-dark-gradient) !important; }

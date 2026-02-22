@@ -855,10 +855,13 @@ def data_processing_log_to_dict(self):
 
 
 # Aplicar métodos aos modelos
-DataConsent.to_dict = data_consent_to_dict
-DeletionRequest.to_dict = deletion_request_to_dict
-AnonymizationRequest.to_dict = anonymization_request_to_dict
-DataProcessingLog.to_dict = data_processing_log_to_dict
+try:
+    DataConsent.to_dict = data_consent_to_dict
+    DeletionRequest.to_dict = deletion_request_to_dict
+    AnonymizationRequest.to_dict = anonymization_request_to_dict
+    DataProcessingLog.to_dict = data_processing_log_to_dict
+except NameError:
+    pass
 
 
 # =============================================================================
