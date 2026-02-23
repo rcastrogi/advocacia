@@ -177,10 +177,6 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <!-- Feedback sincronização -->
-                    <div id="syncFeedback" class="alert d-none mb-3" role="alert">
-                        <small id="syncMessage"></small>
-                    </div>
                     {% if movements %}
                     <ul class="timeline" id="movimentosList">
                         {% for movement in movements %}
@@ -385,6 +381,9 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;" id="toastContainer"></div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const btnSync = document.getElementById('btnSyncMovimentos');
@@ -392,16 +391,59 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const iconSync = document.getElementById('iconSync');
     const spinnerSync = document.getElementById('spinnerSync');
-    const feedbackDiv = document.getElementById('syncFeedback');
-    const feedbackMsg = document.getElementById('syncMessage');
+    
+    // Função utilitária para escapar HTML
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Função de Toast
+    function showToast(message, type = 'info', duration = 6000) {
+        const toastContainer = document.getElementById('toastContainer');
+        const toastId = 'toast-' + Date.now();
+        const icons = {
+            success: 'fas fa-check-circle text-success',
+            danger: 'fas fa-exclamation-circle text-danger',
+            warning: 'fas fa-exclamation-triangle text-warning',
+            info: 'fas fa-info-circle text-info'
+        };
+        const bgColors = {
+            success: 'border-start border-success border-4',
+            danger: 'border-start border-danger border-4',
+            warning: 'border-start border-warning border-4',
+            info: 'border-start border-info border-4'
+        };
+        const icon = icons[type] || icons.info;
+        const bgColor = bgColors[type] || bgColors.info;
+        const titles = { success: 'Sucesso', danger: 'Erro', warning: 'Aviso', info: 'Informação' };
+        
+        const toastHtml = `
+            <div id="${toastId}" class="toast ${bgColor}" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="${duration}">
+                <div class="toast-header">
+                    <i class="${icon} me-2"></i>
+                    <strong class="me-auto">${titles[type] || 'Informação'}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Fechar"></button>
+                </div>
+                <div class="toast-body">${escapeHtml(message)}</div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        const toastEl = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+    }
     
     btnSync.addEventListener('click', function() {
-        // Loading state
         iconSync.classList.add('d-none');
         spinnerSync.classList.remove('d-none');
         btnSync.disabled = true;
         
-        showSyncFeedback('info', 'Consultando tribunal...');
+        showToast('Consultando tribunal...', 'info', 10000);
         
         const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || 
                           document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -423,15 +465,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 const fonte = result.fonte ? ` (${result.fonte})` : '';
                 if (result.novos > 0) {
-                    showSyncFeedback('success', 
-                        `${result.novos} novo(s) andamento(s) importado(s)${fonte}. Recarregando página...`);
+                    showToast(`${result.novos} novo(s) andamento(s) importado(s)${fonte}. Recarregando...`, 'success');
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    showSyncFeedback('info', 
-                        `Nenhum andamento novo encontrado${fonte}. Total no tribunal: ${result.total_encontrados || 0}.`);
+                    showToast(`Nenhum andamento novo encontrado${fonte}. Total no tribunal: ${result.total_encontrados || 0}.`, 'info');
                 }
             } else {
-                showSyncFeedback('warning', result.message || 'Não foi possível buscar andamentos.');
+                showToast(result.message || 'Não foi possível buscar andamentos.', 'warning', 8000);
             }
         })
         .catch(error => {
@@ -439,19 +479,9 @@ document.addEventListener('DOMContentLoaded', function() {
             spinnerSync.classList.add('d-none');
             btnSync.disabled = false;
             console.error('Erro ao sincronizar:', error);
-            showSyncFeedback('danger', 'Erro ao conectar com o tribunal. Tente novamente.');
+            showToast('Erro ao conectar com o tribunal. Tente novamente.', 'danger');
         });
     });
-    
-    function showSyncFeedback(type, message) {
-        feedbackDiv.className = `alert alert-${type} py-2 mb-3`;
-        feedbackDiv.classList.remove('d-none');
-        feedbackMsg.textContent = message;
-        
-        if (type !== 'info' || !message.includes('Consultando')) {
-            setTimeout(() => feedbackDiv.classList.add('d-none'), 15000);
-        }
-    }
 });
 </script>
 {% endblock %}

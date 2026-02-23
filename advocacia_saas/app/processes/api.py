@@ -566,21 +566,40 @@ def search_datajud():
     cert_pfx_path = None
     cert_password = None
     temp_path = None
+    has_certificate = False
 
     try:
         cert = CertificadoService.get_certificado_ativo(current_user.id)
         if cert:
-            temp_path, cert_password = CertificadoService.descriptografar_pfx(
-                cert, senha_cert
-            )
-            cert_pfx_path = temp_path
+            has_certificate = True
+            try:
+                temp_path, cert_password = CertificadoService.descriptografar_pfx(
+                    cert, senha_cert
+                )
+                cert_pfx_path = temp_path
+            except Exception as e:
+                return jsonify({
+                    "success": False,
+                    "has_certificate": True,
+                    "message": f"Erro ao acessar certificado: {str(e)[:100]}. Verifique a senha do certificado.",
+                    "message_type": "warning",
+                })
 
         # Consulta EPROC/MNI
         result = EprocService.search_process(
             process_number, tribunal, cert_pfx_path, cert_password
         )
 
-        # Sempre retorna 200 - success indica se encontrou ou não
+        # Adicionar info sobre certificado na resposta
+        result["has_certificate"] = has_certificate
+        if not result.get("success") and not has_certificate:
+            result["message"] = (
+                "Nenhum certificado digital configurado. "
+                "A maioria dos tribunais exige certificado A1 para consulta. "
+                "Cadastre seu certificado em Perfil > Certificado Digital."
+            )
+            result["message_type"] = "warning"
+
         return jsonify(result)
 
     finally:

@@ -56,12 +56,7 @@
                                 {% for error in form.process_number.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                                 {% endfor %}
-                                <!-- Feedback DataJud -->
-                                <div id="datajudFeedback" class="mt-2 d-none">
-                                    <div class="alert alert-sm py-2 mb-0" id="datajudAlert">
-                                        <small id="datajudMessage"></small>
-                                    </div>
-                                </div>
+
                             </div>
                             <div class="col-md-7 mb-3">
                                 <label for="title" class="form-label">Título/Descrição <span class="text-danger">*</span></label>
@@ -217,9 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnSearch = document.getElementById('btnSearchDatajud');
     const iconSearch = document.getElementById('iconSearch');
     const spinnerSearch = document.getElementById('spinnerSearch');
-    const datajudFeedback = document.getElementById('datajudFeedback');
-    const datajudAlert = document.getElementById('datajudAlert');
-    const datajudMessage = document.getElementById('datajudMessage');
+
     
     // Função utilitária para escapar HTML
     function escapeHtml(text) {
@@ -360,7 +353,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 fillFormWithData(result.data.data);
                 showProcessDetails(result.data.data, result.data.tribunal, result.data.fonte);
             } else {
-                showFeedback('warning', result.data.message || 'Processo não encontrado.');
+                const msgType = result.data.message_type || 'warning';
+                showFeedback(msgType, result.data.message || 'Processo não encontrado.');
             }
         })
         .catch(error => {
@@ -385,21 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showFeedback(type, message) {
         const allowedTypes = ['success', 'danger', 'warning', 'info'];
         const safeType = allowedTypes.includes(type) ? type : 'info';
-        
-        // Mostra toast
         showToast(message, safeType);
-        
-        // Também mostra feedback inline (opcional)
-        if (datajudFeedback && datajudAlert && datajudMessage) {
-            datajudFeedback.classList.remove('d-none');
-            datajudAlert.className = `alert alert-${safeType} py-2 mb-0`;
-            datajudMessage.textContent = message;
-            
-            // Auto-hide após 10 segundos
-            setTimeout(() => {
-                datajudFeedback.classList.add('d-none');
-            }, 10000);
-        }
     }
     
     function fillFormWithData(data) {
