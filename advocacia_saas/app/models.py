@@ -2270,6 +2270,18 @@ class SavedPetition(db.Model):
     completed_at = db.Column(db.DateTime)  # Quando foi finalizada
     cancelled_at = db.Column(db.DateTime)  # Quando foi cancelada
 
+    # Peticionamento Eletrônico (protocolo no tribunal)
+    protocolo_numero = db.Column(db.String(100))  # Número do protocolo retornado
+    protocolo_data = db.Column(db.DateTime)  # Data/hora do protocolo
+    protocolo_tribunal = db.Column(db.String(20))  # Sigla do tribunal (TRF4, TJSC...)
+    protocolo_status = db.Column(
+        db.String(30), default="nao_protocolado"
+    )  # nao_protocolado, protocolado, erro, rejeitado
+    protocolo_erro = db.Column(db.Text)  # Mensagem de erro (se houver)
+    protocolo_certificado_id = db.Column(
+        db.Integer, db.ForeignKey("advogado_certificados.id"), nullable=True
+    )  # Certificado usado no protocolo
+
     # Relacionamentos
     user = db.relationship(
         "User", backref=db.backref("saved_petitions", lazy="dynamic")
@@ -2289,6 +2301,24 @@ class SavedPetition(db.Model):
             "cancelled": ("Cancelada", "danger"),
         }
         return status_map.get(self.status, ("Desconhecido", "secondary"))
+
+    def get_protocolo_display(self):
+        """Retorna o status de protocolo formatado."""
+        status_map = {
+            "nao_protocolado": ("Não Protocolado", "secondary"),
+            "protocolado": ("Protocolado", "success"),
+            "erro": ("Erro no Protocolo", "danger"),
+            "rejeitado": ("Rejeitado", "warning"),
+        }
+        return status_map.get(
+            self.protocolo_status or "nao_protocolado",
+            ("Desconhecido", "secondary"),
+        )
+
+    @property
+    def is_protocolado(self):
+        """Verifica se a petição foi protocolada com sucesso."""
+        return self.protocolo_status == "protocolado" and self.protocolo_numero
 
     def get_author_name(self):
         """Extrai o nome do autor dos dados do formulário."""
@@ -6911,3 +6941,95 @@ class AICreditConfig(db.Model):
 
     def __repr__(self):
         return f"<AICreditConfig {self.operation_key}: {self.credit_cost} créditos>"
+
+
+class AdvogadoCertificado(db.Model):
+    """
+    Certificado digital A1 (.pfx) vinculado ao advogado.
+
+    O arquivo .pfx é criptografado com Fernet (AES-128-CBC) antes de
+    ser armazenado no banco de dados. A senha do certificado pode ser
+    armazenada criptografada (cofre) ou solicitada a cada uso.
+    """
+
+    __tablename__ = "advogado_certificados"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Identificação do certificado
+    nome_titular = db.Column(db.String(300))  # Nome no certificado (CN)
+    oab_numero = db.Column(db.String(20))     # OAB extraída do certificado
+    oab_uf = db.Column(db.String(2))          # UF da OAB
+    cpf = db.Column(db.String(14))            # CPF do titular
+    emissor = db.Column(db.String(300))       # Autoridade Certificadora (ex: AC-OAB)
+    numero_serie = db.Column(db.String(100))  # Número serial do certificado
+
+    # Certificado criptografado
+    certificado_pfx = db.Column(db.LargeBinary)   # .pfx criptografado com Fernet
+    certificado_hash = db.Column(db.String(64))    # SHA256 do .pfx original (verificação)
+
+    # Senha do certificado (criptografada) - opcional
+    # Se None, pede a senha a cada uso (mais seguro)
+    senha_cifrada = db.Column(db.LargeBinary, nullable=True)
+
+    # Validade
+    validade_inicio = db.Column(db.DateTime)   # not_valid_before
+    validade_fim = db.Column(db.DateTime)      # not_valid_after
+
+    # Status
+    ativo = db.Column(db.Boolean, default=True)
+    apelido = db.Column(db.String(100))  # Nome amigável dado pelo advogado
+
+    # Auditoria
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+    ultimo_uso = db.Column(db.DateTime)  # Última vez que o certificado foi usado
+
+    # Relacionamentos
+    user = db.relationship(
+        "User", backref=db.backref("certificados", lazy="dynamic")
+    )
+
+    @property
+    def esta_vencido(self):
+        """Verifica se o certificado está vencido."""
+        if self.validade_fim:
+            return datetime.now(timezone.utc) > self.validade_fim.replace(tzinfo=timezone.utc)
+        return False
+
+    @property
+    def dias_para_vencer(self):
+        """Retorna dias até o vencimento. Negativo se já venceu."""
+        if self.validade_fim:
+            delta = self.validade_fim.replace(tzinfo=timezone.utc) - datetime.now(timezone.utc)
+            return delta.days
+        return None
+
+    @property
+    def status_display(self):
+        """Retorna status formatado."""
+        if not self.ativo:
+            return ("Desativado", "secondary")
+        if self.esta_vencido:
+            return ("Vencido", "danger")
+        dias = self.dias_para_vencer
+        if dias is not None and dias <= 30:
+            return (f"Vence em {dias} dias", "warning")
+        return ("Válido", "success")
+
+    @property
+    def tem_senha_salva(self):
+        """Verifica se a senha está armazenada."""
+        return self.senha_cifrada is not None
+
+    def registrar_uso(self):
+        """Registra que o certificado foi usado agora."""
+        self.ultimo_uso = datetime.now(timezone.utc)
+
+    def __repr__(self):
+        return f"<AdvogadoCertificado {self.nome_titular} - OAB/{self.oab_uf} {self.oab_numero}>"

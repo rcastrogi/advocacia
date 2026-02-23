@@ -1,10 +1,12 @@
 import json
+import logging
 import os
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 from functools import wraps
 from io import BytesIO
+from typing import Optional
 from zipfile import ZipFile
 
 import bleach
@@ -65,6 +67,8 @@ from app.schemas import (
 )
 from app.services.pdf_converter import CONVERTIBLE_EXTENSIONS, convert_to_pdf
 from app.utils.error_messages import format_error_for_user
+
+logger = logging.getLogger(__name__)
 
 # Extensões permitidas - agora incluindo mais formatos que podem ser convertidos
 ATTACHMENT_EXTENSIONS = {
@@ -1285,6 +1289,284 @@ def api_delete_petition(petition_id):
         return jsonify({"success": False, "error": message}), 400
 
     return jsonify({"success": True, "message": message})
+
+
+# ============================================================================
+# PETICIONAMENTO ELETRÔNICO (PROTOCOLO NO TRIBUNAL)
+# ============================================================================
+
+
+@bp.route("/api/protocolar/<int:petition_id>", methods=["POST"])
+@login_required
+@limiter.limit("5 per minute")
+def api_protocolar(petition_id):
+    """
+    Protocola uma petição eletronicamente no tribunal via MNI.
+
+    Body JSON:
+        - tribunal: Sigla do tribunal (obrigatório se não houver processo vinculado)
+        - tipo_documento: Tipo MNI (default: peticao_simples)
+        - senha_certificado: Senha do certificado (opcional, usa salva)
+        - descricao: Descrição complementar
+        - incluir_anexos: bool (default: True)
+
+    O PDF da petição é gerado, assinado digitalmente e enviado ao tribunal.
+    """
+    from app.services.certificado_service import CertificadoService
+    from app.services.protocolo_service import ProtocoloService
+
+    # Buscar petição
+    petition = SavedPetition.query.filter_by(
+        id=petition_id, user_id=current_user.id
+    ).first()
+
+    if not petition:
+        return jsonify({"success": False, "message": "Petição não encontrada."}), 404
+
+    if petition.status not in ("completed", "draft"):
+        return jsonify({
+            "success": False,
+            "message": "Apenas petições finalizadas ou em rascunho podem ser protocoladas.",
+        }), 400
+
+    if petition.protocolo_status == "protocolado":
+        return jsonify({
+            "success": False,
+            "message": f"Petição já protocolada (Protocolo: {petition.protocolo_numero}).",
+        }), 400
+
+    data = request.get_json() or {}
+    tribunal = data.get("tribunal", "").strip().upper()
+    tipo_documento = data.get("tipo_documento", "peticao_simples")
+    senha_cert = data.get("senha_certificado", "").strip() or None
+    descricao = data.get("descricao", "").strip()
+    incluir_anexos = data.get("incluir_anexos", True)
+
+    # Detectar tribunal pelo número do processo
+    if not tribunal and petition.process_number:
+        from app.services.eproc_service import detect_tribunal_from_number, sanitize_process_number
+        numero_limpo = sanitize_process_number(petition.process_number)
+        tribunal = detect_tribunal_from_number(numero_limpo) or ""
+
+    if not tribunal:
+        return jsonify({
+            "success": False,
+            "message": "Informe o tribunal para protocolar. Vincule um número de processo ou selecione manualmente.",
+        }), 400
+
+    if not petition.process_number:
+        return jsonify({
+            "success": False,
+            "message": "A petição precisa ter um número de processo para ser protocolada.",
+        }), 400
+
+    # Obter certificado digital
+    cert = CertificadoService.get_certificado_ativo(current_user.id)
+    if not cert:
+        return jsonify({
+            "success": False,
+            "message": "Nenhum certificado digital ativo. Cadastre seu certificado A1 em Perfil > Certificados.",
+        }), 400
+
+    if cert.esta_vencido:
+        return jsonify({
+            "success": False,
+            "message": f"Certificado '{cert.apelido or cert.nome_titular}' está vencido.",
+        }), 400
+
+    temp_path = None
+    try:
+        temp_path, cert_password = CertificadoService.descriptografar_pfx(cert, senha_cert)
+
+        # Gerar PDF da petição
+        documentos = []
+
+        # Documento principal (gerar PDF do conteúdo)
+        pdf_bytes = _gerar_pdf_peticao(petition)
+        if not pdf_bytes:
+            return jsonify({
+                "success": False,
+                "message": "Erro ao gerar PDF da petição.",
+            }), 500
+
+        titulo_doc = petition.title or "Petição"
+        documentos.append({
+            "nome": f"{titulo_doc[:80]}.pdf",
+            "bytes": pdf_bytes,
+            "mime_type": "application/pdf",
+        })
+
+        # Incluir anexos da petição
+        if incluir_anexos:
+            for att in petition.attachments:
+                try:
+                    att_path = os.path.join(
+                        current_app.config.get("UPLOAD_FOLDER", "uploads"),
+                        att.file_path,
+                    )
+                    if os.path.exists(att_path):
+                        with open(att_path, "rb") as f:
+                            att_bytes = f.read()
+                        documentos.append({
+                            "nome": att.filename,
+                            "bytes": att_bytes,
+                            "mime_type": att.file_type or "application/pdf",
+                        })
+                except Exception as e:
+                    logger.warning(f"Erro ao ler anexo {att.id}: {e}")
+
+        # Protocolar
+        result = ProtocoloService.protocolar(
+            numero_processo=petition.process_number,
+            tribunal=tribunal,
+            documentos=documentos,
+            tipo_documento=tipo_documento,
+            cert_pfx_path=temp_path,
+            cert_password=cert_password,
+            dados_complementares={
+                "descricao": descricao or petition.title,
+            },
+        )
+
+        # Salvar resultado no banco
+        from app import db
+
+        if result.get("success"):
+            petition.protocolo_status = "protocolado"
+            petition.protocolo_numero = result.get("protocolo", "")
+            petition.protocolo_data = datetime.now(timezone.utc)
+            petition.protocolo_tribunal = tribunal
+            petition.protocolo_certificado_id = cert.id
+            petition.protocolo_erro = None
+
+            # Marcar petição como finalizada se era rascunho
+            if petition.status == "draft":
+                petition.status = "completed"
+                petition.completed_at = datetime.now(timezone.utc)
+
+            # Atualizar último uso do certificado
+            cert.ultimo_uso = datetime.now(timezone.utc)
+        else:
+            petition.protocolo_status = "erro"
+            petition.protocolo_erro = result.get("message", "Erro desconhecido")
+            petition.protocolo_tribunal = tribunal
+
+        db.session.commit()
+
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Erro ao protocolar petição {petition_id}: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Erro interno: {str(e)[:200]}",
+        }), 500
+
+    finally:
+        if temp_path:
+            CertificadoService.limpar_temp(temp_path)
+
+
+@bp.route("/api/protocolo/tipos-documento", methods=["GET"])
+@login_required
+def api_tipos_documento():
+    """Retorna tipos de documento disponíveis para protocolo."""
+    from app.services.protocolo_service import ProtocoloService
+    return jsonify({
+        "success": True,
+        "tipos": ProtocoloService.get_tipos_documento(),
+    })
+
+
+@bp.route("/api/protocolo/verificar-tribunal", methods=["POST"])
+@login_required
+def api_verificar_tribunal():
+    """Verifica se um tribunal suporta protocolo eletrônico."""
+    from app.services.protocolo_service import ProtocoloService
+
+    data = request.get_json() or {}
+    tribunal = data.get("tribunal", "").strip()
+
+    if not tribunal:
+        return jsonify({"success": False, "message": "Informe o tribunal."}), 400
+
+    result = ProtocoloService.verificar_tribunal_suporta_protocolo(tribunal)
+    return jsonify(result)
+
+
+@bp.route("/api/protocolar/<int:petition_id>/status", methods=["GET"])
+@login_required
+def api_protocolo_status(petition_id):
+    """Retorna status do protocolo de uma petição."""
+    petition = SavedPetition.query.filter_by(
+        id=petition_id, user_id=current_user.id
+    ).first()
+
+    if not petition:
+        return jsonify({"success": False, "message": "Petição não encontrada."}), 404
+
+    proto_display = petition.get_protocolo_display()
+
+    return jsonify({
+        "success": True,
+        "protocolo_status": petition.protocolo_status or "nao_protocolado",
+        "protocolo_status_label": proto_display[0],
+        "protocolo_status_color": proto_display[1],
+        "protocolo_numero": petition.protocolo_numero,
+        "protocolo_data": petition.protocolo_data.isoformat() if petition.protocolo_data else None,
+        "protocolo_tribunal": petition.protocolo_tribunal,
+        "protocolo_erro": petition.protocolo_erro,
+        "is_protocolado": petition.is_protocolado,
+    })
+
+
+def _gerar_pdf_peticao(petition: SavedPetition) -> Optional[bytes]:
+    """
+    Gera PDF do conteúdo da petição para protocolar.
+    Busca o conteúdo gerado (HTML) e converte para PDF.
+    """
+    try:
+        # Tentar extrair conteúdo do form_data
+        form_data = petition.form_data or {}
+        conteudo = form_data.get("conteudo_gerado") or form_data.get("content") or ""
+
+        if not conteudo:
+            # Montar conteúdo básico a partir dos campos do formulário
+            partes = []
+            titulo = petition.title or "Petição"
+            partes.append(f"<h1>{titulo}</h1>")
+
+            if petition.process_number:
+                partes.append(f"<p><strong>Processo:</strong> {petition.process_number}</p>")
+
+            # Campos do formulário
+            campos_exibir = [
+                ("autor_nome", "Autor/Requerente"),
+                ("reu_nome", "Réu/Requerido"),
+                ("fatos", "Dos Fatos"),
+                ("fundamentos", "Do Direito"),
+                ("pedidos", "Dos Pedidos"),
+                ("valor_causa", "Valor da Causa"),
+            ]
+            for campo, label in campos_exibir:
+                valor = form_data.get(campo, "")
+                if valor:
+                    partes.append(f"<h3>{label}</h3>")
+                    partes.append(f"<p>{valor}</p>")
+
+            conteudo = "\n".join(partes)
+
+        if not conteudo.strip():
+            return None
+
+        # Renderizar PDF
+        titulo = petition.title or "Petição"
+        pdf_buffer = _render_pdf(conteudo, titulo)
+        return pdf_buffer.getvalue()
+
+    except Exception as e:
+        logger.error(f"Erro ao gerar PDF da petição {petition.id}: {e}")
+        return None
 
 
 # ============================================================================

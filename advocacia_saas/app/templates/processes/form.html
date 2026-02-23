@@ -47,7 +47,7 @@
                                 <label for="process_number" class="form-label">Número do Processo</label>
                                 <div class="input-group">
                                     {{ form.process_number(class="form-control" + (" is-invalid" if form.process_number.errors else ""), id="process_number") }}
-                                    <button type="button" class="btn btn-outline-primary" id="btnSearchDatajud" title="Buscar dados no DataJud">
+                                    <button type="button" class="btn btn-outline-primary" id="btnSearchDatajud" title="Buscar dados no Tribunal">
                                         <i class="fas fa-search" id="iconSearch"></i>
                                         <span class="spinner-border spinner-border-sm d-none" id="spinnerSearch"></span>
                                     </button>
@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Loading state
         setLoading(true);
-        showFeedback('info', 'Consultando DataJud...');
+        showFeedback('info', 'Consultando tribunais...');
         
         fetch('{{ url_for("processes.search_datajud") }}', {
             method: 'POST',
@@ -348,7 +348,6 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             return response.json().then(data => {
-                // Inclui o status na resposta para tratamento
                 return { ok: response.ok, data: data };
             });
         })
@@ -356,17 +355,18 @@ document.addEventListener('DOMContentLoaded', function() {
             setLoading(false);
             
             if (result.ok && result.data.success) {
-                showFeedback('success', 'Dados encontrados! Campos preenchidos automaticamente.');
+                const fonte = result.data.fonte || 'Tribunal';
+                showFeedback('success', `Dados encontrados via ${fonte}! Campos preenchidos automaticamente.`);
                 fillFormWithData(result.data.data);
-                showProcessDetails(result.data.data);
+                showProcessDetails(result.data.data, result.data.tribunal, result.data.fonte);
             } else {
                 showFeedback('warning', result.data.message || 'Processo não encontrado.');
             }
         })
         .catch(error => {
             setLoading(false);
-            console.error('Erro ao consultar DataJud:', error);
-            showFeedback('danger', 'Erro ao consultar DataJud. Tente novamente.');
+            console.error('Erro ao consultar tribunal:', error);
+            showFeedback('danger', 'Erro ao consultar tribunal. Tente novamente.');
         });
     }
     
@@ -403,13 +403,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function fillFormWithData(data) {
-        // Preenche campos do formulário com dados do DataJud
+        // Preenche campos do formulário com dados do EPROC/MNI
         const fieldMappings = {
             'title': data.title,
             'court': data.court,
             'court_instance': data.court_instance,
             'jurisdiction': data.jurisdiction,
-            'distribution_date': data.distribution_date
+            'distribution_date': data.distribution_date,
+            'plaintiff': data.plaintiff,
+            'defendant': data.defendant
         };
         
         for (const [fieldId, value] of Object.entries(fieldMappings)) {
@@ -417,9 +419,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (field && value) {
                 // Para selects, verificar se o valor existe nas opções
                 if (field.tagName === 'SELECT') {
-                    const option = Array.from(field.options).find(opt => opt.value === value);
+                    // Tenta match exato
+                    let option = Array.from(field.options).find(opt => opt.value === value);
+                    // Se não encontrou, tenta match parcial (contém)
+                    if (!option) {
+                        option = Array.from(field.options).find(opt =>
+                            opt.text.toLowerCase().includes(value.toLowerCase()) ||
+                            value.toLowerCase().includes(opt.value.toLowerCase())
+                        );
+                    }
                     if (option) {
-                        field.value = value;
+                        field.value = option.value;
                     }
                 } else {
                     // Só preenche se o campo estiver vazio
@@ -433,14 +443,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function showProcessDetails(data) {
+    function showProcessDetails(data, tribunal, fonte) {
         // Remove modal anterior se existir
         const existingModal = document.getElementById('datajudDetailsModal');
         if (existingModal) {
             existingModal.remove();
         }
         
-        // Cria modal com detalhes do processo
+        // Movimentos
         const movimentosHtml = data.movimentos && data.movimentos.length > 0
             ? data.movimentos.map(m => 
                 `<li class="list-group-item py-2">
@@ -450,9 +460,32 @@ document.addEventListener('DOMContentLoaded', function() {
             ).join('')
             : '<li class="list-group-item">Nenhum movimento disponível</li>';
         
+        // Assuntos
         const assuntosHtml = data.assuntos && data.assuntos.length > 0
             ? data.assuntos.map(a => `<span class="badge bg-secondary me-1">${escapeHtml(a)}</span>`).join('')
             : '<span class="text-muted">Não informado</span>';
+        
+        // Partes - polo ativo
+        const poloAtivoHtml = data.polo_ativo && data.polo_ativo.length > 0
+            ? data.polo_ativo.map(p =>
+                `<li class="list-group-item py-1 px-0 border-0">
+                    <i class="fas fa-user text-success me-1"></i>
+                    ${escapeHtml(p.nome)}
+                    ${p.documento ? `<small class="text-muted ms-2">(${escapeHtml(p.documento)})</small>` : ''}
+                </li>`
+            ).join('')
+            : '<li class="list-group-item py-1 px-0 border-0 text-muted">Não informado</li>';
+        
+        // Partes - polo passivo
+        const poloPassivoHtml = data.polo_passivo && data.polo_passivo.length > 0
+            ? data.polo_passivo.map(p =>
+                `<li class="list-group-item py-1 px-0 border-0">
+                    <i class="fas fa-user text-danger me-1"></i>
+                    ${escapeHtml(p.nome)}
+                    ${p.documento ? `<small class="text-muted ms-2">(${escapeHtml(p.documento)})</small>` : ''}
+                </li>`
+            ).join('')
+            : '<li class="list-group-item py-1 px-0 border-0 text-muted">Não informado</li>';
         
         const modalHtml = `
             <div class="modal fade" id="datajudDetailsModal" tabindex="-1">
@@ -461,36 +494,46 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="modal-header bg-primary text-white">
                             <h5 class="modal-title">
                                 <i class="fas fa-gavel me-2"></i>
-                                Dados do DataJud
+                                Dados do Processo — ${escapeHtml(tribunal || '')}
                             </h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <strong>Tribunal:</strong> ${escapeHtml(data.tribunal || '-')}
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>Grau:</strong> ${escapeHtml(data.grau || '-')}
-                                </div>
+                            <div class="alert alert-info py-2 mb-3">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <small>Fonte: <strong>${escapeHtml(fonte || 'Tribunal')}</strong> | Tribunal: <strong>${escapeHtml(data.tribunal_nome || tribunal || '-')}</strong></small>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <strong>Classe:</strong> ${escapeHtml(data.classe || '-')}
+                                    <strong>Classe Processual:</strong> ${escapeHtml(data.classe || '-')}
                                 </div>
                                 <div class="col-md-6">
-                                    <strong>Formato:</strong> ${escapeHtml(data.formato || '-')}
+                                    <strong>Competência:</strong> ${escapeHtml(data.competencia || '-')}
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <strong>Órgão Julgador:</strong> ${escapeHtml(data.jurisdiction || '-')}
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Órgão Julgador:</strong> ${escapeHtml(data.jurisdiction || '-')}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Data de Ajuizamento:</strong> ${escapeHtml(data.distribution_date || '-')}
+                                </div>
                             </div>
+                            <hr>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <h6 class="text-success"><i class="fas fa-user me-1"></i>Polo Ativo (Autor)</h6>
+                                    <ul class="list-group list-group-flush">${poloAtivoHtml}</ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-danger"><i class="fas fa-user me-1"></i>Polo Passivo (Réu)</h6>
+                                    <ul class="list-group list-group-flush">${poloPassivoHtml}</ul>
+                                </div>
+                            </div>
+                            <hr>
                             <div class="mb-3">
                                 <strong>Assuntos:</strong><br>
                                 ${assuntosHtml}
-                            </div>
-                            <div class="mb-3">
-                                <strong>Última Atualização:</strong> ${data.ultima_atualizacao || '-'}
                             </div>
                             <hr>
                             <h6><i class="fas fa-history me-2"></i>Últimos Movimentos</h6>

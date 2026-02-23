@@ -163,13 +163,26 @@
                         <i class="fas fa-history me-2 text-primary"></i>
                         Últimas Movimentações
                     </h5>
-                    <a href="#" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-plus me-1"></i>Adicionar
-                    </a>
+                    <div>
+                        {% if process.process_number %}
+                        <button type="button" class="btn btn-sm btn-outline-success me-1" id="btnSyncMovimentos" title="Sincronizar andamentos do tribunal">
+                            <i class="fas fa-sync-alt me-1" id="iconSync"></i>
+                            <span class="spinner-border spinner-border-sm d-none" id="spinnerSync"></span>
+                            Atualizar do Tribunal
+                        </button>
+                        {% endif %}
+                        <a href="#" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus me-1"></i>Adicionar
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
+                    <!-- Feedback sincronização -->
+                    <div id="syncFeedback" class="alert d-none mb-3" role="alert">
+                        <small id="syncMessage"></small>
+                    </div>
                     {% if movements %}
-                    <ul class="timeline">
+                    <ul class="timeline" id="movimentosList">
                         {% for movement in movements %}
                         <li class="timeline-item">
                             <span class="timeline-date">{{ movement.created_at|local_datetime('%d/%m/%Y') }}</span>
@@ -178,10 +191,15 @@
                         {% endfor %}
                     </ul>
                     {% else %}
-                    <p class="text-muted text-center py-4 mb-0">
-                        <i class="fas fa-history fa-2x mb-3 d-block text-muted"></i>
-                        Nenhuma movimentação registrada.
-                    </p>
+                    <div id="movimentosEmpty">
+                        <p class="text-muted text-center py-4 mb-0">
+                            <i class="fas fa-history fa-2x mb-3 d-block text-muted"></i>
+                            Nenhuma movimentação registrada.
+                            {% if process.process_number %}
+                            <br><small>Clique em "Atualizar do Tribunal" para importar andamentos.</small>
+                            {% endif %}
+                        </p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -364,4 +382,76 @@
     color: #6c757d;
 }
 </style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnSync = document.getElementById('btnSyncMovimentos');
+    if (!btnSync) return;
+    
+    const iconSync = document.getElementById('iconSync');
+    const spinnerSync = document.getElementById('spinnerSync');
+    const feedbackDiv = document.getElementById('syncFeedback');
+    const feedbackMsg = document.getElementById('syncMessage');
+    
+    btnSync.addEventListener('click', function() {
+        // Loading state
+        iconSync.classList.add('d-none');
+        spinnerSync.classList.remove('d-none');
+        btnSync.disabled = true;
+        
+        showSyncFeedback('info', 'Consultando tribunal...');
+        
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || 
+                          document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
+        fetch('/processes/api/eproc/movimentos/{{ process.id }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(result => {
+            iconSync.classList.remove('d-none');
+            spinnerSync.classList.add('d-none');
+            btnSync.disabled = false;
+            
+            if (result.success) {
+                const fonte = result.fonte ? ` (${result.fonte})` : '';
+                if (result.novos > 0) {
+                    showSyncFeedback('success', 
+                        `${result.novos} novo(s) andamento(s) importado(s)${fonte}. Recarregando página...`);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showSyncFeedback('info', 
+                        `Nenhum andamento novo encontrado${fonte}. Total no tribunal: ${result.total_encontrados || 0}.`);
+                }
+            } else {
+                showSyncFeedback('warning', result.message || 'Não foi possível buscar andamentos.');
+            }
+        })
+        .catch(error => {
+            iconSync.classList.remove('d-none');
+            spinnerSync.classList.add('d-none');
+            btnSync.disabled = false;
+            console.error('Erro ao sincronizar:', error);
+            showSyncFeedback('danger', 'Erro ao conectar com o tribunal. Tente novamente.');
+        });
+    });
+    
+    function showSyncFeedback(type, message) {
+        feedbackDiv.className = `alert alert-${type} py-2 mb-3`;
+        feedbackDiv.classList.remove('d-none');
+        feedbackMsg.textContent = message;
+        
+        if (type !== 'info' || !message.includes('Consultando')) {
+            setTimeout(() => feedbackDiv.classList.add('d-none'), 15000);
+        }
+    }
+});
+</script>
 {% endblock %}

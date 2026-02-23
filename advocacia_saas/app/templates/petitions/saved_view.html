@@ -307,6 +307,76 @@
                 </div>
             </div>
             
+            <!-- Peticionamento Eletrônico -->
+            <div class="data-section">
+                <h5><i class="fas fa-paper-plane text-primary me-2"></i>Peticionamento Eletrônico</h5>
+                
+                {% set proto_display = petition.get_protocolo_display() %}
+                <div class="d-flex align-items-center mb-3">
+                    <span class="badge bg-{{ proto_display[1] }} me-2">{{ proto_display[0] }}</span>
+                    {% if petition.protocolo_numero %}
+                    <small class="text-muted">{{ petition.protocolo_numero }}</small>
+                    {% endif %}
+                </div>
+                
+                {% if petition.is_protocolado %}
+                <div class="alert alert-success py-2 mb-2">
+                    <i class="fas fa-check-circle me-1"></i>
+                    <strong>Protocolada!</strong>
+                    <br><small>Protocolo: {{ petition.protocolo_numero }}</small>
+                    {% if petition.protocolo_data %}
+                    <br><small>Data: {{ petition.protocolo_data.strftime('%d/%m/%Y %H:%M') }}</small>
+                    {% endif %}
+                    {% if petition.protocolo_tribunal %}
+                    <br><small>Tribunal: {{ petition.protocolo_tribunal }}</small>
+                    {% endif %}
+                </div>
+                {% elif petition.protocolo_status == 'erro' %}
+                <div class="alert alert-danger py-2 mb-2">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    <small>{{ petition.protocolo_erro or 'Erro ao protocolar' }}</small>
+                </div>
+                {% endif %}
+                
+                {% if not petition.is_protocolado and petition.status != 'cancelled' %}
+                <div id="protocoloFeedback" class="alert d-none py-2 mb-2"></div>
+                
+                <div class="mb-2">
+                    <label class="form-label small fw-bold">Tipo de Documento</label>
+                    <select id="tipoDocumento" class="form-select form-select-sm">
+                        <option value="peticao_simples">Petição</option>
+                        <option value="peticao_inicial">Petição Inicial</option>
+                        <option value="contestacao">Contestação</option>
+                        <option value="recurso">Recurso</option>
+                        <option value="agravo">Agravo</option>
+                        <option value="embargos">Embargos</option>
+                        <option value="peticao_diversa">Petição Diversa</option>
+                        <option value="procuracao">Procuração</option>
+                        <option value="outros">Outros</option>
+                    </select>
+                </div>
+                
+                {% if not petition.process_number %}
+                <div class="alert alert-warning py-2 mb-2">
+                    <small><i class="fas fa-info-circle me-1"></i>Vincule um número de processo para protocolar.</small>
+                </div>
+                {% endif %}
+                
+                <button type="button" class="btn btn-primary btn-sm w-100" id="btnProtocolar"
+                        {% if not petition.process_number %}disabled{% endif %}>
+                    <i class="fas fa-paper-plane me-1" id="iconProtocolo"></i>
+                    <span class="spinner-border spinner-border-sm d-none" id="spinnerProtocolo"></span>
+                    Protocolar no Tribunal
+                </button>
+                
+                <small class="text-muted d-block mt-2">
+                    <i class="fas fa-certificate me-1"></i>
+                    Requer certificado digital A1 ativo.
+                    <a href="{{ url_for('auth.certificados') }}">Gerenciar</a>
+                </small>
+                {% endif %}
+            </div>
+            
             <!-- Anexos -->
             <div class="data-section">
                 <h5>
@@ -505,6 +575,94 @@ async function uploadFile() {
     } catch (e) {
         showToast('Erro ao enviar arquivo', 'error');
     }
+}
+
+// Peticionamento Eletrônico
+const btnProtocolar = document.getElementById('btnProtocolar');
+if (btnProtocolar) {
+    btnProtocolar.addEventListener('click', async function() {
+        const confirmed = await showConfirmModal({
+            title: 'Protocolar Petição',
+            message: 'Tem certeza que deseja protocolar esta petição no tribunal?<br><br>' +
+                     '<small class="text-muted">O PDF será assinado digitalmente com seu certificado A1 e enviado ao tribunal. ' +
+                     'Esta ação não pode ser desfeita.</small>',
+            type: 'warning',
+            confirmText: 'Protocolar',
+            confirmClass: 'btn-primary'
+        });
+        if (!confirmed) return;
+        
+        const iconEl = document.getElementById('iconProtocolo');
+        const spinnerEl = document.getElementById('spinnerProtocolo');
+        const feedbackEl = document.getElementById('protocoloFeedback');
+        const tipoDoc = document.getElementById('tipoDocumento').value;
+        
+        // Loading
+        iconEl.classList.add('d-none');
+        spinnerEl.classList.remove('d-none');
+        btnProtocolar.disabled = true;
+        btnProtocolar.childNodes[btnProtocolar.childNodes.length - 1].textContent = ' Protocolando...';
+        
+        if (feedbackEl) {
+            feedbackEl.className = 'alert alert-info py-2 mb-2';
+            feedbackEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Assinando e enviando ao tribunal...';
+            feedbackEl.classList.remove('d-none');
+        }
+        
+        try {
+            const csrfToken = document.querySelector('input[name="csrf_token"]')?.value ||
+                              document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            
+            const response = await fetch(`/petitions/api/protocolar/${petitionId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    tipo_documento: tipoDoc,
+                    incluir_anexos: true
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                if (feedbackEl) {
+                    feedbackEl.className = 'alert alert-success py-2 mb-2';
+                    feedbackEl.innerHTML = `<i class="fas fa-check-circle me-1"></i> 
+                        <strong>Protocolada com sucesso!</strong><br>
+                        <small>Protocolo: ${result.protocolo || '-'}</small>`;
+                }
+                showToast('Petição protocolada com sucesso!', 'success');
+                setTimeout(() => window.location.reload(), 2000);
+            } else {
+                if (feedbackEl) {
+                    feedbackEl.className = 'alert alert-danger py-2 mb-2';
+                    feedbackEl.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> ${result.message}`;
+                }
+                showToast(result.message || 'Erro ao protocolar', 'error');
+                
+                // Restaurar botão
+                iconEl.classList.remove('d-none');
+                spinnerEl.classList.add('d-none');
+                btnProtocolar.disabled = false;
+                btnProtocolar.childNodes[btnProtocolar.childNodes.length - 1].textContent = ' Protocolar no Tribunal';
+            }
+        } catch (e) {
+            console.error('Erro ao protocolar:', e);
+            if (feedbackEl) {
+                feedbackEl.className = 'alert alert-danger py-2 mb-2';
+                feedbackEl.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Erro de conexão. Tente novamente.';
+            }
+            showToast('Erro ao conectar com o servidor', 'error');
+            
+            iconEl.classList.remove('d-none');
+            spinnerEl.classList.add('d-none');
+            btnProtocolar.disabled = false;
+            btnProtocolar.childNodes[btnProtocolar.childNodes.length - 1].textContent = ' Protocolar no Tribunal';
+        }
+    });
 }
 </script>
 {% endblock %}

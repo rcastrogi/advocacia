@@ -524,7 +524,7 @@ def get_dashboard_analytics_api():
 
 
 # =============================================================================
-# API DataJud - Consulta de Processos
+# API EPROC/MNI - Consulta de Processos nos Tribunais
 # =============================================================================
 
 
@@ -533,16 +533,20 @@ def get_dashboard_analytics_api():
 @lawyer_required
 def search_datajud():
     """
-    Consulta informações de um processo na API pública do DataJud.
+    Consulta informações de um processo nos tribunais via EPROC/MNI.
 
     Body JSON:
         - process_number: Número do processo (obrigatório)
         - tribunal: Sigla do tribunal (opcional, detectado automaticamente)
+        - senha_certificado: Senha do certificado (opcional, usa salva se disponível)
 
     Returns:
         Dados do processo mapeados para o formulário ou mensagem de erro.
     """
-    from app.services.datajud_service import DataJudService
+    import os
+
+    from app.services.certificado_service import CertificadoService
+    from app.services.eproc_service import EprocService
 
     data = request.get_json()
 
@@ -551,14 +555,165 @@ def search_datajud():
 
     process_number = data.get("process_number", "").strip()
     tribunal = data.get("tribunal", "").strip() or None
+    senha_cert = data.get("senha_certificado", "").strip() or None
 
     if not process_number:
         return jsonify(
             {"success": False, "message": "Número do processo é obrigatório."}
         ), 400
 
-    # Consulta DataJud
-    result = DataJudService.search_process(process_number, tribunal)
+    # Tentar obter certificado do advogado logado
+    cert_pfx_path = None
+    cert_password = None
+    temp_path = None
 
-    # Sempre retorna 200 - success indica se encontrou ou não
-    return jsonify(result)
+    try:
+        cert = CertificadoService.get_certificado_ativo(current_user.id)
+        if cert:
+            temp_path, cert_password = CertificadoService.descriptografar_pfx(
+                cert, senha_cert
+            )
+            cert_pfx_path = temp_path
+
+        # Consulta EPROC/MNI
+        result = EprocService.search_process(
+            process_number, tribunal, cert_pfx_path, cert_password
+        )
+
+        # Sempre retorna 200 - success indica se encontrou ou não
+        return jsonify(result)
+
+    finally:
+        # Limpar arquivo temporário do certificado
+        if temp_path:
+            CertificadoService.limpar_temp(temp_path)
+
+
+@bp.route("/api/eproc/tribunais", methods=["GET"])
+@login_required
+@lawyer_required
+def listar_tribunais():
+    """Retorna lista de tribunais suportados."""
+    from app.services.eproc_service import list_supported_tribunals
+
+    return jsonify({
+        "success": True,
+        "tribunais": list_supported_tribunals(),
+    })
+
+
+@bp.route("/api/eproc/movimentos/<int:process_id>", methods=["POST"])
+@login_required
+@lawyer_required
+def sync_movimentos(process_id):
+    """
+    Sincroniza movimentações de um processo com o tribunal.
+    Busca novos andamentos e salva no banco de dados.
+    """
+    import os
+    from datetime import datetime as dt
+
+    from app.models import ProcessMovement
+    from app.services.certificado_service import CertificadoService
+    from app.services.eproc_service import EprocService
+
+    process = Process.query.filter_by(
+        id=process_id, user_id=current_user.id
+    ).first()
+
+    if not process:
+        return jsonify({"success": False, "message": "Processo não encontrado."}), 404
+
+    if not process.process_number:
+        return jsonify(
+            {"success": False, "message": "Processo sem número. Informe o número para buscar andamentos."}
+        ), 400
+
+    # Obter certificado
+    cert_pfx_path = None
+    cert_password = None
+    temp_path = None
+
+    data = request.get_json() or {}
+    senha_cert = data.get("senha_certificado", "").strip() or None
+    tribunal = data.get("tribunal", "").strip() or None
+
+    try:
+        cert = CertificadoService.get_certificado_ativo(current_user.id)
+        if cert:
+            temp_path, cert_password = CertificadoService.descriptografar_pfx(
+                cert, senha_cert
+            )
+            cert_pfx_path = temp_path
+
+        # Buscar última movimentação conhecida
+        last_movement = (
+            ProcessMovement.query
+            .filter_by(process_id=process_id)
+            .order_by(ProcessMovement.movement_date.desc())
+            .first()
+        )
+        last_date = None
+        if last_movement and last_movement.movement_date:
+            last_date = last_movement.movement_date.strftime("%Y-%m-%d")
+
+        # Buscar movimentos no tribunal
+        result = EprocService.fetch_movements(
+            process.process_number, tribunal, cert_pfx_path, cert_password, last_date
+        )
+
+        if not result.get("success"):
+            return jsonify(result)
+
+        # Salvar novos movimentos no banco
+        movimentos = result.get("movimentos", [])
+        novos = 0
+
+        for mov in movimentos:
+            # Verificar se já existe (pela data + descrição)
+            mov_date = None
+            if mov.get("data"):
+                try:
+                    mov_date = dt.strptime(mov["data"], "%Y-%m-%d")
+                except (ValueError, TypeError):
+                    mov_date = dt.utcnow()
+
+            existente = ProcessMovement.query.filter_by(
+                process_id=process_id,
+                description=mov.get("nome", "")[:500],
+            ).first()
+
+            if not existente and mov.get("nome"):
+                novo_mov = ProcessMovement(
+                    process_id=process_id,
+                    movement_date=mov_date or dt.utcnow(),
+                    description=mov.get("nome", "")[:500],
+                    movement_type=mov.get("tipo", "tribunal"),
+                    is_important=False,
+                    requires_action=False,
+                )
+                db.session.add(novo_mov)
+                novos += 1
+
+        if novos > 0:
+            db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"{novos} novo(s) andamento(s) importado(s).",
+            "novos": novos,
+            "total_encontrados": len(movimentos),
+            "fonte": result.get("fonte", ""),
+            "tribunal": result.get("tribunal", ""),
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": f"Erro ao sincronizar: {str(e)[:200]}",
+        }), 500
+
+    finally:
+        if temp_path:
+            CertificadoService.limpar_temp(temp_path)

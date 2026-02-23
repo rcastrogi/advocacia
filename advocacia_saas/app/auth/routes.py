@@ -660,3 +660,110 @@ def notification_settings():
         "auth/notification_settings.html",
         title="Configurações de Notificação",
     )
+
+
+# =============================================================================
+# CERTIFICADOS DIGITAIS
+# =============================================================================
+
+
+@bp.route("/certificados")
+@login_required
+def certificados():
+    """Página de gestão de certificados digitais."""
+    from app.services.certificado_service import CertificadoService
+
+    certs = CertificadoService.get_certificados(current_user.id)
+
+    return render_template(
+        "auth/certificados.html",
+        title="Certificados Digitais",
+        certificados=certs,
+    )
+
+
+@bp.route("/certificados/upload", methods=["POST"])
+@login_required
+def upload_certificado():
+    """Upload de certificado digital .pfx."""
+    from app.services.certificado_service import CertificadoService
+
+    pfx_file = request.files.get("pfx_file")
+    senha_pfx = request.form.get("senha_pfx", "").strip()
+    apelido = request.form.get("apelido", "").strip()
+    salvar_senha = "salvar_senha" in request.form
+
+    if not pfx_file or not pfx_file.filename:
+        flash("Selecione um arquivo .pfx.", "warning")
+        return redirect(url_for("auth.certificados"))
+
+    if not pfx_file.filename.lower().endswith((".pfx", ".p12")):
+        flash("Formato inválido. Use apenas arquivos .pfx ou .p12.", "warning")
+        return redirect(url_for("auth.certificados"))
+
+    if not senha_pfx:
+        flash("A senha do certificado é obrigatória.", "warning")
+        return redirect(url_for("auth.certificados"))
+
+    result = CertificadoService.upload_certificado(
+        user_id=current_user.id,
+        pfx_file=pfx_file,
+        senha_pfx=senha_pfx,
+        apelido=apelido,
+        salvar_senha=salvar_senha,
+    )
+
+    if result["success"]:
+        flash(result["message"], "success")
+    else:
+        flash(result["message"], "danger")
+
+    return redirect(url_for("auth.certificados"))
+
+
+@bp.route("/certificados/<int:cert_id>/remover", methods=["POST"])
+@login_required
+def remover_certificado(cert_id):
+    """Remove (desativa) um certificado."""
+    from app.services.certificado_service import CertificadoService
+
+    result = CertificadoService.remover_certificado(cert_id, current_user.id)
+
+    if result["success"]:
+        flash(result["message"], "success")
+    else:
+        flash(result["message"], "danger")
+
+    return redirect(url_for("auth.certificados"))
+
+
+@bp.route("/certificados/<int:cert_id>/reativar", methods=["POST"])
+@login_required
+def reativar_certificado(cert_id):
+    """Reativa um certificado desativado."""
+    from app.services.certificado_service import CertificadoService
+
+    result = CertificadoService.reativar_certificado(cert_id, current_user.id)
+
+    if result["success"]:
+        flash(result["message"], "success")
+    else:
+        flash(result["message"], "danger")
+
+    return redirect(url_for("auth.certificados"))
+
+
+@bp.route("/certificados/<int:cert_id>/excluir", methods=["POST"])
+@login_required
+def excluir_certificado(cert_id):
+    """Exclui permanentemente um certificado."""
+    from app.services.certificado_service import CertificadoService
+
+    result = CertificadoService.excluir_certificado(cert_id, current_user.id)
+
+    if result["success"]:
+        flash(result["message"], "success")
+    else:
+        flash(result["message"], "danger")
+
+    return redirect(url_for("auth.certificados"))

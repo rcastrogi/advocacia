@@ -39,3 +39,8 @@ aiohttp==3.11.11
 PyPDF2==3.0.1
 python-docx==1.1.2
 openpyxl==3.1.5
+zeep==4.3.1
+cryptography==44.0.0
+requests-pkcs12==1.25
+pyhanko==0.25.2
+pyhanko-certvalidator==0.26.4
