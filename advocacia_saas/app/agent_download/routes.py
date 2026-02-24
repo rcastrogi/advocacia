@@ -5,9 +5,9 @@ from flask_login import login_required
 
 from app.agent_download import bp
 
-# URL do release no GitHub (atualizar após build)
+# URL do release no GitHub (atualizar após publicar release)
 GITHUB_RELEASE_URL = "https://github.com/rcastrogi/advocacia/releases/latest"
-DOWNLOAD_URL = "https://github.com/rcastrogi/advocacia/releases/latest/download/PetitioAssinador-Setup.exe"
+DOWNLOAD_URL = "https://github.com/rcastrogi/advocacia/releases/latest/download/PetitioAssinador-v1.0.0-win64.zip"
 AGENT_VERSION = "1.0.0"
 
 
