@@ -1174,10 +1174,20 @@ def saved_view(petition_id):
         id=petition_id, user_id=current_user.id
     ).first_or_404()
 
+    # Verificar se o usuário tem certificado A1 configurado
+    has_certificate_a1 = False
+    try:
+        from app.services.certificado_service import CertificadoService
+        cert = CertificadoService.get_certificado_ativo(current_user.id)
+        has_certificate_a1 = cert is not None
+    except Exception:
+        pass
+
     return render_template(
         "petitions/saved_view.html",
         title=petition.title or f"Petição #{petition.id}",
         petition=petition,
+        has_certificate_a1=has_certificate_a1,
     )
 
 

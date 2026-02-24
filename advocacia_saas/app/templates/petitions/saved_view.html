@@ -362,15 +362,27 @@
                 </div>
                 {% endif %}
                 
-                <!-- Seletor de método de assinatura -->
-                <div class="mb-2" id="metodoAssinatura">
+                <!-- Aviso se nenhum certificado configurado -->
+                {% if not has_certificate_a1 %}
+                <div class="alert alert-warning py-2 mb-2" id="noCertWarning">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    <strong>Nenhum certificado configurado.</strong><br>
+                    <small>Configure seu certificado digital em 
+                        <a href="{{ url_for('auth.certificados') }}">Perfil &gt; Certificado Digital</a> 
+                        para protocolar petições.
+                    </small>
+                </div>
+                {% endif %}
+
+                <!-- Seletor A1/A3: aparece SOMENTE se agente A3 for detectado pelo JS -->
+                <div class="mb-2 d-none" id="metodoAssinatura">
                     <label class="form-label small fw-bold">Método de Assinatura</label>
                     <div class="btn-group w-100" role="group">
                         <input type="radio" class="btn-check" name="metodoSign" id="metodoA1" value="a1" checked>
                         <label class="btn btn-outline-primary btn-sm" for="metodoA1">
                             <i class="fas fa-file-signature me-1"></i>A1 (Arquivo)
                         </label>
-                        <input type="radio" class="btn-check" name="metodoSign" id="metodoA3" value="a3">
+                        <input type="radio" class="btn-check" name="metodoSign" id="metodoA3" value="a3" disabled>
                         <label class="btn btn-outline-success btn-sm" for="metodoA3">
                             <i class="fas fa-id-card me-1"></i>A3 (Smart Card)
                         </label>
@@ -382,7 +394,8 @@
                 </div>
 
                 <button type="button" class="btn btn-primary btn-sm w-100" id="btnProtocolar"
-                        {% if not petition.process_number %}disabled{% endif %}>
+                        {% if not petition.process_number %}disabled{% endif %}
+                        {% if not has_certificate_a1 %}disabled{% endif %}>
                     <i class="fas fa-paper-plane me-1" id="iconProtocolo"></i>
                     <span class="spinner-border spinner-border-sm d-none" id="spinnerProtocolo"></span>
                     Protocolar no Tribunal
@@ -390,7 +403,11 @@
                 
                 <small class="text-muted d-block mt-2" id="certHelpA1">
                     <i class="fas fa-certificate me-1"></i>
-                    Requer certificado digital A1 ativo.
+                    {% if has_certificate_a1 %}
+                    Certificado A1 ativo. Pronto para assinar.
+                    {% else %}
+                    Requer certificado digital A1.
+                    {% endif %}
                     <a href="{{ url_for('auth.certificados') }}">Gerenciar</a>
                 </small>
                 <small class="text-muted d-block mt-2 d-none" id="certHelpA3">
@@ -398,6 +415,9 @@
                     Requer <strong>Petitio Assinador</strong> e smart card inserido.
                     <a href="{{ url_for('agent_download.index') }}">Baixar</a>
                 </small>
+
+                <!-- Flag para JS saber se tem A1 -->
+                <script>window._hasA1Certificate = {{ 'true' if has_certificate_a1 else 'false' }};</script>
                 {% endif %}
             </div>
             
@@ -604,22 +624,19 @@ async function uploadFile() {
 // Peticionamento Eletrônico
 const btnProtocolar = document.getElementById('btnProtocolar');
 
-// Detectar agente A3 e atualizar UI
+// Toggle help text based on method selection
 const metodoA3Radio = document.getElementById('metodoA3');
 const metodoA1Radio = document.getElementById('metodoA1');
-const a3StatusDiv = document.getElementById('a3Status');
-const a3StatusDot = document.getElementById('a3StatusDot');
-const a3StatusText = document.getElementById('a3StatusText');
 const certHelpA1 = document.getElementById('certHelpA1');
 const certHelpA3 = document.getElementById('certHelpA3');
+const a3StatusDiv = document.getElementById('a3Status');
 
-// Toggle help text based on method selection
 if (metodoA1Radio) {
     metodoA1Radio.addEventListener('change', function() {
         if (this.checked) {
             certHelpA1.classList.remove('d-none');
             certHelpA3.classList.add('d-none');
-            a3StatusDiv.classList.add('d-none');
+            if (a3StatusDiv) a3StatusDiv.classList.add('d-none');
         }
     });
 }
@@ -628,32 +645,22 @@ if (metodoA3Radio) {
         if (this.checked) {
             certHelpA1.classList.add('d-none');
             certHelpA3.classList.remove('d-none');
-            a3StatusDiv.classList.remove('d-none');
+            if (a3StatusDiv) a3StatusDiv.classList.remove('d-none');
         }
     });
 }
 
-// Check agent status for A3 availability
-if (window.petitioAgent) {
-    window.petitioAgent.checkStatus().then(status => {
-        if (status.online) {
-            // Habilitar opção A3
-            if (metodoA3Radio) metodoA3Radio.disabled = false;
-            if (a3StatusDot) a3StatusDot.className = status.smartcard?.card_detected
-                ? 'fas fa-circle text-success'
-                : 'fas fa-circle text-warning';
-            if (a3StatusText) a3StatusText.textContent = status.smartcard?.card_detected
-                ? 'Smart card pronto!'
-                : 'Insira o smart card';
-        } else {
-            if (metodoA3Radio) metodoA3Radio.disabled = true;
-            if (a3StatusDot) a3StatusDot.className = 'fas fa-circle text-danger';
-            if (a3StatusText) a3StatusText.textContent = 'Agente não encontrado';
-        }
-    });
-} else {
-    // Agente JS não carregado — desabilitar A3
-    if (metodoA3Radio) metodoA3Radio.disabled = true;
+// Se agente A3 estiver online, o petitio_agent.js já cuida de:
+// - Mostrar o seletor A1/A3 (remove d-none de #metodoAssinatura)
+// - Habilitar o radio A3
+// - Atualizar o status do smart card
+// Não precisamos fazer nada aqui — tudo é gerenciado pelo petitio_agent.js
+
+// Se tem A3 mas não tem A1, habilitar botão para poder usar A3
+// O petitio_agent.js habilitará o botão se o agente estiver online
+if (!window._hasA1Certificate && window.petitioAgent && window.petitioAgent.online) {
+    const btn = document.getElementById('btnProtocolar');
+    if (btn && !btn.dataset.noProcess) btn.disabled = false;
 }
 
 if (btnProtocolar) {

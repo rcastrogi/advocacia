@@ -2,12 +2,13 @@
  * Petitio Assinador — Cliente JavaScript
  * 
  * Detecta se o agente desktop está rodando em localhost:7777
- * e oferece assinatura A3 (smart card) quando disponível.
+ * e oferece assinatura A3 (smart card) SOMENTE quando disponível.
  * 
- * Uso:
- *   const agent = new PetitioAgent();
- *   const status = await agent.checkStatus();
- *   if (status.online) { ... }
+ * Se o agente não estiver instalado/rodando:
+ *   - Nenhum badge aparece
+ *   - Nenhum seletor A3 aparece
+ *   - Nenhum erro é gerado
+ *   - O fluxo A1 funciona normalmente como sempre
  */
 
 class PetitioAgent {
@@ -16,22 +17,16 @@ class PetitioAgent {
         this.online = false;
         this.version = null;
         this.smartcard = null;
-        this._checkInterval = null;
     }
 
-    /**
-     * Verifica se o agente está rodando.
-     * @returns {Promise<{online: boolean, version: string, smartcard: object}>}
-     */
+    /** Verifica silenciosamente se o agente está rodando. */
     async checkStatus() {
         try {
             const response = await fetch(`${this.baseUrl}/status`, {
                 method: 'GET',
-                signal: AbortSignal.timeout(2000),
+                signal: AbortSignal.timeout(1500),
             });
-            
-            if (!response.ok) throw new Error('Agent not responding');
-            
+            if (!response.ok) throw new Error('not ok');
             const data = await response.json();
             this.online = data.online === true;
             this.version = data.version;
@@ -41,50 +36,39 @@ class PetitioAgent {
             this.online = false;
             this.version = null;
             this.smartcard = null;
-            return { online: false, error: e.message };
+            return { online: false };
         }
     }
 
-    /**
-     * Lista certificados no smart card.
-     * @returns {Promise<Array>}
-     */
+    /** Lista certificados no smart card. */
     async listarCertificados() {
+        if (!this.online) return [];
         try {
-            const response = await fetch(`${this.baseUrl}/certificados`, {
+            const resp = await fetch(`${this.baseUrl}/certificados`, {
                 method: 'GET',
                 signal: AbortSignal.timeout(5000),
             });
-            const data = await response.json();
+            const data = await resp.json();
             return data.success ? data.certificados : [];
         } catch (e) {
-            console.warn('Erro ao listar certificados:', e);
             return [];
         }
     }
 
-    /**
-     * Assina um documento PDF com o certificado A3.
-     * @param {Blob|ArrayBuffer} pdfData - PDF para assinar
-     * @param {string} pin - PIN do cartão
-     * @param {object} options - Opções extras
-     * @returns {Promise<{success: boolean, assinatura_b64: string, message: string}>}
-     */
+    /** Assina PDF com certificado A3 no smart card. */
     async assinarPDF(pdfData, pin, options = {}) {
-        // Converter para base64
         let b64;
         if (pdfData instanceof Blob) {
-            const buffer = await pdfData.arrayBuffer();
-            b64 = this._arrayBufferToBase64(buffer);
+            b64 = this._arrayBufferToBase64(await pdfData.arrayBuffer());
         } else if (pdfData instanceof ArrayBuffer) {
             b64 = this._arrayBufferToBase64(pdfData);
         } else if (typeof pdfData === 'string') {
-            b64 = pdfData; // Já em base64
+            b64 = pdfData;
         } else {
             throw new Error('Formato de PDF não suportado');
         }
 
-        const response = await fetch(`${this.baseUrl}/assinar`, {
+        const resp = await fetch(`${this.baseUrl}/assinar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -94,57 +78,11 @@ class PetitioAgent {
                 cert_id_hex: options.cert_id_hex || null,
                 reason: options.reason || 'Peticionamento Eletrônico',
             }),
-            signal: AbortSignal.timeout(30000), // 30s para assinatura
+            signal: AbortSignal.timeout(30000),
         });
-
-        return await response.json();
+        return await resp.json();
     }
 
-    /**
-     * Monitora status do agente periodicamente.
-     * @param {function} callback - Chamada quando status muda
-     * @param {number} interval - Intervalo em ms (padrão: 5000)
-     */
-    startMonitoring(callback, interval = 5000) {
-        this.stopMonitoring();
-        
-        let lastOnline = null;
-        let lastCard = null;
-
-        const check = async () => {
-            const status = await this.checkStatus();
-            const cardDetected = status.smartcard?.card_detected || false;
-
-            // Notificar apenas se mudou
-            if (lastOnline !== this.online || lastCard !== cardDetected) {
-                lastOnline = this.online;
-                lastCard = cardDetected;
-                callback({
-                    online: this.online,
-                    cardDetected: cardDetected,
-                    version: this.version,
-                    readers: status.smartcard?.readers || [],
-                });
-            }
-        };
-
-        check(); // Primeira verificação imediata
-        this._checkInterval = setInterval(check, interval);
-    }
-
-    /**
-     * Para o monitoramento.
-     */
-    stopMonitoring() {
-        if (this._checkInterval) {
-            clearInterval(this._checkInterval);
-            this._checkInterval = null;
-        }
-    }
-
-    /**
-     * Converte ArrayBuffer para base64.
-     */
     _arrayBufferToBase64(buffer) {
         const bytes = new Uint8Array(buffer);
         let binary = '';
@@ -157,200 +95,228 @@ class PetitioAgent {
 
 
 /**
- * UI Helper - Cria o indicador de status do agente na barra lateral.
+ * Inicializa o agente SILENCIOSAMENTE.
+ * Só cria UI se o agente estiver de fato online.
+ * Se não estiver, não faz absolutamente nada.
  */
-function createAgentStatusIndicator() {
+async function initPetitioAgent() {
     const agent = new PetitioAgent();
+    const status = await agent.checkStatus();
 
-    // Criar elemento indicador
-    const indicator = document.createElement('div');
-    indicator.id = 'agentStatus';
-    indicator.className = 'agent-status-indicator';
-    indicator.innerHTML = `
-        <div class="agent-badge" title="Petitio Assinador">
-            <i class="fas fa-id-card"></i>
-            <span class="status-dot"></span>
-            <span class="status-text">Verificando agente...</span>
-        </div>
-    `;
+    if (!status.online) {
+        // Agente não rodando — silêncio total, zero erros
+        window.petitioAgent = null;
+        return;
+    }
 
-    // Estilos
-    const style = document.createElement('style');
-    style.textContent = `
-        .agent-status-indicator {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1050;
-        }
-        .agent-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 14px;
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .agent-badge:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .agent-badge .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #adb5bd;
-            transition: background 0.3s;
-        }
-        .agent-badge .status-dot.online { background: #28a745; }
-        .agent-badge .status-dot.card-ready { background: #007bff; animation: pulse 2s infinite; }
-        .agent-badge .status-dot.offline { background: #dc3545; }
-        .agent-badge .status-dot.no-card { background: #ffc107; }
-        .agent-badge .fa-id-card { color: #6c757d; }
-        .agent-badge.online .fa-id-card { color: #007bff; }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(0,123,255,0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(0,123,255,0); }
-            100% { box-shadow: 0 0 0 0 rgba(0,123,255,0); }
-        }
-    `;
-    document.head.appendChild(style);
+    // Agente online — ativar
+    window.petitioAgent = agent;
+    _showAgentBadge(agent, status);
+    _enableA3InPage(status);
 
-    // Monitorar status
-    agent.startMonitoring((status) => {
-        const dot = indicator.querySelector('.status-dot');
-        const text = indicator.querySelector('.status-text');
-        const badge = indicator.querySelector('.agent-badge');
-
-        if (!status.online) {
-            dot.className = 'status-dot offline';
-            text.textContent = 'Agente offline';
-            badge.classList.remove('online');
-            badge.title = 'Petitio Assinador não está rodando. Clique para baixar.';
-        } else if (status.cardDetected) {
-            dot.className = 'status-dot card-ready';
-            text.textContent = 'A3 pronto';
-            badge.classList.add('online');
-            badge.title = 'Smart card detectado! Pronto para assinar com certificado A3.';
-        } else if (status.readers && status.readers.length > 0) {
-            dot.className = 'status-dot no-card';
-            text.textContent = 'Insira o cartão';
-            badge.classList.add('online');
-            badge.title = 'Leitor detectado, mas nenhum cartão inserido.';
+    // Monitorar a cada 10s
+    setInterval(async () => {
+        const s = await agent.checkStatus();
+        if (!s.online) {
+            const badge = document.getElementById('agentStatusBadge');
+            if (badge) badge.remove();
+            _disableA3InPage();
+            window.petitioAgent = null;
         } else {
-            dot.className = 'status-dot online';
-            text.textContent = 'Agente ativo';
-            badge.classList.add('online');
-            badge.title = 'Agente rodando, mas nenhum leitor de smart card encontrado.';
+            _updateA3Status(s);
         }
-    }, 5000);
-
-    // Click handler — mostrar modal de detalhes
-    indicator.addEventListener('click', () => {
-        showAgentModal(agent);
-    });
-
-    document.body.appendChild(indicator);
-    return agent;
+    }, 10000);
 }
 
 
-/**
- * Modal com detalhes do agente e certificados.
- */
-async function showAgentModal(agent) {
-    // Remover modal anterior
+// ============================================================
+// UI: Badge de status (só aparece se agente online)
+// ============================================================
+
+function _showAgentBadge(agent, status) {
+    if (document.getElementById('agentStatusBadge')) return;
+
+    // Injetar CSS uma vez
+    if (!document.getElementById('agentBadgeStyle')) {
+        const style = document.createElement('style');
+        style.id = 'agentBadgeStyle';
+        style.textContent = `
+            #agentStatusBadge {
+                position: fixed; bottom: 20px; right: 20px; z-index: 1050;
+                display: flex; align-items: center; gap: 8px;
+                padding: 8px 14px; background: white;
+                border: 1px solid #dee2e6; border-radius: 20px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                font-size: 0.85rem; cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            #agentStatusBadge:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+            #agentStatusBadge .dot {
+                width: 10px; height: 10px; border-radius: 50%;
+                display: inline-block; transition: background 0.3s;
+            }
+            @keyframes a3pulse {
+                0% { box-shadow: 0 0 0 0 rgba(0,123,255,0.4); }
+                70% { box-shadow: 0 0 0 6px rgba(0,123,255,0); }
+                100% { box-shadow: 0 0 0 0 rgba(0,123,255,0); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    const sc = status.smartcard || {};
+    const card = sc.card_detected || false;
+    const readers = (sc.readers || []).length > 0;
+
+    const dotColor = card ? '#007bff' : (readers ? '#ffc107' : '#28a745');
+    const label = card ? 'A3 pronto' : (readers ? 'Insira o cartão' : 'Agente ativo');
+    const tooltip = card
+        ? 'Smart card detectado! Pronto para assinar.'
+        : (readers ? 'Leitor detectado, insira o cartão.' : 'Agente rodando, conecte o leitor.');
+
+    const el = document.createElement('div');
+    el.id = 'agentStatusBadge';
+    el.title = tooltip;
+    el.innerHTML = `
+        <i class="fas fa-id-card" style="color:#007bff"></i>
+        <span class="dot" style="background:${dotColor}${card ? ';animation:a3pulse 2s infinite' : ''}"></span>
+        <span class="label">${label}</span>
+    `;
+    el.addEventListener('click', () => _showAgentModal(agent));
+    document.body.appendChild(el);
+}
+
+
+// ============================================================
+// UI: Habilitar/desabilitar opção A3 em saved_view
+// ============================================================
+
+function _enableA3InPage(status) {
+    const wrapper = document.getElementById('metodoAssinatura');
+    const radio = document.getElementById('metodoA3');
+    if (!wrapper || !radio) return;
+
+    wrapper.classList.remove('d-none');
+    radio.disabled = false;
+    _updateA3Status(status);
+
+    // Se não tem A1 mas tem agente A3, habilitar botão de protocolar
+    if (window._hasA1Certificate === false) {
+        const btn = document.getElementById('btnProtocolar');
+        const noCertWarn = document.getElementById('noCertWarning');
+        if (btn && !btn.getAttribute('data-no-process')) btn.disabled = false;
+        // Ajustar aviso: tem A3 disponível
+        if (noCertWarn) {
+            noCertWarn.className = 'alert alert-info py-2 mb-2';
+            noCertWarn.innerHTML = '<i class="fas fa-info-circle me-1"></i>' +
+                '<small>Certificado A1 não configurado, mas você pode usar o <strong>Smart Card (A3)</strong>. ' +
+                'Selecione o método A3 acima.</small>';
+        }
+    }
+}
+
+function _disableA3InPage() {
+    const radio = document.getElementById('metodoA3');
+    const radioA1 = document.getElementById('metodoA1');
+    const statusDiv = document.getElementById('a3Status');
+
+    if (radio) {
+        radio.disabled = true;
+        if (radio.checked && radioA1) {
+            radioA1.checked = true;
+            radioA1.dispatchEvent(new Event('change'));
+        }
+    }
+    if (statusDiv) statusDiv.classList.add('d-none');
+}
+
+function _updateA3Status(status) {
+    const dot = document.getElementById('a3StatusDot');
+    const text = document.getElementById('a3StatusText');
+    const div = document.getElementById('a3Status');
+    if (!dot || !text || !div) return;
+
+    const sc = status.smartcard || {};
+    const card = sc.card_detected || false;
+    const readers = (sc.readers || []).length > 0;
+
+    div.classList.remove('d-none');
+    if (card) {
+        dot.className = 'fas fa-circle text-success';
+        text.textContent = 'Smart card pronto!';
+    } else if (readers) {
+        dot.className = 'fas fa-circle text-warning';
+        text.textContent = 'Insira o smart card';
+    } else {
+        dot.className = 'fas fa-circle text-info';
+        text.textContent = 'Agente ativo (sem leitor)';
+    }
+
+    // Atualizar badge global
+    const badgeDot = document.querySelector('#agentStatusBadge .dot');
+    const badgeLabel = document.querySelector('#agentStatusBadge .label');
+    if (badgeDot) {
+        badgeDot.style.background = card ? '#007bff' : (readers ? '#ffc107' : '#28a745');
+        badgeDot.style.animation = card ? 'a3pulse 2s infinite' : 'none';
+    }
+    if (badgeLabel) {
+        badgeLabel.textContent = card ? 'A3 pronto' : (readers ? 'Insira o cartão' : 'Agente ativo');
+    }
+}
+
+
+// ============================================================
+// Modal de detalhes do agente
+// ============================================================
+
+async function _showAgentModal(agent) {
     const existing = document.getElementById('agentModal');
     if (existing) existing.remove();
 
     const status = await agent.checkStatus();
-    let certsHtml = '';
+    const sc = status.smartcard || {};
+    const certs = await agent.listarCertificados();
 
-    if (status.online) {
-        const certs = await agent.listarCertificados();
-        if (certs.length > 0) {
-            certsHtml = certs.map(c => `
-                <div class="card mb-2">
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <strong>${c.nome_titular || c.common_name || 'Certificado'}</strong>
-                                ${c.cpf ? `<br><small class="text-muted">CPF: ${c.cpf}</small>` : ''}
-                                ${c.oab ? `<br><small class="text-muted">OAB: ${c.oab}</small>` : ''}
-                            </div>
-                            <span class="badge ${c.valido ? 'bg-success' : 'bg-danger'}">${c.valido ? 'Válido' : 'Expirado'}</span>
-                        </div>
-                        <small class="text-muted">
-                            Validade: ${c.validade_inicio || '?'} a ${c.validade_fim || '?'}
-                        </small>
+    const certsHtml = certs.length > 0
+        ? certs.map(c => `
+            <div class="card mb-2"><div class="card-body py-2">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <strong>${c.nome_titular || c.common_name || 'Certificado'}</strong>
+                        ${c.cpf ? `<br><small class="text-muted">CPF: ${c.cpf}</small>` : ''}
+                        ${c.oab ? `<br><small class="text-muted">OAB: ${c.oab}</small>` : ''}
                     </div>
+                    <span class="badge ${c.valido ? 'bg-success' : 'bg-danger'}">${c.valido ? 'Válido' : 'Expirado'}</span>
                 </div>
-            `).join('');
-        } else {
-            certsHtml = '<p class="text-muted">Nenhum certificado encontrado. Insira o smart card.</p>';
-        }
-    }
+                <small class="text-muted">Validade: ${c.validade_inicio || '?'} a ${c.validade_fim || '?'}</small>
+            </div></div>
+        `).join('')
+        : '<p class="text-muted">Nenhum certificado encontrado. Insira o smart card.</p>';
 
-    const smartcard = status.smartcard || {};
-    const statusIcon = status.online
-        ? (smartcard.card_detected ? '🟢' : smartcard.readers?.length ? '🟡' : '🔵')
-        : '🔴';
+    const icon = sc.card_detected ? '🟢' : (sc.readers?.length ? '🟡' : '🔵');
 
-    const modalHtml = `
+    const html = `
         <div class="modal fade" id="agentModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">
-                            <i class="fas fa-id-card me-2"></i>Petitio Assinador
-                        </h5>
+                        <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Petitio Assinador</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span style="font-size:1.2rem">${icon}</span>
+                            <strong>Agente Conectado</strong>
+                            <small class="text-muted">v${status.version || '?'}</small>
+                        </div>
+                        <h6><i class="fas fa-usb me-1"></i> Leitores</h6>
                         <div class="mb-3">
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <span style="font-size:1.2rem">${statusIcon}</span>
-                                <strong>${status.online ? 'Agente Conectado' : 'Agente Offline'}</strong>
-                                ${status.version ? `<small class="text-muted">v${status.version}</small>` : ''}
-                            </div>
-                            ${!status.online ? `
-                                <div class="alert alert-warning py-2">
-                                    <small>
-                                        O Petitio Assinador não está rodando.<br>
-                                        Para usar certificado A3 (smart card), inicie o aplicativo.
-                                    </small>
-                                </div>
-                            ` : ''}
+                            ${sc.readers?.length
+                                ? sc.readers.map(r => `<span class="badge bg-secondary me-1">${r}</span>`).join('')
+                                : '<span class="text-muted">Nenhum leitor detectado</span>'}
                         </div>
-                        
-                        ${status.online ? `
-                        <div class="mb-3">
-                            <h6><i class="fas fa-usb me-1"></i> Leitores</h6>
-                            ${smartcard.readers?.length
-                                ? smartcard.readers.map(r => `<span class="badge bg-secondary me-1">${r}</span>`).join('')
-                                : '<span class="text-muted">Nenhum leitor detectado</span>'
-                            }
-                        </div>
-                        
-                        <div>
-                            <h6><i class="fas fa-certificate me-1"></i> Certificados</h6>
-                            ${certsHtml}
-                        </div>
-                        ` : `
-                        <div class="text-center py-3">
-                            <i class="fas fa-download fa-2x text-muted mb-2"></i>
-                            <p class="mb-1">Baixe o Petitio Assinador para assinar com A3.</p>
-                            <a href="/agent" class="btn btn-primary btn-sm">
-                                <i class="fas fa-download me-1"></i>Baixar para Windows
-                            </a>
-                            <p class="mt-2 mb-0"><small class="text-muted">Não precisa de Python. É só baixar e instalar!</small></p>
-                        </div>
-                        `}
+                        <h6><i class="fas fa-certificate me-1"></i> Certificados</h6>
+                        ${certsHtml}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
@@ -359,17 +325,15 @@ async function showAgentModal(agent) {
             </div>
         </div>
     `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('agentModal'));
-    modal.show();
+    document.body.insertAdjacentHTML('beforeend', html);
+    new bootstrap.Modal(document.getElementById('agentModal')).show();
 }
 
 
-/**
- * Dialog de PIN para assinar com A3.
- * @returns {Promise<string|null>} PIN ou null se cancelou
- */
+// ============================================================
+// Dialog de PIN para assinar com A3
+// ============================================================
+
 function requestPIN() {
     return new Promise((resolve) => {
         const existing = document.getElementById('pinModal');
@@ -380,9 +344,7 @@ function requestPIN() {
                 <div class="modal-dialog modal-sm">
                     <div class="modal-content">
                         <div class="modal-header bg-warning">
-                            <h6 class="modal-title">
-                                <i class="fas fa-key me-1"></i> PIN do Smart Card
-                            </h6>
+                            <h6 class="modal-title"><i class="fas fa-key me-1"></i> PIN do Smart Card</h6>
                         </div>
                         <div class="modal-body">
                             <p class="small mb-2">Digite o PIN do seu certificado A3:</p>
@@ -403,12 +365,9 @@ function requestPIN() {
 
         document.body.insertAdjacentHTML('beforeend', html);
         const modal = new bootstrap.Modal(document.getElementById('pinModal'));
-
         const input = document.getElementById('pinInput');
-        const btnConfirm = document.getElementById('pinConfirm');
-        const btnCancel = document.getElementById('pinCancel');
 
-        btnConfirm.addEventListener('click', () => {
+        document.getElementById('pinConfirm').addEventListener('click', () => {
             const pin = input.value.trim();
             if (!pin) {
                 document.getElementById('pinError').textContent = 'PIN obrigatório';
@@ -419,19 +378,18 @@ function requestPIN() {
             resolve(pin);
         });
 
-        btnCancel.addEventListener('click', () => {
+        document.getElementById('pinCancel').addEventListener('click', () => {
             modal.hide();
             resolve(null);
         });
 
         input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') btnConfirm.click();
+            if (e.key === 'Enter') document.getElementById('pinConfirm').click();
         });
 
         modal.show();
         setTimeout(() => input.focus(), 500);
 
-        // Cleanup
         document.getElementById('pinModal').addEventListener('hidden.bs.modal', () => {
             document.getElementById('pinModal').remove();
         });
@@ -439,14 +397,13 @@ function requestPIN() {
 }
 
 
-// Auto-inicializar quando o DOM carregar (apenas em páginas com petições/processos)
-document.addEventListener('DOMContentLoaded', () => {
-    // Verificar se estamos em página relevante
-    const isRelevantPage =
-        window.location.pathname.includes('/petitions/') ||
-        window.location.pathname.includes('/processes/');
+// ============================================================
+// Inicialização — UMA verificação silenciosa, sem erros
+// ============================================================
 
-    if (isRelevantPage) {
-        window.petitioAgent = createAgentStatusIndicator();
+document.addEventListener('DOMContentLoaded', () => {
+    const path = window.location.pathname;
+    if (path.includes('/petitions/') || path.includes('/processes/')) {
+        initPetitioAgent(); // Silencioso — se offline, nada acontece
     }
 });
