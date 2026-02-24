@@ -231,7 +231,7 @@ function createAgentStatusIndicator() {
             dot.className = 'status-dot offline';
             text.textContent = 'Agente offline';
             badge.classList.remove('online');
-            badge.title = 'Petitio Assinador não está rodando. Baixe em petitio.onrender.com/agent';
+            badge.title = 'Petitio Assinador não está rodando. Clique para baixar.';
         } else if (status.cardDetected) {
             dot.className = 'status-dot card-ready';
             text.textContent = 'A3 pronto';
@@ -345,9 +345,10 @@ async function showAgentModal(agent) {
                         <div class="text-center py-3">
                             <i class="fas fa-download fa-2x text-muted mb-2"></i>
                             <p class="mb-1">Baixe o Petitio Assinador para assinar com A3.</p>
-                            <a href="/agent/download" class="btn btn-primary btn-sm">
+                            <a href="/agent" class="btn btn-primary btn-sm">
                                 <i class="fas fa-download me-1"></i>Baixar para Windows
                             </a>
+                            <p class="mt-2 mb-0"><small class="text-muted">Não precisa de Python. É só baixar e instalar!</small></p>
                         </div>
                         `}
                     </div>

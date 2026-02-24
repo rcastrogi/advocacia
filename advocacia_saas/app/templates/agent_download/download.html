@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Petitio Assinador — Download{% endblock %}
+
+{% block styles %}
+<style>
+    .hero-download {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        color: white;
+        padding: 3rem 0;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+    }
+    .hero-download h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
+    }
+    .hero-download .subtitle {
+        font-size: 1.1rem;
+        opacity: 0.85;
+    }
+    
+    .download-btn {
+        background: linear-gradient(135deg, #00b894, #00cec9);
+        border: none;
+        padding: 16px 40px;
+        font-size: 1.2rem;
+        font-weight: 700;
+        border-radius: 12px;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4);
+    }
+    .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 184, 148, 0.5);
+        color: white;
+    }
+    
+    .feature-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        height: 100%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border: 1px solid #f0f0f0;
+        transition: transform 0.2s;
+    }
+    .feature-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    .feature-card .icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .step-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        position: relative;
+    }
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        margin: 0 auto 1rem;
+    }
+    
+    .requirements-box {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+    
+    .faq-item {
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 0;
+    }
+    .faq-item:last-child {
+        border-bottom: none;
+    }
+
+    .shield-icon {
+        font-size: 4rem;
+        background: linear-gradient(135deg, #00b894, #00cec9);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    
+    <!-- Hero -->
+    <div class="hero-download text-center px-4">
+        <div class="mb-3">
+            <i class="fas fa-shield-alt shield-icon"></i>
+        </div>
+        <h1>Petitio Assinador</h1>
+        <p class="subtitle mb-4">
+            Assine petições com seu certificado A3 (smart card) direto do navegador.<br>
+            Seguro, rápido e sem complicação.
+        </p>
+        <a href="{{ download_url }}" class="btn download-btn" id="btnDownload">
+            <i class="fab fa-windows me-2"></i>
+            Baixar para Windows
+        </a>
+        <p class="mt-3 mb-0" style="opacity: 0.6;">
+            <small>Versão {{ agent_version }} · Windows 10/11 · ~25 MB · Gratuito</small>
+        </p>
+    </div>
+
+    <!-- Como funciona -->
+    <h2 class="text-center mb-4">
+        <i class="fas fa-magic text-primary me-2"></i>
+        Como funciona?
+    </h2>
+    
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="step-card shadow-sm h-100">
+                <div class="step-number">1</div>
+                <h5>Baixe e instale</h5>
+                <p class="text-muted mb-0">
+                    Clique em "Baixar", execute o instalador e pronto.
+                    Não precisa de Python nem nada técnico.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="step-card shadow-sm h-100">
+                <div class="step-number">2</div>
+                <h5>Insira o smart card</h5>
+                <p class="text-muted mb-0">
+                    Conecte seu leitor (OmniKey, SafeNet, etc.) e insira o cartão com certificado A3.
+                    O ícone fica verde na bandeja.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="step-card shadow-sm h-100">
+                <div class="step-number">3</div>
+                <h5>Assine pelo Petitio</h5>
+                <p class="text-muted mb-0">
+                    Na hora de protocolar, selecione "A3 (Smart Card)", 
+                    digite o PIN e a petição é assinada e enviada.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recursos -->
+    <h2 class="text-center mb-4">
+        <i class="fas fa-star text-warning me-2"></i>
+        Recursos
+    </h2>
+    
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="icon bg-primary bg-opacity-10 text-primary">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h5>100% Seguro</h5>
+                <p class="text-muted mb-0">
+                    A chave privada <strong>nunca sai do cartão</strong>. 
+                    O PIN é solicitado a cada assinatura e não é armazenado.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="icon bg-success bg-opacity-10 text-success">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h5>Automático</h5>
+                <p class="text-muted mb-0">
+                    Inicia com o Windows, detecta quando você insere ou remove o cartão 
+                    e notifica no instante.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="icon bg-info bg-opacity-10 text-info">
+                    <i class="fas fa-usb"></i>
+                </div>
+                <h5>Compatível</h5>
+                <p class="text-muted mb-0">
+                    Funciona com OmniKey, SafeNet, Gemalto, Oberthur, Bit4id, 
+                    Watchdata e outros leitores comuns.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Requisitos + FAQ -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="requirements-box h-100">
+                <h5 class="mb-3"><i class="fas fa-clipboard-check text-primary me-2"></i>Requisitos</h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Windows 10 ou 11
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Leitor de smart card (USB)
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Certificado digital A3 (ICP-Brasil)
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Driver do leitor instalado (geralmente automático)
+                    </li>
+                    <li>
+                        <i class="fas fa-times text-danger me-2"></i>
+                        <span class="text-decoration-line-through text-muted">
+                            Python, Java ou qualquer linguagem de programação
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="requirements-box h-100">
+                <h5 class="mb-3"><i class="fas fa-question-circle text-primary me-2"></i>Perguntas Frequentes</h5>
+                
+                <div class="faq-item">
+                    <strong>Preciso de Python ou algo técnico?</strong>
+                    <p class="text-muted mb-0 small">
+                        Não! É só baixar, instalar e usar. Igual qualquer programa do Windows.
+                    </p>
+                </div>
+                
+                <div class="faq-item">
+                    <strong>Meu PIN fica salvo?</strong>
+                    <p class="text-muted mb-0 small">
+                        Não. O PIN é solicitado a cada assinatura e descartado imediatamente.
+                    </p>
+                </div>
+                
+                <div class="faq-item">
+                    <strong>E se eu não tiver smart card?</strong>
+                    <p class="text-muted mb-0 small">
+                        Sem problema! Continue usando certificado A1 (arquivo .pfx) normalmente pelo Petitio.
+                        O Assinador é necessário apenas para quem usa A3.
+                    </p>
+                </div>
+                
+                <div class="faq-item">
+                    <strong>Qual leitor é compatível?</strong>
+                    <p class="text-muted mb-0 small">
+                        OmniKey (HID), SafeNet, Gemalto, Oberthur, Bit4id, Watchdata, Pronova, 
+                        e qualquer leitor com driver PKCS#11.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA final -->
+    <div class="text-center py-4">
+        <a href="{{ download_url }}" class="btn download-btn">
+            <i class="fab fa-windows me-2"></i>
+            Baixar Petitio Assinador
+        </a>
+        <p class="text-muted mt-3 small">
+            Funciona junto com o Petitio no navegador. Gratuito para todos os planos.
+        </p>
+    </div>
+
+</div>
+{% endblock %}

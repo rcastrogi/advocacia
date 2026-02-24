@@ -357,6 +357,11 @@ def create_app(config_class=Config):
 
     app.register_blueprint(calculator_bp)
 
+    # Register agent download routes
+    from app.agent_download import bp as agent_download_bp
+
+    app.register_blueprint(agent_download_bp)
+
     # Register error handlers
     from app.error_handlers import init_logging, register_error_handlers
 
