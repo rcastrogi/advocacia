@@ -362,6 +362,25 @@
                 </div>
                 {% endif %}
                 
+                <!-- Seletor de método de assinatura -->
+                <div class="mb-2" id="metodoAssinatura">
+                    <label class="form-label small fw-bold">Método de Assinatura</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="metodoSign" id="metodoA1" value="a1" checked>
+                        <label class="btn btn-outline-primary btn-sm" for="metodoA1">
+                            <i class="fas fa-file-signature me-1"></i>A1 (Arquivo)
+                        </label>
+                        <input type="radio" class="btn-check" name="metodoSign" id="metodoA3" value="a3">
+                        <label class="btn btn-outline-success btn-sm" for="metodoA3">
+                            <i class="fas fa-id-card me-1"></i>A3 (Smart Card)
+                        </label>
+                    </div>
+                    <div id="a3Status" class="small text-muted mt-1 d-none">
+                        <i class="fas fa-circle text-secondary" id="a3StatusDot"></i>
+                        <span id="a3StatusText">Verificando agente...</span>
+                    </div>
+                </div>
+
                 <button type="button" class="btn btn-primary btn-sm w-100" id="btnProtocolar"
                         {% if not petition.process_number %}disabled{% endif %}>
                     <i class="fas fa-paper-plane me-1" id="iconProtocolo"></i>
@@ -369,10 +388,14 @@
                     Protocolar no Tribunal
                 </button>
                 
-                <small class="text-muted d-block mt-2">
+                <small class="text-muted d-block mt-2" id="certHelpA1">
                     <i class="fas fa-certificate me-1"></i>
                     Requer certificado digital A1 ativo.
                     <a href="{{ url_for('auth.certificados') }}">Gerenciar</a>
+                </small>
+                <small class="text-muted d-block mt-2 d-none" id="certHelpA3">
+                    <i class="fas fa-id-card me-1"></i>
+                    Requer <strong>Petitio Assinador</strong> e smart card inserido.
                 </small>
                 {% endif %}
             </div>
@@ -579,18 +602,86 @@ async function uploadFile() {
 
 // Peticionamento Eletrônico
 const btnProtocolar = document.getElementById('btnProtocolar');
+
+// Detectar agente A3 e atualizar UI
+const metodoA3Radio = document.getElementById('metodoA3');
+const metodoA1Radio = document.getElementById('metodoA1');
+const a3StatusDiv = document.getElementById('a3Status');
+const a3StatusDot = document.getElementById('a3StatusDot');
+const a3StatusText = document.getElementById('a3StatusText');
+const certHelpA1 = document.getElementById('certHelpA1');
+const certHelpA3 = document.getElementById('certHelpA3');
+
+// Toggle help text based on method selection
+if (metodoA1Radio) {
+    metodoA1Radio.addEventListener('change', function() {
+        if (this.checked) {
+            certHelpA1.classList.remove('d-none');
+            certHelpA3.classList.add('d-none');
+            a3StatusDiv.classList.add('d-none');
+        }
+    });
+}
+if (metodoA3Radio) {
+    metodoA3Radio.addEventListener('change', function() {
+        if (this.checked) {
+            certHelpA1.classList.add('d-none');
+            certHelpA3.classList.remove('d-none');
+            a3StatusDiv.classList.remove('d-none');
+        }
+    });
+}
+
+// Check agent status for A3 availability
+if (window.petitioAgent) {
+    window.petitioAgent.checkStatus().then(status => {
+        if (status.online) {
+            // Habilitar opção A3
+            if (metodoA3Radio) metodoA3Radio.disabled = false;
+            if (a3StatusDot) a3StatusDot.className = status.smartcard?.card_detected
+                ? 'fas fa-circle text-success'
+                : 'fas fa-circle text-warning';
+            if (a3StatusText) a3StatusText.textContent = status.smartcard?.card_detected
+                ? 'Smart card pronto!'
+                : 'Insira o smart card';
+        } else {
+            if (metodoA3Radio) metodoA3Radio.disabled = true;
+            if (a3StatusDot) a3StatusDot.className = 'fas fa-circle text-danger';
+            if (a3StatusText) a3StatusText.textContent = 'Agente não encontrado';
+        }
+    });
+} else {
+    // Agente JS não carregado — desabilitar A3
+    if (metodoA3Radio) metodoA3Radio.disabled = true;
+}
+
 if (btnProtocolar) {
     btnProtocolar.addEventListener('click', async function() {
+        const metodoAssinatura = document.querySelector('input[name="metodoSign"]:checked')?.value || 'a1';
+        
+        const confirmMsg = metodoAssinatura === 'a3'
+            ? 'Tem certeza que deseja protocolar com certificado A3 (smart card)?<br><br>' +
+              '<small class="text-muted">O documento será assinado pelo Petitio Assinador usando seu smart card e enviado ao tribunal.</small>'
+            : 'Tem certeza que deseja protocolar esta petição no tribunal?<br><br>' +
+              '<small class="text-muted">O PDF será assinado digitalmente com seu certificado A1 e enviado ao tribunal. ' +
+              'Esta ação não pode ser desfeita.</small>';
+
         const confirmed = await showConfirmModal({
             title: 'Protocolar Petição',
-            message: 'Tem certeza que deseja protocolar esta petição no tribunal?<br><br>' +
-                     '<small class="text-muted">O PDF será assinado digitalmente com seu certificado A1 e enviado ao tribunal. ' +
-                     'Esta ação não pode ser desfeita.</small>',
+            message: confirmMsg,
             type: 'warning',
             confirmText: 'Protocolar',
             confirmClass: 'btn-primary'
         });
         if (!confirmed) return;
+
+        // Se A3, solicitar PIN e assinar pelo agente
+        if (metodoAssinatura === 'a3' && window.petitioAgent) {
+            await protocolarComA3();
+            return;
+        }
+        
+        // A1 — fluxo padrão servidor
         
         const iconEl = document.getElementById('iconProtocolo');
         const spinnerEl = document.getElementById('spinnerProtocolo');
@@ -663,6 +754,107 @@ if (btnProtocolar) {
             btnProtocolar.childNodes[btnProtocolar.childNodes.length - 1].textContent = ' Protocolar no Tribunal';
         }
     });
+}
+
+// === Protocolar com A3 (Smart Card) ===
+async function protocolarComA3() {
+    const feedbackEl = document.getElementById('protocoloFeedback');
+    const iconEl = document.getElementById('iconProtocolo');
+    const spinnerEl = document.getElementById('spinnerProtocolo');
+    const tipoDoc = document.getElementById('tipoDocumento').value;
+    
+    // 1. Solicitar PIN
+    const pin = await requestPIN();
+    if (!pin) return; // Cancelou
+    
+    // Loading
+    iconEl.classList.add('d-none');
+    spinnerEl.classList.remove('d-none');
+    btnProtocolar.disabled = true;
+    btnProtocolar.childNodes[btnProtocolar.childNodes.length - 1].textContent = ' Assinando com A3...';
+    
+    if (feedbackEl) {
+        feedbackEl.className = 'alert alert-info py-2 mb-2';
+        feedbackEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Assinando com smart card...';
+        feedbackEl.classList.remove('d-none');
+    }
+    
+    try {
+        // 2. Baixar PDF da petição
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value ||
+                          document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
+        const pdfResponse = await fetch(`/petitions/api/saved/${petitionId}/pdf`, {
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        
+        if (!pdfResponse.ok) {
+            throw new Error('Erro ao obter PDF da petição');
+        }
+        
+        const pdfBlob = await pdfResponse.blob();
+        
+        // 3. Enviar para agente assinar
+        if (feedbackEl) {
+            feedbackEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Enviando ao smart card para assinatura...';
+        }
+        
+        const signResult = await window.petitioAgent.assinarPDF(pdfBlob, pin, {
+            reason: 'Peticionamento Eletrônico - ' + tipoDoc
+        });
+        
+        if (!signResult.success) {
+            throw new Error(signResult.message || 'Erro ao assinar com smart card');
+        }
+        
+        // 4. Enviar assinatura ao servidor para protocolar
+        if (feedbackEl) {
+            feedbackEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Enviando ao tribunal...';
+        }
+        
+        const protoResponse = await fetch(`/petitions/api/protocolar/${petitionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                tipo_documento: tipoDoc,
+                incluir_anexos: true,
+                metodo_assinatura: 'a3',
+                assinatura_b64: signResult.assinatura_b64,
+                documento_hash: signResult.documento_hash_sha256
+            })
+        });
+        
+        const result = await protoResponse.json();
+        
+        if (result.success) {
+            if (feedbackEl) {
+                feedbackEl.className = 'alert alert-success py-2 mb-2';
+                feedbackEl.innerHTML = `<i class="fas fa-check-circle me-1"></i> 
+                    <strong>Protocolada com A3!</strong><br>
+                    <small>Protocolo: ${result.protocolo || '-'}</small>`;
+            }
+            showToast('Petição protocolada com certificado A3!', 'success');
+            setTimeout(() => window.location.reload(), 2000);
+        } else {
+            throw new Error(result.message || 'Erro ao protocolar');
+        }
+        
+    } catch (e) {
+        console.error('Erro ao protocolar com A3:', e);
+        if (feedbackEl) {
+            feedbackEl.className = 'alert alert-danger py-2 mb-2';
+            feedbackEl.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> ${e.message}`;
+        }
+        showToast(e.message || 'Erro ao assinar com A3', 'error');
+        
+        iconEl.classList.remove('d-none');
+        spinnerEl.classList.add('d-none');
+        btnProtocolar.disabled = false;
+        btnProtocolar.childNodes[btnProtocolar.childNodes.length - 1].textContent = ' Protocolar no Tribunal';
+    }
 }
 </script>
 {% endblock %}

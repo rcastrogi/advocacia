@@ -1525,6 +1525,11 @@
 
     {% block scripts %}{% endblock %}
     
+    <!-- Petitio Assinador (Agente A3 Smart Card) -->
+    {% if current_user.is_authenticated %}
+    <script src="{{ static_url('js/petitio_agent.js') }}"></script>
+    {% endif %}
+    
     <!-- Performance Utilities - Load early for better performance -->
     <script src="{{ url_for('static', filename='js/performance-utils.js') }}"></script>
     
