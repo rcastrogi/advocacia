@@ -393,13 +393,17 @@
                     </div>
                 </div>
 
-                <button type="button" class="btn btn-primary btn-sm w-100" id="btnProtocolar"
-                        {% if not petition.process_number %}disabled{% endif %}
-                        {% if not has_certificate_a1 %}disabled{% endif %}>
-                    <i class="fas fa-paper-plane me-1" id="iconProtocolo"></i>
+                <button type="button" class="btn btn-secondary btn-sm w-100" id="btnProtocolar" disabled
+                        title="Funcionalidade em fase de testes. Será habilitada em breve.">
+                    <i class="fas fa-flask me-1" id="iconProtocolo"></i>
                     <span class="spinner-border spinner-border-sm d-none" id="spinnerProtocolo"></span>
                     Protocolar no Tribunal
+                    <span class="badge bg-warning text-dark ms-1">Em breve</span>
                 </button>
+                <small class="text-muted d-block mt-1">
+                    <i class="fas fa-flask me-1"></i>
+                    Peticionamento eletrônico em fase de testes.
+                </small>
                 
                 <small class="text-muted d-block mt-2" id="certHelpA1">
                     <i class="fas fa-certificate me-1"></i>

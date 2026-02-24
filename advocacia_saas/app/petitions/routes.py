@@ -1318,10 +1318,18 @@ def api_protocolar(petition_id):
         - tipo_documento: Tipo MNI (default: peticao_simples)
         - senha_certificado: Senha do certificado (opcional, usa salva)
         - descricao: Descrição complementar
-        - incluir_anexos: bool (default: True)
-
-    O PDF da petição é gerado, assinado digitalmente e enviado ao tribunal.
     """
+    # === MODO TESTE: Peticionamento desabilitado temporariamente ===
+    return jsonify({
+        "success": False,
+        "message": "Peticionamento eletrônico em fase de testes. "
+                   "Esta funcionalidade será habilitada em breve."
+    }), 503
+    # === FIM MODO TESTE (remover bloco acima para ativar) ===
+
+    #   - incluir_anexos: bool (default: True)
+    # O PDF da petição é gerado, assinado digitalmente e enviado ao tribunal.
+
     from app.services.certificado_service import CertificadoService
     from app.services.protocolo_service import ProtocoloService
 
