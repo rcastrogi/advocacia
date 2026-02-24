@@ -1042,6 +1042,64 @@ document.addEventListener('alpine:init', () => {
             this.$watch('formData', () => {
                 this.scheduleAutoSave();
             }, { deep: true });
+
+            // === Auto-preenchimento do endereçamento (Fórum/Tribunal) ===
+            // Quando tipo_acao ou comarca mudam, gera o texto padrão
+            this.$watch('formData.cabecalho_tipo_acao', () => this.gerarEnderecamento());
+            this.$watch('formData.cabecalho_comarca', () => this.gerarEnderecamento());
+        },
+
+        // Mapa de tipo de ação → nome da vara correspondente
+        _varaMap: {
+            'DIVORCIO_LITIGIOSO': 'FAMÍLIA E SUCESSÕES',
+            'DIVORCIO_CONSENSUAL': 'FAMÍLIA E SUCESSÕES',
+            'SEPARACAO_JUDICIAL': 'FAMÍLIA E SUCESSÕES',
+            'GUARDA_FILHOS': 'FAMÍLIA E SUCESSÕES',
+            'PENSÃO_ALIMENTICIA': 'FAMÍLIA E SUCESSÕES',
+            'REGULAMENTACAO_VISITAS': 'FAMÍLIA E SUCESSÕES',
+            'ANULACAO_CASAMENTO': 'FAMÍLIA E SUCESSÕES',
+            'RECONHECIMENTO_UNIAO_ESTAVEL': 'FAMÍLIA E SUCESSÕES',
+            'ALTERACAO_REGIME_BENS': 'FAMÍLIA E SUCESSÕES',
+            'PARTILHA_BENS': 'FAMÍLIA E SUCESSÕES',
+            'INVASAO_POSSE': 'CÍVEL',
+            'USUCAPIAO': 'CÍVEL',
+            'REINTEGRACAO_POSSE': 'CÍVEL',
+            'EXECUCAO_CONTRATO': 'CÍVEL',
+            'COBRANCA_DIVIDA': 'CÍVEL',
+            'DANOS_MORAIS': 'CÍVEL',
+            'ACIDENTE_TRANSITO': 'CÍVEL',
+            'BUSCA_APREENSÃO': 'CÍVEL',
+            'RESCISAO_CONTRATO_TRABALHO': 'DO TRABALHO',
+            'EXECUCAO_FISCAL': 'DA FAZENDA PÚBLICA',
+            'EXECUCAO_HIPOTECARIA': 'CÍVEL',
+        },
+
+        /**
+         * Gera o texto de endereçamento padrão.
+         * Ex: "EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO DA VARA DE FAMÍLIA E SUCESSÕES DA COMARCA DE SÃO PAULO/SP"
+         * O advogado pode editar livremente depois.
+         */
+        gerarEnderecamento() {
+            const tipoAcao = this.formData['cabecalho_tipo_acao'] || '';
+            const comarca = (this.formData['cabecalho_comarca'] || '').trim();
+            const forumAtual = (this.formData['cabecalho_forum'] || '').trim();
+
+            // Não sobrescrever se o usuário já digitou algo manualmente
+            // (a menos que esteja vazio ou seja um texto gerado anteriormente)
+            if (forumAtual && !forumAtual.startsWith('EXCELENTÍSSIMO')) {
+                return;
+            }
+
+            // Precisa pelo menos o tipo de ação
+            if (!tipoAcao || tipoAcao === 'OUTROS') return;
+
+            const vara = this._varaMap[tipoAcao] || 'CÍVEL';
+            let texto = `EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO DA VARA DE ${vara}`;
+            if (comarca) {
+                texto += ` DA COMARCA DE ${comarca.toUpperCase()}`;
+            }
+
+            this.formData['cabecalho_forum'] = texto;
         },
         
         // Verifica se um campo está bloqueado para edição

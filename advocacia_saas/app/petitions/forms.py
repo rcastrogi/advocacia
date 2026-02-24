@@ -21,8 +21,12 @@ class CivilPetitionForm(FlaskForm):
         coerce=int,
         validators=[DataRequired()],
     )
-    forum = StringField("Fórum", validators=[DataRequired(), Length(max=255)])
-    vara = StringField("Vara", validators=[DataRequired(), Length(max=255)])
+    forum = StringField("Fórum / Endereçamento", validators=[DataRequired(), Length(max=500)],
+        render_kw={"placeholder": "Ex: EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO DA VARA CÍVEL..."})
+    vara = StringField("Vara", validators=[DataRequired(), Length(max=255)],
+        render_kw={"placeholder": "Ex: 1ª Vara Cível"})
+    comarca = StringField("Comarca", validators=[Optional(), Length(max=255)],
+        render_kw={"placeholder": "Ex: São Paulo/SP"})
     process_number = StringField("Número do Processo", validators=[Optional(), Length(max=100)])
     author_name = StringField("Nome do Autor", validators=[DataRequired(), Length(max=255)])
     author_qualification = TextAreaField(
@@ -56,14 +60,19 @@ class FamilyPetitionForm(FlaskForm):
         validators=[DataRequired()],
     )
     forum = StringField(
-        "Fórum",
-        validators=[Optional(), Length(max=255)],
-        render_kw={"placeholder": "Ex: TRIBUNAL DE JUSTIÇA DO ESTADO DE SÃO PAULO"},
+        "Fórum / Endereçamento",
+        validators=[Optional(), Length(max=500)],
+        render_kw={"placeholder": "Ex: EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO DA VARA DE FAMÍLIA..."},
     )
     vara = StringField(
         "Vara",
         validators=[Optional(), Length(max=255)],
         render_kw={"placeholder": "Ex: 1ª Vara de Família e Sucessões"},
+    )
+    comarca = StringField(
+        "Comarca",
+        validators=[Optional(), Length(max=255)],
+        render_kw={"placeholder": "Ex: São Paulo/SP"},
     )
     process_number = StringField("Número do Processo", validators=[Optional(), Length(max=100)])
     action_type = SelectField(
@@ -329,13 +338,18 @@ class SimplePetitionForm(FlaskForm):
     # Dados do processo
     forum = StringField(
         "Fórum/Tribunal",
-        validators=[Optional(), Length(max=255)],
-        render_kw={"placeholder": "Ex: TRIBUNAL DE JUSTIÇA DO ESTADO DE SÃO PAULO"},
+        validators=[Optional(), Length(max=500)],
+        render_kw={"placeholder": "Ex: EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO..."},
     )
     vara = StringField(
         "Vara",
         validators=[Optional(), Length(max=255)],
         render_kw={"placeholder": "Ex: 1ª Vara do Juizado Especial Cível de Santo Amaro"},
+    )
+    comarca = StringField(
+        "Comarca",
+        validators=[Optional(), Length(max=255)],
+        render_kw={"placeholder": "Ex: São Paulo/SP"},
     )
     process_number = StringField(
         "Número do Processo",
