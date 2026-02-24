@@ -215,17 +215,21 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-success me-2">Aceito</span>
-                        <span class="small"><strong>A1</strong> — Arquivo digital (.pfx / .p12)</span>
+                        <span class="badge bg-success me-2">A1</span>
+                        <span class="small"><strong>Arquivo digital</strong> (.pfx / .p12) — Upload direto aqui</span>
                     </div>
-                    <div class="d-flex align-items-center">
-                        <span class="badge bg-secondary me-2">Não aceito</span>
-                        <span class="small"><strong>A3</strong> — Token USB / Smartcard</span>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-primary me-2">A3</span>
+                        <span class="small"><strong>Token USB / Smart Card</strong> — Via Petitio Assinador</span>
                     </div>
-                    <p class="small text-muted mt-2 mb-0">
-                        Certificados A3 (token/smartcard) não são compatíveis com sistemas web.
-                        Se você usa A3, será necessário adquirir um certificado A1.
-                    </p>
+                    <div class="alert alert-light small mb-0 mt-2">
+                        <i class="fas fa-info-circle text-primary me-1"></i>
+                        <strong>Certificado A1:</strong> Faça upload do arquivo .pfx acima. A assinatura é feita no servidor.<br>
+                        <i class="fas fa-id-card text-primary me-1"></i>
+                        <strong>Certificado A3:</strong> Não precisa de upload. Baixe o 
+                        <a href="{{ url_for('agent_download.index') }}">Petitio Assinador</a>, 
+                        insira o smart card e assine direto do navegador.
+                    </div>
                 </div>
             </div>
 
