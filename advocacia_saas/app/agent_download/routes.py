@@ -7,7 +7,7 @@ from app.agent_download import bp
 
 # URL do release no GitHub (atualizar após publicar release)
 GITHUB_RELEASE_URL = "https://github.com/rcastrogi/advocacia/releases/latest"
-DOWNLOAD_URL = "https://github.com/rcastrogi/advocacia/releases/latest/download/PetitioAssinador-v1.0.0-win64.zip"
+DOWNLOAD_URL = "https://github.com/rcastrogi/advocacia/releases/latest/download/PetitioAssinador.exe"
 AGENT_VERSION = "1.0.0"
 
 
